@@ -1,5 +1,12 @@
 -- filepath: c:\Users\xavie\OneDrive\Documents\GitHub\brickbreaker\UtilityFunction.lua
-local UtilityFunction = {}
+local UtilityFunction = {
+    freeze = false -- Global freeze variable to control game state
+}
+
+function UtilityFunction:toggleFreeze()
+    self.freeze = not self.freeze
+    print("game is now " .. (self.freeze and "frozen" or "unfrozen"))
+end
 
 -- Convert HSLA to RGBA
 function UtilityFunction.HslaToRgba(h, s, l, a)

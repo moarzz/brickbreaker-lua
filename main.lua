@@ -1,10 +1,17 @@
-local UtilityFunction = require("UtilityFunction")
-local Player = require("Player")
+local UtilityFunction = require("UtilityFunction") -- utility functions
+local Player = require("Player") -- player logic
+local Balls = require("Balls") -- ball logic
+local Timer = require("Libraries.timer") -- timer library
 -- main.lua
 -- Basic Brick Breaker Game
 
 -- Load Love2D modules
 function love.load()
+    -- Load the MP3 file
+    backgroundMusic = love.audio.newSource("assets/sounds/game song.mp3", "static")
+    backgroundMusic:setLooping(true)
+    backgroundMusic:play()
+
     -- Screen dimensions
     screenWidth = 1020
     screenHeight = 600
@@ -23,15 +30,8 @@ function love.load()
         speed = 400
     }
 
-    -- Ball
-    ball = {
-        x = screenWidth / 2,
-        y = screenHeight / 2,
-        radius = 10,
-        speed = 375
-    }
-    ball.speedX = math.random(-200, 200)
-    ball.speedY = math.sqrt(ball.speed * ball.speed - ball.speedX * ball.speedX)
+    -- Initialize balls
+    balls = Balls.initialize(screenWidth, screenHeight)
 
     -- Bricks
     brickColorsByHealth = {
@@ -65,105 +65,27 @@ function love.load()
 end
 
 function love.update(dt)
-    -- Paddle movement
-    if love.keyboard.isDown("left") or love.keyboard.isDown("a") then
-        paddle.x = paddle.x - paddle.speed * dt
-    elseif love.keyboard.isDown("right") or love.keyboard.isDown("d") then
-        paddle.x = paddle.x + paddle.speed * dt
-    end
+    Timer.update(dt) -- Update the timer
 
-    -- Keep paddle within screen bounds
-    paddle.x = math.max(0, math.min(screenWidth - paddle.width, paddle.x))
+    if not Player.levelingUp and not UtilityFunction.freeze then
+        -- Paddle movement
+        if love.keyboard.isDown("left") or love.keyboard.isDown("a") then
+            paddle.x = paddle.x - paddle.speed * dt
+        elseif love.keyboard.isDown("right") or love.keyboard.isDown("d") then
+            paddle.x = paddle.x + paddle.speed * dt
+        end
 
-    -- Ball movement
-    ball.x = ball.x + ball.speedX * dt
-    ball.y = ball.y + ball.speedY * dt
+        -- Keep paddle within screen bounds
+        paddle.x = math.max(0, math.min(screenWidth - paddle.width, paddle.x))
 
-    -- Ball collision with paddle
-    if ball.x + ball.radius > paddle.x and ball.x - ball.radius < paddle.x + paddle.width and ball.speedY > 0 and
-    ball.y + ball.radius > paddle.y and ball.y - ball.radius < paddle.y + paddle.height then
-        -- Reverse vertical speed
-        ball.speedY = -ball.speedY
+        -- Update balls
+        Balls.update(balls, dt, paddle, bricks, screenWidth, screenHeight, Player)
 
-        -- Adjust horizontal speed direction based on where the ball hits the paddle
-        local hitPosition = (ball.x - (paddle.x - ball.radius)) / (paddle.width + ball.radius * 2) -- Relative position (0 to 1)
-        ball.speedX = (hitPosition - 0.5) * 2 * math.abs(ball.speed*0.99) -- Adjust direction
-        ball.speedY = math.sqrt(ball.speed^2 - ball.speedX^2) * (ball.speedY > 0 and 1 or -1)
-    end
-
-    -- Ball collision with bricks
-    hitBrickThisFrame = false
-    for index_, brick in ipairs(bricks) do
-        if brick.hitLastFrame then
-            brick.hitLastFrame = false
-        elseif not brick.destroyed then
-            if ball.x + ball.radius > brick.x and ball.x - ball.radius < brick.x + brick.width and
-               ball.y + ball.radius > brick.y and ball.y - ball.radius < brick.y + brick.height then
-
-                -- Determine the side of collision
-                local ballCenterX = ball.x
-                local ballCenterY = ball.y
-                local brickCenterX = brick.x + brick.width / 2
-                local brickCenterY = brick.y + brick.height / 2
-
-                local dx = ballCenterX - brickCenterX
-                local dy = ballCenterY - brickCenterY
-
-                if math.abs(dx)*(30 + ball.radius) > math.abs(dy)*(75 + ball.radius) then
-                    -- Horizontal collision
-                    ball.speedX = -ball.speedX
-                else
-                    -- Vertical collision
-                    ball.speedY = -ball.speedY
-                end
-                if brick.health > 1 then
-                    brick.health = brick.health - 1
-                    brick.hitLastFrame = true
-                    -- Update brick color based on health
-                    if brick.health > 12 then --ca marche pour live mais je vais devoir le changer pour une fonction qui set la couleur selon une fonction sqrt
-                        brick.color = {1,1,1,1}
-                    else
-                        brick.color = brickColorsByHealth[brick.health]
-                    end
-                else
-                    table.remove(bricks, index)
-                    -- Remove the brick from the table
-                    brick.destroyed = true
-                    print(#bricks)
-                    hitBrickThisFrame = true
-                    break
-                end
-                hitBrickThisFrame = true
-                break
+        -- Move bricks down
+        for _, brick in ipairs(bricks) do
+            if not brick.destroyed then
+                brick.y = brick.y + brickSpeed * dt
             end
-        end
-    end
-
-    -- Ball collision with walls
-    if not hitBrickThisFrame then
-        if ball.x - ball.radius < 0 and ball.speedX < 0 then
-            ball.speedX = -ball.speedX
-        elseif ball.x + ball.radius > screenWidth and ball.speedX > 0 then
-            ball.speedX = -ball.speedX
-        end
-        if ball.y - ball.radius < 30 then
-            ball.speedY = -ball.speedY
-        end
-    end
-
-    -- Reset ball if it falls below the screen
-    if ball.y - ball.radius > screenHeight then
-        ball.x = screenWidth / 2
-        ball.y = screenHeight / 2
-        ball.speed = 280
-        ball.speedX = math.random(-200, 200)
-        ball.speedY = math.sqrt(ball.speed * ball.speed - ball.speedX * ball.speedX)
-    end
-
-    -- Move bricks down
-    for _, brick in ipairs(bricks) do
-        if not brick.destroyed then
-            brick.y = brick.y + brickSpeed * dt
         end
     end
 end
@@ -175,8 +97,8 @@ function love.draw()
     -- Draw paddle
     love.graphics.rectangle("fill", paddle.x, paddle.y, paddle.width, paddle.height)
 
-    -- Draw ball
-    love.graphics.circle("fill", ball.x, ball.y, ball.radius)
+    -- Draw balls
+    Balls.draw(balls)
 
     -- Draw bricks
     for _, brick in ipairs(bricks) do
@@ -191,12 +113,22 @@ function love.draw()
     -- Draw XP bar
     Player:drawXPBar(screenWidth, 30)
     love.graphics.setColor(1, 1, 1) -- reset color to white
+
+    if Player.levelingUp then
+        Player:drawLevelUpShop()
+    end
 end
 
 --exit game with esc key
 function love.keypressed(key)
     if key == "escape" then
         love.event.quit()
+    end
+    if key == "f" then
+        UtilityFunction:toggleFreeze()
+    end
+    if key == "l" then
+        Player:levelUp()
     end
 end
 
