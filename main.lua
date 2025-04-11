@@ -7,6 +7,11 @@ local suit = require("Libraries.Suit") -- UI library
 -- main.lua
 -- Basic Brick Breaker Game
 
+--screen dimensions
+statsWidth = 450 -- Width of the stats area
+screenWidth = 1020 + statsWidth
+screenHeight = 800
+
 local function generateRow(brickCount, yPos)
     local row = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
     for i = 1, brickCount do
@@ -43,9 +48,6 @@ function love.load()
     backgroundMusic:play()
 
     -- Adjust screen dimensions to include stats area
-    statsWidth = 450 -- Width of the stats area
-    screenWidth = 1020 + statsWidth
-    screenHeight = 800
     love.window.setMode(screenWidth, screenHeight)
     love.window.setTitle("Brick Breaker")
 
@@ -161,5 +163,8 @@ function love.keypressed(key)
     end
     if key == "l" then
         Player:levelUp()
+    end
+    if key == "b" then
+        Balls.addBall()
     end
 end

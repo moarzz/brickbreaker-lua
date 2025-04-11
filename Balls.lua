@@ -4,6 +4,9 @@
 local Balls = {}
 local ballCategories = {}
 local ballList = {}
+local currentBallTypes = {}
+
+local ballTrainLength = 20 -- Length of the ball trail
 
 --list of all ball types in the game
 local function ballListInit()
@@ -56,6 +59,7 @@ function Balls.addBall(ballName)
     if ballTemplate then -- makes sure there is a ball with ballName in ballList
         -- Create a copy of the ball template
         local newBall = {
+            name = ballTemplate.name,
             x = ballTemplate.x,
             y = ballTemplate.y,
             radius = ballTemplate.radius,
@@ -181,7 +185,7 @@ function Balls.update(dt, paddle, bricks, Player)
 
         -- Update the trail
         table.insert(ball.trail, {x = ball.x, y = ball.y})
-        if #ball.trail > 15 then -- Limit the trail length to 10 points
+        if #ball.trail > ballTrainLength then -- Limit the trail length to 10 points
             table.remove(ball.trail, 1)
         end
 
@@ -207,7 +211,7 @@ function Balls.draw()
     -- Set line style and join to make the trail smoother
     love.graphics.setLineStyle("smooth")
     love.graphics.setLineJoin("bevel")
-    --love.graphics.setLineWidth(2) -- Set the line width to 2 pixels
+    love.graphics.setLineWidth(1.0)
 
     for _, ball in ipairs(Balls) do
         -- Draw the trail

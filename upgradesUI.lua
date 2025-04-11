@@ -60,25 +60,34 @@ local function drawPlayerStats()
 end
 
 local function drawBallStats()
-    local x, y = statsWidth + 20, 50 -- Starting position for the table
+    local x, y = 20, 200 -- Starting position for the table
     local rowHeight = 30 -- Height of each row
     local columnWidth = 150 -- Width of each column
 
+    -- Initialize the layout with the starting position and padding
+    suit.layout:reset(x, y, 10, 10) -- Set padding (10px horizontal and vertical)
+    --suit.layout:push(suit:getOptionsAndSize()) -- Push the layout stack to start a new layout
+    
+    local x = {min_height = 300,
+    {100, 50},
+    {nil, 'fill'},
+    {nil, 50},}
     -- Table headers
-    suit.Label("Ball Name", {align = "left"}, x, y, columnWidth, rowHeight)
-    suit.Label("Speed", {align = "left"}, x + columnWidth, y, columnWidth, rowHeight)
-    suit.Label("Damage", {align = "left"}, x + columnWidth * 2, y, columnWidth, rowHeight)
-
-    y = y + rowHeight -- Move to the next row
+    suit.Label("Name", {align = "left"}, suit.layout:row(columnWidth, rowHeight))
+    suit.Label("Spd", {align = "center"}, suit.layout:col(columnWidth))
+    suit.Label("Dmg", {align = "center"}, suit.layout:col(columnWidth))
 
     -- Iterate through all balls and display their stats
-    for _, ball in ipairs(Balls) do
-        suit.Label(ball.name or "Unknown", {align = "left"}, x, y, columnWidth, rowHeight)
-        suit.Label(tostring(ball.stats.speed or 0), {align = "left"}, x + columnWidth, y, columnWidth, rowHeight)
-        suit.Label(tostring(ball.stats.baseDamage or 0), {align = "left"}, x + columnWidth * 2, y, columnWidth, rowHeight)
-        y = y + rowHeight
+    --suit.layout:pop()
+    --suit.layout:nextRow() -- Move to the next row
 
-        -- Draw upgrade buttons for each stats
+    for _, ball in ipairs(Balls) do
+        suit.layout:row(columnWidth, rowHeight) -- Define the size of each row
+        suit.Label(ball.name or "Unknown", {align = "left"}, suit.layout:row())
+        suit.Label(tostring(ball.stats.speed or 0), {align = "center"}, suit.layout:col())
+        suit.Label(tostring(ball.stats.baseDamage or 0), {align = "center"}, suit.layout:col())
+
+        -- Draw upgrade buttons for each stat
         local buttonResult = suit.Button("+speed", x + columnWidth * 3, y, columnWidth, rowHeight)
         if buttonResult.hit then
             ball.stats.speed = ball.stats.speed + 50 -- Example action
