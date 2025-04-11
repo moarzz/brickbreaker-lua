@@ -3,13 +3,13 @@ local UtilityFunction = {
     freeze = false -- Global freeze variable to control game state
 }
 
-function UtilityFunction:toggleFreeze()
+function toggleFreeze()
     self.freeze = not self.freeze
     print("game is now " .. (self.freeze and "frozen" or "unfrozen"))
 end
 
 -- Convert HSLA to RGBA
-function UtilityFunction.HslaToRgba(h, s, l, a)
+function HslaToRgba(h, s, l, a)
     if s == 0 then
         -- Achromatic (gray)
         return l, l, l, a
@@ -30,6 +30,14 @@ function UtilityFunction.HslaToRgba(h, s, l, a)
         local b = hueToRgb(p, q, h/360 - 1/3)
         return r, g, b, a
     end
+end
+
+function normalizeVector(x, y)
+    local magnitude = math.sqrt(x^2 + y^2)
+    if magnitude == 0 then
+        return 0, 0 -- Return a zero vector if the magnitude is 0
+    end
+    return x / magnitude, y / magnitude
 end
 
 return UtilityFunction
