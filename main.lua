@@ -162,9 +162,6 @@ function love.keypressed(key)
     if key == "f" then
         UtilityFunction:toggleFreeze()
     end
-    if key == "l" then
-        Player:levelUp()
-    end
     if key == "b" then
         Balls.addBall()
     end
@@ -174,5 +171,8 @@ function love.keypressed(key)
     end
     if key == "m" then
         Player.money = Player.money + 1000000 -- Add 1000 money for testing
+    end
+    if key == "t" then
+        getBricksTouchingCircle(50, 50, 50)
     end
 end

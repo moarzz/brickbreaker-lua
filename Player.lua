@@ -4,7 +4,14 @@ local upgradesUI = require("upgradesUI")
 Player = {
     money = 0,
     lives = 3,
-    levelingUp = false
+    levelingUp = false,
+    bonuses = { -- These bonuses are percentages
+        critChance = 0,
+        moneyIncome = 0,
+        speedBuff = 0,
+        paddleSpeed = 0,
+        paddleSize = 0
+    }
 }
 
 --[[function Player:gainXP(amount)

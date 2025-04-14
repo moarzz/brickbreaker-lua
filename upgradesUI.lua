@@ -36,6 +36,7 @@ local shortStatNames = {
     size = "Size",
     ammount = "Amnt",
 }
+
 local function drawPlayerStats()
     -- Draw the "Stats" title header
     local statsFont = love.graphics.newFont(20) -- Custom font for stats
@@ -109,7 +110,6 @@ local function drawBallStats()
                 buttonID = generateNextButtonID() -- Generate a unique ID for the button
                 -- Display the button for upgrading the stat and its cost
                 suit.layout:row(w*1.5/4, w) -- makes sure the button is centered even though it is smaller
-                print(" w = " .. w/4)
                 if statName == "cooldown" and statValue <= 0 then
                     --Cooldown value is maxed out, so we don't show the button
                 else 
@@ -143,6 +143,15 @@ local function drawBallStats()
         y = y + 20 -- Add padding to the y position for the next row
         x = 20
     end
+end
+
+local function drawPlayerUpgrades()
+    local myLayout = {
+        min_width = 410, -- Minimum width for the layout
+        pos = {x, y}, -- Starting position (x, y)
+        padding = {5, 5}, -- Padding between cells
+        {80, 30} -- for name
+    }
 end
 
 local displayedUpgrades = {}

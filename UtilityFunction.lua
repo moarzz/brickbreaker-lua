@@ -121,4 +121,29 @@ function formatNumber(value)
     end
 end
 
+-- function to calculate circle hitboxes
+function getBricksTouchingCircle(circleX, circleY, radius)
+    local bricksTouchingCircle = {}
+
+    for _, brick in ipairs(bricks) do
+        if not brick.destroyed then
+            -- Calculate the closest point on the brick to the circle's center
+            local closestX = math.max(brick.x, math.min(circleX, brick.x + brick.width))
+            local closestY = math.max(brick.y, math.min(circleY, brick.y + brick.height))
+
+            -- Calculate the distance between the circle's center and the closest point
+            local distanceX = circleX - closestX
+            local distanceY = circleY - closestY
+            local distanceSquared = distanceX^2 + distanceY^2
+
+            -- Check if the distance is less than or equal to the circle's radius squared
+            if distanceSquared <= radius^2 then
+                table.insert(bricksTouchingCircle, brick)
+            end
+        end
+    end
+    print("Bricks touching circle: " .. #bricksTouchingCircle)
+    return bricksTouchingCircle
+end
+
 return UtilityFunction
