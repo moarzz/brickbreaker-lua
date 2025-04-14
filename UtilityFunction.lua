@@ -40,4 +40,85 @@ function normalizeVector(x, y)
     return x / magnitude, y / magnitude
 end
 
+function getKeysAsList(list)
+    local keys = {}
+    for key, _ in pairs(list) do
+        table.insert(keys, tostring(key)) -- Add each key as a string
+    end
+    return keys -- Return the list of keys
+end
+
+function setFont(...)
+    local args = {...}
+    local fontSize = 12 -- Default font size
+    local fontType = nil
+    if not love.graphics.getFont() == nil then
+        fontSize = love.graphics.getFont():getSize() or 12 -- Default font size
+        fontType = love.graphics.getFont():getName() -- Default font type
+    end
+    for _, arg in ipairs(args) do
+        if type(arg) == "number" then
+            fontSize = arg -- Set the font size to the first number found
+        elseif type(arg) == "string" then
+            fontType = arg -- Set the font type to the first string found
+        else
+            error("invalid argument in setFont, expected number or string") 
+        end
+    end
+    local font
+    if fontType == nil then
+        font = love.graphics.newFont(fontSize)
+    else 
+        font = love.graphics.newFont(fontType, fontSize)
+    end
+    love.graphics.setFont(font) -- Set the font in Love2D
+end -- Missing 'end' added here
+
+function countStringKeys(tbl)
+    local count = 0
+    for key, _ in pairs(tbl) do
+        if type(key) == "string" then
+            count = count + 1
+        end
+    end
+    return count
+end
+
+local lastId = 0 -- Initialize a variable to keep track of the last ID used
+local buttonIDs = {} -- Table to keep track of button IDs
+function generateNextButtonID(...)
+    lastId = lastId + 1 -- Increment the last ID by 1
+    return lastId -- Return the new ID
+end
+
+function resetButtonLastID()
+    lastId = 0 -- Reset the last ID to 0
+end
+
+function getTextSize(text)
+    -- Create a temporary font with the specified size
+    local font = love.graphics.getFont()
+    if not font then
+        error("Font not set. Please set a font before calling getTextSize.")
+    end
+    -- Get the width and height of the text
+    local width = font:getWidth(text)
+    local height = font:getHeight()
+    return width, height
+end
+
+function formatNumber(value)
+    if value >= 1e12 then
+        return string.format("%.3gT", value / 1e12) -- Trillions
+    elseif value >= 1e9 then
+        return string.format("%.3gB", value / 1e9) -- Billions
+    elseif value >= 1e6 then
+        return string.format("%.3gM", value / 1e6) -- Millions
+    elseif value >= 1e3 then
+        return string.format("%.3gK", value / 1e3) -- Thousands
+    else
+        return tostring(value) -- Less than 1000, no suffix
+    end
+end
+
 return UtilityFunction

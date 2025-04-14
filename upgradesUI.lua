@@ -18,16 +18,6 @@ local upgradeOptions = {
         effect = function() Balls.addBall() end
     },
     {
-        name = "+Ball damage",
-        description = "Increase ball damage by 1",
-        effect = function() for _, ball in ipairs(Balls) do Balls.damageIncrease(1, ball) end end
-    },
-    {
-        name = "+XP gain",
-        description = "Increase XP gain by 15%",
-        effect = function() Player.xpRequiredMult = Player.xpRequiredMult * 0.85 end
-    },
-    {
         name = "+Money gain",
         description = "Increase money gain by 25%",
         effect = function() Player.money = Player.money * 1.25 end
@@ -39,6 +29,13 @@ local upgradeOptions = {
     },
 }
 
+local shortStatNames = {
+    speed = "Spd",
+    damage = "Dmg",
+    cooldown = "Cd",
+    size = "Size",
+    ammount = "Amnt",
+}
 local function drawPlayerStats()
     -- Draw the "Stats" title header
     local statsFont = love.graphics.newFont(20) -- Custom font for stats
@@ -49,50 +46,102 @@ local function drawPlayerStats()
 
     -- Draw the stats details
     love.graphics.setFont(statsFont)
-    love.graphics.setColor(1, 1, 1, 1) -- White text
-    love.graphics.printf("Score: " .. (Player.money or 0), 20, 70, statsWidth - 40, "left")
-    love.graphics.printf("Level: " .. (Player.level or 1), 20, 110, statsWidth - 40, "left")
-    love.graphics.printf("Lives: " .. (Player.lives or 3), 20, 150, statsWidth - 40, "left")
+    love.graphics.setColor(1, 1, 1, 1) -- White text    
+    love.graphics.printf("Level: " .. (Player.level or 1), 20, 70, statsWidth - 40, "left")
+    love.graphics.printf("Lives: " .. (Player.lives or 3), 20, 110, statsWidth - 40, "left")
+    love.graphics.printf("Money: " .. (Player.money or 0), 20, 150, statsWidth - 40, "left")
 
     -- Add a separator line for better visual clarity
     love.graphics.setColor(0.8, 0.8, 0.8, 1) -- Light gray
     love.graphics.rectangle("fill", 10, 200, statsWidth - 20, 2) -- Horizontal line
 end
 
-local function drawBallStats()
-    local x, y = 20, 200 -- Starting position for the table
-    local rowHeight = 30 -- Height of each row
-    local columnWidth = 150 -- Width of each column
-
+local function drawBallStats()  
+    local x, y = 20, 230 -- Starting position for the table
+    local w, h
     -- Initialize the layout with the starting position and padding
     suit.layout:reset(x, y, 10, 10) -- Set padding (10px horizontal and vertical)
-    --suit.layout:push(suit:getOptionsAndSize()) -- Push the layout stack to start a new layout
-    
-    local x = {min_height = 300,
-    {100, 50},
-    {nil, 'fill'},
-    {nil, 50},}
-    -- Table headers
-    suit.Label("Name", {align = "left"}, suit.layout:row(columnWidth, rowHeight))
-    suit.Label("Spd", {align = "center"}, suit.layout:col(columnWidth))
-    suit.Label("Dmg", {align = "center"}, suit.layout:col(columnWidth))
-
     -- Iterate through all balls and display their stats
-    --suit.layout:pop()
-    --suit.layout:nextRow() -- Move to the next row
-
-    for _, ball in ipairs(Balls) do
-        suit.layout:row(columnWidth, rowHeight) -- Define the size of each row
-        suit.Label(ball.name or "Unknown", {align = "left"}, suit.layout:row())
-        suit.Label(tostring(ball.stats.speed or 0), {align = "center"}, suit.layout:col())
-        suit.Label(tostring(ball.stats.baseDamage or 0), {align = "center"}, suit.layout:col())
-
-        -- Draw upgrade buttons for each stat
-        local buttonResult = suit.Button("+speed", x + columnWidth * 3, y, columnWidth, rowHeight)
-        if buttonResult.hit then
-            ball.stats.speed = ball.stats.speed + 50 -- Example action
-            Balls.adjustSpeed(ball.name) -- Adjust the speed of the ball
+    for _, ballType in ipairs(Balls.getUnlockedBallTypes()) do
+        suit.layout:reset(x, y, 10, 10)
+        if #Balls.getUnlockedBallTypes() > 1 then
         end
+        local myLayout = {
+            min_width = 410, -- Minimum width for the layout
+            pos = {x, y}, -- Starting position (x, y)
+            padding = {5, 5}, -- Padding between cells
+            {80, 30} -- for name
+        }
+        for x = 1, countStringKeys(ballType.stats) + 1 do -- adds a {"fill"} for each stat in the ballType.stats table
+            table.insert(myLayout, {"fill"}) -- for stats
+        end
+        local definition = suit.layout:cols(myLayout)
+        x, y, w, h = definition.cell(1)
+        suit.layout:reset(x, y, 10, 10) -- Set padding (10px horizontal and vertical)
+        setFont(24)
+        suit.Label("Name", {align = "left"}, suit.layout:row(w, h)) -- Display the stat name
+        setFont(18)
+        suit.Label(ballType.name or "Unk", {align = "left"}, suit.layout:row(w, h)) -- Display the ball name
+        -- Draw upgrade buttons for each stat
+        local intIndex = 2 -- keeps track of the current cell int id being checked
+        -- Define the order of keys
+        local statOrder = { "ammount", "damage", "speed", "cooldown", "size" }
+
+        -- Create the typeStats table
+        local typeStats = { ammount = ballType.ammount } -- Start with ammount
+        for statName, statValue in pairs(ballType.stats) do
+            typeStats[statName] = statValue -- Add stats to the table
+        end
+
+        for _, statName in ipairs(statOrder) do
+            local statValue = typeStats[statName] -- Get the value for the current stat
+            if statValue then -- Only process if the stat exists
+                local buttonResult = nil
+                x, y, w, h = definition.cell(intIndex)
+                suit.layout:reset(x, y, 10, 10) -- Set padding (10px horizontal and vertical)
+                setFont(24)
+                suit.Label(shortStatNames[statName] or "Unk", {align = "center"}, suit.layout:row(w, h)) -- Display the stat name
+                setFont(18)
+                suit.layout:padding(0, 0)
+                local textWidth = getTextSize(tostring(statValue or 0))
+                suit.Label(tostring(statValue or 0), {align = "center"}, suit.layout:row(w, h)) -- Display the stat value
+                local buttonID
+                buttonID = generateNextButtonID() -- Generate a unique ID for the button
+                -- Display the button for upgrading the stat and its cost
+                suit.layout:row(w*1.5/4, w) -- makes sure the button is centered even though it is smaller
+                print(" w = " .. w/4)
+                if statName == "cooldown" and statValue <= 0 then
+                    --Cooldown value is maxed out, so we don't show the button
+                else 
+                    if suit.Button(statName == "cooldown" and "-" or "+" , {id = buttonID, align = "center"}, suit.layout:col(23.75, 23.75)).hit then
+                        if Player.money < ballType.price then
+                            print("Not enough money to upgrade " .. ballType.name .. "'s " .. statName)
+                        else
+                            if statName == "speed" then
+                                ballType.stats.speed = ballType.stats.speed + 50 -- Example action
+                                Balls.adjustSpeed(ballType.name) -- Adjust the speed of the ball
+                            elseif statName == "ammount" then
+                                Balls.addBall(ballType.name) -- Add a new ball of the same type
+                            elseif statName == "cooldown" then
+                                ballType.stats.cooldown = ballType.stats.cooldown - 1 -- Example action
+                                print( "stat ".. statName .. " decreased to " .. ballType.stats[statName])
+                            else
+                                ballType.stats[statName] = ballType.stats[statName] + 1 -- Example action
+                                print( "stat ".. statName .. " increased to " .. ballType.stats[statName])
+                            end
+                            Player.money = Player.money - ballType.price -- Deduct the cost from the player's money
+                            ballType.price = ballType.price * 2 -- Increase the price of the ball
+                        end
+                    end
+                    setFont(14)
+                    suit.Label(formatNumber(ballType.price) .. " $", {align = "left"}, suit.layout:col(65, w/4)) -- Display the cost of the upgrade
+                    intIndex = intIndex + 1 -- Increment the index for the next stat
+                end
+            end
+        end
+        x, y = suit.layout:nextRow()
+        y = y + 20 -- Add padding to the y position for the next row
+        x = 20
     end
 end
 

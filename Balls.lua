@@ -4,7 +4,10 @@
 local Balls = {}
 local ballCategories = {}
 local ballList = {}
-local currentBallTypes = {}
+local unlockedBallTypes = {}
+function Balls.getUnlockedBallTypes()
+    return unlockedBallTypes
+end
 
 local ballTrainLength = 20 -- Length of the ball trail
 
@@ -16,9 +19,11 @@ local function ballListInit()
             x = screenWidth / 2,
             y = screenHeight / 2,
             size = 1,
+            startingPrice = 1,
+            rarity = "common",
             stats = {
                 speed = 250,
-                baseDamage = 1,
+                damage = 1,
                 cooldown = 3,
             },
         },
@@ -27,10 +32,14 @@ local function ballListInit()
             x = screenWidth / 2,
             y = screenHeight / 2,
             size = 2,
+            rarity = "uncommon",
+            startingPrice = 2,
             stats = {
                 speed = 175,
-                baseDamage = 2,
+                damage = 2,
                 cooldown = 3,
+                cool = 4,
+                fuck = 2
             },
         }
     }
@@ -47,23 +56,53 @@ end
 
 function Balls.addBall(ballName)
     ballName = ballName or "baseBall" -- Default to baseBall if no name is provided
-    local ballTemplate = ballList[ballName]
+    print("Adding ball: " .. ballName)
 
-    local newBall = true
+    local isNewBall = true
     for _, ball in ipairs(Balls) do
         if ball.name == ballName then
-            newBall = false -- Ball already exists in the list
+            isNewBall = false -- Ball already exists in the list
         end
     end
 
+    local stats = nil
+    local ballTemplate = ballList[ballName]
     if ballTemplate then -- makes sure there is a ball with ballName in ballList
         -- Create a copy of the ball template
+        local stats = nil
+        print("isNewBall: " .. tostring(isNewBall))
+        if isNewBall then
+            local newBallType = {
+                name = ballName, -- Set the name of the ball
+                ammount = 1, -- Set the initial amount to 1
+                price = ballTemplate.startingPrice, -- Set the initial price of ball upgrades
+                stats = {} -- Set the initial cooldown
+            }
+            for statName, statValue in pairs(ballTemplate.stats) do
+                newBallType.stats[statName] = statValue -- Copy other stats as well
+            end
+            table.insert(unlockedBallTypes, newBallType) -- Add the new ball type to the unlockedBallTypes list
+            stats = unlockedBallTypes[#unlockedBallTypes].stats -- Get the stats of the new ball type
+        else 
+            for _, ballType in ipairs(unlockedBallTypes) do
+                if ballType.name == ballName then
+                    stats = ballType.stats -- Get the stats of the existing ball type
+                    ballType.ammount = ballType.ammount + 1 -- Increase the amount of the ball in the list
+                    print("caca")
+                    break -- Exit the loop once the ball type is found
+                end
+            end
+        end
+        if not stats then
+            print("Error: Ball type '" .. ballName .. "' not found in unlockedBallTypes. But, " .. ballName .. " is not a new ball")
+            return
+        end
         local newBall = {
             name = ballTemplate.name,
             x = ballTemplate.x,
             y = ballTemplate.y,
             radius = ballTemplate.radius,
-            stats = ballTemplate.stats,	
+            stats = stats, -- Use the stats from the associated unlockedBallTypes list
             speedX = math.random(ballTemplate.stats.speed*0.6, ballTemplate.stats.speed*0.6), -- Randomize speedX
             speedY = 0, -- Will be calculated below
             dead = false,
@@ -71,33 +110,22 @@ function Balls.addBall(ballName)
         }
         newBall.speedY = math.sqrt(newBall.stats.speed^2 - newBall.speedX^2) -- Calculate speedY
         table.insert(Balls, newBall)
-        if newBall then
-            local newCategory = {ammount = 1, ballName = ballName}
-            table.insert(ballCategories, ballName) -- Add the new ball to the ballCategories list
-        else 
-            BallCategories[ballName].ammount = BallCategories[ballName].ammount + 1 -- Increase the amount of the ball in the list
-        end
     else
         print("Error: Ball type '" .. ballName .. "' does not exist in ballList.")
     end
-end
-
-function Balls.damageIncrease(damage, ball)
-    ball.stats.baseDamage = ball.stats.baseDamage + damage
+    print("Added ball: " .. ballName .. ", total balls: " .. #Balls .. ", unlocked ball types: " .. #unlockedBallTypes)
 end
 
 --increases the particular stat of every ball of a certain type by set amount
 function Balls.adjustSpeed(ballName)
     for _, ball in ipairs(Balls) do
         if ball.name == ballName then
-            print("old ball speed : " .. ball.speedX .. ", " .. ball.speedY)
             local normalisedSpeedX, normalisedSpeedY = normalizeVector(ball.speedX, ball.speedY)
             ball.speedX = ball.stats.speed * normalisedSpeedX
             ball.speedY = ball.stats.speed * normalisedSpeedY
             print("new ball speed : " .. ball.speedX .. ", " .. ball.speedY)
         end
     end
-
 end
 
 --Spawns the ball back at the bottom of the speed with a random speed
@@ -119,6 +147,19 @@ local function ballDie(ball)
     end
 end
 
+local function dealDamage(ball, brick)
+    local damage = math.min(ball.stats.damage, brick.health)
+    brick.health = brick.health - damage
+    Player.money = Player.money + damage -- Increase money based on damage dealt
+    if brick.health > 1 then
+        brick.hitLastFrame = true
+        brick.color = brick.health > 12 and {1, 1, 1, 1} or brickColorsByHealth[brick.health]
+    else
+        table.remove(bricks, index)
+        brick.destroyed = true
+    end
+end
+
 local function brickCollision(ball, bricks, Player)
     for index, brick in ipairs(bricks) do
         if brick.hitLastFrame then
@@ -126,7 +167,6 @@ local function brickCollision(ball, bricks, Player)
         elseif not brick.destroyed then
             if ball.x + ball.radius > brick.x and ball.x - ball.radius < brick.x + brick.width and
                ball.y + ball.radius > brick.y and ball.y - ball.radius < brick.y + brick.height then
-                Player:gainXP(1)
 
                 local dx = ball.x - (brick.x + brick.width / 2)
                 local dy = ball.y - (brick.y + brick.height / 2)
@@ -136,15 +176,7 @@ local function brickCollision(ball, bricks, Player)
                 else
                     ball.speedY = -ball.speedY
                 end
-
-                if brick.health > 1 then
-                    brick.health = brick.health - 1
-                    brick.hitLastFrame = true
-                    brick.color = brick.health > 12 and {1, 1, 1, 1} or brickColorsByHealth[brick.health]
-                else
-                    table.remove(bricks, index)
-                    brick.destroyed = true
-                end
+                dealDamage(ball, brick) -- Call the dealDamage function to handle damage
                 return true -- Collision detected with a brick
             end
         end
@@ -169,7 +201,7 @@ local function wallCollision(ball)
     elseif ball.x + ball.radius > screenWidth and ball.speedX > 0 then
         ball.speedX = -ball.speedX
     end
-    if ball.y - ball.radius < 30 then
+    if ball.y - ball.radius < 0 then
         ball.speedY = -ball.speedY
     end
 end

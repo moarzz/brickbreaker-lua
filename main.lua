@@ -124,6 +124,7 @@ function love.update(dt)
 end
 
 function love.draw()
+    resetButtonLastID()
     -- Draw stats area background
     love.graphics.setColor(0.2, 0.2, 0.2, 1) -- Dark gray background
     love.graphics.rectangle("fill", 0, 0, statsWidth, screenHeight)
@@ -145,7 +146,7 @@ function love.draw()
     end
 
     -- Draw XP bar
-    Player:drawXPBar(screenWidth, 30)
+    --Player:drawXPBar(screenWidth, 30)
     
     -- Draw the upgrade UI
     upgradesUI.draw()
@@ -166,5 +167,12 @@ function love.keypressed(key)
     end
     if key == "b" then
         Balls.addBall()
+    end
+    if key == "p" then
+        print("p pressed")
+        Balls.addBall("fireBall")
+    end
+    if key == "m" then
+        Player.money = Player.money + 1000000 -- Add 1000 money for testing
     end
 end
