@@ -4,6 +4,7 @@ Balls = require("Balls") -- ball logic
 Timer = require("Libraries.timer") -- timer library
 local upgradesUI = require("upgradesUI") -- upgrade UI logic
 local suit = require("Libraries.Suit") -- UI library
+tween = require("Libraries.tween") -- tweening library
 -- main.lua
 -- Basic Brick Breaker Game
 
@@ -11,6 +12,8 @@ local suit = require("Libraries.Suit") -- UI library
 statsWidth = 450 -- Width of the stats area
 screenWidth = 1020 + statsWidth
 screenHeight = 1000
+
+playRate = 1 -- Set the playback rate to 1 (normal speed)
 
 local function generateRow(brickCount, yPos)
     local row = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
@@ -36,6 +39,7 @@ local function generateRow(brickCount, yPos)
                 color = brickColor,
                 hitLastFrame = false
             })
+            --print("screenWidth: " .. screenWidth)
         end
     end
     return row
@@ -49,9 +53,12 @@ function love.load()
     backgroundMusic:play()
     brickFont = love.graphics.newFont(14)
 
-    -- Adjust screen dimensions to include stats area
-    love.window.setMode(0, 0, {fullscreen = true, vsync = true})
+    -- Set fullscreen mode
+    love.window.setMode(1920, 1080, {fullscreen = true, vsync = true})
+
+    -- Get screen dimensions
     screenWidth, screenHeight = love.graphics.getDimensions()
+
     love.window.setTitle("Brick Breaker")
 
     -- Background image
@@ -90,9 +97,9 @@ function love.load()
     brickSpacing = 10
     brickWidth = 75
     brickHeight = 30
-    rows = 10
+    rows = 100
     cols = 10
-    brickSpeed = 10 -- Speed at which bricks move down (pixels per second)
+    brickSpeed = { value = 10 } -- Speed at which bricks move down (pixels per second)
     currentRowPopulation = 1 -- Number of bricks in the first row
 
     -- Generate bricks
@@ -100,9 +107,11 @@ function love.load()
         generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing)) --generate 100 scaling rows of bricks
         currentRowPopulation = currentRowPopulation + 1
     end
+    print("screenWidth: " .. screenWidth)
 end
 
 function love.update(dt)
+    dt = dt * playRate -- Adjust the delta time based on the playback rate
     Timer.update(dt) -- Update the timer
 
     if not Player.levelingUp and not UtilityFunction.freeze then
@@ -119,10 +128,11 @@ function love.update(dt)
         -- Update Balls
         Balls.update(dt, paddle, bricks, Player) -- Removed screenWidth and screenHeight arguments
 
+        
         -- Move bricks down
         for _, brick in ipairs(bricks) do
             if not brick.destroyed then
-                brick.y = brick.y + brickSpeed * dt
+                brick.y = brick.y + brickSpeed.value * dt
             end
         end
     end
@@ -132,6 +142,8 @@ function love.update(dt)
             table.remove(bricks, _)
         end
     end
+
+    Player.update(dt) -- Update player logic
 end
 
 local function drawBricks()
@@ -169,7 +181,9 @@ function love.draw()
     resetButtonLastID()-- resets the button ID to 1 so it stays consistent
 
     drawStatsArea() -- Draw the stats area
-
+    love.graphics.setColor(1 , 1, 1, 0.25)
+    love.graphics.rectangle("fill", statsWidth, paddle.y + paddle.height/2, screenWidth - statsWidth * 2, 1) -- Draw the background for the game area
+    love.graphics.setColor(1, 1, 1, 1)
     love.graphics.rectangle("fill", paddle.x, paddle.y, paddle.width * paddle.widthMult, paddle.height) -- Draw paddle
 
     drawBricks() -- Draw bricks
@@ -203,5 +217,17 @@ function love.keypressed(key)
     end
     if key == "t" then
         getBricksTouchingCircle(50, 50, 50)
+    end
+    if key == "l" then
+        playRate = playRate * 2
+    end
+    if key == "k" then 
+        playRate = 1
+    end
+    if key == "j" then 
+        playRate = playRate / 2
+    end
+    if key == "h" then 
+        Player.hit()
     end
 end

@@ -16,6 +16,40 @@ Player = {
     }
 }
 
+function Player.die()
+end
+
+local brickSpeedAfterHit = 500
+local brickSpeedTween
+function Player.hit()
+    Player.lives = Player.lives - 1
+    if Player.lives <= 0 then
+        Player.die()
+    end
+    brickSpeed.value = -brickSpeedAfterHit
+    brickSpeedTween = tween.new(2, brickSpeed, { value = 10 }, tween.outQuad)
+    print("Player hit! Lives left: " .. Player.lives)
+end
+
+local function checkForHit()
+    for _, brick in ipairs(bricks) do
+        if brick.y + brick.height > paddle.y + paddle.height/2 then
+            Player.hit()
+        end
+    end
+end
+
+function Player.update(dt)
+    if brickSpeedTween then
+        brickSpeedTween:update(dt)
+        if brickSpeedTween.clock >= brickSpeedTween.duration then
+            brickSpeedTween = nil
+            brickSpeed.value = 10
+        end
+    end
+
+    checkForHit()
+end
 function Player.pay(amount)
     if Player.money >= amount then
         Player.money = Player.money - amount

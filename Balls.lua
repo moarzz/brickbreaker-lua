@@ -135,7 +135,6 @@ local function Ballspawn(ball)
     ball.speedX = math.random(-200, 200)
     ball.speedY = -math.sqrt(ball.stats.speed^2 - ball.speedX^2)
     ball.dead = false
-    print("Ball spawned at: " .. ball.x .. ", " .. ball.y)
 end
 
 -- Function to handle ball death when it falls below the screen
