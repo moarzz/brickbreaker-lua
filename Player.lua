@@ -1,43 +1,41 @@
 local upgradesUI = require("upgradesUI")
 
 -- This file contains the player class, it manages his level, his abilities and his stats
+local money = 0
 Player = {
-    money = 0,
+    money = math.floor(money),
     lives = 3,
     levelingUp = false,
+    price = 1,
     bonuses = { -- These bonuses are percentages
         critChance = 0,
         moneyIncome = 0,
-        speedBuff = 0,
+        ballSpeed = 0,
         paddleSpeed = 0,
         paddleSize = 0
     }
 }
 
---[[function Player:gainXP(amount)
-    self.xp = self.xp + amount
-    if self.xp >= self.xpToNextLevel then
-        self:levelUp()
+function Player.pay(amount)
+    if Player.money >= amount then
+        Player.money = Player.money - amount
+    else
+        error("Player tried to pay ".. amount.."but didn't habe enough money : "..Player.money)
     end
 end
 
---[[function Player:drawXPBar(width, height)
-    local xpRatio = self.xp / self.xpToNextLevel
-    love.graphics.setColor(0, 0, 0, 1) -- Black color for the XP bar background
-    love.graphics.rectangle("fill", 0, 0, width, height)
-    love.graphics.setColor(HslaToRgba(195, 1, 0.5, 1)) -- Blue color for the XP bar
-    love.graphics.rectangle("fill", 0, 0, width * xpRatio, height)
-    love.graphics.setColor(1, 1, 1) -- Reset color to white
-    love.graphics.rectangle("line", 0, 0, width, height) -- Draw the border of the XP bar
-    love.graphics.print("Lv ".. self.level, 5, 5) -- Print the level inside the XP bar
-    love.graphics.setColor(1, 1, 1) -- reset color to white
+function Player.gain(amount)
+    Player.money = Player.money + amount
 end
 
-function Player:levelUp()
-    self.xp = 0
-    self.level = self.level + 1
-    self.xpToNextLevel = math.ceil(self.xpToNextLevel * self.xpRequiredMult)
-    self.levelingUp = true
-    upgradesUI.chooseUpgrades()
-end]]
+Player.bonusUpgrades = {
+    critChance = function() Player.bonuses.critChance = Player.bonuses.critChance + 5 end,
+    moneyIncome = function() Player.bonuses.moneyIncome = Player.moneyIncome + 5 end,
+    ballSpeed = function() Player.bonuses.ballSpeed = Player.bonuses.ballSpeed + 5 end,
+    paddleSpeed = function() Player.bonuses.paddleSpeed = Player.bonuses.paddleSpeed + 50
+        paddle.speed = paddle.speed + 200 end,
+    paddleSize = function() Player.bonuses.paddleSize = Player.bonuses.paddleSize + 25 
+        paddle.width = paddle.width+32.5 end
+}
+
 return Player

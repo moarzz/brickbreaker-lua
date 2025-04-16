@@ -4,8 +4,8 @@ local UtilityFunction = {
 }
 
 function toggleFreeze()
-    self.freeze = not self.freeze
-    print("game is now " .. (self.freeze and "frozen" or "unfrozen"))
+    UtilityFunction.freeze = not UtilityFunction.freeze
+    print("game is now " .. (UtilityFunction.freeze and "frozen" or "unfrozen"))
 end
 
 -- Convert HSLA to RGBA
@@ -48,6 +48,7 @@ function getKeysAsList(list)
     return keys -- Return the list of keys
 end
 
+local Fonts = {}
 function setFont(...)
     local args = {...}
     local fontSize = 12 -- Default font size
@@ -67,12 +68,66 @@ function setFont(...)
     end
     local font
     if fontType == nil then
+        if Fonts[fontSize] then
+            font = Fonts[fontSize] -- Use the cached font if it exists
+        else
+            font = love.graphics.newFont(fontSize) -- Create a new font if it doesn't exist
+            Fonts[fontSize] = font -- Cache the new font
+        end
         font = love.graphics.newFont(fontSize)
     else 
         font = love.graphics.newFont(fontType, fontSize)
     end
     love.graphics.setFont(font) -- Set the font in Love2D
 end -- Missing 'end' added here
+
+function drawCenteredText(text, x, y, font, textColor)
+    love.graphics.setFont(font) -- Set the font
+    love.graphics.setColor(textColor) -- Set the text color
+
+    -- Get the width and height of the text
+    local textWidth = font:getWidth(text)
+    local textHeight = font:getHeight()
+
+    -- Calculate the top-left position to center the text
+    local drawX = x - textWidth / 2
+    local drawY = y - textHeight / 2
+
+    -- Draw the text
+    love.graphics.print(text, drawX, drawY)
+
+    -- Reset the color to white
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
+function drawTextWithOutline(text, x, y, font, textColor, outlineColor, outlineThickness)
+    love.graphics.setFont(font)
+
+    -- Set the outline color and draw the text around the main text
+    love.graphics.setColor(outlineColor)
+    for dx = -outlineThickness, outlineThickness, outlineThickness do
+        for dy = -outlineThickness, outlineThickness, outlineThickness do
+            if dx ~= 0 or dy ~= 0 then
+                drawCenteredText(text, x + dx, y + dy, font, outlineColor)
+            end
+        end
+    end
+
+    -- Draw the main text using drawCenteredText
+    drawCenteredText(text, x, y, font, textColor)
+
+    -- Reset the color to white
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
+function drawFPS()
+    local fps = love.timer.getFPS() -- Get the current FPS
+    local font = love.graphics.newFont(14) -- Set a small font for the FPS display
+    love.graphics.setFont(font)
+    love.graphics.setColor(0, 1, 0, 1) -- Green color for the FPS text
+    love.graphics.print("FPS: " .. fps, screenWidth - 100, 10) -- Draw FPS at the top-right corner
+    love.graphics.setColor(1, 1, 1, 1) -- Reset color to white
+end
 
 function countStringKeys(tbl)
     local count = 0

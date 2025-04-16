@@ -10,7 +10,7 @@ local suit = require("Libraries.Suit") -- UI library
 --screen dimensions
 statsWidth = 450 -- Width of the stats area
 screenWidth = 1020 + statsWidth
-screenHeight = 800
+screenHeight = 1000
 
 local function generateRow(brickCount, yPos)
     local row = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
@@ -40,15 +40,18 @@ local function generateRow(brickCount, yPos)
     end
     return row
 end
+
 -- Load Love2D modules
 function love.load()
     -- Load the MP3 file
     backgroundMusic = love.audio.newSource("assets/sounds/game song.mp3", "static")
     backgroundMusic:setLooping(true)
     backgroundMusic:play()
+    brickFont = love.graphics.newFont(14)
 
     -- Adjust screen dimensions to include stats area
-    love.window.setMode(screenWidth, screenHeight)
+    love.window.setMode(0, 0, {fullscreen = true, vsync = true})
+    screenWidth, screenHeight = love.graphics.getDimensions()
     love.window.setTitle("Brick Breaker")
 
     -- Background image
@@ -57,10 +60,12 @@ function love.load()
     -- Paddle
     paddle = {
         x = screenWidth / 2 - 50,
-        y = screenHeight - 30,
+        y = screenHeight - 200,
         width = 130,
+        widthMult = 1,
         height = 20,
-        speed = 400
+        speed = 400,
+        speedMult = 1
     }
 
     -- Initialize Balls
@@ -85,7 +90,7 @@ function love.load()
     brickSpacing = 10
     brickWidth = 75
     brickHeight = 30
-    rows = 100
+    rows = 10
     cols = 10
     brickSpeed = 10 -- Speed at which bricks move down (pixels per second)
     currentRowPopulation = 1 -- Number of bricks in the first row
@@ -103,13 +108,13 @@ function love.update(dt)
     if not Player.levelingUp and not UtilityFunction.freeze then
         -- Paddle movement
         if love.keyboard.isDown("left") or love.keyboard.isDown("a") then
-            paddle.x = paddle.x - paddle.speed * dt
+            paddle.x = paddle.x - paddle.speed * paddle.speedMult * dt
         elseif love.keyboard.isDown("right") or love.keyboard.isDown("d") then
-            paddle.x = paddle.x + paddle.speed * dt
+            paddle.x = paddle.x + paddle.speed * paddle.speedMult * dt
         end
 
         -- Keep paddle within screen bounds
-        paddle.x = math.max(statsWidth, math.min(screenWidth - paddle.width, paddle.x))
+        paddle.x = math.max(statsWidth, math.min(screenWidth - statsWidth - paddle.width, paddle.x))
 
         -- Update Balls
         Balls.update(dt, paddle, bricks, Player) -- Removed screenWidth and screenHeight arguments
@@ -121,37 +126,61 @@ function love.update(dt)
             end
         end
     end
+
+    for _, brick in ipairs(bricks) do
+        if brick.destroyed then
+            table.remove(bricks, _)
+        end
+    end
 end
 
-function love.draw()
-    resetButtonLastID()
+local function drawBricks()
+    setFont(14) -- Set the preloaded font once for all bricks
+
+    for _, brick in ipairs(bricks) do
+        if not brick.destroyed and brick.y > 0 - brick.height - 5 then
+            -- Ensure brick color is valid
+            local color = brick.color or {1, 1, 1, 1}
+            love.graphics.setColor(color) -- Set brick color
+            love.graphics.rectangle("fill", brick.x, brick.y, brick.width, brick.height)
+
+            -- Draw the brick's HP using drawTextWithOutline
+            local textColor = {1, 1, 1, 1} -- White text color
+            local outlineColor = {0, 0, 0, 1} -- Black outline color
+            local outlineThickness = 1
+            local hpText = tostring(brick.health or 0)
+
+            drawTextWithOutline(hpText, brick.x + brick.width / 2, brick.y + brick.height / 2, brickFont, textColor, outlineColor, outlineThickness)
+        end
+    end
+end
+
+local function drawStatsArea()
     -- Draw stats area background
     love.graphics.setColor(0.2, 0.2, 0.2, 1) -- Dark gray background
     love.graphics.rectangle("fill", 0, 0, statsWidth, screenHeight)
 
-    love.graphics.setColor(1, 1, 1, 1) -- Reset color to white for other drawings
+    love.graphics.rectangle("fill", screenWidth - statsWidth, 0, statsWidth, screenHeight)
 
-    love.graphics.rectangle("fill", paddle.x, paddle.y, paddle.width, paddle.height) -- Draw paddle
+    love.graphics.setColor(1, 1, 1, 1) -- Reset color to white for other drawings
+end
+
+function love.draw()
+    resetButtonLastID()-- resets the button ID to 1 so it stays consistent
+
+    drawStatsArea() -- Draw the stats area
+
+    love.graphics.rectangle("fill", paddle.x, paddle.y, paddle.width * paddle.widthMult, paddle.height) -- Draw paddle
+
+    drawBricks() -- Draw bricks
 
     Balls.draw(Balls) -- Draw balls
 
-    -- Draw bricks
-    for _, brick in ipairs(bricks) do
-        if not brick.destroyed then
-            --ensure brick color is valid
-            local color = brick.color or {1, 1, 1, 1}
-            love.graphics.setColor(color) -- set brick color
-            love.graphics.rectangle("fill", brick.x, brick.y, brick.width, brick.height)
-        end
-    end
-
-    -- Draw XP bar
-    --Player:drawXPBar(screenWidth, 30)
-    
-    -- Draw the upgrade UI
     upgradesUI.draw()
 
     suit.draw() -- Draw the UI elements using Suit
+
+    drawFPS()
 end
 
 --exit game with esc key and other debugging keys
@@ -160,7 +189,7 @@ function love.keypressed(key)
         love.event.quit()
     end
     if key == "f" then
-        UtilityFunction:toggleFreeze()
+        toggleFreeze()
     end
     if key == "b" then
         Balls.addBall()
@@ -170,7 +199,7 @@ function love.keypressed(key)
         Balls.addBall("fireBall")
     end
     if key == "m" then
-        Player.money = Player.money + 1000000 -- Add 1000 money for testing
+        Player.money = Player.money + 10000000000000000 -- Add 1000 money for testing
     end
     if key == "t" then
         getBricksTouchingCircle(50, 50, 50)

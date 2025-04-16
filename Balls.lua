@@ -88,7 +88,6 @@ function Balls.addBall(ballName)
                 if ballType.name == ballName then
                     stats = ballType.stats -- Get the stats of the existing ball type
                     ballType.ammount = ballType.ammount + 1 -- Increase the amount of the ball in the list
-                    print("caca")
                     break -- Exit the loop once the ball type is found
                 end
             end
@@ -150,32 +149,44 @@ end
 local function dealDamage(ball, brick)
     local damage = math.min(ball.stats.damage, brick.health)
     brick.health = brick.health - damage
-    Player.money = Player.money + damage -- Increase money based on damage dealt
-    if brick.health > 1 then
+    Player.gain(damage * Player.bonuses.moneyIncome / 100) -- Increase player money based on damage dealt
+    if brick.health >= 1 then
         brick.hitLastFrame = true
         brick.color = brick.health > 12 and {1, 1, 1, 1} or brickColorsByHealth[brick.health]
     else
-        table.remove(bricks, index)
         brick.destroyed = true
     end
 end
 
 local function brickCollision(ball, bricks, Player)
-    for index, brick in ipairs(bricks) do
+    for _, brick in ipairs(bricks) do
         if brick.hitLastFrame then
             brick.hitLastFrame = false
         elseif not brick.destroyed then
             if ball.x + ball.radius > brick.x and ball.x - ball.radius < brick.x + brick.width and
                ball.y + ball.radius > brick.y and ball.y - ball.radius < brick.y + brick.height then
 
-                local dx = ball.x - (brick.x + brick.width / 2)
-                local dy = ball.y - (brick.y + brick.height / 2)
+                -- Calculate overlap distances
+                local overlapX = math.min(ball.x + ball.radius - brick.x, brick.x + brick.width - ball.x + ball.radius)
+                local overlapY = math.min(ball.y + ball.radius - brick.y, brick.y + brick.height - ball.y + ball.radius)
 
-                if math.abs(dx) * (30 + ball.radius) > math.abs(dy) * (75 + ball.radius) then
-                    ball.speedX = -ball.speedX
+                -- Determine collision side based on the smaller overlap
+                if overlapX < overlapY then
+                    ball.speedX = -ball.speedX -- Side collision
+                    if ball.x < brick.x + brick.width / 2 then
+                        ball.x = ball.x - overlapX -- Move the ball to the left
+                    else
+                        ball.x = ball.x + overlapX -- Move the ball to the right
+                    end
                 else
-                    ball.speedY = -ball.speedY
+                    ball.speedY = -ball.speedY -- Top/bottom collision
+                    if ball.y < brick.y + brick.height / 2 then
+                        ball.y = ball.y - overlapY -- Move the ball up
+                    else
+                        ball.y = ball.y + overlapY -- Move the ball down
+                    end
                 end
+
                 dealDamage(ball, brick) -- Call the dealDamage function to handle damage
                 return true -- Collision detected with a brick
             end
@@ -198,22 +209,24 @@ end
 local function wallCollision(ball)
     if ball.x - ball.radius < statsWidth and ball.speedX < 0 then
         ball.speedX = -ball.speedX
-    elseif ball.x + ball.radius > screenWidth and ball.speedX > 0 then
+        ball.x = statsWidth + ball.radius -- Ensure the ball is not stuck in the wall
+    elseif ball.x + ball.radius > screenWidth - statsWidth and ball.speedX > 0 then
         ball.speedX = -ball.speedX
+        ball.x = screenWidth - statsWidth - ball.radius -- Ensure the ball is not stuck in the wall
     end
     if ball.y - ball.radius < 0 then
         ball.speedY = -ball.speedY
     end
 end
 
-function Balls.update(dt, paddle, bricks, Player)
+function Balls.update(dt, paddle, bricks)
     -- Store paddle reference for Ballspawn
     paddleReference = paddle
 
     for _, ball in ipairs(Balls) do -- Corrected loop
         -- Ball movement
-        ball.x = ball.x + ball.speedX * dt
-        ball.y = ball.y + ball.speedY * dt
+        ball.x = ball.x + ball.speedX * (1 + Player.bonuses.ballSpeed/100) * dt
+        ball.y = ball.y + ball.speedY * (1 + Player.bonuses.ballSpeed/100) * dt
 
         -- Update the trail
         table.insert(ball.trail, {x = ball.x, y = ball.y})
