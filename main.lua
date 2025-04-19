@@ -3,7 +3,7 @@ Player = require("Player") -- player logic
 Balls = require("Balls") -- ball logic
 Timer = require("Libraries.timer") -- timer library
 local upgradesUI = require("upgradesUI") -- upgrade UI logic
-local suit = require("Libraries.Suit") -- UI library
+suit = require("Libraries.Suit") -- UI library
 tween = require("Libraries.tween") -- tweening library
 -- main.lua
 -- Basic Brick Breaker Game
@@ -45,6 +45,37 @@ local function generateRow(brickCount, yPos)
     return row
 end
 
+function initializeBricks()
+    -- Bricks
+    brickColorsByHealth = {
+        [1] = {HslaToRgba(60, 1, 0.5, 1)},
+        [2] = {HslaToRgba(30, 0.92, 0.46, 1)},
+        [3] = {HslaToRgba(0, 0.84, 0.42, 1)},
+        [4] = {HslaToRgba(330, 0.76, 0.38, 1)},
+        [5] = {HslaToRgba(300, 0.68, 0.34, 1)},
+        [6] = {HslaToRgba(270, 0.6, 0.3, 1)},
+        [7] = {HslaToRgba(240, 0.52, 0.26, 1)},
+        [8] = {HslaToRgba(210, 0.44, 0.22, 1)},
+        [9] = {HslaToRgba(180, 0.36, 0.18, 1)},
+        [10] = {HslaToRgba(150, 0.28, 0.14, 1)},
+        [11] = {HslaToRgba(120, 0.2, 0.1, 1)},
+        [12] = {HslaToRgba(90, 0.12, 0.06, 1)}
+    }
+    bricks = {}
+    brickSpacing = 10
+    brickWidth = 75
+    brickHeight = 30
+    rows = 100
+    cols = 10
+    brickSpeed = { value = 10 } -- Speed at which bricks move down (pixels per second)
+    currentRowPopulation = 1 -- Number of bricks in the first row
+
+    -- Generate bricks
+    for i = 0, rows - 1 do
+        generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing)) --generate 100 scaling rows of bricks
+        currentRowPopulation = currentRowPopulation + 1
+    end
+end
 -- Load Love2D modules
 function love.load()
     -- Load the MP3 file
@@ -78,35 +109,7 @@ function love.load()
     -- Initialize Balls
     Balls.initialize() -- Removed screenWidth and screenHeight arguments
 
-    -- Bricks
-    brickColorsByHealth = {
-        [1] = {HslaToRgba(60, 1, 0.5, 1)},
-        [2] = {HslaToRgba(30, 0.92, 0.46, 1)},
-        [3] = {HslaToRgba(0, 0.84, 0.42, 1)},
-        [4] = {HslaToRgba(330, 0.76, 0.38, 1)},
-        [5] = {HslaToRgba(300, 0.68, 0.34, 1)},
-        [6] = {HslaToRgba(270, 0.6, 0.3, 1)},
-        [7] = {HslaToRgba(240, 0.52, 0.26, 1)},
-        [8] = {HslaToRgba(210, 0.44, 0.22, 1)},
-        [9] = {HslaToRgba(180, 0.36, 0.18, 1)},
-        [10] = {HslaToRgba(150, 0.28, 0.14, 1)},
-        [11] = {HslaToRgba(120, 0.2, 0.1, 1)},
-        [12] = {HslaToRgba(90, 0.12, 0.06, 1)}
-    }
-    bricks = {}
-    brickSpacing = 10
-    brickWidth = 75
-    brickHeight = 30
-    rows = 100
-    cols = 10
-    brickSpeed = { value = 10 } -- Speed at which bricks move down (pixels per second)
-    currentRowPopulation = 1 -- Number of bricks in the first row
-
-    -- Generate bricks
-    for i = 0, rows - 1 do
-        generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing)) --generate 100 scaling rows of bricks
-        currentRowPopulation = currentRowPopulation + 1
-    end
+    initializeBricks()
     print("screenWidth: " .. screenWidth)
 end
 
@@ -137,13 +140,19 @@ function love.update(dt)
         end
     end
 
+    explosionsUpdate(dt) -- Update explosions
+
     for _, brick in ipairs(bricks) do
         if brick.destroyed then
             table.remove(bricks, _)
         end
     end
 
+    updateAllTweens(dt) -- Update all tweens
+
     Player.update(dt) -- Update player logic
+
+    updateAnimations(dt) -- Update animations
 end
 
 local function drawBricks()
@@ -192,8 +201,13 @@ function love.draw()
 
     upgradesUI.draw()
 
+    drawAnimations() -- Draw animations
+
     suit.draw() -- Draw the UI elements using Suit
 
+    if Player.dead then
+        GameOverDraw()
+    end
     drawFPS()
 end
 
@@ -209,7 +223,6 @@ function love.keypressed(key)
         Balls.addBall()
     end
     if key == "p" then
-        print("p pressed")
         Balls.addBall("fireBall")
     end
     if key == "m" then
@@ -229,5 +242,8 @@ function love.keypressed(key)
     end
     if key == "h" then 
         Player.hit()
+    end
+    if key == "g" then
+        Player.die()
     end
 end

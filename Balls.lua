@@ -31,17 +31,30 @@ local function ballListInit()
             name = "fireBall",
             x = screenWidth / 2,
             y = screenHeight / 2,
-            size = 2,
+            size = 1,
             rarity = "uncommon",
             startingPrice = 2,
             stats = {
                 speed = 175,
                 damage = 2,
                 cooldown = 3,
-                cool = 4,
-                fuck = 2
+                range = 5
             },
-        }
+        },
+        machineGun = {
+            name = "machineGun",
+            x = screenWidth / 2,
+            y = screenHeight / 2,
+            size = 1,
+            rarity = "uncommon",
+            startingPrice = 3,
+            stats = {
+                speed = 200,
+                damage = 1,
+                cooldown = 0.5,
+                range = 1
+            },
+        },
     }
     for _, ball in pairs(ballList) do
         ball.radius = ball.size*10 -- Set the radius based on size
@@ -50,8 +63,10 @@ end
 
 -- calls ballListInit and adds a ball to it
 function Balls.initialize()
+    ballCategories = {}
+    ballList = {}
+    unlockedBallTypes = {}
     ballListInit()
-    Balls.addBall("baseBall") -- Add the first ball to the list
 end
 
 function Balls.addBall(ballName)
@@ -157,6 +172,22 @@ local function dealDamage(ball, brick)
     end
 end
 
+local function brickCollisionEffects(ball, brick)
+    if ball.name == "fireBall" then
+        local explosionImage = love.graphics.newImage("assets/VFX/explosion.png")
+        createSpriteAnimation(ball.x, ball.y, ball.stats.range*2/3, explosionImage, 19, 19, 0.2)
+        local bricksTouchingCircle = getBricksTouchingCircle(ball.x, ball.y, (ball.stats.range*2/3) * 10)
+        if #bricksTouchingCircle > 1 then
+            print("Bricks touched by fireball explosion: " .. #bricksTouchingCircle)
+        end
+        for _, touchingBrick in ipairs(bricksTouchingCircle) do
+            dealDamage(ball, touchingBrick) -- Deal damage to the touched bricks
+            print("Dealing damage to brick at: " .. touchingBrick.x .. ", " .. touchingBrick.y)
+        end
+    else dealDamage(ball, brick) -- For other ball types, just deal damage to the brick
+    end
+end
+
 local function brickCollision(ball, bricks, Player)
     for _, brick in ipairs(bricks) do
         if brick.hitLastFrame then
@@ -185,8 +216,8 @@ local function brickCollision(ball, bricks, Player)
                         ball.y = ball.y + overlapY -- Move the ball down
                     end
                 end
-
-                dealDamage(ball, brick) -- Call the dealDamage function to handle damage
+                
+                brickCollisionEffects(ball, brick)
                 return true -- Collision detected with a brick
             end
         end
@@ -259,6 +290,7 @@ function Balls.draw()
 
     for _, ball in ipairs(Balls) do
         -- Draw the trail
+        
         for i = 1, #ball.trail - 1 do
             local p1 = ball.trail[i]
             local p2 = ball.trail[i + 1]
@@ -267,7 +299,13 @@ function Balls.draw()
         end
 
         -- Draw the ball
-        love.graphics.setColor(1, 1, 1, 1) -- Reset color to white
+        if ball.name == "baseBall" then
+            love.graphics.setColor(1, 1, 1, 1) -- Blue color for baseBall
+        elseif ball.name == "fireBall" then
+            love.graphics.setColor(1, 0, 0, 1) -- Red color for fireBall
+        else
+            love.graphics.setColor(1, 1, 1, 1) -- Default color for other balls
+        end
         love.graphics.circle("fill", ball.x, ball.y, ball.radius)
     end
 end

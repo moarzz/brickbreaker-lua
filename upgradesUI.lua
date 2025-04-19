@@ -30,6 +30,7 @@ local shortStatNames = {
     cooldown = "Cd",
     size = "Size",
     ammount = "Amnt",
+    range = "Rng",
 }
 
 local buttonWidth, buttonHeight = 35, 25 -- Dimensions for each button
@@ -178,7 +179,7 @@ local function drawBallStats()
         -- Draw upgrade buttons for each stat
         local intIndex = 2 -- keeps track of the current cell int id being checked
         -- Define the order of keys
-        local statOrder = { "ammount", "damage", "speed", "cooldown", "size" }
+        local statOrder = { "ammount", "damage", "speed", "cooldown", "range" }
 
         -- Create the typeStats table
         local typeStats = { ammount = ballType.ammount } -- Start with ammount

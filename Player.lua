@@ -7,6 +7,7 @@ Player = {
     lives = 3,
     levelingUp = false,
     price = 1,
+    dead = false,
     bonuses = { -- These bonuses are percentages
         critChance = 0,
         moneyIncome = 0,
@@ -16,7 +17,24 @@ Player = {
     }
 }
 
+function Player.reset()
+    Player.money = 0
+    Player.lives = 3
+    Player.levelingUp = false
+    Player.price = 1
+    Player.dead = false
+    Player.bonuses = { -- These bonuses are percentages
+        critChance = 0,
+        moneyIncome = 0,
+        ballSpeed = 0,
+        paddleSpeed = 0,
+        paddleSize = 0
+    }
+end
+
 function Player.die()
+    toggleFreeze()
+    Player.dead = true
 end
 
 local brickSpeedAfterHit = 500
@@ -28,6 +46,7 @@ function Player.hit()
     end
     brickSpeed.value = -brickSpeedAfterHit
     brickSpeedTween = tween.new(2, brickSpeed, { value = 10 }, tween.outQuad)
+    addTweenToUpdate(brickSpeedTween)
     print("Player hit! Lives left: " .. Player.lives)
 end
 
@@ -40,14 +59,6 @@ local function checkForHit()
 end
 
 function Player.update(dt)
-    if brickSpeedTween then
-        brickSpeedTween:update(dt)
-        if brickSpeedTween.clock >= brickSpeedTween.duration then
-            brickSpeedTween = nil
-            brickSpeed.value = 10
-        end
-    end
-
     checkForHit()
 end
 function Player.pay(amount)

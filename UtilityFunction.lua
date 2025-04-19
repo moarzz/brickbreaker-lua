@@ -8,6 +8,61 @@ function toggleFreeze()
     print("game is now " .. (UtilityFunction.freeze and "frozen" or "unfrozen"))
 end
 
+function restartGame()
+    -- Reset Player
+    Player.money = 0
+    Player.lives = 3
+    Player.dead = false
+    Player.bonuses = {
+        critChance = 0,
+        moneyIncome = 0,
+        ballSpeed = 0,
+        paddleSpeed = 0,
+        paddleSize = 0
+    }
+
+    Player.reset()
+
+    -- Reset Balls
+    for i=1, #Balls, 1 do
+        table.remove(Balls, _)
+    end
+    Balls.initialize() -- Assuming you have an `initialize` function for Balls
+
+    -- Reset other game states (e.g., bricks, score)
+    initializeBricks()
+
+    -- Unfreeze the game
+    UtilityFunction.freeze = false
+end
+
+function GameOverDraw()
+    -- Draw a gray overlay on the screen
+    love.graphics.setColor(0.5, 0.5, 0.5, 0.7) -- Gray color with 70% opacity
+    love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+
+    -- Display "Game Over" text
+    love.graphics.setColor(1, 1, 1, 1) -- White color for the text
+    local font = love.graphics.newFont(48) -- Set a large font size
+    love.graphics.setFont(font)
+    local text = "Game Over"
+    local textWidth = font:getWidth(text)
+    local textHeight = font:getHeight()
+    love.graphics.print(text, (love.graphics.getWidth() - textWidth) / 2, (love.graphics.getHeight() - textHeight) / 2)
+
+    -- Draw the restart button
+    local buttonWidth, buttonHeight = 150, 50
+    local buttonX = (love.graphics.getWidth() - buttonWidth) / 2
+    local buttonY = (love.graphics.getHeight() + textHeight) / 2 + 20
+
+    if suit.Button("Restart", {align = "center"}, buttonX, buttonY, buttonWidth, buttonHeight).hit then
+        restartGame() -- Call the restart function when the button is clicked
+    end
+
+    -- Reset the color to white
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
 -- Convert HSLA to RGBA
 function HslaToRgba(h, s, l, a)
     if s == 0 then
@@ -176,6 +231,36 @@ function formatNumber(value)
     end
 end
 
+local Tweens = {} -- Table to store tweens
+function addTweenToUpdate(tween)
+    table.insert(Tweens, tween) -- Add the tween to the list
+end
+function updateAllTweens(dt)
+    for _, tween in ipairs(Tweens) do
+        if tween.update then
+            tween:update(dt) -- Update each tween
+            if tween.clock >= tween.duration then
+                tween = nil
+            end
+        end
+    end
+end
+
+explosions = {} -- Table to store explosions
+
+function addExplosion(x, y, radius, duration, speed, color)
+    local explosion = {
+        x = x,
+        y = y,
+        radius = radius,
+        duration = duration,
+        speed = speed,
+        color = color or {1, 1, 0, 1}, -- Default to yellow if no color is provided
+        clock = 0 -- Initialize the clock for the explosion
+    }
+    table.insert(explosions, explosion) -- Add the explosion to the list
+end
+
 -- function to calculate circle hitboxes
 function getBricksTouchingCircle(circleX, circleY, radius)
     local bricksTouchingCircle = {}
@@ -197,8 +282,81 @@ function getBricksTouchingCircle(circleX, circleY, radius)
             end
         end
     end
-    print("Bricks touching circle: " .. #bricksTouchingCircle)
     return bricksTouchingCircle
+end
+
+function drawExplosions()
+    for _, explosion in ipairs(explosions) do
+        love.graphics.setColor(explosion.color) -- Set the explosion color
+        love.graphics.circle("fill", explosion.x, explosion.y, explosion.radius) -- Draw the explosion
+    end
+end
+
+function explosionsUpdate(dt)
+    for _, explosion in ipairs(explosions) do
+        explosion.radius = explosion.radius + explosion.speed * dt -- Update the explosion radius
+        if explosion.clock >= explosion.duration then
+            table.remove(explosions, _) -- Remove the explosion if its duration is over
+        end
+    end
+end
+
+local animations = {}
+function createSpriteAnimation(x, y, scale, spritesheet, frameWidth, frameHeight, frameTime)
+    local animation = {}
+    animation.x = x
+    animation.y = y
+    animation.scale = scale
+    animation.spritesheet = spritesheet
+    animation.frameWidth = frameWidth
+    animation.frameHeight = frameHeight
+    animation.frameTime = frameTime
+    animation.elapsedTime = 0
+    animation.currentFrame = 1
+    animation.quads = {}
+
+    -- Calculate the number of frames in the spritesheet
+    local sheetWidth = spritesheet:getWidth()
+    local sheetHeight = spritesheet:getHeight()
+
+    for y = 0, sheetHeight - frameHeight, frameHeight do
+        for x = 0, sheetWidth - frameWidth, frameWidth do
+            table.insert(animation.quads, love.graphics.newQuad(x, y, frameWidth, frameHeight, sheetWidth, sheetHeight))
+        end
+    end
+    table.insert(animations, animation) -- Store the animation in the animations table
+end
+
+-- Update function for the animation
+function updateAnimations(dt)
+    for _, animation in ipairs(animations) do
+        animation.elapsedTime = animation.elapsedTime + dt
+        if animation.elapsedTime >= animation.frameTime then
+            animation.elapsedTime = animation.elapsedTime - animation.frameTime
+            animation.currentFrame = animation.currentFrame + 1
+            if animation.currentFrame > #animation.quads then
+                table.remove(animations, _) -- Remove the animation if it has finished
+                animation = nil
+            end
+        end
+    end
+    
+end
+
+function drawAnimations()
+    for _, animation in ipairs(animations) do
+        love.graphics.draw(
+            animation.spritesheet,
+            animation.quads[animation.currentFrame],
+            animation.x,
+            animation.y,
+            0, -- Rotation (default to 0)
+            animation.scale, -- Scale X
+            animation.scale, -- Scale Y
+            animation.frameWidth / 2, -- Origin X (half the frame width)
+            animation.frameHeight / 2 -- Origin Y (half the frame height)
+        )
+    end
 end
 
 return UtilityFunction
