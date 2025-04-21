@@ -7,15 +7,37 @@ Player = {
     lives = 3,
     levelingUp = false,
     price = 1,
+    newUpgradePrice = 10,
     dead = false,
     bonuses = { -- These bonuses are percentages
-        critChance = 0,
-        moneyIncome = 0,
-        ballSpeed = 0,
-        paddleSpeed = 0,
-        paddleSize = 0
     }
 }
+
+Player.bonusOrder = {}
+Player.bonusesList = {
+    critChance = {name = "critChance", description = "Critical chance"},
+    moneyIncome = {name = "moneyIncome", description = "Money income"},
+    ballSpeed = {name = "ballSpeed", description = "Ball speed"},
+    paddleSpeed = {name = "paddleSpeed", description = "Paddle speed"},
+    paddleSize = {name = "paddleSize", description = "Paddle size"},
+    upgradeOptions = {name = "upgradeOptions", description = "Upgrade option"}
+}
+
+Player.bonusUpgrades = {
+    critChance = function() Player.bonuses.critChance = Player.bonuses.critChance + 5 end,
+    moneyIncome = function() Player.bonuses.moneyIncome = Player.bonuses.moneyIncome + 5 end,
+    ballSpeed = function() Player.bonuses.ballSpeed = Player.bonuses.ballSpeed + 5 end,
+    paddleSpeed = function() Player.bonuses.paddleSpeed = Player.bonuses.paddleSpeed + 50
+        paddle.speed = paddle.speed + 200 end,
+    paddleSize = function() Player.bonuses.paddleSize = Player.bonuses.paddleSize + 25 
+        paddle.width = paddle.width+32.5 end
+}
+
+function Player.addBonus(name)
+    Player.bonuses[name] = 0
+    table.insert(Player.bonusOrder, name)
+    print("added bonus, #Player.bonuses : " .. tableLength(Player.bonuses))
+end
 
 function Player.reset()
     Player.money = 0
@@ -72,15 +94,5 @@ end
 function Player.gain(amount)
     Player.money = Player.money + amount
 end
-
-Player.bonusUpgrades = {
-    critChance = function() Player.bonuses.critChance = Player.bonuses.critChance + 5 end,
-    moneyIncome = function() Player.bonuses.moneyIncome = Player.moneyIncome + 5 end,
-    ballSpeed = function() Player.bonuses.ballSpeed = Player.bonuses.ballSpeed + 5 end,
-    paddleSpeed = function() Player.bonuses.paddleSpeed = Player.bonuses.paddleSpeed + 50
-        paddle.speed = paddle.speed + 200 end,
-    paddleSize = function() Player.bonuses.paddleSize = Player.bonuses.paddleSize + 25 
-        paddle.width = paddle.width+32.5 end
-}
 
 return Player

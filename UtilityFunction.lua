@@ -136,6 +136,22 @@ function setFont(...)
     love.graphics.setFont(font) -- Set the font in Love2D
 end -- Missing 'end' added here
 
+function tableLength(tbl)
+    local count = 0
+    for _ in pairs(tbl) do
+        count = count + 1
+    end
+    return count
+end
+
+function getRandomValueFromTable(tbl)
+    local values = {}
+    for _, value in pairs(tbl) do
+        table.insert(values, value)
+    end
+    return values[math.random(#values)]
+end
+
 function drawCenteredText(text, x, y, font, textColor)
     love.graphics.setFont(font) -- Set the font
     love.graphics.setColor(textColor) -- Set the text color

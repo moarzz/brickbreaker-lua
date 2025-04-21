@@ -78,6 +78,7 @@ function initializeBricks()
 end
 -- Load Love2D modules
 function love.load()
+    dress = suit.new()
     -- Load the MP3 file
     backgroundMusic = love.audio.newSource("assets/sounds/game song.mp3", "static")
     backgroundMusic:setLooping(true)
@@ -103,6 +104,7 @@ function love.load()
         widthMult = 1,
         height = 20,
         speed = 400,
+        currrentSpeedX = 0,
         speedMult = 1
     }
 
@@ -121,8 +123,11 @@ function love.update(dt)
         -- Paddle movement
         if love.keyboard.isDown("left") or love.keyboard.isDown("a") then
             paddle.x = paddle.x - paddle.speed * paddle.speedMult * dt
+            paddle.currrentSpeedX = -400
         elseif love.keyboard.isDown("right") or love.keyboard.isDown("d") then
             paddle.x = paddle.x + paddle.speed * paddle.speedMult * dt
+            paddle.currrentSpeedX = 400
+        else paddle.currrentSpeedX = 0
         end
 
         -- Keep paddle within screen bounds
@@ -141,12 +146,6 @@ function love.update(dt)
     end
 
     explosionsUpdate(dt) -- Update explosions
-
-    for _, brick in ipairs(bricks) do
-        if brick.destroyed then
-            table.remove(bricks, _)
-        end
-    end
 
     updateAllTweens(dt) -- Update all tweens
 
@@ -199,11 +198,13 @@ function love.draw()
 
     Balls.draw(Balls) -- Draw balls
 
-    upgradesUI.draw()
-
     drawAnimations() -- Draw animations
 
+    upgradesUI.draw()
+
     suit.draw() -- Draw the UI elements using Suit
+
+    dress:draw()
 
     if Player.dead then
         GameOverDraw()
@@ -222,8 +223,8 @@ function love.keypressed(key)
     if key == "b" then
         Balls.addBall()
     end
-    if key == "p" then
-        Balls.addBall("fireBall")
+    if key == "n" then
+        Balls.addBall("machineGun")
     end
     if key == "m" then
         Player.money = Player.money + 10000000000000000 -- Add 1000 money for testing
@@ -240,10 +241,7 @@ function love.keypressed(key)
     if key == "j" then 
         playRate = playRate / 2
     end
-    if key == "h" then 
-        Player.hit()
-    end
     if key == "g" then
-        Player.die()
+        Balls.addBall("phantomBall")
     end
 end

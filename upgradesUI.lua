@@ -6,22 +6,7 @@ local upgradeOptions = {
         name = "+Paddle speed", 
         description = "Increase Paddle speed by 25%", 
         effect = function() paddle.speed = paddle.speed * 1.25 end
-    },
-    {
-        name = "+Paddle size", 
-        description = "Increase Paddle size by 25%", 
-        effect = function() paddle.width = paddle.width * 1.25 end
-    },
-    {
-        name = "+Ball", 
-        description = "Gain an additional ball", 
-        effect = function() Balls.addBall() end
-    },
-    {
-        name = "+Life",
-        description = "Gain an additional life",
-        effect = function() Player.lives = Player.lives + 1 end
-    },
+    }
 }
 
 local shortStatNames = {
@@ -30,7 +15,6 @@ local shortStatNames = {
     cooldown = "Cd",
     size = "Size",
     ammount = "Amnt",
-    range = "Rng",
 }
 
 local buttonWidth, buttonHeight = 35, 25 -- Dimensions for each button
@@ -74,6 +58,71 @@ local function drawPlayerStats()
     love.graphics.setColor(1, 1, 1, 1) -- Reset color to white
 end
 
+local displayedUpgrades = {} -- This should be an array, not a table with string keys
+local function setLevelUpShop(isForBall)
+    displayedUpgrades = {} -- Clear the displayed upgrades
+    if isForBall then
+        -- Ball unlocks
+        local unlockedBallNames = {}
+        for _, ball in ipairs(Balls.getUnlockedBallTypes()) do
+            unlockedBallNames[ball.name] = true
+        end
+        
+        local availableBalls = {}
+        for name, ballType in pairs(Balls.getBallList()) do
+            if not unlockedBallNames[name] then
+                table.insert(availableBalls, ballType)
+            end
+        end
+        
+        -- Choose random unowned balls to display
+        for i = 1, math.min(3, #availableBalls) do
+            if #availableBalls > 0 then
+                local index = math.random(1, #availableBalls)
+                local currentBallType = availableBalls[index]
+                
+                table.insert(displayedUpgrades, {
+                    name = currentBallType.name,
+                    description = currentBallType.description,
+                    effect = function()
+                        Balls.addBall(currentBallType.name) -- Add the new ball type to the game
+                    end
+                })
+                
+                -- Remove this ball from available options
+                table.remove(availableBalls, index)
+            end
+        end
+    else
+        -- Player upgrades
+        local availableBonuses = {}
+        for name, bonus in pairs(Player.bonusesList) do
+            if not Player.bonuses[name] then
+                table.insert(availableBonuses, bonus)
+            end
+        end
+        
+        -- Choose random unowned upgrades
+        for i = 1, math.min(3, #availableBonuses) do
+            if #availableBonuses > 0 then
+                local index = math.random(1, #availableBonuses)
+                local currentBonus = availableBonuses[index]
+                
+                table.insert(displayedUpgrades, {
+                    name = currentBonus.name,
+                    description = currentBonus.description,
+                    effect = function()
+                        Player.addBonus(currentBonus.name) -- Add the new bonus to the player
+                    end
+                })
+                
+                -- Remove this bonus from available options
+                table.remove(availableBonuses, index)
+            end
+        end
+    end
+end
+
 local function drawPlayerUpgrades()
     local padding = 10 -- Padding between elements
     local cellWidth, cellHeight = 150, 50 -- Dimensions for each cell
@@ -81,40 +130,44 @@ local function drawPlayerUpgrades()
 
     --drawTitle
     setFont(28) -- Set font for the title
-    suit.Label("Player Upgrades", {align = "center", valign = "center"}, suit.layout:row(statsWidth, 60)) -- Title row
+    suit.Label("Player Upgrades", {align = "center", valign = "center"}, suit.layout:row(statsWidth - 20, 60)) -- Title row
     
     -- Define the order of keys for Player.bonuses
-    local bonusOrder = { "critChance", "moneyIncome", "ballSpeed", "paddleSpeed", "paddleSize" }
-    local rowCount = math.ceil(#bonusOrder/3)
+    local rowCount = math.ceil((#Player.bonusOrder)/3)
 
     local intIndex = 1
 
-    for i=1, rowCount, 1 do -- for each row
+    local currentRow = 0
+
+    for i=1, math.max(rowCount,1), 1 do -- for each row
         local x, y = suit.layout:nextRow()
 
         local bonusLayout = {
-            min_width = 450, -- Minimum width for the layout
+            min_width = statsWidth - 20, -- Minimum width for the layout
             pos = {x, y}, -- Starting position (x, y)
             padding = {padding, padding}, -- Padding between cells
         }
 
-        local colsOnThisRow = math.min(3, #bonusOrder-intIndex+1)
+        local colsOnThisRow = math.min(3, #Player.bonusOrder-intIndex+2)
+
         for i=1, colsOnThisRow, 1 do
             table.insert(bonusLayout, {"fill", 30})
         end
         local definition = suit.layout:cols(bonusLayout) -- Create a column layout for the bonuses
 
-        for i=1, colsOnThisRow, 1 do
-            local bonusName = bonusOrder[intIndex] -- Get the bonus name
+        currentRow = 0
+        for i=1, math.min(colsOnThisRow, #Player.bonusOrder-intIndex+1), 1 do
+            currentRow = currentRow + 1
+            local bonusName = Player.bonusOrder[intIndex] -- Get the bonus name
             local x,y,w,h = definition.cell(i)
             suit.layout:reset(x, y, padding, padding) -- Reset layout with padding
 
             setFont(18) -- Set font for the stats
-            suit.Label(bonusOrder[intIndex], {align = "center"}, suit.layout:row(w, h)) -- Display the stat name
+            suit.Label(Player.bonusOrder[intIndex], {align = "center"}, suit.layout:row(w, h)) -- Display the stat name
             setFont(16) -- Set font for the stats
             suit.layout:padding(0, 0) -- Reset padding
             suit.Label(tostring(Player.bonuses[bonusName] or 0) .. "%", {align = "center"}, suit.layout:row(w, h)) -- Display the stat value
-            local buttonID = generateNextButtonID() -- Generate a unique ID for the button
+            local buttonID = generateNextButtonID()
             suit.layout:padding(0, 0) -- Reset padding
             suit.layout:row((w-30)/2, w) -- makes sure the button is centered even though it is smaller
             if suit.Button("+", {id = buttonID, align = "center"}, suit.layout:col(buttonWidth, buttonHeight)).hit then -- Display the button for upgrading the stat
@@ -131,15 +184,36 @@ local function drawPlayerUpgrades()
             end
             intIndex = intIndex + 1
         end
+        if currentRow < 3 then
+            local buttonID = generateNextButtonID()
+            local x,y,w,h = definition.cell(currentRow+1)
+            suit.layout:reset(x, y, padding, padding)
+            setFont(22)
+            if suit.Button("add stat", {id = buttonID, align = "center"}, suit.layout:row(w, h*2)).hit and Player.money >= Player.newUpgradePrice then
+                Player.newUpgradePrice = Player.newUpgradePrice * 10
+                setLevelUpShop(false) -- Set the level up shop with ball unlockedBallTypes
+                Player.levelingUp = true -- Set the flag to indicate leveling up
+            end
+        elseif i == math.max(rowCount,1) then
+            local x, y = suit.layout:nextRow()
+            suit.layout:reset(10, y + 10, padding, padding)
+            setFont(22)
+            if suit.Button("add stat", {id = buttonID, align = "center"}, suit.layout:row(statsWidth - 20, 60)).hit and Player.money >= Player.newUpgradePrice then
+                Player.newUpgradePrice = Player.newUpgradePrice * 10
+                setLevelUpShop(false) -- Set the level up shop with ball unlockedBallTypes
+                Player.levelingUp = true -- Set the flag to indicate leveling up
+            end
+        end
 
-        local x,y = suit.layout:nextRow() -- Move to the next row
+        local x,y = suit.layout:nextRow()
+        suit.layout:reset(x, y + 10, padding, padding)
         suit.layout:reset(0, y, 0, 0)
         suit.layout:row(statsWidth, 15) -- Add spacing for the separator
     end
     
     local x,y = suit.layout:nextRow()
     love.graphics.setColor(0.8, 0.8, 0.8, 1) -- Light gray
-    love.graphics.rectangle("fill", 0, y, statsWidth, 2) -- Horizontal line
+    love.graphics.rectangle("fill", 0, y + 10, statsWidth, 2) -- Horizontal line
     love.graphics.setColor(1, 1, 1, 1) -- Reset color to white
 end
 
@@ -154,9 +228,12 @@ local function drawBallStats()
     setFont(28) -- Set font for the title
     suit.Label("Ball Types", {align = "center"}, suit.layout:row(statsWidth, 60))
     local x,y = suit.layout:nextRow()
+    x = 20
 
     -- Iterate through all balls and display their stats
-    for _, ballType in ipairs(Balls.getUnlockedBallTypes()) do
+    local i = 0
+    for ballName, ballType in pairs(Balls.getUnlockedBallTypes()) do
+        i = i + 1
         suit.layout:reset(x, y, 10, 10)
         if #Balls.getUnlockedBallTypes() > 1 then
         end
@@ -179,7 +256,7 @@ local function drawBallStats()
         -- Draw upgrade buttons for each stat
         local intIndex = 2 -- keeps track of the current cell int id being checked
         -- Define the order of keys
-        local statOrder = { "ammount", "damage", "speed", "cooldown", "range" }
+        local statOrder = { "ammount", "damage", "speed", "cooldown", "size" }
 
         -- Create the typeStats table
         local typeStats = { ammount = ballType.ammount } -- Start with ammount
@@ -234,48 +311,58 @@ local function drawBallStats()
                 end
             end
         end
+        suit.layout:row(statsWidth, 20) -- Add spacing for the separator
         x, y = suit.layout:nextRow()
+        --if it isnt the last ballType, add a seperator
+        if i< tableLength(Balls.getUnlockedBallTypes()) then
+            love.graphics.setColor(0.6, 0.6, 0.6, 1) -- Light gray
+            love.graphics.rectangle("fill", 40, y, statsWidth-80, 2) -- Horizontal line
+            love.graphics.setColor(1, 1, 1, 1) -- Reset color to white
+        end
         y = y + 20 -- Add padding to the y position for the next row
         x = 20
     end
+    if not (tableLength(Balls.getUnlockedBallTypes()) >= 5) then
+        suit.layout:reset(x, y, 10, 10)
+        -- Button to unlock a new ball type
+        setFont(16)
+        if suit.Button("Unlock new ball", {align = "center"}, suit.layout:row(statsWidth-40, 40)).hit and Player.money >= Balls.getNextBallPrice() then
+            Balls.NextBallPriceIncrease()
+            setLevelUpShop(true) -- Set the level up shop with ball unlockedBallTypes
+            Player.levelingUp = true -- Set the flag to indicate leveling up
+        end
+        suit.Label(formatNumber(Balls.getNextBallPrice()) .. " $", {color = "money", align = "center"}, suit.layout:row(statsWidth-40, 40)) -- Display the cost of the upgrade
+    end
 end
 
-local displayedUpgrades = {}
-function upgradesUI.chooseUpgrades()
-    for k in pairs(displayedUpgrades) do
-        displayedUpgrades[k] = nil
-    end
-    for i = 1, 3 do
-        local UpgradeID = math.random(1, #upgradeOptions)
-        table.insert(displayedUpgrades, upgradeOptions[UpgradeID])
-    end
-end
 
-local titleFont = love.graphics.newFont(24) -- Create a font with size 24
-local descriptionFont = love.graphics.newFont(12) -- Create a font with size 12
 local function drawLevelUpShop()
-    love.graphics.setColor(0, 0, 0, 1) -- Black color for the background
-    love.graphics.rectangle("fill", 150, 100, love.graphics.getWidth()- 300 , love.graphics.getHeight() - 200)
-    love.graphics.setColor(1, 1, 1) -- White color for the text
-    love.graphics.print("Level Up! Choose an upgrade:", 50, 50)
-    -- Add buttons or options for upgrades here
-    for i = 1, 3 do 
-        local UpgradeID = math.random(1, #upgradeOptions)
-        local buttonX = 175 + (i-1) * ((love.graphics.getWidth()- 300)/3)
-        local buttonWidth = (love.graphics.getWidth()- 300)/3 - 60
-        local buttonHeight = love.graphics.getHeight() - 250
-        local mouseX, mouseY = love.mouse.getPosition()
-        -- checks if button is hoverd and change color based on if it is
-        local isHovered = mouseX >= buttonX and mouseX <= buttonX + buttonWidth and mouseY >= 125 and mouseY <= 125 + buttonHeight
-        local color = isHovered and {0.7, 0.7, 0.7, 1} or {0.5, 0.5, 0.5, 1} -- Change color based on hover state
-        love.graphics.setColor(color)
-        love.graphics.rectangle("fill", 175 + (i-1) * ((love.graphics.getWidth()- 300)/3), 125, (love.graphics.getWidth()- 300)/3 -60, love.graphics.getHeight() - 250) -- Example button
-        local name = displayedUpgrades[i].name -- Apply the effect of the upgrade
-        love.graphics.setColor(1, 1, 1) -- White color for the text
-        love.graphics.setFont(titleFont) -- Set the custom font
-        love.graphics.printf(displayedUpgrades[i].name, 175 + (i-1) * ((love.graphics.getWidth()- 300)/3), 150, (love.graphics.getWidth()- 300)/3 -60, "center")
-        love.graphics.setFont(descriptionFont) -- Set the font to the description font
-        love.graphics.printf(displayedUpgrades[i].description, 175 + (i-1) * ((love.graphics.getWidth()- 300)/3), 200, (love.graphics.getWidth()- 300)/3 -60, "center")
+    -- Initialize layout for the buttons
+    local buttonWidth = (love.graphics.getWidth() - 300) / 3 - 60
+    local buttonHeight = love.graphics.getHeight() - 250
+    local buttonY = 125
+
+    for index, currentUpgrade in ipairs(displayedUpgrades) do
+        -- Calculate button position
+        local buttonX = 175 + (index - 1) * ((love.graphics.getWidth() - 300) / 3)
+
+        -- Use suit to create a button
+        suit.layout:reset(buttonX, buttonY, 10, 10) -- Reset layout for each button
+        setFont(35)
+        dress:Label(currentUpgrade.name, {align = "center"}, suit.layout:row(buttonWidth, 100)) -- Display the button label
+        setFont(24)
+        dress:Label(currentUpgrade.description, {align = "center"}, suit.layout:row(buttonWidth, buttonHeight - 100)) -- Display the button description
+
+        -- Use the upgrade's index as the button ID to ensure uniqueness
+        local buttonID = "upgrade_" .. index
+        suit.layout:reset(buttonX, buttonY, 10, 10) -- Reset layout for each button
+        if suit.Button("", {id = buttonID, align = "center"}, suit.layout:col(buttonWidth, buttonHeight)).hit then
+            -- Button clicked: apply the effect and close the shop
+            print("Clicked on upgrade: " .. currentUpgrade.name)
+            currentUpgrade.effect() -- Apply the effect of the upgrade
+            Player.levelingUp = false -- Close the level up shop
+            break
+        end
     end
 end
 
@@ -283,35 +370,15 @@ function upgradesUI.draw()
     drawPlayerStats() -- Draw the player stats table
     drawPlayerUpgrades() -- Draw the player upgrades table
     drawBallStats() -- Draw the ball stats table
-    if Player.levelingUp then
-        drawLevelUpShop()
-    end
 
+    --draw stats area background
     love.graphics.setColor(0.8, 0.8, 0.8, 1) -- Light gray
     love.graphics.rectangle("fill", statsWidth, 0, 2, screenHeight) -- separator line
     love.graphics.rectangle("fill", screenWidth - statsWidth, 0, 2, screenHeight)
     love.graphics.setColor(1, 1, 1, 1) -- Reset color to white
-end
 
-local function detectUpgradeClick(x, y)
-    local buttonWidth = (love.graphics.getWidth() - 300) / 3 - 60
-    local buttonHeight = love.graphics.getHeight() - 250
-    local buttonY = 125
-
-    for i = 1, 3 do
-        local buttonX = 175 + (i - 1) * ((love.graphics.getWidth() - 300) / 3)
-        if x >= buttonX and x <= buttonX + buttonWidth and y >= buttonY and y <= buttonY + buttonHeight then
-            displayedUpgrades[i].effect() -- Apply the effect of the upgrade
-            table.remove(displayedUpgrades, i) -- Remove the selected upgrade from the list
-            Player.levelingUp = false -- Close the level up shop
-            break
-        end
-    end
-end
---Checks if the mouse is over an upgrade button when clicked
-function love.mousepressed(x, y, button, istouch, presses)
-    if button == 1 and Player.levelingUp then -- Left mouse button
-        detectUpgradeClick(x, y)
+    if Player.levelingUp then
+        drawLevelUpShop()
     end
 end
 
