@@ -30,6 +30,7 @@ local function generateRow(brickCount, yPos)
                 brickColor = brickColorsByHealth[brickHealth]
             end
             table.insert(bricks, {
+                id = #bricks + 1,
                 x = statsWidth + (xPos - 1) * (brickWidth + brickSpacing) + 5,
                 y = yPos,
                 width = brickWidth,
@@ -223,11 +224,11 @@ function love.keypressed(key)
     if key == "b" then
         Balls.addBall()
     end
-    if key == "n" then
-        Balls.addBall("machineGun")
-    end
     if key == "m" then
         Player.money = Player.money + 10000000000000000 -- Add 1000 money for testing
+    end
+    if key == "n" then
+        Player.money = 0
     end
     if key == "t" then
         getBricksTouchingCircle(50, 50, 50)

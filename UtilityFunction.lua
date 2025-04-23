@@ -136,6 +136,17 @@ function setFont(...)
     love.graphics.setFont(font) -- Set the font in Love2D
 end -- Missing 'end' added here
 
+function areBallsInRange(ball1, ball2, range)
+    -- Calculate the distance between the centers of the two balls
+    local dx = ball1.x - ball2.x
+    local dy = ball1.y - ball2.y
+    local distance = math.sqrt(dx * dx + dy * dy)
+    
+    -- Check if the distance is less than or equal to the range
+    -- We subtract the radii of both balls to make the calculation more accurate
+    return distance <= range + ball1.radius + ball2.radius
+end
+
 function tableLength(tbl)
     local count = 0
     for _ in pairs(tbl) do

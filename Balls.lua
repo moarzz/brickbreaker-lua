@@ -61,6 +61,7 @@ local function ballListInit()
             startingPrice = 1,
             rarity = "common",
             description = "The most basic ball, it has no special abilities.",
+            color = {1, 1, 1, 1}, -- White color
             stats = {
                 speed = 250,
                 damage = 1,
@@ -76,6 +77,7 @@ local function ballListInit()
             rarity = "uncommon",
             startingPrice = 2,
             description = "A ball that explodes on impact, dealing damage to nearby bricks.",
+            color = {1, 0, 0, 1}, -- Red color
             stats = {
                 speed = 175,
                 damage = 2,
@@ -91,9 +93,8 @@ local function ballListInit()
             size = 1,
             rarity = "uncommon",
             startingPrice = 3,
-            description = "Makes your paddle fire bullets that die on impact in bursts",
+            description = "fire bullets that die on impact in bursts",
             onBuy = function() 
-                --unlockedBallTypes["machineGun"].currentAmmo = 10 
                 machineGunShoot() 
             end,
             currentAmmo = 5,
@@ -101,7 +102,7 @@ local function ballListInit()
             stats = {
                 damage = 1,
                 cooldown = 5,
-                range = 1,
+                pierce = 1,
                 ammo = 5,
             },
         },
@@ -114,19 +115,46 @@ local function ballListInit()
             rarity = "rare",
             startingPrice = 5,
             description = "A ball that can pass through bricks.",
+            color = {0.5, 0.5, 0.7, 0.6}, -- Blue color
             stats = {
                 speed = 50,
                 damage = 1,
                 cooldown = 3,
                 range = 1
             },
-            statsScaling = {
-                speed = 0.5,
-                damage = 0.5,
-                cooldown = 0.5,
-                range = 0.5
+        },
+        goldBall = {
+            name = "goldBall",
+            type = "ball",
+            x = screenWidth / 2,
+            y = screenHeight / 2,
+            size = 1,
+            rarity = "uncommon",
+            startingPrice = 10,
+            description = "Hits brick : gives money equal to 2 times this ball's damage stat. Deals no damage",
+            color = {1, 0.84, 0, 1},
+            stats = {
+                speed = 100,
+                damage = 1,
+                cooldown = 3,
             },
         },
+        ["Damage boost ball"] = {
+            name = "Damage boost ball",
+            type = "ball",
+            x = screenWidth / 2,
+            y = screenHeight / 2,
+            size = 1,
+            rarity = "uncommon",
+            startingPrice = 10,
+            description = "Boost nearby ball damage by this ball's damage stat",
+            stats = {
+                speed = 0,
+                damage = 1,
+                cooldown = 3,
+                range = 10
+            },
+        }
     }
     for _, ball in pairs(ballList) do
         ball.radius = ball.size*10 -- Set the radius based on size
@@ -189,7 +217,7 @@ function Balls.addBall(ballName)
                 x = ballTemplate.x,
                 y = ballTemplate.y,
                 radius = ballTemplate.radius,
-                currentlyOverlapping = {},
+                currentlyOverlappingBricks = {},
                 stats = stats,
                 speedX = math.random(ballTemplate.stats.speed*0.6, ballTemplate.stats.speed*0.6), -- Randomize speedX
                 speedY = 0, -- Will be calculated below
@@ -241,19 +269,35 @@ local function ballDie(ball)
 end
 
 local function dealDamage(ball, brick)
-    local damage = math.min(ball.stats.damage, brick.health)
-    brick.health = brick.health - damage
+    local damage = ball.stats.damage
+    if unlockedBallTypes["Damage boost ball"] then
+        for _, ballB in ipairs(Balls) do
+            if ballB.name == "Damage boost ball" and ballB ~= ball then
+                if areBallsInRange(ball, ballB, ballB.stats.range) then
+                    damage = damage + ballB.stats.damage
+                end
+            end
+        end
+    end
+    if ball.name == "goldBall" then
+        damage = damage * 2 -- Double the damage for goldBal    l
+    else
+        local damage = math.min(damage, brick.health)
+        --deals damage to brick
+        brick.health = brick.health - damage
+
+        if brick.health >= 1 then
+            brick.hitLastFrame = true
+            brick.color = brick.health > 12 and {1, 1, 1, 1} or brickColorsByHealth[brick.health]
+        else
+            brick.destroyed = true
+            brick = nil
+        end
+    end
     if Player.bonuses.moneyIncome then
         Player.gain(damage * Player.bonuses.moneyIncome / 100) -- Increase player money based on damage dealt
     else
         Player.gain(damage) -- Increase player money based on damage dealt
-    end
-    if brick.health >= 1 then
-        brick.hitLastFrame = true
-        brick.color = brick.health > 12 and {1, 1, 1, 1} or brickColorsByHealth[brick.health]
-    else
-        brick.destroyed = true
-        brick = nil
     end
 end
 
@@ -277,31 +321,35 @@ local function brickCollision(ball, bricks, Player)
     local hitAnyBrick = false
     
     -- Special handling for phantom ball - needs to check ALL bricks
-    if ball.name == "phantomBall" then
+    if ball.name == "phantomBall" or ball.name == "Damage boost ball" then
         -- First, create a table to track bricks we're currently overlapping with
-        local currentlyOverlapping = {}
+        local currentlyOverlappingBricks = {}
 
         for index, brick in ipairs(bricks) do
             if not brick.destroyed then
-                local wasOverlaping = ball.currentlyOverlapping[index] or false
+                local wasOverlaping = ball.currentlyOverlappingBricks[index] or false
                 if wasOverlaping == true then
-                    if not (ball.x + ball.radius > brick.x and ball.x - ball.radius < brick.x + brick.width and
-                    ball.y + ball.radius > brick.y and ball.y - ball.radius < brick.y + brick.height) then
-                        ball.currentlyOverlapping[index] = nil -- Remove from currently overlapping if not overlapping anymore
+                    if not (ball.x + ball.radius * ball.stats.range > brick.x and ball.x - ball.radius * ball.stats.range < brick.x + brick.width and
+                    ball.y + ball.radius * ball.stats.range > brick.y and ball.y - ball.radius * ball.stats.range < brick.y + brick.height) then
+                        ball.currentlyOverlappingBricks[index] = nil -- Remove from currently overlapping if not overlapping anymore
                     end
                 else
                     -- Check if we're currently overlapping with this brick
-                    if ball.x + ball.radius > brick.x and ball.x - ball.radius < brick.x + brick.width and
-                    ball.y + ball.radius > brick.y and ball.y - ball.radius < brick.y + brick.height then
-                        ball.currentlyOverlapping[index] = true
-                        dealDamage(ball, brick) -- Deal damage for new overlaps
-                        -- If this brick wasn't in our last frame overlaps, it's a new entry
-                        hitAnyBrick = true
+                    if ball.x + ball.radius * ball.stats.range > brick.x and ball.x - ball.radius * ball.stats.range < brick.x + brick.width and
+                    ball.y + ball.radius * ball.stats.range > brick.y and ball.y - ball.radius * ball.stats.range < brick.y + brick.height then
+                        ball.currentlyOverlappingBricks[index] = true
+                        if ball.name == "phantomBall" then
+                            dealDamage(ball, brick) -- Deal damage for new overlaps
+                            -- If this brick wasn't in our last frame overlaps, it's a new entry
+                            hitAnyBrick = true
+                        end
                     end
                 end
             end
         end
-        return hitAnyBrick
+        if ball.name == "phantomBall" then
+            return hitAnyBrick
+        end
     end
 
     
@@ -449,13 +497,8 @@ function Balls.draw()
         end
 
         -- Draw the ball
-        if ball.name == "baseBall" then
-            love.graphics.setColor(1, 1, 1, 1) -- Blue color for baseBall
-        elseif ball.name == "fireBall" then
-            love.graphics.setColor(1, 0, 0, 1) -- Red color for fireBall
-        else
-            love.graphics.setColor(1, 1, 1, 1) -- Default color for other balls
-        end
+        love.graphics.setColor(ballList[ball.name].color or {1,1,1,1}) -- Set color based on ball type
+        
         love.graphics.circle("fill", ball.x, ball.y, ball.radius)
     end
     --print("bullets amount : " .. #bullets)

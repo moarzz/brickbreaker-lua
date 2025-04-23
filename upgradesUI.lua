@@ -58,10 +58,12 @@ local function drawPlayerStats()
     love.graphics.setColor(1, 1, 1, 1) -- Reset color to white
 end
 
+local levelUpShopType = "ball"
 local displayedUpgrades = {} -- This should be an array, not a table with string keys
 local function setLevelUpShop(isForBall)
     displayedUpgrades = {} -- Clear the displayed upgrades
     if isForBall then
+        levelUpShopType = "ball"
         -- Ball unlocks
         local unlockedBallNames = {}
         for _, ball in ipairs(Balls.getUnlockedBallTypes()) do
@@ -95,6 +97,7 @@ local function setLevelUpShop(isForBall)
         end
     else
         -- Player upgrades
+        levelUpShopType = "playerUpgrade"
         local availableBonuses = {}
         for name, bonus in pairs(Player.bonusesList) do
             if not Player.bonuses[name] then
@@ -339,7 +342,7 @@ end
 local function drawLevelUpShop()
     -- Initialize layout for the buttons
     local buttonWidth = (love.graphics.getWidth() - 300) / 3 - 60
-    local buttonHeight = love.graphics.getHeight() - 250
+    local buttonHeight = love.graphics.getHeight() - 200
     local buttonY = 125
 
     for index, currentUpgrade in ipairs(displayedUpgrades) do
@@ -364,9 +367,23 @@ local function drawLevelUpShop()
             break
         end
     end
+    local x, y = suit.layout:nextRow()
+    local x = screenWidth/2 - 150
+    local w, h = 300, 100 -- Dimensions for the reroll button
+    local buttonID = "reroll_button" -- Unique ID for the reroll button
+    suit.layout:reset(x, y, 10, 10) -- Reset layout for the reroll button
+    setFont(30)
+    if suit.Button("Reroll", {id = buttonID, align = "center"}, suit.layout:row(w,h)).hit then
+        local isBallShop = levelUpShopType == "ball"
+        setLevelUpShop(isBallShop) -- Reroll the upgrades
+    end
+
 end
 
 function upgradesUI.draw()
+    if Player.levelingUp then
+        drawLevelUpShop()
+    end
     drawPlayerStats() -- Draw the player stats table
     drawPlayerUpgrades() -- Draw the player upgrades table
     drawBallStats() -- Draw the ball stats table
@@ -376,10 +393,6 @@ function upgradesUI.draw()
     love.graphics.rectangle("fill", statsWidth, 0, 2, screenHeight) -- separator line
     love.graphics.rectangle("fill", screenWidth - statsWidth, 0, 2, screenHeight)
     love.graphics.setColor(1, 1, 1, 1) -- Reset color to white
-
-    if Player.levelingUp then
-        drawLevelUpShop()
-    end
 end
 
 return upgradesUI
