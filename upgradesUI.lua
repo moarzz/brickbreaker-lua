@@ -1,23 +1,16 @@
 local suit = require("Libraries.Suit") -- UI library
 local upgradesUI = {}
 
-local upgradeOptions = {
-    {
-        name = "+Paddle speed", 
-        description = "Increase Paddle speed by 25%", 
-        effect = function() paddle.speed = paddle.speed * 1.25 end
-    }
-}
-
 local shortStatNames = {
     speed = "Spd",
     damage = "Dmg",
     cooldown = "Cd",
     size = "Size",
     ammount = "Amnt",
+    range = "Rng",
 }
 
-local buttonWidth, buttonHeight = 35, 25 -- Dimensions for each button
+local buttonWidth, buttonHeight = 25, 25 -- Dimensions for each button
 
 local drawPlayerStatsHeight = 200 -- Height of the player stats section
 local function drawPlayerStats()
@@ -45,12 +38,12 @@ local function drawPlayerStats()
 
     -- Draw the stats details
     setFont(20) -- Set font for the stats
-    suit.Label("Level: " .. (Player.level or 1), {align = "center"}, definition.cell(1)) -- Level
-    suit.Label("Lives: " .. (Player.lives or 3), {align = "center"}, definition.cell(2))
+    suit.Label("Lives: " .. (Player.lives or 3), {align = "center"}, definition.cell(1))
+    suit.Label("Score: " .. formatNumber(Player.score), {align = "center"}, definition.cell(2))
     suit.Label("Money: " .. formatNumber(Player.money), {align = "center"}, definition.cell(3))
 
     -- Add a separator line for better visual clarity
-    suit.layout:row(statsWidth, 30) -- Add spacing for the separator
+    suit.layout:row(statsWidth, 40) -- Add spacing for the separator
     local x,y = suit.layout:nextRow()
 
     love.graphics.setColor(0.8, 0.8, 0.8, 1) -- Light gray
@@ -175,16 +168,18 @@ local function drawPlayerUpgrades()
             suit.layout:row((w-30)/2, w) -- makes sure the button is centered even though it is smaller
             if suit.Button("+", {id = buttonID, align = "center"}, suit.layout:col(buttonWidth, buttonHeight)).hit then -- Display the button for upgrading the stat
                 -- Check if the player has enough money to upgrade
-                if Player.money < Player.price then
+                if Player.money < Player.bonusPrice[bonusName] then
                     print("Not enough money to upgrade " .. bonusName)
                 else
                     -- Apply the upgrade
                     Player.bonusUpgrades[bonusName]() -- Call the upgrade function
-                    Player.Pay(Player.price) -- Deduct the cost from the player's money
-                    Player.price = Player.price * 2 -- Double the price for the next upgrade
+                    Player.pay(Player.bonusPrice[bonusName]) -- Deduct the cost from the player's money
+                    Player.bonusPrice[bonusName] = Player.bonusPrice[bonusName] * 5 -- Double the price for the next upgrade
                     print(bonusName .. " upgraded to " .. Player.bonuses[bonusName] .. "%")
                 end
             end
+            setFont(16)
+            suit.Label(formatNumber(Player.bonusPrice[bonusName]) .. " $", {align = "left"}, suit.layout:col(w/2-buttonWidth+10, buttonHeight)) -- Display the cost of the upgrade
             intIndex = intIndex + 1
         end
         if currentRow < 3 then
@@ -192,26 +187,29 @@ local function drawPlayerUpgrades()
             local x,y,w,h = definition.cell(currentRow+1)
             suit.layout:reset(x, y, padding, padding)
             setFont(22)
-            if suit.Button("add stat", {id = buttonID, align = "center"}, suit.layout:row(w, h*2)).hit and Player.money >= Player.newUpgradePrice then
-                Player.newUpgradePrice = Player.newUpgradePrice * 10
+            if suit.Button("add stat", {id = buttonID, align = "center"}, suit.layout:row(w, h*3/2)).hit and Player.money >= Player.newUpgradePrice then
+                Player.newUpgradePrice = Player.newUpgradePrice * Player.upgradePriceMultScaling
                 setLevelUpShop(false) -- Set the level up shop with ball unlockedBallTypes
                 Player.levelingUp = true -- Set the flag to indicate leveling up
-            end
+                end
+            setFont(16)
+            suit.Label(formatNumber(Player.newUpgradePrice) .. " $", {align = "center"}, suit.layout:row(w, 15)) -- Display the cost of the upgrade
         elseif i == math.max(rowCount,1) then
             local x, y = suit.layout:nextRow()
             suit.layout:reset(10, y + 10, padding, padding)
             setFont(22)
-            if suit.Button("add stat", {id = buttonID, align = "center"}, suit.layout:row(statsWidth - 20, 60)).hit and Player.money >= Player.newUpgradePrice then
-                Player.newUpgradePrice = Player.newUpgradePrice * 10
+            if suit.Button("add stat", {id = buttonID, align = "center"}, suit.layout:row(statsWidth - 20, 45)).hit and Player.money >= Player.newUpgradePrice then
+                Player.newUpgradePrice = Player.newUpgradePrice * Player.upgradePriceMultScaling
                 setLevelUpShop(false) -- Set the level up shop with ball unlockedBallTypes
                 Player.levelingUp = true -- Set the flag to indicate leveling up
             end
+            setFont(16)
+            suit.Label(formatNumber(Player.newUpgradePrice) .. " $", {align = "center"}, suit.layout:row(statsWidth - 20, 15)) -- Display the cost of the upgrade
         end
-
         local x,y = suit.layout:nextRow()
         suit.layout:reset(x, y + 10, padding, padding)
         suit.layout:reset(0, y, 0, 0)
-        suit.layout:row(statsWidth, 15) -- Add spacing for the separator
+        suit.layout:row(statsWidth, 5) -- Add spacing for the separator
     end
     
     local x,y = suit.layout:nextRow()
@@ -259,16 +257,27 @@ local function drawBallStats()
         -- Draw upgrade buttons for each stat
         local intIndex = 2 -- keeps track of the current cell int id being checked
         -- Define the order of keys
-        local statOrder = { "ammount", "damage", "speed", "cooldown", "size" }
+        local statOrder = { "ammount", "damage", "speed", "cooldown", "range" }
 
+        local typeStats = {} -- Initialize the typeStats table
         -- Create the typeStats table
-        local typeStats = { ammount = ballType.ammount } -- Start with ammount
+        if ballType.noAmmount == false then
+           typeStats = { ammount = ballType.ammount } -- Start with ammount
+        end
+        
         for statName, statValue in pairs(ballType.stats) do
             typeStats[statName] = statValue -- Add stats to the table
         end
 
         for _, statName in ipairs(statOrder) do
-            local statValue = typeStats[statName] -- Get the value for the current stat
+            local statValue = nil
+            if typeStats[statName] then
+                if statName == "speed" then
+                    statValue = typeStats[statName]/50 -- Add speed to the stats table
+                else
+                    statValue = typeStats[statName]
+                end
+            end
             if statValue then -- Only process if the stat exists
                 local buttonResult = nil
                 x, y, w, h = definition.cell(intIndex)
@@ -287,7 +296,7 @@ local function drawBallStats()
                     --Cooldown value is maxed out, so we don't show the button
                 else 
                     setFont(14)
-                    if suit.Button(statName == "cooldown" and "-1" or statName == "speed" and "+50" or "+1" , {id = buttonID, align = "center"}, suit.layout:col(buttonWidth, buttonHeight)).hit then
+                    if suit.Button(statName == "cooldown" and "-" or "+" , {id = buttonID, align = "center"}, suit.layout:col(buttonWidth, buttonHeight)).hit then
                         if Player.money < ballType.price then
                             print("Not enough money to upgrade " .. ballType.name .. "'s " .. statName)
                         else
@@ -338,12 +347,11 @@ local function drawBallStats()
     end
 end
 
-
 local function drawLevelUpShop()
     -- Initialize layout for the buttons
     local buttonWidth = (love.graphics.getWidth() - 300) / 3 - 60
     local buttonHeight = love.graphics.getHeight() - 200
-    local buttonY = 125
+    local buttonY = 100
 
     for index, currentUpgrade in ipairs(displayedUpgrades) do
         -- Calculate button position
@@ -369,7 +377,7 @@ local function drawLevelUpShop()
     end
     local x, y = suit.layout:nextRow()
     local x = screenWidth/2 - 150
-    local w, h = 300, 100 -- Dimensions for the reroll button
+    local w, h = 250, 75 -- Dimensions for the reroll button
     local buttonID = "reroll_button" -- Unique ID for the reroll button
     suit.layout:reset(x, y, 10, 10) -- Reset layout for the reroll button
     setFont(30)

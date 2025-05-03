@@ -352,10 +352,11 @@ end
 
 -- Public interface
 
-function tween.new(duration, subject, target, easing)
+function tween.new(duration, subject, target, easing, id)
   easing = getEasingFunction(easing)
   checkNewParams(duration, subject, target, easing)
   return setmetatable({
+    id = id or 0,
     duration  = duration,
     subject   = subject,
     target    = target,

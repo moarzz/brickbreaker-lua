@@ -15,8 +15,11 @@ screenHeight = 1000
 
 playRate = 1 -- Set the playback rate to 1 (normal speed)
 
+--brickSpacing = 10 -- Spacing between bricks
+
 local function generateRow(brickCount, yPos)
     local row = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+    local rowOffset = mapRangeClamped(math.random(0,10),0,10, -brickWidth/2, brickWidth/2)
     for i = 1, brickCount do
         n = math.random(12)
         row[n] = row[n] + 1
@@ -31,16 +34,15 @@ local function generateRow(brickCount, yPos)
             end
             table.insert(bricks, {
                 id = #bricks + 1,
-                x = statsWidth + (xPos - 1) * (brickWidth + brickSpacing) + 5,
+                x = statsWidth + (xPos - 1) * (brickWidth + brickSpacing) + 5 + rowOffset,
                 y = yPos,
                 width = brickWidth,
                 height = brickHeight,
                 destroyed = false,
                 health = brickHealth,
-                color = brickColor,
+                color = {brickColor[1], brickColor[2], brickColor[3], 1}, -- Set the color with full opacity
                 hitLastFrame = false
             })
-            --print("screenWidth: " .. screenWidth)
         end
     end
     return row
@@ -63,10 +65,10 @@ function initializeBricks()
         [12] = {HslaToRgba(90, 0.12, 0.06, 1)}
     }
     bricks = {}
-    brickSpacing = 10
     brickWidth = 75
     brickHeight = 30
-    rows = 100
+    brickSpacing = 10 -- Spacing between bricks
+    rows = 10
     cols = 10
     brickSpeed = { value = 10 } -- Speed at which bricks move down (pixels per second)
     currentRowPopulation = 1 -- Number of bricks in the first row
@@ -74,16 +76,34 @@ function initializeBricks()
     -- Generate bricks
     for i = 0, rows - 1 do
         generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing)) --generate 100 scaling rows of bricks
-        currentRowPopulation = currentRowPopulation + 1
+        currentRowPopulation = currentRowPopulation + 1 + math.floor(currentRowPopulation/15)
     end
+    Timer.every(0.5, function()
+        for _, brick in ipairs(bricks) < 12 do
+
+        end
+    end)
 end
+
+local function loadAssets()
+    --load images
+    auraImg = love.graphics.newImage("assets/textures/aura.png")
+
+    -- load sounds
+    backgroundMusic = love.audio.newSource("assets/SFX/game song.mp3", "static")
+    brickHitSFX = love.audio.newSource("assets/SFX/brickBoop.mp3", "static")
+    paddleBoopSFX = love.audio.newSource("assets/SFX/paddleBoop.mp3", "static")
+    wallBoopSFX = love.audio.newSource("assets/SFX/wallBoop.mp3", "static")
+end
+
 -- Load Love2D modules
 function love.load()
     dress = suit.new()
+
+    loadAssets() -- Load assets
+
     -- Load the MP3 file
-    backgroundMusic = love.audio.newSource("assets/sounds/game song.mp3", "static")
-    backgroundMusic:setLooping(true)
-    backgroundMusic:play()
+    playSoundEffect(backgroundMusic, 0.5, 1, true, false) -- Play the background music
     brickFont = love.graphics.newFont(14)
 
     -- Set fullscreen mode
@@ -93,9 +113,6 @@ function love.load()
     screenWidth, screenHeight = love.graphics.getDimensions()
 
     love.window.setTitle("Brick Breaker")
-
-    -- Background image
-    backgroundImage = love.graphics.newImage("assets/neonGrid.png")
 
     -- Paddle
     paddle = {
@@ -116,10 +133,36 @@ function love.load()
     print("screenWidth: " .. screenWidth)
 end
 
+local function getBrickSpeedMult()
+    -- the lowest bricK}k on screen will have the highest Y.
+    for i, brick in ipairs(bricks) do
+        if not brick.destroyed then
+            return mapRangeClamped(brick.y, 0, paddle.y - brickHeight, 2, 0.5)
+        end
+    end
+    error("No bricks found that weren't destroyed")
+end
+
+local function moveBricksDown(dt)
+    local speedMult = getBrickSpeedMult() -- Get the speed multiplier based on the lowest brick Y position
+    for _, brick in ipairs(bricks) do
+        if not brick.destroyed then
+            brick.y = brick.y + brickSpeed.value * dt * speedMult
+        end
+    end
+end
+
+backgroundColor = {r=0,g=0,b=0,a=0  }
+screenOffset = {x=0,y=0}
 function love.update(dt)
+
     dt = dt * playRate -- Adjust the delta time based on the playback rate
+    if UtilityFunction.freeze then
+        dt = 0 -- Freeze the game if UtilityFunction.freeze is true
+    end
     Timer.update(dt) -- Update the timer
 
+    -- checks if game is frozen
     if not Player.levelingUp and not UtilityFunction.freeze then
         -- Paddle movement
         if love.keyboard.isDown("left") or love.keyboard.isDown("a") then
@@ -139,20 +182,22 @@ function love.update(dt)
 
         
         -- Move bricks down
-        for _, brick in ipairs(bricks) do
-            if not brick.destroyed then
-                brick.y = brick.y + brickSpeed.value * dt
-            end
+        moveBricksDown(dt)
+
+        explosionsUpdate(dt) -- Update explosions
+
+        updateAllTweens(dt) -- Update all tweens
+
+        Player.update(dt) -- Update player logic
+
+        updateAnimations(dt) -- Update animations
+
+        if damageThisFrame > 0 then
+            damageScreenVisuals(0.25, damageThisFrame)
+            playSoundEffect(brickHitSFX, mapRangeClamped(damageThisFrame, 1,10, 0.4,1.0), mapRangeClamped(damageThisFrame,1,10,0.5,1), false, true)
         end
+        damageThisFrame = 0 -- Reset damage this frame
     end
-
-    explosionsUpdate(dt) -- Update explosions
-
-    updateAllTweens(dt) -- Update all tweens
-
-    Player.update(dt) -- Update player logic
-
-    updateAnimations(dt) -- Update animations
 end
 
 local function drawBricks()
@@ -186,21 +231,35 @@ local function drawStatsArea()
     love.graphics.setColor(1, 1, 1, 1) -- Reset color to white for other drawings
 end
 
+
 function love.draw()
     resetButtonLastID()-- resets the button ID to 1 so it stays consistent
 
-    drawStatsArea() -- Draw the stats area
-    love.graphics.setColor(1 , 1, 1, 0.25)
-    love.graphics.rectangle("fill", statsWidth, paddle.y + paddle.height/2, screenWidth - statsWidth * 2, 1) -- Draw the background for the game area
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.rectangle("fill", paddle.x, paddle.y, paddle.width * paddle.widthMult, paddle.height) -- Draw paddle
+    -- Draw the background for the game area
+    love.graphics.setColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a)
+    love.graphics.rectangle("fill", statsWidth, 0, screenWidth - statsWidth * 2, screenHeight)
+
+    love.graphics.push()
+    love.graphics.translate(screenOffset.x, screenOffset.y) -- Apply screen shake
 
     drawBricks() -- Draw bricks
 
     Balls.draw(Balls) -- Draw balls
 
+    -- Draw paddle
+    love.graphics.setColor(0.5, 0.5, 0.5, 0.5) -- Reset color to white for paddle
+    love.graphics.rectangle("fill", statsWidth, paddle.y, screenWidth - statsWidth*2, 1)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.rectangle("fill", paddle.x, paddle.y, paddle.width * paddle.widthMult, paddle.height)
+
+    drawDamageNumbers() -- Draw damage numbers
+
     drawAnimations() -- Draw animations
 
+    love.graphics.pop()
+
+    drawStatsArea() -- Draw the stats area
+    
     upgradesUI.draw()
 
     suit.draw() -- Draw the UI elements using Suit
@@ -213,6 +272,7 @@ function love.draw()
     drawFPS()
 end
 
+local boopah = 1
 --exit game with esc key and other debugging keys
 function love.keypressed(key)
     if key == "escape" then
@@ -230,9 +290,6 @@ function love.keypressed(key)
     if key == "n" then
         Player.money = 0
     end
-    if key == "t" then
-        getBricksTouchingCircle(50, 50, 50)
-    end
     if key == "l" then
         playRate = playRate * 2
     end
@@ -242,7 +299,33 @@ function love.keypressed(key)
     if key == "j" then 
         playRate = playRate / 2
     end
+    if key == "r" then
+        love.event.quit("restart")
+    end
+
+    --test damage screen visuals 
     if key == "g" then
-        Balls.addBall("phantomBall")
+        damageThisFrame = boopah
+    end
+    if key == "v" then
+        boopah = boopah + 2
+    end
+
+    --test ball hit vfx
+    if key == "y" then
+        for _,ball in ipairs(Balls) do
+            ballHitVFX(ball)
+        end
+    end
+
+    --print brick speed mult calculation
+    if key == "t" then
+        local total = 0
+        for _, ball in ipairs(Balls) do
+            if ball.name == "fireBall" and ball.dead == false then
+                total = total + 1
+            end
+        end
+        print("total fireballs alive: " .. total)
     end
 end

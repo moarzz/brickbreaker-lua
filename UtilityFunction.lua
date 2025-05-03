@@ -3,9 +3,23 @@ local UtilityFunction = {
     freeze = false -- Global freeze variable to control game state
 }
 
+FontReference = {default = "assets/Fonts/borderedPixelated.ttf"}
+
 function toggleFreeze()
     UtilityFunction.freeze = not UtilityFunction.freeze
     print("game is now " .. (UtilityFunction.freeze and "frozen" or "unfrozen"))
+end
+
+-- Function to combine two lists
+function addLists(list1, list2)
+    local result = {}
+    for _, value in ipairs(list1) do
+        table.insert(result, value)
+    end
+    for _, value in ipairs(list2) do
+        table.insert(result, value)
+    end
+    return result
 end
 
 function restartGame()
@@ -34,6 +48,17 @@ function restartGame()
 
     -- Unfreeze the game
     UtilityFunction.freeze = false
+end
+
+function playSoundEffect(soundEffect, volume, pitch, loop, clone)
+    clone = clone or true -- Default to false if not provided
+    if clone then
+        soundEffect = soundEffect:clone() -- Clone the sound effect if specified
+    end
+    soundEffect:setVolume(volume or 1) -- Set the volume (default to 1)
+    soundEffect:setPitch(pitch or 1) -- Set the pitch (default to 1)
+    soundEffect:setLooping(loop or false) -- Set looping (default to false)
+    soundEffect:play() -- Play the sound effect
 end
 
 function GameOverDraw()
@@ -126,15 +151,38 @@ function setFont(...)
         if Fonts[fontSize] then
             font = Fonts[fontSize] -- Use the cached font if it exists
         else
-            font = love.graphics.newFont(fontSize) -- Create a new font if it doesn't exist
+            font = love.graphics.newFont(fontSize) -- Create a new font if it doesn't exis
             Fonts[fontSize] = font -- Cache the new font
+            print("Font created and cached: " .. fontSize)
         end
-        font = love.graphics.newFont(fontSize)
     else 
+        if Fonts[fontType .. fontSize] then
+            font = Fonts[fontType .. fontSize] -- Use the cached font if it exists
+        else
+            Fonts[fontType .. fontSize] = love.graphics.newFont(fontType, fontSize) -- Create a new font and cache it
+        end
         font = love.graphics.newFont(fontType, fontSize)
+        print("Font created and cached: " .. fontSize)
     end
     love.graphics.setFont(font) -- Set the font in Love2D
 end -- Missing 'end' added here
+
+function drawImageCentered(image, x, y, targetWidth, targetHeight)
+    -- Get the original dimensions of the image
+    local imageWidth = image:getWidth()
+    local imageHeight = image:getHeight()
+
+    -- Calculate scaling factors
+    local scaleX = targetWidth / imageWidth
+    local scaleY = targetHeight / imageHeight
+
+    -- Calculate the top-left corner to center the image
+    local drawX = x - (targetWidth / 2)
+    local drawY = y - (targetHeight / 2)
+
+    -- Draw the image
+    love.graphics.draw(image, drawX, drawY, 0, scaleX, scaleY)
+end
 
 function areBallsInRange(ball1, ball2, range)
     -- Calculate the distance between the centers of the two balls
@@ -145,6 +193,31 @@ function areBallsInRange(ball1, ball2, range)
     -- Check if the distance is less than or equal to the range
     -- We subtract the radii of both balls to make the calculation more accurate
     return distance <= range + ball1.radius + ball2.radius
+end
+
+function isBallInRange(ball, x, y, range)
+    -- Calculate the distance between the ball's center and the target point (x, y)
+    local dx = ball.x - x
+    local dy = ball.y - y
+    local distance = math.sqrt(dx * dx + dy * dy)
+    
+    -- Check if the distance is less than or equal to the range
+    return distance <= range + ball.radius
+end
+
+function isBrickInRange(brick, x, y, range)
+    -- Calculate the closest point on the brick to the circle's center
+    local closestX = math.max(brick.x, math.min(x, brick.x + brick.width))
+    local closestY = math.max(brick.y, math.min(y, brick.y + brick.height))
+
+    -- Calculate the distance between the circle's center and the closest point
+    local distanceX = x - closestX
+    local distanceY = y - closestY
+    local distanceSquared = distanceX^2 + distanceY^2
+
+    -- Check if the distance is less than or equal to the circle's radius squared
+    return distanceSquared <= range^2
+
 end
 
 function tableLength(tbl)
@@ -258,19 +331,50 @@ function formatNumber(value)
     end
 end
 
+
+--Tween functions
 local Tweens = {} -- Table to store tweens
+local currentTweenID = 0 -- Initialize a variable to keep track of the current tween ID
 function addTweenToUpdate(tween)
+    tween.table = currentTweenID
+    currentTweenID = currentTweenID + 1
     table.insert(Tweens, tween) -- Add the tween to the list
+    return #Tweens
 end
-function updateAllTweens(dt)
+
+function removeTween(tweenID)
     for _, tween in ipairs(Tweens) do
+        if tween.id == tweenID then
+            table.remove(Tweens, _) -- Remove the tween from the list
+            break
+        end
+    end
+end
+
+function updateAllTweens(dt)
+    for i = #Tweens, 1, -1 do -- Iterate backward to safely remove items
+        local tween = Tweens[i]
         if tween.update then
             tween:update(dt) -- Update each tween
             if tween.clock >= tween.duration then
-                tween = nil
+                table.remove(Tweens, i) -- Remove the tween if its duration is over
             end
         end
     end
+end
+
+
+function mapRangeClamped(x, in_min, in_max, out_min, out_max)
+    if x < in_min then
+        return out_min
+    elseif x > in_max then
+        return out_max
+    end
+    return (x - in_min) / (in_max - in_min) * (out_max - out_min) + out_min
+end
+
+function mapRange(x, in_min, in_max, out_min, out_max)
+    return (x - in_min) / (in_max - in_min) * (out_max - out_min) + out_min
 end
 
 explosions = {} -- Table to store explosions
@@ -383,6 +487,127 @@ function drawAnimations()
             animation.frameWidth / 2, -- Origin X (half the frame width)
             animation.frameHeight / 2 -- Origin Y (half the frame height)
         )
+    end
+end
+
+-- Example: Elastic tween that ends with the same value
+local function createElasticTween(duration, subject, property, overshoot, easing)
+    local startValue = subject[property]
+    local targetValue = startValue + overshoot -- Add an overshoot value
+
+    -- Create a tween that animates to the overshoot and back to the start value
+    local elasticTween = tween.new(duration, subject, {[property] = targetValue}, easing)
+
+    -- Add a second tween to return to the start value
+    local returnTween = tween.new(duration, subject, {[property] = startValue}, easing)
+
+    return {elasticTween, returnTween}
+end
+
+currentScreenShakeIntensity = 0 -- Initialize the screen shake intensity
+function screenShake(duration, intensity, vibrationCount, direction)
+    -- This function has 1 more vibration than vibrationCount
+    intensity = intensity or 10 -- Default intensity
+    duration = duration or 0.5 -- Default duration
+    vibrationCount = vibrationCount or 3 -- Default number of vibrations
+    local delay = 0 -- Default duration multiplier
+
+    for i = 0, vibrationCount do
+        Timer.after(delay, function()
+            local shakeTween = nil
+            local currentVibration = i
+            local easing = tween.easing.outSine
+            currentScreenShakeIntensity = intensity*((vibrationCount-currentVibration)/vibrationCount) 
+
+            if currentVibration%2 == 0 then
+                shakeTween = tween.new(duration/(vibrationCount+1), screenOffset, {x = -currentScreenShakeIntensity*direction[1], y = -currentScreenShakeIntensity*direction[2]}, easing)
+            else
+                shakeTween = tween.new(duration/(vibrationCount+1), screenOffset, {x = currentScreenShakeIntensity*direction[1], y = currentScreenShakeIntensity*direction[2]}, easing)
+            end
+            addTweenToUpdate(shakeTween)
+        end)
+        delay = delay + (duration/(vibrationCount + 1))
+    end
+end
+
+currentGoalFlashIntensity = 0
+function screenFlash(duration, color)
+    -- Create a tween for the flash effect
+    currentGoalFlashIntensity = color[0]
+    local easing = tween.easing.outSine
+    local delay = duration / 8
+    backgroundColor.r = color[1] backgroundColor.g = color[2] backgroundColor.b = color[3] backgroundColor.a = color[4]
+
+    currentGoalFlashIntensity = 0
+    flashTween = tween.new(duration, backgroundColor, {r = 0, g = 0, b = 0, a = 0}, tween.easing.inSine)
+    addTweenToUpdate(flashTween)
+end
+
+function damageScreenVisuals(duration, intensity, direction)
+
+    local directionX, directionY = normalizeVector(math.random(-1000, 1000), math.random(-1000, 1000)) -- Random direction for the screen shake
+    direction = direction or {directionX, directionY} -- Use the random direction if not provided
+
+    --screen shake logic
+    if intensity > currentScreenShakeIntensity then
+        screenShake(duration, mapRangeClamped(intensity , 
+            mapRangeClamped(intensity,1,10,1,10), 
+            100, 
+            mapRangeClamped(intensity, mapRangeClamped(intensity,1,5,1,5), 10, mapRangeClamped(intensity,1,5,2,10), 15), 
+            50), math.floor(mapRangeClamped(intensity, 1, 100, 3, 6)),
+            direction)
+    end
+
+    --screen flash logic
+    local flashIntensity = mapRangeClamped(intensity, mapRangeClamped(intensity,1,10,1,10), 100, mapRangeClamped(intensity,1,10,0.1,0.5), 1)
+    local flashColor = {flashIntensity, flashIntensity, flashIntensity, flashIntensity} -- Red color for the flash effect
+    if flashIntensity > backgroundColor.a and flashIntensity > currentGoalFlashIntensity then
+        screenFlash(0.25, flashColor)
+    end
+end
+
+local damageNumbers = {} -- Table to store damage numbers
+function damageNumber(damage, x, y, color)
+    local damageNumber = {
+        x = x,
+        y = y,
+        damage = damage,
+        color = color or {1, 0, 0, 1}, -- Default to red if no color is provided
+        alpha = 1,
+        fontSize = 0
+    }
+    table.insert(damageNumbers, damageNumber) -- Add the damage number to the list
+
+    local newTween = tween.new(0.75, damageNumber, {fontSize = damage < 10 and mapRange(damage, 0, 10, 1, 2) or mapRange(damage, 10, 50, 2, 4)}, tween.easing.outBack)
+    addTweenToUpdate(newTween) -- Add the damage number to the list
+
+    local xRandom, yRandom = math.random(-15, 15), -15 - math.random(20)
+    local newTween = tween.new(0.75, damageNumber, {x = x + xRandom, y = y + yRandom}, tween.easing.outQuad)
+    addTweenToUpdate(newTween) -- Add the damage number to the list
+    
+    Timer.after(0.40, function()
+        local newTween = tween.new(0.35, damageNumber, {alpha = 0}, tween.easing.outCirc)
+        addTweenToUpdate(newTween) -- Add the damage number to the
+    end)
+    Timer.after(0.75, function()
+        for i = #damageNumbers, 1, -1 do
+            if damageNumbers[i] == damageNumber then
+                table.remove(damageNumbers, i) -- Remove the damage number after its duration
+                break
+            end
+        end
+    end)
+end
+
+function drawDamageNumbers()
+    for _, damageNumber in ipairs(damageNumbers) do
+        setFont(45)
+        love.graphics.push()
+        love.graphics.scale(damageNumber.fontSize/3, damageNumber.fontSize/3) -- Scale the font size
+        local color = damageNumber.color
+        love.graphics.setColor(color[1], color[2], color[3], damageNumber.alpha)
+        drawTextWithOutline(tostring(damageNumber.damage), damageNumber.x*3/damageNumber.fontSize, damageNumber.y*3/damageNumber.fontSize, love.graphics.getFont(), color, {0.25, 0.25, 0.25, 1}, 1) -- Draw the damage number with outline
+        love.graphics.pop()
     end
 end
 
