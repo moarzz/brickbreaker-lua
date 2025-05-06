@@ -3,6 +3,8 @@ Player = require("Player") -- player logic
 Balls = require("Balls") -- ball logic
 Timer = require("Libraries.timer") -- timer library
 local upgradesUI = require("upgradesUI") -- upgrade UI logic
+moonshine = require("Libraries.moonshine")
+shaders = require("shaders") -- shader logic
 suit = require("Libraries.Suit") -- UI library
 tween = require("Libraries.tween") -- tweening library
 -- main.lua
@@ -14,8 +16,9 @@ screenWidth = 1020 + statsWidth
 screenHeight = 1000
 
 playRate = 1 -- Set the playback rate to 1 (normal speed)
-
+gameCanvas = nil
 --brickSpacing = 10 -- Spacing between bricks
+
 
 local function generateRow(brickCount, yPos)
     local row = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
@@ -48,6 +51,23 @@ local function generateRow(brickCount, yPos)
     return row
 end
 
+local function addMoreBricks()
+    for i = #bricks, 0, -1 do
+        if bricks[i] then
+            if bricks[i].y > -50 then
+                print("spawning more bricks")
+                for i=1 , 10 do
+                    generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 50) --generate 100 scaling rows of bricks
+                    currentRowPopulation = currentRowPopulation + 1 + math.floor(currentRowPopulation/15)
+                end
+                return
+            else 
+                return
+            end--else print("bricks are too high to spawn more") end
+        end
+    end
+end
+
 function initializeBricks()
     -- Bricks
     brickColorsByHealth = {
@@ -76,18 +96,17 @@ function initializeBricks()
     -- Generate bricks
     for i = 0, rows - 1 do
         generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing)) --generate 100 scaling rows of bricks
-        currentRowPopulation = currentRowPopulation + 1 + math.floor(currentRowPopulation/15)
+        currentRowPopulation = currentRowPopulation + 1 + math.floor(currentRowPopulation/50)
     end
-    Timer.every(0.5, function()
-        for _, brick in ipairs(bricks) < 12 do
 
-        end
-    end)
+    --check for adding more bricks every 0.5 seconds
+    Timer.every(0.5, function() addMoreBricks() end)
 end
 
 local function loadAssets()
     --load images
-    auraImg = love.graphics.newImage("assets/textures/aura.png")
+    auraImg = love.graphics.newImage("assets/sprites/aura.png")
+    brickImg = love.graphics.newImage("assets/sprites/brick.png")
 
     -- load sounds
     backgroundMusic = love.audio.newSource("assets/SFX/game song.mp3", "static")
@@ -111,6 +130,7 @@ function love.load()
 
     -- Get screen dimensions
     screenWidth, screenHeight = love.graphics.getDimensions()
+    gameCanvas = love.graphics.newCanvas(screenWidth, screenHeight)
 
     love.window.setTitle("Brick Breaker")
 
@@ -137,7 +157,7 @@ local function getBrickSpeedMult()
     -- the lowest bricK}k on screen will have the highest Y.
     for i, brick in ipairs(bricks) do
         if not brick.destroyed then
-            return mapRangeClamped(brick.y, 0, paddle.y - brickHeight, 2, 0.5)
+            return mapRangeClamped(brick.y, 0, paddle.y - brickHeight, 2, 0.25)
         end
     end
     error("No bricks found that weren't destroyed")
@@ -192,6 +212,8 @@ function love.update(dt)
 
         updateAnimations(dt) -- Update animations
 
+        shaders.updatePulse(dt) -- Update pulse effect
+
         if damageThisFrame > 0 then
             damageScreenVisuals(0.25, damageThisFrame)
             playSoundEffect(brickHitSFX, mapRangeClamped(damageThisFrame, 1,10, 0.4,1.0), mapRangeClamped(damageThisFrame,1,10,0.5,1), false, true)
@@ -208,6 +230,7 @@ local function drawBricks()
             -- Ensure brick color is valid
             local color = brick.color or {1, 1, 1, 1}
             love.graphics.setColor(color) -- Set brick color
+            love.graphics.draw(brickIMG, brick.x, brick.y, 0, brick.width / brickIMG:getWidth(), brick.height / brickIMG:getHeight())
             love.graphics.rectangle("fill", brick.x, brick.y, brick.width, brick.height)
 
             -- Draw the brick's HP using drawTextWithOutline
@@ -234,6 +257,9 @@ end
 
 function love.draw()
     resetButtonLastID()-- resets the button ID to 1 so it stays consistent
+
+    love.graphics.setCanvas(gameCanvas) -- Set the canvas for drawing
+    love.graphics.clear()
 
     -- Draw the background for the game area
     love.graphics.setColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a)
@@ -266,6 +292,11 @@ function love.draw()
 
     dress:draw()
 
+    love.graphics.setCanvas()
+
+    love.graphics.draw(gameCanvas)
+    shaders.draw() -- Draw the pulse effect
+
     if Player.dead then
         GameOverDraw()
     end
@@ -273,6 +304,7 @@ function love.draw()
 end
 
 local boopah = 1
+boopag = 1
 --exit game with esc key and other debugging keys
 function love.keypressed(key)
     if key == "escape" then
@@ -309,6 +341,7 @@ function love.keypressed(key)
     end
     if key == "v" then
         boopah = boopah + 2
+        boopag = boopag + 2
     end
 
     --test ball hit vfx
@@ -327,5 +360,11 @@ function love.keypressed(key)
             end
         end
         print("total fireballs alive: " .. total)
+    end
+end
+
+function love.mousepressed(x, y, button)
+    if button == 1 then
+        shaders.triggerPulse(x, y, 10,2) -- Trigger a pulse at the mouse position with intensity 10
     end
 end

@@ -160,8 +160,8 @@ function setFont(...)
             font = Fonts[fontType .. fontSize] -- Use the cached font if it exists
         else
             Fonts[fontType .. fontSize] = love.graphics.newFont(fontType, fontSize) -- Create a new font and cache it
+            font = love.graphics.newFont(fontType, fontSize)
         end
-        font = love.graphics.newFont(fontType, fontSize)
         print("Font created and cached: " .. fontSize)
     end
     love.graphics.setFont(font) -- Set the font in Love2D
@@ -559,7 +559,7 @@ function damageScreenVisuals(duration, intensity, direction)
     end
 
     --screen flash logic
-    local flashIntensity = mapRangeClamped(intensity, mapRangeClamped(intensity,1,10,1,10), 100, mapRangeClamped(intensity,1,10,0.1,0.5), 1)
+    local flashIntensity = mapRangeClamped(intensity, 0, 10, 0, 1)
     local flashColor = {flashIntensity, flashIntensity, flashIntensity, flashIntensity} -- Red color for the flash effect
     if flashIntensity > backgroundColor.a and flashIntensity > currentGoalFlashIntensity then
         screenFlash(0.25, flashColor)
@@ -572,22 +572,21 @@ function damageNumber(damage, x, y, color)
         x = x,
         y = y,
         damage = damage,
-        color = color or {1, 0, 0, 1}, -- Default to red if no color is provided
+        color = color or {1, 0, 0, 1}, -- Default to red if no color is provsided
         alpha = 1,
         fontSize = 0
     }
-    table.insert(damageNumbers, damageNumber) -- Add the damage number to the list
+    table.insert(damageNumbers, damageNumber)
 
-    local newTween = tween.new(0.75, damageNumber, {fontSize = damage < 10 and mapRange(damage, 0, 10, 1, 2) or mapRange(damage, 10, 50, 2, 4)}, tween.easing.outBack)
-    addTweenToUpdate(newTween) -- Add the damage number to the list
+    local sizeTween = tween.new(0.75, damageNumber, {fontSize = damage < 10 and mapRange(damage, 0, 10, 1, 5) or mapRange(damage, 10, 50, 5, 8)}, tween.easing.outBack)
+    addTweenToUpdate(sizeTween) 
 
     local xRandom, yRandom = math.random(-15, 15), -15 - math.random(20)
-    local newTween = tween.new(0.75, damageNumber, {x = x + xRandom, y = y + yRandom}, tween.easing.outQuad)
-    addTweenToUpdate(newTween) -- Add the damage number to the list
-    
+    local offsetTween = tween.new(0.75, damageNumber, {x = x + xRandom, y = y + yRandom}, tween.easing.outQuad)
+    addTweenToUpdate(offsetTween)
     Timer.after(0.40, function()
-        local newTween = tween.new(0.35, damageNumber, {alpha = 0}, tween.easing.outCirc)
-        addTweenToUpdate(newTween) -- Add the damage number to the
+        local alphaTween = tween.new(0.35, damageNumber, {alpha = 0}, tween.easing.outCirc)
+        addTweenToUpdate(alphaTween)
     end)
     Timer.after(0.75, function()
         for i = #damageNumbers, 1, -1 do
@@ -601,12 +600,13 @@ end
 
 function drawDamageNumbers()
     for _, damageNumber in ipairs(damageNumbers) do
-        setFont(45)
+        setFont("assets/Fonts/borderedPixelated.ttf", 60)
         love.graphics.push()
         love.graphics.scale(damageNumber.fontSize/3, damageNumber.fontSize/3) -- Scale the font size
+        damageNumber.color[4] = damageNumber.alpha -- Set the alpha value for the color
         local color = damageNumber.color
-        love.graphics.setColor(color[1], color[2], color[3], damageNumber.alpha)
-        drawTextWithOutline(tostring(damageNumber.damage), damageNumber.x*3/damageNumber.fontSize, damageNumber.y*3/damageNumber.fontSize, love.graphics.getFont(), color, {0.25, 0.25, 0.25, 1}, 1) -- Draw the damage number with outline
+        love.graphics.setColor(color)
+        drawCenteredText(tostring(damageNumber.damage), damageNumber.x*3/damageNumber.fontSize, damageNumber.y*3/damageNumber.fontSize, love.graphics.getFont(), color) -- Draw the damage number
         love.graphics.pop()
     end
 end

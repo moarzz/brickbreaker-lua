@@ -24,19 +24,12 @@ local ballTrainLength = 20 -- Length of the ball trail
 local bullets = {}
 local bulletSpeed = 500
 
-local function Shoot(gunName)
-    print("machineGunShoot called")
-    if unlockedBallTypes["machineGun"] then
-        print("machineGun is unlocked")
-        local machineGun = unlockedBallTypes["machineGun"]
-        if machineGun.currentAmmo > 0 then
-            local speedOffset = 0
-            if love.keyboard.isDown("a") then
-                speedOffset = speedOffset-400
-            elseif love.keyboard.isDown("d") then
-                speedOffset = speedOffset + 400
-            end
-            machineGun.currentAmmo = machineGun.currentAmmo - 1  -- Decrease ammo count
+local function shoot(gunName)
+    if unlockedBallTypes[gunName] then
+        local gun = unlockedBallTypes[gunName]
+        if gun.currentAmmo > 0 then
+            local speedOffset = paddle.currentSpeedX or 0
+            gun.currentAmmo = gun.currentAmmo - 1  -- Decrease ammo count
             local speedXref = math.random(-100, 100) + speedOffset
             table.insert(bullets, {
                 x = paddle.x + paddle.width / 2,
@@ -44,47 +37,15 @@ local function Shoot(gunName)
                 speedX = speedXref,
                 speedY = -math.sqrt(bulletSpeed^2 - speedXref^2),
                 radius = 5,
-                stats = {damage = machineGun.stats.damage}
+                stats = {damage = gun.stats.damage}
             })
-            Timer.after(0.25, function() machineGunShoot() end)
+            Timer.after(2.0/gun.stats.fireRate, function() shoot(gunName) end)
         else
-            machineGun.currentAmmo = machineGun.stats.ammo -- Reset ammo using the stats value
-            Timer.after(machineGun.stats.cooldown, function() machineGunShoot() end)
+            gun.currentAmmo = gun.stats.ammo -- Reset ammo using the stats value
+            Timer.after(gun.stats.cooldown, function() shoot(gunName) end)
         end
     else 
-        print("Error: machineGun is not unlocked but machineGunShoot is being called.")
-    end
-end
-
-local function machineGunShoot()
-    print("machineGunShoot called")
-    if unlockedBallTypes["machineGun"] then
-        print("machineGun is unlocked")
-        local machineGun = unlockedBallTypes["machineGun"]
-        if machineGun.currentAmmo > 0 then
-            local speedOffset = 0
-            if love.keyboard.isDown("a") then
-                speedOffset = speedOffset-400
-            elseif love.keyboard.isDown("d") then
-                speedOffset = speedOffset + 400
-            end
-            machineGun.currentAmmo = machineGun.currentAmmo - 1  -- Decrease ammo count
-            local speedXref = math.random(-100, 100) + speedOffset
-            table.insert(bullets, {
-                x = paddle.x + paddle.width / 2,
-                y = paddle.y,
-                speedX = speedXref,
-                speedY = -math.sqrt(bulletSpeed^2 - speedXref^2),
-                radius = 5,
-                stats = {damage = machineGun.stats.damage}
-            })
-            Timer.after(0.25, function() machineGunShoot() end)
-        else
-            machineGun.currentAmmo = machineGun.stats.ammo -- Reset ammo using the stats value
-            Timer.after(machineGun.stats.cooldown, function() machineGunShoot() end)
-        end
-    else 
-        print("Error: machineGun is not unlocked but machineGunShoot is being called.")
+        print("Error: gun is not unlocked but shoot is being called.")
     end
 end
 
@@ -183,7 +144,7 @@ local function ballListInit()
             startingPrice = 3,
             description = "fire bullets that die on impact in bursts",
             onBuy = function() 
-                machineGunShoot() 
+                shoot("machineGun")
             end,
             noAmmount = true,
             currentAmmo = 5,
@@ -193,6 +154,7 @@ local function ballListInit()
                 cooldown = 5,
                 pierce = 1,
                 ammo = 5,
+                fireRate = 8,
             },
         },
         Laser = {
@@ -655,6 +617,11 @@ function Balls.draw()
         if ball.name == "Damage boost ball" then
             love.graphics.setColor(1, 0, 0, 1) -- Red color for damage boost ball
             drawImageCentered(auraImg, ball.x, ball.y, ball.stats.range * 80, ball.stats.range * 80) -- Draw the aura image
+        end
+
+        if ball.name == "phantomBall" then
+            love.graphics.setColor(0, 0, 1, 1)
+            drawImageCentered(auraImg, ball.x, ball.y, ball.stats.range * 40, ball.stats.range * 40) -- Draw the aura image
         end
 
         -- Draw the ball

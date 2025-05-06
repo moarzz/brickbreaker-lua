@@ -63,7 +63,7 @@ function Player.die()
     Player.dead = true
 end
 
-local brickSpeedAfterHit = 500
+local brickSpeedAfterHit = 750
 local brickSpeedTween
 function Player.hit()
     Player.lives = Player.lives - 1
@@ -73,6 +73,7 @@ function Player.hit()
     brickSpeed.value = -brickSpeedAfterHit
     brickSpeedTween = tween.new(2, brickSpeed, { value = 10 }, tween.outExpo)
     addTweenToUpdate(brickSpeedTween)
+
     print("Player hit! Lives left: " .. Player.lives)
 end
 
