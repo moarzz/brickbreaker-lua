@@ -7,8 +7,7 @@ moonshine = require("Libraries.moonshine")
 shaders = require("shaders") -- shader logic
 suit = require("Libraries.Suit") -- UI library
 tween = require("Libraries.tween") -- tweening library
--- main.lua
--- Basic Brick Breaker Game
+VFX = require("VFX") -- VFX library
 
 --screen dimensions
 statsWidth = 450 -- Width of the stats area
@@ -17,8 +16,9 @@ screenHeight = 1000
 
 playRate = 1 -- Set the playback rate to 1 (normal speed)
 gameCanvas = nil
---brickSpacing = 10 -- Spacing between bricks
 
+-- shaders
+local backgroundShader
 
 local function generateRow(brickCount, yPos)
     local row = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
@@ -39,6 +39,10 @@ local function generateRow(brickCount, yPos)
                 id = #bricks + 1,
                 x = statsWidth + (xPos - 1) * (brickWidth + brickSpacing) + 5 + rowOffset,
                 y = yPos,
+                drawOffsetX = 0,
+                drawOffsetY = 0,
+                drawOffsetRot = 0,
+                drawScale = 1,
                 width = brickWidth,
                 height = brickHeight,
                 destroyed = false,
@@ -72,17 +76,32 @@ function initializeBricks()
     -- Bricks
     brickColorsByHealth = {
         [1] = {HslaToRgba(60, 1, 0.5, 1)},
-        [2] = {HslaToRgba(30, 0.92, 0.46, 1)},
-        [3] = {HslaToRgba(0, 0.84, 0.42, 1)},
-        [4] = {HslaToRgba(330, 0.76, 0.38, 1)},
-        [5] = {HslaToRgba(300, 0.68, 0.34, 1)},
-        [6] = {HslaToRgba(270, 0.6, 0.3, 1)},
-        [7] = {HslaToRgba(240, 0.52, 0.26, 1)},
-        [8] = {HslaToRgba(210, 0.44, 0.22, 1)},
-        [9] = {HslaToRgba(180, 0.36, 0.18, 1)},
-        [10] = {HslaToRgba(150, 0.28, 0.14, 1)},
-        [11] = {HslaToRgba(120, 0.2, 0.1, 1)},
-        [12] = {HslaToRgba(90, 0.12, 0.06, 1)}
+        [2] = {HslaToRgba(45, 0.96, 0.48, 1)},
+        [3] = {HslaToRgba(30, 0.92, 0.46, 1)},
+        [4] = {HslaToRgba(15, 0.88, 0.44, 1)},
+        [5] = {HslaToRgba(0, 0.84, 0.42, 1)},
+        [6] = {HslaToRgba(330, 0.8, 0.4, 1)},
+        [7] = {HslaToRgba(315, 0.76, 0.38, 1)},
+        [8] = {HslaToRgba(300, 0.72, 0.36, 1)},
+        [9] = {HslaToRgba(285, 0.68, 0.34, 1)},
+        [10] = {HslaToRgba(270, 0.64, 0.32, 1)},
+        [11] = {HslaToRgba(255, 0.6, 0.3, 1)},
+        [12] = {HslaToRgba(240, 0.56, 0.28, 1)},
+        [13] = {HslaToRgba(225, 0.52, 0.26, 1)},
+        [14] = {HslaToRgba(210, 0.48, 0.24, 1)},
+        [15] = {HslaToRgba(195, 0.44, 0.22, 1)},
+        [16] = {HslaToRgba(180, 0.4, 0.2, 1)},
+        [17] = {HslaToRgba(165, 0.36, 0.18, 1)},
+        [18] = {HslaToRgba(150, 0.32, 0.16, 1)},
+        [19] = {HslaToRgba(135, 0.28, 0.14, 1)},
+        [20] = {HslaToRgba(120, 0.24, 0.12, 1)},
+        [21] = {HslaToRgba(105, 0.2, 0.1, 1)},
+        [22] = {HslaToRgba(90, 0.16, 0.08, 1)},
+        [23] = {HslaToRgba(75, 0.12, 0.06, 1)},
+        [24] = {HslaToRgba(60, 0.08, 0.04, 1)},
+        [25] = {HslaToRgba(45, 0.04, 0.02, 1)},
+        [26] = {HslaToRgba(30, 0, 0, 1)}
+
     }
     bricks = {}
     brickWidth = 75
@@ -113,6 +132,12 @@ local function loadAssets()
     brickHitSFX = love.audio.newSource("assets/SFX/brickBoop.mp3", "static")
     paddleBoopSFX = love.audio.newSource("assets/SFX/paddleBoop.mp3", "static")
     wallBoopSFX = love.audio.newSource("assets/SFX/wallBoop.mp3", "static")
+    explosionSFX = love.audio.newSource("assets/SFX/explosion.mp3", "static") -- Add explosion sound if available
+    brickDeathSfX = love.audio.newSource("assets/SFX/brickDeath.mp3", "static")
+
+    -- load shaders
+    backgroundShader = love.graphics.newShader("Shaders/background.glsl")
+    shaders.load()
 end
 
 -- Load Love2D modules
@@ -131,6 +156,7 @@ function love.load()
     -- Get screen dimensions
     screenWidth, screenHeight = love.graphics.getDimensions()
     gameCanvas = love.graphics.newCanvas(screenWidth, screenHeight)
+    glowCanvas = love.graphics.newCanvas(screenWidth, screenHeight)
 
     love.window.setTitle("Brick Breaker")
 
@@ -172,11 +198,16 @@ local function moveBricksDown(dt)
     end
 end
 
-backgroundColor = {r=0,g=0,b=0,a=0  }
+backgroundColor = {r=0,g=0,b=0,a=0}
 screenOffset = {x=0,y=0}
 function love.update(dt)
 
+    --send info to background shader
+    backgroundShader:send("time", love.timer.getTime())                    -- RAJOUTE UN "-STARTTIME"
+    backgroundShader:send("resolution", {screenWidth, screenHeight})
+
     dt = dt * playRate -- Adjust the delta time based on the playback rate
+    dt = dt * 0.4 -- ralenti le jeu a la bonne vitesse
     if UtilityFunction.freeze then
         dt = 0 -- Freeze the game if UtilityFunction.freeze is true
     end
@@ -204,7 +235,7 @@ function love.update(dt)
         -- Move bricks down
         moveBricksDown(dt)
 
-        explosionsUpdate(dt) -- Update explosions
+        boomUpdate(dt) -- Update explosion for damage
 
         updateAllTweens(dt) -- Update all tweens
 
@@ -212,7 +243,6 @@ function love.update(dt)
 
         updateAnimations(dt) -- Update animations
 
-        shaders.updatePulse(dt) -- Update pulse effect
 
         if damageThisFrame > 0 then
             damageScreenVisuals(0.25, damageThisFrame)
@@ -222,24 +252,38 @@ function love.update(dt)
     end
 end
 
-local function drawBricks()
-    setFont(14) -- Set the preloaded font once for all bricks
-
+function drawBricks()
     for _, brick in ipairs(bricks) do
         if not brick.destroyed and brick.y > 0 - brick.height - 5 then
             -- Ensure brick color is valid
             local color = brick.color or {1, 1, 1, 1}
             love.graphics.setColor(color) -- Set brick color
-            love.graphics.draw(brickIMG, brick.x, brick.y, 0, brick.width / brickIMG:getWidth(), brick.height / brickIMG:getHeight())
-            love.graphics.rectangle("fill", brick.x, brick.y, brick.width, brick.height)
+            love.graphics.draw(brickImg, brick.x + brick.drawOffsetX, brick.y + brick.drawOffsetY, brick.drawOffsetRot, brick.width / brickImg:getWidth(), brick.height / brickImg:getHeight())
 
-            -- Draw the brick's HP using drawTextWithOutline
+            -- Calculate the origin for rotation (center of the brick)
+            local originX = brick.width / 2
+            local originY = brick.height / 2
+
+            -- Draw the brick with rotation around its center
+            love.graphics.draw(
+                brickImg,
+                brick.x + brick.drawOffsetX + originX, -- Adjust x position
+                brick.y + brick.drawOffsetY + originY, -- Adjust y position
+                brick.drawOffsetRot, -- Rotation angle
+                brick.width / brickImg:getWidth(), -- Scale X
+                brick.height / brickImg:getHeight(), -- Scale Y
+                originX, -- Origin X (center of the brick)
+                originY -- Origin Y (center of the brick)
+            )
+
+            --[[ Draw the brick's HP using drawTextWithOutline
             local textColor = {1, 1, 1, 1} -- White text color
             local outlineColor = {0, 0, 0, 1} -- Black outline color
             local outlineThickness = 1
             local hpText = tostring(brick.health or 0)
 
-            drawTextWithOutline(hpText, brick.x + brick.width / 2, brick.y + brick.height / 2, brickFont, textColor, outlineColor, outlineThickness)
+            setFont(14)
+            drawTextWithOutline(hpText, brick.x + brick.width / 2, brick.y + brick.height / 2, textColor, outlineColor, outlineThickness)]]
         end
     end
 end
@@ -261,18 +305,18 @@ function love.draw()
     love.graphics.setCanvas(gameCanvas) -- Set the canvas for drawing
     love.graphics.clear()
 
-    -- Draw the background for the game area
-    love.graphics.setColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a)
-    love.graphics.rectangle("fill", statsWidth, 0, screenWidth - statsWidth * 2, screenHeight)
-
     love.graphics.push()
     love.graphics.translate(screenOffset.x, screenOffset.y) -- Apply screen shake
+
+    love.graphics.setShader(backgroundShader)
+    love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
+    love.graphics.setShader()
 
     drawBricks() -- Draw bricks
 
     Balls.draw(Balls) -- Draw balls
 
-    -- Draw paddle
+    --Draw paddle
     love.graphics.setColor(0.5, 0.5, 0.5, 0.5) -- Reset color to white for paddle
     love.graphics.rectangle("fill", statsWidth, paddle.y, screenWidth - statsWidth*2, 1)
     love.graphics.setColor(1, 1, 1, 1)
@@ -281,6 +325,7 @@ function love.draw()
     drawDamageNumbers() -- Draw damage numbers
 
     drawAnimations() -- Draw animations
+    
 
     love.graphics.pop()
 
@@ -288,14 +333,13 @@ function love.draw()
     
     upgradesUI.draw()
 
-    suit.draw() -- Draw the UI elements using Suit
-
+    -- Draw the UI elements using Suit
+    suit.draw()
     dress:draw()
 
     love.graphics.setCanvas()
 
-    love.graphics.draw(gameCanvas)
-    shaders.draw() -- Draw the pulse effect
+    shaders.draw()
 
     if Player.dead then
         GameOverDraw()
@@ -310,18 +354,25 @@ function love.keypressed(key)
     if key == "escape" then
         love.event.quit()
     end
+
+    -- freeze
     if key == "f" then
         toggleFreeze()
     end
+
     if key == "b" then
-        Balls.addBall()
+        damageNumber(4,screenWidth/2,screenHeight/2,{1,1,1,1})
     end
+
+    --money manipulation
     if key == "m" then
         Player.money = Player.money + 10000000000000000 -- Add 1000 money for testing
     end
     if key == "n" then
         Player.money = 0
     end
+
+    --time manipulation
     if key == "l" then
         playRate = playRate * 2
     end
@@ -331,6 +382,8 @@ function love.keypressed(key)
     if key == "j" then 
         playRate = playRate / 2
     end
+
+    -- reset
     if key == "r" then
         love.event.quit("restart")
     end
@@ -355,16 +408,33 @@ function love.keypressed(key)
     if key == "t" then
         local total = 0
         for _, ball in ipairs(Balls) do
-            if ball.name == "fireBall" and ball.dead == false then
+            if ball.name == "Fire Ball" and ball.dead == false then
                 total = total + 1
             end
         end
         print("total fireballs alive: " .. total)
     end
+
+    if key == "=" then
+        if love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift") then
+            for _, brick in ipairs(bricks) do
+                if not brick.destroyed then
+                    brick.health = brick.health + 1
+                    brick.color = brickColorsByHealth[brick.health]
+                end
+            end
+        else end
+    end
+    if key == "-" then
+        for _, brick in ipairs(bricks) do
+            if not brick.destroyed then
+                brick.health = brick.health + 1
+                brick.color = brickColorsByHealth[brick.health]
+            end
+        end
+    end
 end
 
 function love.mousepressed(x, y, button)
-    if button == 1 then
-        shaders.triggerPulse(x, y, 10,2) -- Trigger a pulse at the mouse position with intensity 10
-    end
+
 end

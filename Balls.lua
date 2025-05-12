@@ -30,18 +30,34 @@ local function shoot(gunName)
         if gun.currentAmmo > 0 then
             local speedOffset = paddle.currentSpeedX or 0
             gun.currentAmmo = gun.currentAmmo - 1  -- Decrease ammo count
-            local speedXref = math.random(-100, 100) + speedOffset
-            table.insert(bullets, {
-                x = paddle.x + paddle.width / 2,
-                y = paddle.y,
-                speedX = speedXref,
-                speedY = -math.sqrt(bulletSpeed^2 - speedXref^2),
-                radius = 5,
-                stats = {damage = gun.stats.damage}
-            })
-            Timer.after(2.0/gun.stats.fireRate, function() shoot(gunName) end)
+            if gun.name == "Shotgun" then
+                for i = 1, 6 do
+                    local speedXref = math.random(-125, 125) + speedOffset
+                    table.insert(bullets, {
+                        type = "bullet",
+                        x = paddle.x + paddle.width / 2,
+                        y = paddle.y,
+                        speedX = speedXref + math.random(-50, 50),
+                        speedY = -math.sqrt(bulletSpeed^2 - (speedXref + math.random(-50, 50))^2),
+                        radius = 5,
+                        stats = {damage = gun.stats.damage}
+                    })
+                end
+            else
+                local speedXref = math.random(-100, 100) + speedOffset
+                table.insert(bullets, {
+                    type = "bullet",
+                    x = paddle.x + paddle.width / 2,
+                    y = paddle.y,
+                    speedX = speedXref,
+                    speedY = -math.sqrt(bulletSpeed^2 - speedXref^2),
+                    radius = 5,
+                    stats = {damage = gun.stats.damage}
+                }) 
+            end
+            Timer.after(2.0/(gun.stats.fireRate + (Player.bonuses.fireRate or 0)), function() shoot(gunName) end)
         else
-            gun.currentAmmo = gun.stats.ammo -- Reset ammo using the stats value
+            gun.currentAmmo = gun.stats.ammo + (Player.bonuses.ammo or 0) -- Reset ammo using the stats value
             Timer.after(gun.stats.cooldown, function() shoot(gunName) end)
         end
     else 
@@ -52,8 +68,8 @@ end
 --list of all ball types in the game
 local function ballListInit()
     ballList = {
-        baseBall = {
-            name = "baseBall",
+        ["Ball"] = {
+            name = "Ball",
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
@@ -68,8 +84,8 @@ local function ballListInit()
                 cooldown = 3,
             },
         },
-        fireBall = {
-            name = "fireBall",
+        ["Fire Ball"] = {
+            name = "Fire Ball",
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
@@ -85,8 +101,8 @@ local function ballListInit()
                 range = 2
             },
         },
-        phantomBall = {
-            name = "phantomBall",
+        ["Phantom Ball"] = {
+            name = "Phantom Ball",
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
@@ -102,14 +118,14 @@ local function ballListInit()
                 range = 1
             },
         },
-        goldBall = {
-            name = "goldBall",
+        ["Gold Ball"] = {
+            name = "Gold Ball",
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
             size = 1,
             rarity = "uncommon",
-            startingPrice = 10,
+            startingPrice = 5,
             description = "Hits brick : gives money equal to 2 times this ball's damage stat. Deals no damage",
             color = {1, 0.84, 0, 1},
             stats = {
@@ -125,7 +141,7 @@ local function ballListInit()
             y = screenHeight / 2,
             size = 1,
             rarity = "uncommon",
-            startingPrice = 10,
+            startingPrice = 5,
             description = "Boost nearby ball damage by this ball's damage stat",
             stats = {
                 speed = 75,
@@ -134,32 +150,78 @@ local function ballListInit()
                 range = 4
             },
         },
-        machineGun = {
-            name = "machineGun",
+        ["Machine Gun"] = {
+            name = "Machine Gun",
             type = "gun",
             x = screenWidth / 2,
             y = screenHeight / 2,
             size = 1,
             rarity = "uncommon",
-            startingPrice = 3,
+            startingPrice = 5,
             description = "fire bullets that die on impact in bursts",
             onBuy = function() 
-                shoot("machineGun")
+                shoot("Machine Gun")
             end,
             noAmmount = true,
             currentAmmo = 5,
 
             stats = {
-                damage = 1,
+                damage = 2,
                 cooldown = 5,
-                pierce = 1,
+                pierce = 0,
                 ammo = 5,
                 fireRate = 8,
             },
         },
+        Shotgun = {
+            name = "Shotgun",
+            type = "gun",
+            x = screenWidth / 2,
+            y = screenHeight / 2,
+            size = 1,
+            rarity = "uncommon",
+            startingPrice = 10,
+            description = "fire bullets that die on impact in bursts",
+            onBuy = function() 
+                shoot("Shotgun")
+            end,
+            noAmmount = true,
+            currentAmmo = 2,
+
+            stats = {
+                damage = 1,
+                cooldown = 8,
+                pierce = 1,
+                ammo = 2,
+                fireRate = 1,
+            },
+        },
+        Sniper = {
+            name = "Shotgun",
+            type = "gun",
+            x = screenWidth / 2,
+            y = screenHeight / 2,
+            size = 1,
+            rarity = "uncommon",
+            startingPrice = 10,
+            description = "fire bullets that die on impact in bursts",
+            onBuy = function() 
+                shoot("Shotgun")
+            end,
+            noAmmount = true,
+            currentAmmo = 2,
+
+            stats = {
+                damage = 1,
+                cooldown = 8,
+                pierce = 1,
+                ammo = 2,
+                fireRate = 1,
+            },
+        },
         Laser = {
             name = "Laser",
-            type = "Special weapon",
+            type = "tech",
             x = screenWidth / 2,
             y = screenHeight / 2,
             size = 1,
@@ -169,11 +231,11 @@ local function ballListInit()
             rarity = "rare",
             startingPrice = 10,
             description = "Paddle shoots laser beam forward equal to it's width that pierces bricks with a slow cooldown." .. 
-            "\n\n when a ball bounces off the paddle, the laser's cooldown is charged by 5 second",
+            "\n\n when a ball bounces off the paddle, the laser's cooldown is charged by 1 second",
             color = {0, 1, 0, 1}, -- Green color
             stats = {
                 damage = 1,
-                cooldown = 10,
+                cooldown = 13,
             },
         },
     }
@@ -189,11 +251,11 @@ function Balls.initialize()
     ballList = {}
     unlockedBallTypes = {}
     ballListInit()
-    Balls.addBall("baseBall")
+    Balls.addBall("Ball")
 end
 
 function Balls.addBall(ballName)
-    ballName = ballName or "baseBall" -- Default to baseBall if no name is provided
+    ballName = ballName or "Ball" -- Default to baseBall if no name is provided
     print("Adding ball: " .. ballName)
 
     local isNewBall = true
@@ -215,7 +277,7 @@ function Balls.addBall(ballName)
                 charging = true,
                 currentChargeTime = 0,
                 price = ballTemplate.startingPrice, -- Set the initial price of ball upgrades
-                currentAmmo = ballTemplate.currentAmmo or {}, -- Copy specific values from the template
+                currentAmmo = ((ballTemplate.currentAmmo or 0) + (Player.bonuses.ammo or 0)), -- Copy specific values from the template
                 stats = {} -- Set the initial cooldown
             }
             for statName, statValue in pairs(ballTemplate.stats) do
@@ -237,22 +299,29 @@ function Balls.addBall(ballName)
             return
         end
         if ballTemplate.type == "ball" then
-            local newBall = {
-                name = ballTemplate.name,
-                x = ballTemplate.x,
-                y = ballTemplate.y,
-                radius = ballTemplate.radius,
-                drawSizeBoost = 1,
-                drawSizeBoostTweens = {},
-                currentlyOverlappingBricks = {},
-                stats = stats,
-                speedX = math.random(ballTemplate.stats.speed*0.6, ballTemplate.stats.speed*0.6), -- Randomize speedX
-                speedY = 0, -- Will be calculated below
-                dead = false,
-                trail = {} -- Add a trail field to store previous positions
-            }
-            newBall.speedY = math.sqrt(newBall.stats.speed^2 - newBall.speedX^2) -- Calculate speedY
-            table.insert(Balls, newBall)
+            local loops = 1
+            if Player.bonuses.ammount then
+                loops = Player.bonuses.ammount + 1 -- Increase the number of loops based on bonuses
+            end
+            for i=1, loops do
+                local newBall = {
+                    type = "ball",
+                    name = ballTemplate.name,
+                    x = ballTemplate.x,
+                    y = ballTemplate.y,
+                    radius = ballTemplate.radius,
+                    drawSizeBoost = 1,
+                    drawSizeBoostTweens = {},
+                    currentlyOverlappingBricks = {},
+                    stats = stats,
+                    speedX = math.random(ballTemplate.stats.speed*0.6, ballTemplate.stats.speed*0.6), -- Randomize speedX
+                    speedY = 0, -- Will be calculated below
+                    dead = false,
+                    trail = {} -- Add a trail field to store previous positions
+                }
+                newBall.speedY = math.sqrt(newBall.stats.speed^2 - newBall.speedX^2) -- Calculate speedY
+                table.insert(Balls, newBall)
+            end
         end
 
         -- Call the onBuy function if it exists
@@ -302,7 +371,7 @@ function ballHitVFX(ball)
         removeTween(tweenID) -- Remove the previous tween if it exists
     end
     ball.drawSizeBoostTweens = {} -- Clear the previous tweens
-    local hitTween = tween.new(0.05, ball, {drawSizeBoost = 2}, tween.outQuad)
+    local hitTween = tween.new(0.05, ball, {drawSizeBoost = ball.drawSizeBoost+1}, tween.outQuad)
     addTweenToUpdate(hitTween)
     table.insert(ball.drawSizeBoostTweens, hitTween.id) -- Store the tween in the ball's drawSizeBoostTweens table
     Timer.after(0.05, function()
@@ -317,13 +386,26 @@ local function dealDamage(ball, brick)
     if unlockedBallTypes["Damage boost ball"] then
         for _, ballB in ipairs(Balls) do
             if ballB.name == "Damage boost ball" and ballB ~= ball then
-                if isBrickInRange(brick, ballB.x, ballB.y, ballB.stats.range * 40) then
+                if isBrickInRange(brick, ballB.x, ballB.y, ballB.stats.range + (Player.bonuses.range or 0) * 40) then
                     damage = damage + ballB.stats.damage
                 end
             end
         end
     end
-    if ball.name == "goldBall" then
+    if Player.bonuses.ballDamage and ball.type == "ball" then
+        damage = damage + Player.bonuses.ballDamage -- Increase damage based on player bonuses
+    end
+    if Player.bonuses.damage then
+        damage = damage + Player.bonuses.damage -- Increase damage based on player bonuses
+    end
+    if Player.bonuses.bulletDamage and ball.type == "bullet" then
+        damage = damage + Player.bonuses.bulletDamage -- Increase damage based on player bonuses
+    end
+    if math.random(1, 100) <= (Player.bonuses.critChance or 0) then
+        damage = damage * 2 -- Double the damage on crit
+        damageNumber(damage, brick.x + brick.width / 2, brick.y + brick.height / 2, {0, 1, 0, 1}) -- Green color for crit damage
+    end
+    if ball.name == "Gold Ball" then
         damage = damage * 2 -- Double the damage for goldBal
         damageNumber(damage, brick.x + brick.width / 2, brick.y + brick.height / 2, {1, 1, 0, 1}) -- Yellow color for goldBall
     else
@@ -335,34 +417,33 @@ local function dealDamage(ball, brick)
 
         damageThisFrame = damageThisFrame + damage -- Increase the damage dealt this frame
 
+        --createBrickExplosion(brick)
+
         if brick.health >= 1 then
             brick.hitLastFrame = true
-            brick.color = brick.health > 12 and {1, 1, 1, 1} or brickColorsByHealth[brick.health]
-            local colorBeforeHit = brick.color or {1, 1, 1, 1} -- Default to white if no color is set
-            brick.color = {1,1,1,1}
-            local hitTweenBack = tween.new(0.35, brick, {color = colorBeforeHit}, tween.outSine)
-            addTweenToUpdate(hitTweenBack)
+            VFX.bricksHitFX(brick, ball, damage)
         else
+            playSoundEffect(brickDeathSfX, 0.6, 1, false, true)
             brick.destroyed = true
             brick = nil
         end
         Player.score = Player.score + damage -- Increase player score based on damage dealt
     end
     if Player.bonuses.moneyIncome then
-        Player.gain(1 + damage * (Player.bonuses.moneyIncome / 100)) -- Increase player money based on damage dealt
+        Player.gain(damage + Player.bonuses.moneyIncome) -- Increase player money based on damage dealt
     else
         Player.gain(damage) -- Increase player money based on damage dealt
     end
 end
 
 local function brickCollisionEffects(ball, brick)
-    if ball.name ~= "phantomBall" then
+    if ball.name ~= "Phantom Ball" then
         ballHitVFX(ball) -- Call the ball hit VFX function
     end
-    if ball.name == "fireBall" then
+    if ball.name == "Fire Ball" then
         local explosionImage = love.graphics.newImage("assets/VFX/explosion.png")
-        createSpriteAnimation(ball.x, ball.y, ball.stats.range*2, explosionImage, 19, 19, 0.1)
-        local bricksTouchingCircle = getBricksTouchingCircle(ball.x, ball.y, (ball.stats.range*2) * 10)
+        createSpriteAnimation(ball.x, ball.y, (ball.stats.range + (Player.bonuses.range or 0))*2, explosionImage, 19, 19, 0.1)
+        local bricksTouchingCircle = getBricksTouchingCircle(ball.x, ball.y, (ball.stats.range + (Player.bonuses.range or 0)) * 24)
         if #bricksTouchingCircle > 1 then
         end
         for _, touchingBrick in ipairs(bricksTouchingCircle) do
@@ -376,24 +457,25 @@ local function brickCollision(ball, bricks, Player)
     local hitAnyBrick = false
     
     -- Special handling for phantom ball - needs to check ALL bricks
-    if ball.name == "phantomBall" or ball.name == "Damage boost ball" then
+    if ball.name == "Phantom Ball" or ball.name == "Damage boost ball" then
         -- First, create a table to track bricks we're currently overlapping with
         local currentlyOverlappingBricks = {}
 
         for index, brick in ipairs(bricks) do
             if not brick.destroyed then
                 local wasOverlaping = ball.currentlyOverlappingBricks[index] or false
+                local range = ball.stats.range + (Player.bonuses.range or 0)
                 if wasOverlaping == true then
-                    if not (ball.x + ball.radius * ball.stats.range > brick.x and ball.x - ball.radius * ball.stats.range < brick.x + brick.width and
-                    ball.y + ball.radius * ball.stats.range > brick.y and ball.y - ball.radius * ball.stats.range < brick.y + brick.height) then
+                    if not (ball.x + ball.radius * range > brick.x and ball.x - ball.radius * range < brick.x + brick.width and
+                    ball.y + ball.radius * range > brick.y and ball.y - ball.radius * range < brick.y + brick.height) then
                         ball.currentlyOverlappingBricks[index] = nil -- Remove from currently overlapping if not overlapping anymore
                     end
                 else
                     -- Check if we're currently overlapping with this brick
-                    if ball.x + ball.radius * ball.stats.range > brick.x and ball.x - ball.radius * ball.stats.range < brick.x + brick.width and
-                    ball.y + ball.radius * ball.stats.range > brick.y and ball.y - ball.radius * ball.stats.range < brick.y + brick.height then
+                    if ball.x + ball.radius * range > brick.x and ball.x - ball.radius * range < brick.x + brick.width and
+                    ball.y + ball.radius * range > brick.y and ball.y - ball.radius * range < brick.y + brick.height then
                         ball.currentlyOverlappingBricks[index] = true
-                        if ball.name == "phantomBall" then
+                        if ball.name == "Phantom Ball" then
                             dealDamage(ball, brick) -- Deal damage for new overlaps
                             -- If this brick wasn't in our last frame overlaps, it's a new entry
                             hitAnyBrick = true
@@ -402,7 +484,7 @@ local function brickCollision(ball, bricks, Player)
                 end
             end
         end
-        if ball.name == "phantomBall" then
+        if ball.name == "Phantom Ball" then
             return hitAnyBrick
         end
     end
@@ -416,6 +498,8 @@ local function brickCollision(ball, bricks, Player)
                ball.y + ball.radius > brick.y and ball.y - ball.radius < brick.y + brick.height then
                 local overlapX = math.min(ball.x + ball.radius - brick.x, brick.x + brick.width - ball.x + ball.radius)
                 local overlapY = math.min(ball.y + ball.radius - brick.y, brick.y + brick.height - ball.y + ball.radius)
+
+                brickCollisionEffects(ball, brick)
 
                 if overlapX < overlapY then
                     ball.speedX = -ball.speedX
@@ -433,7 +517,6 @@ local function brickCollision(ball, bricks, Player)
                     end
                 end
                 
-                brickCollisionEffects(ball, brick)
                 return true
             end
         end
@@ -450,7 +533,7 @@ local function paddleCollision(ball, paddle)
         ball.speedX = (hitPosition - 0.5) * 2 * math.abs(ball.stats.speed * 0.99)
         ball.speedY = math.sqrt(ball.stats.speed^2 - ball.speedX^2) * (ball.speedY > 0 and 1 or -1)
         if unlockedBallTypes["Laser"] then
-            unlockedBallTypes["Laser"].currentChargeTime = unlockedBallTypes["Laser"].currentChargeTime + 2 -- Reset charge time
+            unlockedBallTypes["Laser"].currentChargeTime = unlockedBallTypes["Laser"].currentChargeTime + 1 -- Reset charge time
         end
     end
     return false
@@ -491,8 +574,9 @@ function Balls.update(dt, paddle, bricks)
     for _, ball in ipairs(Balls) do -- Corrected loop
         -- Ball movement
         if Player.bonuses.ballSpeed then
-            ball.x = ball.x + ball.speedX * (1 + Player.bonuses.ballSpeed/100) * dt
-            ball.y = ball.y + ball.speedY * (1 + Player.bonuses.ballSpeed/100) * dt
+            local multX, multY = normalizeVector(ball.speedX, ball.speedY)
+            ball.x = ball.x + (ball.speedX + multX * Player.bonuses.ballSpeed * 50) * dt
+            ball.y = ball.y + (ball.speedY + multY * Player.bonuses.ballSpeed * 50) * dt
         else
             ball.x = ball.x + ball.speedX * dt
             ball.y = ball.y + ball.speedY * dt
@@ -565,7 +649,7 @@ local function laserShoot()
     local laserTween = tween.new(0.5, laserAlpha, {a = 0}, tween.inQuad)
     addTweenToUpdate(laserTween)
     for _, brick in ipairs(bricks) do
-        if not brick.destroyed then
+        if not brick.destroyed and brick.y > -brickHeight then
             if paddle.x < brick.x + brick.width and paddle.x + paddle.width > brick.x then
                 dealDamage({stats = {damage = unlockedBallTypes["Laser"].stats.damage}}, brick)
             end
@@ -575,18 +659,18 @@ end
 
 local function LaserDraw()
     if unlockedBallTypes["Laser"] then
-        love.graphics.setColor(1, 1, 1, 0.5)
+        love.graphics.setColor(1, 1, 1, 0.6)
         love.graphics.rectangle("fill", paddle.x, 0, 1, paddle.y)
         love.graphics.rectangle("fill", paddle.x + paddle.width, 0, 1, paddle.y)
 
         if unlockedBallTypes["Laser"].charging then 
-            local chargeRatio = unlockedBallTypes["Laser"].currentChargeTime / unlockedBallTypes["Laser"].stats.cooldown
+            local chargeRatio = unlockedBallTypes["Laser"].currentChargeTime / unlockedBallTypes["Laser"].stats.cooldown*2
             if chargeRatio >= 1 then
                 --Shoot the laser
                 laserShoot()
             end
 
-            love.graphics.setColor(0.5, 0.5, 0.5, 0.25)
+            love.graphics.setColor(0.5, 0.5, 0.5, 0.5)
             love.graphics.rectangle("fill", paddle.x + (paddle.width/2) - (paddle.width/2) * chargeRatio, 0, 1, paddle.y)
             love.graphics.rectangle("fill", paddle.x + (paddle.width/2)+ (paddle.width/2) * chargeRatio, 0, 1, paddle.y)
 
@@ -616,12 +700,12 @@ function Balls.draw()
 
         if ball.name == "Damage boost ball" then
             love.graphics.setColor(1, 0, 0, 1) -- Red color for damage boost ball
-            drawImageCentered(auraImg, ball.x, ball.y, ball.stats.range * 80, ball.stats.range * 80) -- Draw the aura image
+            drawImageCentered(auraImg, ball.x, ball.y, (ball.stats.range + (Player.bonuses.range or 0)) * 80, (ball.stats.range + (Player.bonuses.range or 0)) * 80) -- Draw the aura image
         end
 
-        if ball.name == "phantomBall" then
+        if ball.name == "Phantom Ball" then
             love.graphics.setColor(0, 0, 1, 1)
-            drawImageCentered(auraImg, ball.x, ball.y, ball.stats.range * 40, ball.stats.range * 40) -- Draw the aura image
+            drawImageCentered(auraImg, ball.x, ball.y, (ball.stats.range + (Player.bonuses.range or 0)) * 40, (ball.stats.range + (Player.bonuses.range or 0)) * 40) -- Draw the aura image
         end
 
         -- Draw the ball

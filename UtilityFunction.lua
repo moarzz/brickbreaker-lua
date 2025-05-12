@@ -68,8 +68,7 @@ function GameOverDraw()
 
     -- Display "Game Over" text
     love.graphics.setColor(1, 1, 1, 1) -- White color for the text
-    local font = love.graphics.newFont(48) -- Set a large font size
-    love.graphics.setFont(font)
+    setFont(48)
     local text = "Game Over"
     local textWidth = font:getWidth(text)
     local textHeight = font:getHeight()
@@ -151,18 +150,19 @@ function setFont(...)
         if Fonts[fontSize] then
             font = Fonts[fontSize] -- Use the cached font if it exists
         else
-            font = love.graphics.newFont(fontSize) -- Create a new font if it doesn't exis
+            -- default font type
+            font = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf",fontSize)
             Fonts[fontSize] = font -- Cache the new font
             print("Font created and cached: " .. fontSize)
         end
     else 
-        if Fonts[fontType .. fontSize] then
-            font = Fonts[fontType .. fontSize] -- Use the cached font if it exists
+        if Fonts[fontType .. tostring(fontSize)] then
+            font = Fonts[fontType .. tostring(fontSize)] -- Use the cached font if it exists
         else
-            Fonts[fontType .. fontSize] = love.graphics.newFont(fontType, fontSize) -- Create a new font and cache it
             font = love.graphics.newFont(fontType, fontSize)
+            Fonts[fontType .. tostring(fontSize)] = font
+            print("Font created and cached: " .. fontSize .. " " .. fontType)
         end
-        print("Font created and cached: " .. fontSize)
     end
     love.graphics.setFont(font) -- Set the font in Love2D
 end -- Missing 'end' added here
@@ -255,9 +255,7 @@ function drawCenteredText(text, x, y, font, textColor)
     love.graphics.setColor(1, 1, 1, 1)
 end
 
-function drawTextWithOutline(text, x, y, font, textColor, outlineColor, outlineThickness)
-    love.graphics.setFont(font)
-
+function drawTextWithOutline(text, x, y, textColor, outlineColor, outlineThickness)
     -- Set the outline color and draw the text around the main text
     love.graphics.setColor(outlineColor)
     for dx = -outlineThickness, outlineThickness, outlineThickness do
@@ -333,10 +331,10 @@ end
 
 
 --Tween functions
-local Tweens = {} -- Table to store tweens
+Tweens = {} -- Table to store tweens
 local currentTweenID = 0 -- Initialize a variable to keep track of the current tween ID
 function addTweenToUpdate(tween)
-    tween.table = currentTweenID
+    tween.id = currentTweenID
     currentTweenID = currentTweenID + 1
     table.insert(Tweens, tween) -- Add the tween to the list
     return #Tweens
@@ -423,7 +421,7 @@ function drawExplosions()
     end
 end
 
-function explosionsUpdate(dt)
+function boomUpdate(dt)
     for _, explosion in ipairs(explosions) do
         explosion.radius = explosion.radius + explosion.speed * dt -- Update the explosion radius
         if explosion.clock >= explosion.duration then
@@ -507,6 +505,7 @@ end
 currentScreenShakeIntensity = 0 -- Initialize the screen shake intensity
 function screenShake(duration, intensity, vibrationCount, direction)
     -- This function has 1 more vibration than vibrationCount
+    direction = direction or {1, 0} -- Default direction
     intensity = intensity or 10 -- Default intensity
     duration = duration or 0.5 -- Default duration
     vibrationCount = vibrationCount or 3 -- Default number of vibrations
@@ -566,6 +565,103 @@ function damageScreenVisuals(duration, intensity, direction)
     end
 end
 
+-- Function to create different types of explosions
+function createExplosionAt(x, y, type, size)
+    -- Default values if not specified
+    type = type or "normal"
+    size = size or 1.0
+    
+    -- Sound effect
+    if explosionSFX then
+        -- Vary pitch slightly for variety
+        local pitch = 0.9 + math.random() * 0.2
+        playSoundEffect(explosionSFX, 0.8, pitch, false, false)
+    end
+    
+    -- Visual effect based on type
+    if type == "normal" then
+        -- Create both white background explosion and particle explosion
+        Explosion.createBackgroundExplosion(x, y, 300 * size, 0.7 * size)
+        Explosion.createExplosion(x, y, math.floor(300 * size))
+        
+        -- Small screen shake
+        screenShake(0.2 * size, 3 * size)
+        
+    elseif type == "big" then
+        -- Create a larger white background explosion
+        Explosion.createBackgroundExplosion(x, y, 500 * size, 1.0 * size)
+        
+        -- Create particle explosion
+        Explosion.createExplosion(x, y, math.floor(800 * size))
+        
+        -- Bigger screen shake
+        screenShake(0.4 * size, 8 * size)
+        
+        -- Spawn additional smaller explosions
+        for i = 1, 3 do
+            local offsetX = (math.random() * 2 - 1) * 100 * size
+            local offsetY = (math.random() * 2 - 1) * 100 * size
+            
+            -- Delayed smaller explosions
+            Timer.after(0.1 * i, function()
+                Explosion.createBackgroundExplosion(x + offsetX, y + offsetY, 200 * size, 0.5 * size)
+                Explosion.createExplosion(x + offsetX, y + offsetY, math.floor(200 * size))
+            end)
+        end
+        
+    elseif type == "chain" then
+        -- Create initial white background explosion
+        Explosion.createBackgroundExplosion(x, y, 400 * size, 0.8 * size)
+        
+        -- Create initial particle explosion
+        Explosion.createExplosion(x, y, math.floor(500 * size))
+        
+        -- Medium screen shake
+        screenShake(0.3 * size, 5 * size)
+        
+        -- Chain reaction of explosions
+        for i = 1, 6 do
+            Timer.after(0.15 * i, function()
+                local distance = i * 50 * size
+                local angle = math.random() * math.pi * 2
+                local nextX = x + math.cos(angle) * distance
+                local nextY = y + math.sin(angle) * distance
+                
+                Explosion.createBackgroundExplosion(nextX, nextY, 200 * size, 0.6 * size)
+                Explosion.createExplosion(nextX, nextY, math.floor(300 * size))
+                
+                -- Small shake for each chain explosion
+                screenShake(0.15 * size, 3 * size)
+                
+                -- Play sound with decreasing volume
+                if explosionSFX then
+                    local volume = 0.7 - (i * 0.1)
+                    if volume > 0.3 then
+                        playSoundEffect(explosionSFX, volume, 1.1 - (i * 0.05), false, false)
+                    end
+                end
+            end)
+        end
+    end
+end
+
+-- New function to create explosions when bricks are destroyed
+function createBrickExplosion(brick)
+    if not brick then return end
+    
+    -- Create a small white background explosion
+    Explosion.createBackgroundExplosion(brick.x + brick.width/2, brick.y + brick.height/2, 
+                                       brick.width * 2, 0.4)
+    
+    -- Create a small particle explosion
+    Explosion.createExplosion(brick.x + brick.width/2, brick.y + brick.height/2, 
+                             math.floor(100 + brick.health * 10))
+    
+    -- Small screen shake based on brick health
+    local shakeIntensity = math.min(3, brick.health * 0.2)
+    screenShake(0.1, shakeIntensity)
+end
+
 local damageNumbers = {} -- Table to store damage numbers
 function damageNumber(damage, x, y, color)
     local damageNumber = {
@@ -600,7 +696,7 @@ end
 
 function drawDamageNumbers()
     for _, damageNumber in ipairs(damageNumbers) do
-        setFont("assets/Fonts/borderedPixelated.ttf", 60)
+        setFont("assets/Fonts/KenneyBlocks.ttf", 60)
         love.graphics.push()
         love.graphics.scale(damageNumber.fontSize/3, damageNumber.fontSize/3) -- Scale the font size
         damageNumber.color[4] = damageNumber.alpha -- Set the alpha value for the color
