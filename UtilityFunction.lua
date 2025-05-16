@@ -111,6 +111,18 @@ function HslaToRgba(h, s, l, a)
     end
 end
 
+function randomFloat(min, max)
+    return min + (max - min) * math.random()
+end
+
+function rotateVector(x, y, angle)
+    local cosTheta = math.cos(angle)
+    local sinTheta = math.sin(angle)
+    local rotatedX = x * cosTheta - y * sinTheta
+    local rotatedY = x * sinTheta + y * cosTheta
+    return rotatedX, rotatedY
+end
+
 function normalizeVector(x, y)
     local magnitude = math.sqrt(x^2 + y^2)
     if magnitude == 0 then
@@ -317,18 +329,29 @@ end
 
 function formatNumber(value)
     if value >= 1e12 then
-        return string.format("%.3gT", value / 1e12) -- Trillions
+        return string.format("%.2gT", value / 1e12) -- Trillions
     elseif value >= 1e9 then
-        return string.format("%.3gB", value / 1e9) -- Billions
+        return string.format("%.2gB", value / 1e9) -- Billions
     elseif value >= 1e6 then
-        return string.format("%.3gM", value / 1e6) -- Millions
+        return string.format("%.2gM", value / 1e6) -- Millions
     elseif value >= 1e3 then
-        return string.format("%.3gK", value / 1e3) -- Thousands
+        return string.format("%.2gK", value / 1e3) -- Thousands
     else
         return tostring(value) -- Less than 1000, no suffix
     end
 end
 
+function getMaxFittingFontSize(text, maxFontSize, cellWidth)
+    local fontSize = maxFontSize
+    setFont(fontSize)
+    local textWidth = getTextSize(text)
+    while textWidth > cellWidth and fontSize > 1 do
+        fontSize = fontSize - 1
+        setFont(fontSize)
+        textWidth = getTextSize(text)
+    end
+    return fontSize
+end
 
 --Tween functions
 Tweens = {} -- Table to store tweens

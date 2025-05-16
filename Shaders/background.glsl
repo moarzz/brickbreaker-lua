@@ -4,9 +4,16 @@
 // LÖVE2D uniform variables to replace Shadertoy globals
 uniform float time;           // Replaces iTime
 uniform vec2 resolution;      // Replaces iResolution.xy
+uniform float intensity;
+uniform float brightness;
 
 vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
 {
+    // set adjustable parameters
+    float scaleMult = 0.25 + intensity * 0.5; // Adjust the scale multiplier based on intensity
+    float brightnessMultBoost = brightness * 2.0 + intensity;
+    float brightnessOffsetBoost = -2.5;
+
     // Create our output color variable
     vec4 fragColor = vec4(0.0, 0.0, 0.0, 1.0);  // Initialize with alpha = 1.0
     
@@ -15,7 +22,7 @@ vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
     
     float pi = 3.14159265359;
     // Iterator, raymarch depth and step distance
-    float i = 0.0, z = 0.0, d = 0.0, scaleMult = 0.0;
+    float i = 0.0, z = 0.0, d = 0.0;
     
     // Remove the time > 2.0 condition so we see something immediately
     // Raymarch 50 steps
@@ -29,7 +36,6 @@ vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
         p.z -= time;
         
         // Scale shift
-        scaleMult = ((sin((((time/10.0)-pi)/2.0))+1.0)/2.0)*0.65+0.15;
         if (scaleMult < 0.01) scaleMult = 0.01; // Prevent potential divide by zero
         
         // Shift the position to modulate colors
@@ -41,11 +47,11 @@ vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
         z += d = 1e-4+scaleMult*length(max(v=cos(p)-sin(p).yzx,v.yxz*.2));
         
         // Use shifted position for coloring (cycles hues)
-        fragColor.rgb += (cos(shiftedP) + 1.5) / (d+0.05)-5.0;  // Prevent division by very small numbers
+        fragColor.rgb += (cos(shiftedP) + brightnessMultBoost) / (d+0.1) + brightnessOffsetBoost;  // Prevent division by very small numbers
     }
     
     // Tonemapping
-    fragColor /= fragColor/(scaleMult/100000.0 +0.4) + 1e3;
+    fragColor /= fragColor/(scaleMult/0.8+0.4) + 1e3;
     
     // Ensure alpha is 1.0
     fragColor.a = 1.0;

@@ -1,17 +1,8 @@
 shaders = {}
 
 function shaders.load()
-    
-    --glow effect
-    glowEffect = moonshine(moonshine.effects.glow)
-        .chain(moonshine.effects.boxblur)
     glowEffect.glow.strength = 500 -- Adjust glow intensity
     glowEffect.glow.min_luma = 0.05 -- Minimum brightness to glow
-
-    --test
-    effect = moonshine(moonshine.effects.filmgrain)
-                        .chain(moonshine.effects.vignette)
-    effect.filmgrain.size = 2
 end
 
 function shaders.drawGlowLayer()

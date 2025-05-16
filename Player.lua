@@ -28,9 +28,8 @@ Player.bonusesList = {
     bulletDamage = {name = "bulletDamage", description = "Bullet damage boost", startingPrice = 5},
     ammo = {name = "ammo", description = "Ammo boost", startingPrice = 5},
     range = {name = "range", description = "Range boost", startingPrice = 5},
-    fireRate = {name = "fireRate", description = "Fire rate boost", price = 5},
-    pierce = {name = "pierce", description = "Pierce boost", price = 5},
-    ammount = {name = "amount", description = "Amount boost", price = 10},
+    fireRate = {name = "fireRate", description = "Fire rate boost", startingPrice = 5},
+    amount = {name = "amount", description = "Amount boost", startingPrice = 10},
 }
 
 Player.bonusUpgrades = {
@@ -47,10 +46,15 @@ Player.bonusUpgrades = {
     ammo = function() Player.bonuses.ammo = Player.bonuses.ammo + 1 end,
     range = function() Player.bonuses.range = Player.bonuses.range + 1 end,
     fireRate = function() Player.bonuses.fireRate = Player.bonuses.fireRate + 1 end,
-    pierce = function() Player.bonuses.pierce = Player.bonuses.pierce + 1 end,
-    ammount = function() Player.bonuses.ammount = Player.bonuses.ammount + 1 
-        for _, ballType in Balls.getUnlockedBallTypes() do
-            Balls.addBall(ballType.name)
+    amount = function() Player.bonuses.amount = Player.bonuses.amount + 1 
+        local ballsToAdd = {}
+        print("Balls.addBall type:", type(Balls.addBall))
+        print(#Balls.getUnlockedBallTypes())
+        for _, ballType in ipairs(Balls.getUnlockedBallTypes()) do
+            table.insert(ballsToAdd, ballType.name)
+        end
+        for _, ballName in ipairs(ballsToAdd) do
+            Balls.addBall(ballName)
         end
     end,
 }

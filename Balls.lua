@@ -8,7 +8,7 @@ function Balls.getBallList()
     return ballList
 end
 local unlockedBallTypes = {}
-local nextBallPrice = 10
+local nextBallPrice = 100
 function Balls.getNextBallPrice()
     return nextBallPrice
 end
@@ -20,7 +20,7 @@ function Balls.getUnlockedBallTypes()
     return unlockedBallTypes
 end
 
-local ballTrainLength = 20 -- Length of the ball trail
+local ballTrailLength = 100 -- Length of the ball trail
 local bullets = {}
 local bulletSpeed = 500
 
@@ -81,11 +81,11 @@ local function ballListInit()
             stats = {
                 speed = 250,
                 damage = 1,
-                cooldown = 3,
+                --cooldown = 3,
             },
         },
-        ["Fire Ball"] = {
-            name = "Fire Ball",
+        ["Exploding ball"] = {
+            name = "Exploding ball",
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
@@ -97,7 +97,7 @@ local function ballListInit()
             stats = {
                 speed = 100,
                 damage = 2,
-                cooldown = 3,
+                --cooldown = 3,
                 range = 2
             },
         },
@@ -114,7 +114,7 @@ local function ballListInit()
             stats = {
                 speed = 50,
                 damage = 1,
-                cooldown = 3,
+                --cooldown = 3,
                 range = 1
             },
         },
@@ -131,7 +131,7 @@ local function ballListInit()
             stats = {
                 speed = 100,
                 damage = 1,
-                cooldown = 3,
+                --cooldown = 3,
             },
         },
         ["Damage boost ball"] = {
@@ -146,7 +146,7 @@ local function ballListInit()
             stats = {
                 speed = 75,
                 damage = 1,
-                cooldown = 3,
+                --cooldown = 3,
                 range = 4
             },
         },
@@ -162,14 +162,13 @@ local function ballListInit()
             onBuy = function() 
                 shoot("Machine Gun")
             end,
-            noAmmount = true,
+            noAmount = true,
             currentAmmo = 5,
 
             stats = {
-                damage = 2,
+                damage = 1,
                 cooldown = 5,
-                pierce = 0,
-                ammo = 5,
+                ammo = 8,
                 fireRate = 8,
             },
         },
@@ -185,19 +184,18 @@ local function ballListInit()
             onBuy = function() 
                 shoot("Shotgun")
             end,
-            noAmmount = true,
+            noAmount = true,
             currentAmmo = 2,
 
             stats = {
                 damage = 1,
-                cooldown = 8,
-                pierce = 1,
+                cooldown = 12,
                 ammo = 2,
                 fireRate = 1,
             },
         },
         Sniper = {
-            name = "Shotgun",
+            name = "Sniper",
             type = "gun",
             x = screenWidth / 2,
             y = screenHeight / 2,
@@ -208,13 +206,12 @@ local function ballListInit()
             onBuy = function() 
                 shoot("Shotgun")
             end,
-            noAmmount = true,
+            noAmount = true,
             currentAmmo = 2,
 
             stats = {
                 damage = 1,
                 cooldown = 8,
-                pierce = 1,
                 ammo = 2,
                 fireRate = 1,
             },
@@ -227,10 +224,10 @@ local function ballListInit()
             size = 1,
             charging = true,
             currentChargeTime = 0,
-            noAmmount = true,
+            noAmount = true,
             rarity = "rare",
             startingPrice = 10,
-            description = "Paddle shoots laser beam forward equal to it's width that pierces bricks with a slow cooldown." .. 
+            description = "Paddle shoots laser beam forward equal to it's width that goes through bricks with a slow cooldown." .. 
             "\n\n when a ball bounces off the paddle, the laser's cooldown is charged by 1 second",
             color = {0, 1, 0, 1}, -- Green color
             stats = {
@@ -272,8 +269,9 @@ function Balls.addBall(ballName)
         if isNewBall then
             local newBallType = {
                 name = ballName, -- Set the name of the ball
-                ammount = 1, -- Set the initial amount to 1
-                noAmmount = ballTemplate.noAmmount or false, -- Set noAmmount to false if not specified
+                type = ballTemplate.type,
+                amount = 1, -- Set the initial amount to 1
+                noAmount = ballTemplate.noAmount or false, -- Set noAmount to false if not specified
                 charging = true,
                 currentChargeTime = 0,
                 price = ballTemplate.startingPrice, -- Set the initial price of ball upgrades
@@ -289,7 +287,7 @@ function Balls.addBall(ballName)
             for _, ballType in pairs(unlockedBallTypes) do
                 if ballType.name == ballName then
                     stats = ballType.stats -- Get the stats of the existing ball type
-                    ballType.ammount = ballType.ammount + 1 -- Increase the amount of the ball in the list
+                    ballType.amount = ballType.amount + 1 -- Increase the amount of the ball in the list
                     break -- Exit the loop once the ball type is found
                 end
             end
@@ -300,8 +298,8 @@ function Balls.addBall(ballName)
         end
         if ballTemplate.type == "ball" then
             local loops = 1
-            if Player.bonuses.ammount then
-                loops = Player.bonuses.ammount + 1 -- Increase the number of loops based on bonuses
+            if Player.bonuses.amount then
+                loops = Player.bonuses.amount + 1 -- Increase the number of loops based on bonuses
             end
             for i=1, loops do
                 local newBall = {
@@ -334,6 +332,24 @@ function Balls.addBall(ballName)
     print("Added ball: " .. ballName .. ", total balls: " .. #Balls .. ", unlocked ball types: " .. #unlockedBallTypes)
 end
 
+function Balls.getMinX()
+    local minX = math.huge
+    for _, ball in ipairs(Balls) do
+        if ball.x < minX then
+            minX = ball.x
+        end
+    end
+    return minX
+end
+function Balls.getMaxX()
+    local maxX = -math.huge
+    for _, ball in ipairs(Balls) do
+        if ball.x > maxX then
+            maxX = ball.x
+        end
+    end
+    return maxX
+end
 --increases the particular stat of every ball of a certain type by set amount
 function Balls.adjustSpeed(ballName)
     for _, ball in ipairs(Balls) do
@@ -382,6 +398,7 @@ function ballHitVFX(ball)
 end
 
 local function dealDamage(ball, brick)
+    local kill = false
     local damage = ball.stats.damage
     if unlockedBallTypes["Damage boost ball"] then
         for _, ballB in ipairs(Balls) do
@@ -417,15 +434,22 @@ local function dealDamage(ball, brick)
 
         damageThisFrame = damageThisFrame + damage -- Increase the damage dealt this frame
 
-        --createBrickExplosion(brick)
+        -- brick hit vfx
+        VFX.brickHit(brick, ball, damage)
 
         if brick.health >= 1 then
             brick.hitLastFrame = true
-            VFX.bricksHitFX(brick, ball, damage)
         else
+            kill = true
             playSoundEffect(brickDeathSfX, 0.6, 1, false, true)
             brick.destroyed = true
             brick = nil
+            if ball.type == "bullet" then
+                ball.stats.damage = ball.stats.damage - damage
+                if ball.stats.damage <= 0 then
+                    kill = false
+                end
+            end
         end
         Player.score = Player.score + damage -- Increase player score based on damage dealt
     end
@@ -434,13 +458,14 @@ local function dealDamage(ball, brick)
     else
         Player.gain(damage) -- Increase player money based on damage dealt
     end
+    return(kill)
 end
 
 local function brickCollisionEffects(ball, brick)
     if ball.name ~= "Phantom Ball" then
         ballHitVFX(ball) -- Call the ball hit VFX function
     end
-    if ball.name == "Fire Ball" then
+    if ball.name == "Exploding ball" then
         local explosionImage = love.graphics.newImage("assets/VFX/explosion.png")
         createSpriteAnimation(ball.x, ball.y, (ball.stats.range + (Player.bonuses.range or 0))*2, explosionImage, 19, 19, 0.1)
         local bricksTouchingCircle = getBricksTouchingCircle(ball.x, ball.y, (ball.stats.range + (Player.bonuses.range or 0)) * 24)
@@ -544,19 +569,23 @@ local function wallCollision(ball)
         ball.speedX = -ball.speedX
         ball.x = statsWidth + ball.radius -- Ensure the ball is not stuck in the wall
         if ball.y < screenWidth then
-            playSoundEffect(wallBoopSFX, 0.5, 0.5)
+            playSoundEffect(wallBoopSFX, 1, 0.5)
         end
     elseif ball.x + ball.radius > screenWidth - statsWidth and ball.speedX > 0 then
         ball.speedX = -ball.speedX
         ball.x = screenWidth - statsWidth - ball.radius -- Ensure the ball is not stuck in the wall
         if ball.y < screenWidth then
-            playSoundEffect(wallBoopSFX, 0.5, 0.5)
+            playSoundEffect(wallBoopSFX, 1, 0.5)
         end
     end
     if ball.y - ball.radius < 0 and ball.speedY < 0 then
         ball.speedY = -ball.speedY
         ball.y = ball.radius -- Ensure the ball is not stuck in the wall
-        playSoundEffect(wallBoopSFX, 0.5, 0.5)
+        playSoundEffect(wallBoopSFX, 1, 0.5)
+    elseif ball.y + ball.radius > screenHeight and ball.speedY > 0 then
+        ball.speedY = -ball.speedY
+        ball.y = screenHeight - ball.radius
+        playSoundEffect(wallBoopSFX, 1, 0.5)
     end
 end
 
@@ -571,6 +600,7 @@ end
 function Balls.update(dt, paddle, bricks)
     -- Store paddle reference for Ballspawn
     paddleReference = paddle
+    local ballTrailLength = 100
     for _, ball in ipairs(Balls) do -- Corrected loop
         -- Ball movement
         if Player.bonuses.ballSpeed then
@@ -584,7 +614,7 @@ function Balls.update(dt, paddle, bricks)
 
         -- Update the trail
         table.insert(ball.trail, {x = ball.x, y = ball.y})
-        if #ball.trail > ballTrainLength then -- Limit the trail length to 10 points
+        if #ball.trail > ballTrailLength then -- Limit the trail length to 10 points
             table.remove(ball.trail, 1)
         end
 
@@ -599,10 +629,10 @@ function Balls.update(dt, paddle, bricks)
             wallCollision(ball)
         end
 
-        -- Reset ball if it falls below the screen
+        --[[ Reset ball if it falls below the screen
         if ball.y - ball.radius > screenHeight then
             ballDie(ball)
-        end
+        end]]
     end
 
     for i, bullet in ipairs(bullets) do
@@ -616,9 +646,11 @@ function Balls.update(dt, paddle, bricks)
                     bullet.y + bullet.radius > brick.y and bullet.y - bullet.radius < brick.y + brick.height then
 
                     -- Deal damage to the brick and remove the bullet
-                    dealDamage(bullet, brick)
-                    bullet = nil
-                    table.remove(bullets, i)
+                    local kill = dealDamage(bullet, brick)
+                    if not kill then
+                        bullet = nil
+                        table.remove(bullets, i)
+                    end
                     return
                 end
             end
@@ -651,7 +683,7 @@ local function laserShoot()
     for _, brick in ipairs(bricks) do
         if not brick.destroyed and brick.y > -brickHeight then
             if paddle.x < brick.x + brick.width and paddle.x + paddle.width > brick.x then
-                dealDamage({stats = {damage = unlockedBallTypes["Laser"].stats.damage}}, brick)
+                dealDamage({stats = {damage = unlockedBallTypes["Laser"].stats.damage}, speedX = 0, speedY = -1}, brick)
             end
         end
     end
@@ -682,19 +714,16 @@ local function LaserDraw()
 end
 
 function Balls.draw()
-    -- Set line style and join to make the trail smoother
-    love.graphics.setLineStyle("smooth")
-    love.graphics.setLineJoin("bevel")
-    love.graphics.setLineWidth(1.0)
-
     for _, ball in ipairs(Balls) do
         -- Draw the trail
+        local ballColor = ballList[ball.name].color or {1,1,1,1}
         if not ball.dead then
-            for i = 1, #ball.trail - 1 do
-                local p1 = ball.trail[i]
-                local p2 = ball.trail[i + 1]
-                love.graphics.setColor(1, 1, 1, i / #ball.trail) -- Fade the trail
-                love.graphics.line(p1.x, p1.y, p2.x, p2.y)
+            for i = 1, #ball.trail do
+                local p = ball.trail[i]
+                local t = i / #ball.trail
+                local trailRadius = ball.radius * ball.drawSizeBoost * math.pow(t,1.25) -- Starts at 0, grows to ball.radius
+                love.graphics.setColor(ballColor[1], ballColor[2], ballColor[3], math.pow(t,4)) -- Fade the trail
+                love.graphics.circle("fill", p.x, p.y, trailRadius)
             end
         end
 
@@ -709,7 +738,6 @@ function Balls.draw()
         end
 
         -- Draw the ball
-        love.graphics.setColor(ballList[ball.name].color or {1,1,1,1}) -- Set color based on ball type
         love.graphics.circle("fill", ball.x, ball.y, ball.radius * ball.drawSizeBoost)
 
     end

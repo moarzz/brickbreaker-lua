@@ -3,7 +3,6 @@ Player = require("Player") -- player logic
 Balls = require("Balls") -- ball logic
 Timer = require("Libraries.timer") -- timer library
 local upgradesUI = require("upgradesUI") -- upgrade UI logic
-moonshine = require("Libraries.moonshine")
 shaders = require("shaders") -- shader logic
 suit = require("Libraries.Suit") -- UI library
 tween = require("Libraries.tween") -- tweening library
@@ -13,6 +12,7 @@ VFX = require("VFX") -- VFX library
 statsWidth = 450 -- Width of the stats area
 screenWidth = 1020 + statsWidth
 screenHeight = 1000
+backgroundColor = {r=0,g=0,b=0,a=0}
 
 playRate = 1 -- Set the playback rate to 1 (normal speed)
 gameCanvas = nil
@@ -54,7 +54,7 @@ local function generateRow(brickCount, yPos)
     end
     return row
 end
-
+local currentRowPopulation
 local function addMoreBricks()
     for i = #bricks, 0, -1 do
         if bricks[i] then
@@ -71,6 +71,7 @@ local function addMoreBricks()
         end
     end
 end
+
 
 function initializeBricks()
     -- Bricks
@@ -115,7 +116,7 @@ function initializeBricks()
     -- Generate bricks
     for i = 0, rows - 1 do
         generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing)) --generate 100 scaling rows of bricks
-        currentRowPopulation = currentRowPopulation + 1 + math.floor(currentRowPopulation/50)
+        currentRowPopulation = currentRowPopulation + 1 + math.floor(currentRowPopulation/25)
     end
 
     --check for adding more bricks every 0.5 seconds
@@ -126,6 +127,19 @@ local function loadAssets()
     --load images
     auraImg = love.graphics.newImage("assets/sprites/aura.png")
     brickImg = love.graphics.newImage("assets/sprites/brick.png")
+        -- UI
+    uiLabelImg = love.graphics.newImage("assets/sprites/UI/ballUI backgroundTop.png")
+    uiWindowImg = love.graphics.newImage("assets/sprites/UI/ballBackground.png")
+        --Icons
+    iconsImg = {
+        amount = love.graphics.newImage("assets/sprites/UI/icons/amount.png"),
+        ammo = love.graphics.newImage("assets/sprites/UI/icons/ammo.png"),
+        damage = love.graphics.newImage("assets/sprites/UI/icons/damage.png"),
+        cooldown = love.graphics.newImage("assets/sprites/UI/icons/cooldown.png"),
+        fireRate = love.graphics.newImage("assets/sprites/UI/icons/fireRate.png"),
+        speed = love.graphics.newImage("assets/sprites/UI/icons/speed.png"),
+        range = love.graphics.newImage("assets/sprites/UI/icons/range.png"),
+    }
 
     -- load sounds
     backgroundMusic = love.audio.newSource("assets/SFX/game song.mp3", "static")
@@ -137,7 +151,9 @@ local function loadAssets()
 
     -- load shaders
     backgroundShader = love.graphics.newShader("Shaders/background.glsl")
-    shaders.load()
+    
+    -- Load our new radial sine shader
+    radialSineShader = love.graphics.newShader("Shaders/brickHit.glsl")
 end
 
 -- Load Love2D modules
@@ -157,13 +173,17 @@ function love.load()
     screenWidth, screenHeight = love.graphics.getDimensions()
     gameCanvas = love.graphics.newCanvas(screenWidth, screenHeight)
     glowCanvas = love.graphics.newCanvas(screenWidth, screenHeight)
+    uiCanvas = love.graphics.newCanvas(screenWidth, screenHeight)
+    
+    -- Create a new canvas for the shader overlay
+    shaderOverlayCanvas = love.graphics.newCanvas(screenWidth, screenHeight)
 
     love.window.setTitle("Brick Breaker")
 
     -- Paddle
     paddle = {
         x = screenWidth / 2 - 50,
-        y = screenHeight - 200,
+        y = screenHeight - 300,
         width = 130,
         widthMult = 1,
         height = 20,
@@ -183,7 +203,7 @@ local function getBrickSpeedMult()
     -- the lowest bricK}k on screen will have the highest Y.
     for i, brick in ipairs(bricks) do
         if not brick.destroyed then
-            return mapRangeClamped(brick.y, 0, paddle.y - brickHeight, 2, 0.25)
+            return brick.y <= (paddle.y - brickHeight)/2 and mapRangeClamped(brick.y, 0, (paddle.y - brickHeight)/2, 4, 1) or mapRangeClamped(brick.y, (paddle.y - brickHeight)/2, paddle.y - brickHeight, 1, 0.25)
         end
     end
     error("No bricks found that weren't destroyed")
@@ -198,13 +218,29 @@ local function moveBricksDown(dt)
     end
 end
 
-backgroundColor = {r=0,g=0,b=0,a=0}
 screenOffset = {x=0,y=0}
-function love.update(dt)
-
+local startTime = -10
+function love.update(dt)    
     --send info to background shader
-    backgroundShader:send("time", love.timer.getTime())                    -- RAJOUTE UN "-STARTTIME"
+    backgroundShader:send("time", love.timer.getTime())                   
     backgroundShader:send("resolution", {screenWidth, screenHeight})
+    backgroundShader:send("brightness", backgroundColor.a)
+    local backgroundIntensity = Player.score <= 100 and mapRangeClamped(Player.score,1,100, 0.0, 0.15) or (Player.score <= 5000 and mapRangeClamped(Player.score, 100, 5000, 0.15, 0.5) or mapRangeClamped(Player.score, 5000, 100000, 0.5, 1.0))
+    
+    -- overwrites backgroundIntensity if using debugging window
+    if shouldDrawDebug then
+        backgroundIntensity = VFX.backgroundIntensityOverwrite 
+    end
+
+    backgroundShader:send("intensity", backgroundIntensity)
+    if startTime == -10 then
+        startTime = love.timer.getTime()+0.5
+    end
+    radialSineShader:send("time", love.timer.getTime()-startTime)
+    radialSineShader:send("resolution", {screenWidth, screenHeight})
+    local sineShaderIntensity = 0.3 -- Default base intensity
+
+    radialSineShader:send("intensity", sineShaderIntensity)
 
     dt = dt * playRate -- Adjust the delta time based on the playback rate
     dt = dt * 0.4 -- ralenti le jeu a la bonne vitesse
@@ -245,10 +281,14 @@ function love.update(dt)
 
 
         if damageThisFrame > 0 then
-            damageScreenVisuals(0.25, damageThisFrame)
-            playSoundEffect(brickHitSFX, mapRangeClamped(damageThisFrame, 1,10, 0.4,1.0), mapRangeClamped(damageThisFrame,1,10,0.5,1), false, true)
+            damageScreenVisuals(mapRangeClamped(damageThisFrame,1,20,0.25, 0.5), damageThisFrame)
+            playSoundEffect(brickHitSFX, mapRangeClamped(damageThisFrame, 1,10, 0.4,1.0), mapRangeClamped(damageThisFrame,1,20,0.5,1), false, true)
+            
+            -- Optionally increase the radial sine shader intensity on damage
+            radialSineShader:send("intensity", math.min(0.8, sineShaderIntensity + damageThisFrame * 0.05))
         end
         damageThisFrame = 0 -- Reset damage this frame
+        VFX.update(dt) -- Update VFX
     end
 end
 
@@ -291,9 +331,7 @@ end
 local function drawStatsArea()
     -- Draw stats area background
     love.graphics.setColor(0.2, 0.2, 0.2, 1) -- Dark gray background
-    love.graphics.rectangle("fill", 0, 0, statsWidth, screenHeight)
-
-    love.graphics.rectangle("fill", screenWidth - statsWidth, 0, statsWidth, screenHeight)
+   -- love.graphics.rectangle("fill", 0, 0, statsWidth, screenHeight)
 
     love.graphics.setColor(1, 1, 1, 1) -- Reset color to white for other drawings
 end
@@ -302,22 +340,23 @@ end
 function love.draw()
     resetButtonLastID()-- resets the button ID to 1 so it stays consistent
 
+    -- First render the game to the game canvas
     love.graphics.setCanvas(gameCanvas) -- Set the canvas for drawing
     love.graphics.clear()
-
     love.graphics.push()
-    love.graphics.translate(screenOffset.x, screenOffset.y) -- Apply screen shake
 
     love.graphics.setShader(backgroundShader)
     love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
     love.graphics.setShader()
+
+    love.graphics.translate(screenOffset.x, screenOffset.y) -- Apply screen shake
 
     drawBricks() -- Draw bricks
 
     Balls.draw(Balls) -- Draw balls
 
     --Draw paddle
-    love.graphics.setColor(0.5, 0.5, 0.5, 0.5) -- Reset color to white for paddle
+    love.graphics.setColor(0.5, 0.5, 0.5, math.max(0.5-getBrickSpeedMult(),0)) -- Reset color to white for paddle
     love.graphics.rectangle("fill", statsWidth, paddle.y, screenWidth - statsWidth*2, 1)
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.rectangle("fill", paddle.x, paddle.y, paddle.width * paddle.widthMult, paddle.height)
@@ -326,8 +365,17 @@ function love.draw()
 
     drawAnimations() -- Draw animations
     
-
     love.graphics.pop()
+
+    -- Now draw the shader overlay
+    love.graphics.setCanvas(shaderOverlayCanvas)
+    love.graphics.clear()
+    love.graphics.setShader(radialSineShader)
+    love.graphics.setColor(1,1,1,1)
+    love.graphics.rectangle("fill", statsWidth, 0, screenWidth-statsWidth, screenHeight)
+    love.graphics.setShader()
+    love.graphics.setCanvas(uiCanvas)
+    love.graphics.clear()
 
     drawStatsArea() -- Draw the stats area
     
@@ -337,14 +385,30 @@ function love.draw()
     suit.draw()
     dress:draw()
 
-    love.graphics.setCanvas()
+    love.graphics.setCanvas(gameCanvas)
+    VFX.draw() -- Draw VFX
+    
 
-    shaders.draw()
+    love.graphics.setCanvas()
 
     if Player.dead then
         GameOverDraw()
     end
     drawFPS()
+
+    -- Draw the game canvas gameCanvasfirst
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(gameCanvas)
+    
+    -- Then draw the shader overlay on top with some transparency to blend with the game
+    love.graphics.setColor(1, 1, 1, 1.0) -- Adjust alpha for desired effect
+    --love.graphics.draw(shaderOverlayCanvas)
+
+    -- draw ui canvas
+    love.graphics.draw(uiCanvas)
+
+    love.graphics.setShader()
+    love.graphics.setColor(1, 1, 1, 1)
 end
 
 local boopah = 1
@@ -388,13 +452,18 @@ function love.keypressed(key)
         love.event.quit("restart")
     end
 
-    --test damage screen visuals 
+    -- flip la valeur de draw debug
     if key == "g" then
-        damageThisFrame = boopah
+        VFX.flipDrawDebug()
     end
+
+    --test damage screen visuals 
     if key == "v" then
         boopah = boopah + 2
         boopag = boopag + 2
+    end
+    if key == "b" then
+        damageThisFrame = boopah
     end
 
     --test ball hit vfx
@@ -408,7 +477,7 @@ function love.keypressed(key)
     if key == "t" then
         local total = 0
         for _, ball in ipairs(Balls) do
-            if ball.name == "Fire Ball" and ball.dead == false then
+            if ball.name == "Exploding ball" and ball.dead == false then
                 total = total + 1
             end
         end
@@ -424,7 +493,7 @@ function love.keypressed(key)
                 end
             end
         else end
-    end
+    end 
     if key == "-" then
         for _, brick in ipairs(bricks) do
             if not brick.destroyed then
@@ -436,5 +505,7 @@ function love.keypressed(key)
 end
 
 function love.mousepressed(x, y, button)
-
+    if button == "2" and currentlyHoveredButton ~= nil then
+        upgradesUI.queueUpgrade()
+    end
 end
