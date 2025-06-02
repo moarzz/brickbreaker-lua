@@ -7,18 +7,16 @@ shaders = require("shaders") -- shader logic
 suit = require("Libraries.Suit") -- UI library
 tween = require("Libraries.tween") -- tweening library
 VFX = require("VFX") -- VFX library
+local KeySys = require("KeywordSystem") -- Keyword system for text parsing
 
 --screen dimensions
 statsWidth = 450 -- Width of the stats area
 screenWidth = 1020 + statsWidth
 screenHeight = 1000
-backgroundColor = {r=0,g=0,b=0,a=0}
+backgroundIntensity = 0
 
 playRate = 1 -- Set the playback rate to 1 (normal speed)
 gameCanvas = nil
-
--- shaders
-local backgroundShader
 
 local function generateRow(brickCount, yPos)
     local row = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
@@ -102,7 +100,6 @@ function initializeBricks()
         [24] = {HslaToRgba(60, 0.08, 0.04, 1)},
         [25] = {HslaToRgba(45, 0.04, 0.02, 1)},
         [26] = {HslaToRgba(30, 0, 0, 1)}
-
     }
     bricks = {}
     brickWidth = 75
@@ -123,6 +120,10 @@ function initializeBricks()
     Timer.every(0.5, function() addMoreBricks() end)
 end
 
+-- shaders
+local backgroundShader
+local glowShader
+
 local function loadAssets()
     --load images
     auraImg = love.graphics.newImage("assets/sprites/aura.png")
@@ -130,6 +131,7 @@ local function loadAssets()
         -- UI
     uiLabelImg = love.graphics.newImage("assets/sprites/UI/ballUI backgroundTop.png")
     uiWindowImg = love.graphics.newImage("assets/sprites/UI/ballBackground.png")
+    uiBigWindowImg = love.graphics.newImage("assets/sprites/UI/ballBackground_20.png")
         --Icons
     iconsImg = {
         amount = love.graphics.newImage("assets/sprites/UI/icons/amount.png"),
@@ -139,6 +141,10 @@ local function loadAssets()
         fireRate = love.graphics.newImage("assets/sprites/UI/icons/fireRate.png"),
         speed = love.graphics.newImage("assets/sprites/UI/icons/speed.png"),
         range = love.graphics.newImage("assets/sprites/UI/icons/range.png"),
+        ballDamage = love.graphics.newImage("assets/sprites/UI/icons/ballDamage.png"),
+        paddleSize = love.graphics.newImage("assets/sprites/UI/icons/paddleSize.png"),
+        bulletDamage = love.graphics.newImage("assets/sprites/UI/icons/bulletDamage.png"),
+        income = love.graphics.newImage("assets/sprites/UI/icons/income.png"),
     }
 
     -- load sounds
@@ -151,6 +157,7 @@ local function loadAssets()
 
     -- load shaders
     backgroundShader = love.graphics.newShader("Shaders/background.glsl")
+    glowShader = love.graphics.newShader("Shaders/glow.glsl")
     
     -- Load our new radial sine shader
     radialSineShader = love.graphics.newShader("Shaders/brickHit.glsl")
@@ -161,6 +168,9 @@ function love.load()
     dress = suit.new()
 
     loadAssets() -- Load assets
+
+    KeywordSystem = KeySys.new()
+    KeywordSystem:loadKeywordImages()
 
     -- Load the MP3 file
     playSoundEffect(backgroundMusic, 0.5, 1, true, false) -- Play the background music
@@ -203,7 +213,7 @@ local function getBrickSpeedMult()
     -- the lowest bricK}k on screen will have the highest Y.
     for i, brick in ipairs(bricks) do
         if not brick.destroyed then
-            return brick.y <= (paddle.y - brickHeight)/2 and mapRangeClamped(brick.y, 0, (paddle.y - brickHeight)/2, 4, 1) or mapRangeClamped(brick.y, (paddle.y - brickHeight)/2, paddle.y - brickHeight, 1, 0.25)
+            return mapRangeClamped(brick.y, 0, (paddle.y/2 - brickHeight)/2, 10, 1)
         end
     end
     error("No bricks found that weren't destroyed")
@@ -218,15 +228,24 @@ local function moveBricksDown(dt)
     end
 end
 
+local function reduceBackgroundBrightness()
+    -- Reduce background brightness over time, faster at higher intensities
+    local reductionRate = 0.01 * (backgroundIntensity * 2) -- Scales from 0.01 to 0.03 based on intensity
+    backgroundIntensity = math.max(0, backgroundIntensity - reductionRate)
+    backgroundShader:send("intensity", backgroundIntensity)
+end
+
 screenOffset = {x=0,y=0}
 local startTime = -10
 function love.update(dt)    
     --send info to background shader
     backgroundShader:send("time", love.timer.getTime())                   
     backgroundShader:send("resolution", {screenWidth, screenHeight})
-    backgroundShader:send("brightness", backgroundColor.a)
+    backgroundShader:send("brightness", backgroundIntensity)
+    reduceBackgroundBrightness()
     local backgroundIntensity = Player.score <= 100 and mapRangeClamped(Player.score,1,100, 0.0, 0.15) or (Player.score <= 5000 and mapRangeClamped(Player.score, 100, 5000, 0.15, 0.5) or mapRangeClamped(Player.score, 5000, 100000, 0.5, 1.0))
-    
+
+    KeywordSystem:update() -- Update the keyword system
     -- overwrites backgroundIntensity if using debugging window
     if shouldDrawDebug then
         backgroundIntensity = VFX.backgroundIntensityOverwrite 
@@ -336,9 +355,11 @@ local function drawStatsArea()
     love.graphics.setColor(1, 1, 1, 1) -- Reset color to white for other drawings
 end
 
-
 function love.draw()
     resetButtonLastID()-- resets the button ID to 1 so it stays consistent
+
+    -- reset keyword system tooltip each frame
+    KeywordSystem:resetTooltip()
 
     -- First render the game to the game canvas
     love.graphics.setCanvas(gameCanvas) -- Set the canvas for drawing
@@ -356,7 +377,7 @@ function love.draw()
     Balls.draw(Balls) -- Draw balls
 
     --Draw paddle
-    love.graphics.setColor(0.5, 0.5, 0.5, math.max(0.5-getBrickSpeedMult(),0)) -- Reset color to white for paddle
+    love.graphics.setColor(0.5, 0.5, 0.5, math.max(0.5 - getBrickSpeedMult(),0)) -- Reset color to white for paddle
     love.graphics.rectangle("fill", statsWidth, paddle.y, screenWidth - statsWidth*2, 1)
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.rectangle("fill", paddle.x, paddle.y, paddle.width * paddle.widthMult, paddle.height)
@@ -384,6 +405,9 @@ function love.draw()
     -- Draw the UI elements using Suit
     suit.draw()
     dress:draw()
+
+    -- Draw tooltip last (on top of everything)
+    KeywordSystem:drawTooltip()
 
     love.graphics.setCanvas(gameCanvas)
     VFX.draw() -- Draw VFX
@@ -502,10 +526,18 @@ function love.keypressed(key)
             end
         end
     end
+
+    if key == "i" then
+        Balls.addBall("Machine Gun")
+    end
 end
 
 function love.mousepressed(x, y, button)
-    if button == "2" and currentlyHoveredButton ~= nil then
-        upgradesUI.queueUpgrade()
+    print("button : " .. button)
+    if button == 2 then
+        print("hovered button " .. (currentlyHoveredButton and "exists" or "nil"))
+        if currentlyHoveredButton then
+            upgradesUI.queueUpgrade(currentlyHoveredButton)
+        end
     end
 end

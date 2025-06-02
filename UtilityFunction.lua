@@ -29,7 +29,7 @@ function restartGame()
     Player.dead = false
     Player.bonuses = {
         critChance = 0,
-        moneyIncome = 0,
+        income = 0,
         ballSpeed = 0,
         paddleSpeed = 0,
         paddleSize = 0
@@ -552,25 +552,34 @@ function screenShake(duration, intensity, vibrationCount, direction)
     end
 end
 
-currentGoalFlashIntensity = 0
-function screenFlash(duration, color)
+function screenFlash(duration, intensity)
     -- Create a tween for the flash effect
-    currentGoalFlashIntensity = color[0]
     local easing = tween.easing.outSine
     local delay = duration / 8
-    backgroundColor.r = color[1] backgroundColor.g = color[2] backgroundColor.b = color[3] backgroundColor.a = color[4]
+    backgroundIntensity = intensity
 
-    currentGoalFlashIntensity = 0
-    flashTween = tween.new(duration, backgroundColor, {r = 0, g = 0, b = 0, a = 0}, tween.easing.inSine)
+    local flashTween = tween.new(duration, backgroundColor, {r = 0, g = 0, b = 0, a = 0}, tween.easing.inSine)
     addTweenToUpdate(flashTween)
 end
 
 function damageScreenVisuals(duration, intensity, direction)
 
-    local directionX, directionY = normalizeVector(math.random(-1000, 1000), math.random(-1000, 1000)) -- Random direction for the screen shake
+    --local directionX, directionY = normalizeVector(math.random(-1000, 1000), math.random(-1000, 1000)) -- Random direction for the screen shake
+    local directionX, directionY = normalizeVector(5, 3) -- Fixed direction for the screen shake
     direction = direction or {directionX, directionY} -- Use the random direction if not provided
+    direction = {directionX, directionY}
+
+    --screen flash logic
+    local flashIntensity = mapRangeClamped(intensity, 0, 10, 0, 1)
+    local flashColor = {flashIntensity, flashIntensity, flashIntensity, flashIntensity} -- Red color for the flash effect
+    if flashIntensity > backgroundIntensity then
+        local color = flashColor
+        backgroundIntensity = flashIntensity
+        --screenFlash(0.25, flashColor)
+    end
 
     --screen shake logic
+    intensity = intensity / 3
     if intensity > currentScreenShakeIntensity then
         screenShake(duration, mapRangeClamped(intensity , 
             mapRangeClamped(intensity,1,10,1,10), 
@@ -578,13 +587,6 @@ function damageScreenVisuals(duration, intensity, direction)
             mapRangeClamped(intensity, mapRangeClamped(intensity,1,5,1,5), 10, mapRangeClamped(intensity,1,5,2,10), 15), 
             50), math.floor(mapRangeClamped(intensity, 1, 100, 3, 6)),
             direction)
-    end
-
-    --screen flash logic
-    local flashIntensity = mapRangeClamped(intensity, 0, 10, 0, 1)
-    local flashColor = {flashIntensity, flashIntensity, flashIntensity, flashIntensity} -- Red color for the flash effect
-    if flashIntensity > backgroundColor.a and flashIntensity > currentGoalFlashIntensity then
-        screenFlash(0.25, flashColor)
     end
 end
 

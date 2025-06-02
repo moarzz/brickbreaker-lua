@@ -9,8 +9,8 @@ Player = {
     lives = 3,
     levelingUp = false,
     price = 1,
-    newUpgradePrice = 5,
-    upgradePriceMultScaling = 5,
+    newUpgradePrice = 100,
+    upgradePriceMultScaling = 10,
     dead = false,
     bonuses = { -- These bonuses are percentages
     }
@@ -19,25 +19,23 @@ Player = {
 Player.bonusOrder = {}
 Player.bonusPrice = {}
 Player.bonusesList = {
-    critChance = {name = "critChance", description = "Critical chance", startingPrice = 5},
-    moneyIncome = {name = "moneyIncome", description = "Money income", startingPrice = 5},
-    ballSpeed = {name = "ballSpeed", description = "Ball speed", startingPrice = 5},
-    paddleSize = {name = "paddleSize", description = "Paddle size", startingPrice = 5},
-    damage = {name = "damage", description = "Damage boost", startingPrice = 5},
-    ballDamage = {name = "ballDamage", description = "Ball damage boost", startingPrice = 5},
-    bulletDamage = {name = "bulletDamage", description = "Bullet damage boost", startingPrice = 5},
-    ammo = {name = "ammo", description = "Ammo boost", startingPrice = 5},
-    range = {name = "range", description = "Range boost", startingPrice = 5},
-    fireRate = {name = "fireRate", description = "Fire rate boost", startingPrice = 5},
-    amount = {name = "amount", description = "Amount boost", startingPrice = 10},
+    --income = {name = "income", description = "Money income", startingPrice = 50},
+    speed = {name = "speed", description = "Ball speed", startingPrice = 100},
+    paddleSize = {name = "paddleSize", description = "Paddle size", startingPrice = 100},
+    damage = {name = "damage", description = "Damage boost", startingPrice = 100},
+    ballDamage = {name = "ballDamage", description = "Ball damage boost", startingPrice = 100},
+    bulletDamage = {name = "bulletDamage", description = "Bullet damage boost", startingPrice = 100},
+    ammo = {name = "ammo", description = "Ammo boost", startingPrice = 100},
+    range = {name = "range", description = "Range boost", startingPrice = 100},
+    fireRate = {name = "fireRate", description = "Fire rate boost", startingPrice = 100},
+    amount = {name = "amount", description = "Amount boost", startingPrice = 100},
 }
 
 Player.bonusUpgrades = {
-    critChance = function() Player.bonuses.critChance = Player.bonuses.critChance + 10 end,
-    moneyIncome = function() Player.bonuses.moneyIncome = Player.bonuses.moneyIncome + 1 end,
-    ballSpeed = function() Player.bonuses.ballSpeed = Player.bonuses.ballSpeed + 1 end,
-    paddleSpeed = function() Player.bonuses.paddleSpeed = Player.bonuses.paddleSpeed + 1
-        paddle.speed = paddle.speed + 200 end,
+    --income = function() Player.bonuses.income = Player.bonuses.income + 1 end,
+    speed = function() Player.bonuses.speed = Player.bonuses.speed + 1 end,
+    --paddleSpeed = function() Player.bonuses.paddleSpeed = Player.bonuses.paddleSpeed + 1
+        --paddle.speed = paddle.speed + 200 end,
     paddleSize = function() Player.bonuses.paddleSize = Player.bonuses.paddleSize + 1 
         paddle.width = paddle.width+65 end,
     damage = function() Player.bonuses.damage = Player.bonuses.damage + 1 end,
@@ -48,12 +46,13 @@ Player.bonusUpgrades = {
     fireRate = function() Player.bonuses.fireRate = Player.bonuses.fireRate + 1 end,
     amount = function() Player.bonuses.amount = Player.bonuses.amount + 1 
         local ballsToAdd = {}
-        print("Balls.addBall type:", type(Balls.addBall))
-        print(#Balls.getUnlockedBallTypes())
-        for _, ballType in ipairs(Balls.getUnlockedBallTypes()) do
+        print("#unlocked ball types: " .. #Balls.getUnlockedBallTypes())
+        for _, ballType in pairs(Balls.getUnlockedBallTypes()) do
+            print("Ball type:", ballType.name)
             table.insert(ballsToAdd, ballType.name)
         end
         for _, ballName in ipairs(ballsToAdd) do
+            print("Adding ball: " .. ballName)
             Balls.addBall(ballName)
         end
     end,
@@ -72,13 +71,9 @@ function Player.reset()
     Player.levelingUp = false
     Player.price = 1
     Player.dead = false
-    Player.bonuses = { -- These bonuses are percentages
-        critChance = 0,
-        moneyIncome = 0,
-        ballSpeed = 0,
-        paddleSpeed = 0,
-        paddleSize = 0
-    }
+    for name, bonus in pairs(Player.bonuses) do
+        Player.bonuses[name] = 0
+    end
 end
 
 function Player.die()
@@ -111,6 +106,7 @@ end
 function Player.update(dt)
     checkForHit()
 end
+
 function Player.pay(amount)
     if Player.money >= amount then
         Player.money = Player.money - amount
@@ -121,6 +117,7 @@ end
 
 function Player.gain(amount)
     Player.money = Player.money + amount
+    upgradesUI.tryQueue()
 end
 
 return Player
