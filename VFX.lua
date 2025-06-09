@@ -2,13 +2,22 @@ VFX = {}
 
 -- brick hit functions
 local function brickHitFX(brick, ball, intensity)
-    brick.color = brick.health > 12 and {1, 1, 1, 1} or brickColorsByHealth[brick.health]
+    brick.color = brick.health > 12 and {1, 1, 1, 1} or getBrickColor(brick.health)
     local colorBeforeHit = brick.color or {1, 1, 1, 1} -- Default to white if no color is set
     brick.color = {1,1,1,1}
     local colorTweenBack = tween.new(0.5, brick, {color = colorBeforeHit}, tween.outSine)
     addTweenToUpdate(colorTweenBack)
 
-    local offsetX, offsetY = normalizeVector(ball.speedX, ball.speedY)
+    if ball.speedX and ball.speedY then
+        local offsetX, offsetY = normalizeVector(ball.speedX, ball.speedY)
+    else
+        local offsetX, offsetY = 0, -1
+    end
+    if ball.speedX and ball.speedY then
+        offsetX, offsetY = normalizeVector(ball.speedX, ball.speedY)
+    else
+        offsetX, offsetY = 0, -1 -- Default direction if ball speed is not defined
+    end
     local offsetRotation = math.atan2(offsetY, offsetX) * 0.1
     offsetX = offsetX * (mapRange(intensity, 1, 10, 5, 30) + 5)
     offsetY = offsetY * (mapRange(intensity, 1, 10, 5, 30) + 5)
@@ -27,7 +36,11 @@ local function brickHitParticles(brick, ball, intensity) --maybe ca c'est brick 
     local particleSpeed = {100,200}
     for i=1, particleamount do
         local direction = {}
-        direction.x, direction.y = normalizeVector(ball.speedX, ball.speedY)
+        if ball.speedX and ball.speedY then
+            direction.x, direction.y = normalizeVector(ball.speedX, ball.speedY)
+        else
+            direction.x, direction.y = 0, -1 -- Default direction if ball speed is not defined
+        end
         local particle = {
             x = (brick.x + brick.width/2 + (ball.x or (brick.x + brick.width/2)))/2,
             y = (brick.y + brick.height/2 + (ball.y or (brick.y + brick.height/2)))/2,

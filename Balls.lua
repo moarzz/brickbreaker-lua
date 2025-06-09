@@ -1,6 +1,9 @@
 --This file holds the values for all the Balls in the game.
 -- It also holds the functions for updating the Balls and drawing them.
+local Smoke = require("particleSystems.smoke")
+local Explosion = require("particleSystems.explosion")
 
+local startingBall = "Ball"
 local Balls = {}
 local ballCategories = {}
 local ballList = {}
@@ -25,9 +28,68 @@ function Balls.getUnlockedBallTypes()
     return unlockedBallTypes
 end
 
-local ballTrailLength = 100 -- Length of the ball trail
+local ballTrailLength = 40 -- Length of the ball trail
 local bullets = {}
 local deadBullets = {}
+local laserBeamBrick
+local laserBeamY = 0
+
+local function dealDamage(ball, brick)
+    local damage
+    local kill = false
+    local damage = ball.stats.damage
+    if unlockedBallTypes["Damage boost ball"] then
+        for _, ballB in ipairs(Balls) do
+            if ballB.name == "Damage boost ball" and ballB ~= ball then
+                if isBrickInRange(brick, ballB.x, ballB.y, ballB.stats.range + (Player.bonuses.range or 0) * 40) then
+                    damage = damage + ballB.stats.damage
+                end
+            end
+        end
+    end
+    if Player.bonuses.ballDamage and ball.type == "ball" then
+        damage = damage + Player.bonuses.ballDamage -- Increase damage based on player bonuses
+    end
+    if Player.bonuses.damage and ball.type == "ball" then
+        damage = damage + Player.bonuses.damage -- Increase damage based on player bonuses
+    end
+    if ball.name == "Gold Ball" then
+        damage = damage * 5 -- Double the damage for goldBall
+        damageNumber(damage, brick.x + brick.width / 2, brick.y + brick.height / 2, {1, 1, 0, 1}) -- Yellow color for goldBall
+    else
+        damage = math.min(damage, brick.health)
+        print("dealt : ".. damage .. " to brick with health : " .. brick.health)
+        --deals damage to brick
+        brick.health = brick.health - damage
+
+        damageNumber(damage, brick.x + brick.width / 2, brick.y + brick.height / 2, {1, 0, 0, 1}) -- Red color for normal damage
+
+        damageThisFrame = damageThisFrame + damage -- Increase the damage dealt this frame
+
+        -- brick hit vfx
+        VFX.brickHit(brick, ball, damage)
+
+        if brick.health >= 1 then
+            brick.hitLastFrame = true
+        else
+            kill = true
+            playSoundEffect(brickDeathSfX, 0.6, 1, false, true)
+            brick.destroyed = true
+            brick = nil
+            if ball.type == "bullet" then
+                ball.stats.damage = ball.stats.damage - damage
+                if ball.stats.damage <= 0 then
+                    kill = false
+                end
+            end
+        end
+        Player.score = Player.score + damage -- Increase player score based on damage dealt
+    end
+    -- Increase player money based on damage dealt
+    Player.gain(damage)
+
+    return(kill)
+end
 
 local function shoot(gunName)
     if unlockedBallTypes[gunName] then
@@ -98,13 +160,33 @@ local function shoot(gunName)
                     stats = {damage = bulletDamage}
                 }) 
             end
-            Timer.after(2.0/(gun.stats.fireRate + (Player.bonuses.fireRate or 0)), function() shoot(gunName) end)
+            if gun.name == "Minigun" then
+                Timer.after((2.0*mapRangeClamped(gun.stats.ammo - gun.currentAmmo,0,15, 5,1))/(gun.stats.fireRate + (Player.bonuses.fireRate or 0)), function() shoot(gunName) end)
+            else
+                Timer.after(2.0/(gun.stats.fireRate + (Player.bonuses.fireRate or 0)), function() shoot(gunName) end)
+            end
         else
             gun.currentAmmo = gun.stats.ammo + (Player.bonuses.ammo or 0) -- Reset ammo using the stats value
-            Timer.after(gun.stats.cooldown, function() shoot(gunName) end)
+            if gun.name == "Minigun" then
+                Timer.after(gun.stats.cooldown * 2, function() shoot(gunName) end) 
+            else
+                Timer.after(gun.stats.cooldown, function() shoot(gunName) end) 
+            end
         end
     else 
         print("Error: gun is not unlocked but shoot is being called.")
+    end
+end
+
+local laserBeamTarget = nil
+local laserBeamTimer = 0
+local function fire(techName)    
+    if techName == "Atomic Bomb" then
+        for _, brick in ipairs(bricks) do
+            if brick.health > 0 and not brick.y > -brick.height then
+                dealDamage(unlockedBallTypes["Atomic Bomb"], brick) -- Deal damage to all bricks
+            end
+        end
     end
 end
 
@@ -126,6 +208,21 @@ local function ballListInit()
                 damage = 1,
             },
         },
+        ["Ping-Pong ball"] = {
+            name = "Ping-Pong ball",
+            type = "ball",
+            x = screenWidth / 2,
+            y = screenHeight / 2,
+            size = 1,
+            rarity = "uncommon",
+            startingPrice = 15,
+            description = "A bouncy ball affected by gravity. Builds up speed as it falls!",
+            color = {0.95, 0.95, 0.85, 1}, -- Off-white color like a real ping pong ball
+            stats = {
+                speed = 400,
+                damage = 1,
+            },
+        },
         ["Exploding ball"] = {
             name = "Exploding ball",
             type = "ball",
@@ -133,11 +230,11 @@ local function ballListInit()
             y = screenHeight / 2,
             size = 1,
             rarity = "uncommon",
-            startingPrice = 10,
+            startingPrice = 20,
             description = "A ball that explodes on impact, dealing damage to nearby bricks.",
             color = {1, 0, 0, 1}, -- Red color
             stats = {
-                speed = 100,
+                speed = 50,
                 damage = 2,
                 range = 2
             },
@@ -149,7 +246,7 @@ local function ballListInit()
             y = screenHeight / 2,
             size = 2,
             rarity = "rare",
-            startingPrice = 10,
+            startingPrice = 20,
             description = "A ball that can pass through bricks.",
             color = {0.5, 0.5, 0.7, 0.6}, -- Blue color
             stats = {
@@ -165,7 +262,7 @@ local function ballListInit()
             y = screenHeight / 2,
             size = 1,
             rarity = "uncommon",
-            startingPrice = 25,
+            startingPrice = 10,
             description = "Hits brick : gain money equal to 5 * DMG. Deals no damage",
             color = {1, 0.84, 0, 1},
             stats = {
@@ -173,21 +270,21 @@ local function ballListInit()
                 damage = 1,
             },
         },
-        ["Damage boost ball"] = {
-            name = "Damage boost ball",
+         ["Magnetic Ball"] = {
+            name = "Magnetic Ball",
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
             size = 1,
-            rarity = "uncommon",
-            startingPrice = 10,
-            description = "Boost nearby ball damage by this ball's damage stat",
-            color = {1, 0, 0, 1},
+            rarity = "rare",
+            startingPrice = 50,
+            description = "A ball that's magnetically attracted to the nearest brick",
+            color = {0.6, 0.2, 0.8, 1}, -- Purple color
             stats = {
-                speed = 75,
-                damage = 1,
-                range = 4
+                speed = 200,
+                damage = 2,
             },
+            attractionStrength = 25000
         },
         ["Pistol"] = {
             name = "Pistol",
@@ -202,7 +299,7 @@ local function ballListInit()
                 shoot("Pistol")
             end,
             noAmount = true,
-            currentAmmo = 10,
+            currentAmmo = 10 + (Player.bonuses.ammo or 0),
             bulletSpeed = 1000,
 
             stats = {
@@ -225,13 +322,13 @@ local function ballListInit()
                 shoot("Machine Gun")
             end,
             noAmount = true,
-            currentAmmo = 5,
+            currentAmmo = 12 + (Player.bonuses.ammo or 0),
             bulletSpeed = 1000,
 
             stats = {
                 damage = 1,
                 cooldown = 6,
-                ammo = 8,
+                ammo = 12,
                 fireRate = 10,
             },
         },
@@ -248,7 +345,7 @@ local function ballListInit()
                 shoot("Shotgun")
             end,
             noAmount = true,
-            currentAmmo = 2,
+            currentAmmo = 2 + (Player.bonuses.ammo or 0),
             bulletSpeed = 750,
 
             stats = {
@@ -271,7 +368,7 @@ local function ballListInit()
                 shoot("Sniper")
             end,
             noAmount = true,
-            currentAmmo = 1,
+            currentAmmo = 1 + (Player.bonuses.ammo or 0),
             bulletSpeed = 1500,
 
             stats = {
@@ -279,6 +376,29 @@ local function ballListInit()
                 cooldown = 8,
                 ammo = 1,
                 fireRate = 1,
+            },
+        },
+        Minigun = {
+            name = "Minigun",
+            type = "gun",
+            x = screenWidth / 2,
+            y = screenHeight / 2,
+            size = 1,
+            rarity = "rare",
+            startingPrice = 50,
+            description = "Fires bullets at an accelerating rate of fire, reload time is doubled",
+            onBuy = function() 
+                shoot("Minigun")
+            end,
+            noAmount = true,
+            currentAmmo = 30 + (Player.bonuses.ammo or 0),
+            bulletSpeed = 1500,
+
+            stats = {
+                damage = 1,
+                cooldown = 10,
+                ammo = 50,
+                fireRate = 15,
             },
         },
         Laser = {
@@ -300,6 +420,74 @@ local function ballListInit()
                 cooldown = 10,
             },
         },
+        ["laser Beam"] = {
+            name = "laser Beam",
+            type = "tech",
+            x = screenWidth / 2,
+            y = screenHeight / 2,
+            size = 1,
+            noAmount = true,
+            rarity = "rare",
+            startingPrice = 20,
+            description = "Fire a thin laser Beam beam that stops at the first brick hit. Fast fire rate but lower damage.",
+            color = {1, 0, 0, 1}, -- Red color for laser Beam
+            currentAmmo = 10 + (Player.bonuses.ammo or 0),
+            stats = {
+                damage = 1,
+                fireRate = 2
+            },
+        },
+        ["Atomic Bomb"] = {
+            name = "Atomic Bomb",
+            type = "tech",
+            x = screenWidth / 2,
+            y = screenHeight / 2,
+            size = 1,
+            noAmount = true,
+            rarity = "legendary",
+            startingPrice = 1000,
+            description = "A powerful bomb that deals massive damage to all bricks on the screen.",
+            color = {1, 0.5, 0, 1}, -- Orange color for Atomic Bomb
+            onBuy = function()
+                fire("Atomic Bomb")
+            end,
+            stats = {
+                damage = 1000,
+                cooldown = 60,
+            },
+        },
+        ["Gravity well"] = {
+            name = "Gravity well",
+            type = "tech",
+            size = 1,
+            noAmount = true,
+            rarity = "rare",
+            startingPrice = 50,
+            description = "Creates an attraction point at nearest brick that pulls balls towards it and increases their damage. Attraction force scales with ball speed",
+            color = {0.1, 0.1, 0.3, 1}, -- Dark blue color theme
+            stats = {
+                damage = 2,
+            },
+            attractionStrength = 250,
+        },
+        ["Saw Orbiter"] = {
+            name = "Saw Orbiter",
+            type = "tech",
+            size = 1,
+            noAmount = true,
+            rarity = "uncommon",
+            startingPrice = 20,
+            description = "Creates deadly Saw Orbiter that orbit around your paddle, damaging any bricks they touch",
+            color = {0.7, 0.7, 0.7, 1}, -- Grey color theme
+            stats = {
+                damage = 1,
+                amount = 1, -- Number of saws
+                speed = 150, -- Rotations per second
+            },
+            sawPositions = {}, -- Will store current positions of saws
+            currentAngle = 0, -- Current rotation angle
+            orbitRadius = 250
+        },
     }
     for _, ball in pairs(ballList) do
         ball.radius = ball.size*10 -- Set the radius based on size
@@ -307,13 +495,14 @@ local function ballListInit()
     print("Ball list initialized with " .. #ballList .. " ball types.")
 end
 
--- calls ballListInit and adds a ball to it
+-- calls ballListInit and adds a ball to i
 function Balls.initialize()
     ballCategories = {}
     ballList = {}
     unlockedBallTypes = {}
     ballListInit()
-    Balls.addBall("Ball")
+    Balls.addBall(startingBall)
+    --Balls.addBall("Gravity well") -- Add Gravity well ball by default
 end
 
 function Balls.addBall(ballName)
@@ -339,9 +528,13 @@ function Balls.addBall(ballName)
                 noAmount = ballTemplate.noAmount or false, -- Set noAmount to false if not specified
                 charging = true,
                 currentChargeTime = 0,
+                color = ballTemplate.color or {1, 1, 1, 1}, -- Set the color of the ball
                 price = ballTemplate.startingPrice, -- Set the initial price of ball upgrades
                 currentAmmo = ((ballTemplate.currentAmmo or 0) + (Player.bonuses.ammo or 0)), -- Copy specific values from the template
                 bulletSpeed = ballTemplate.bulletSpeed or 1000, -- Set the bullet speed if it exists
+                attractionStrength = ballTemplate.attractionStrength or nil, -- Set the attraction strength if it exists
+                currentAngle = ballTemplate.currentAngle or nil,
+                orbitRadius = ballTemplate.orbitRadius or nil,
                 stats = {} -- Set the initial cooldown
             }
             for statName, statValue in pairs(ballTemplate.stats) do
@@ -377,6 +570,7 @@ function Balls.addBall(ballName)
                     drawSizeBoost = 1,
                     drawSizeBoostTweens = {},
                     currentlyOverlappingBricks = {},
+                    attractionStrength = ballTemplate.attractionStrength or nil, -- Set the attraction strength if it exists
                     stats = stats,
                     speedX = math.random(-ballTemplate.stats.speed*0.6, ballTemplate.stats.speed*0.6), -- Randomize speedX
                     speedY = 0, -- Will be calculated below
@@ -464,75 +658,17 @@ function ballHitVFX(ball)
     end)
 end
 
-local function dealDamage(ball, brick)
-    local kill = false
-    local damage = ball.stats.damage
-    if unlockedBallTypes["Damage boost ball"] then
-        for _, ballB in ipairs(Balls) do
-            if ballB.name == "Damage boost ball" and ballB ~= ball then
-                if isBrickInRange(brick, ballB.x, ballB.y, ballB.stats.range + (Player.bonuses.range or 0) * 40) then
-                    damage = damage + ballB.stats.damage
-                end
-            end
-        end
-    end
-    if Player.bonuses.ballDamage and ball.type == "ball" then
-        damage = damage + Player.bonuses.ballDamage -- Increase damage based on player bonuses
-    end
-    if Player.bonuses.damage and ball.type == "ball" then
-        damage = damage + Player.bonuses.damage -- Increase damage based on player bonuses
-    end
-    if math.random(1, 100) <= (Player.bonuses.critChance or 0) then
-        damage = damage * 2 -- Double the damage on crit
-        damageNumber(damage, brick.x + brick.width / 2, brick.y + brick.height / 2, {0, 1, 0, 1}) -- Green color for crit damage
-    end
-    if ball.name == "Gold Ball" then
-        damage = damage * 5 -- Double the damage for goldBall
-        damageNumber(damage, brick.x + brick.width / 2, brick.y + brick.height / 2, {1, 1, 0, 1}) -- Yellow color for goldBall
-    else
-        local damage = math.min(damage, brick.health)
-        --deals damage to brick
-        brick.health = brick.health - damage
-
-        damageNumber(damage, brick.x + brick.width / 2, brick.y + brick.height / 2, {1, 0, 0, 1}) -- Red color for normal damage
-
-        damageThisFrame = damageThisFrame + damage -- Increase the damage dealt this frame
-
-        -- brick hit vfx
-        VFX.brickHit(brick, ball, damage)
-
-        if brick.health >= 1 then
-            brick.hitLastFrame = true
-        else
-            kill = true
-            playSoundEffect(brickDeathSfX, 0.6, 1, false, true)
-            brick.destroyed = true
-            brick = nil
-            if ball.type == "bullet" then
-                ball.stats.damage = ball.stats.damage - damage
-                if ball.stats.damage <= 0 then
-                    kill = false
-                end
-            end
-        end
-        Player.score = Player.score + damage -- Increase player score based on damage dealt
-    end
-    -- Increase player money based on damage dealt
-    Player.gain(damage)
-
-    return(kill)
-end
-
 local function brickCollisionEffects(ball, brick)
     if ball.name ~= "Phantom Ball" then
         ballHitVFX(ball) -- Call the ball hit VFX function
-    end
-    if ball.name == "Exploding ball" then
-        local explosionImage = love.graphics.newImage("assets/VFX/explosion.png")
-        createSpriteAnimation(ball.x, ball.y, (ball.stats.range + (Player.bonuses.range or 0))*2, explosionImage, 19, 19, 0.1)
+    end    if ball.name == "Exploding ball" then
+        -- Create explosion using new particle system
+        local scale = (ball.stats.range + (Player.bonuses.range or 0)) * 0.5
+        Explosion.spawn(ball.x, ball.y, scale)
+        -- Play explosion sound
+        playSoundEffect(explosionSFX, 0.3 + scale * 0.2, 1 - scale * 0.1, false, true)
+        
         local bricksTouchingCircle = getBricksTouchingCircle(ball.x, ball.y, (ball.stats.range + (Player.bonuses.range or 0)) * 24)
-        if #bricksTouchingCircle > 1 then
-        end
         for _, touchingBrick in ipairs(bricksTouchingCircle) do
             dealDamage(ball, touchingBrick) -- Deal damage to the touched bricks
         end
@@ -651,10 +787,174 @@ local function wallCollision(ball)
     end
 end
 
-local function laserChargeUpdate(dt)
+local function techUpdate(dt)
     if unlockedBallTypes["Laser"] then
         if unlockedBallTypes["Laser"].charging then
             unlockedBallTypes["Laser"].currentChargeTime = unlockedBallTypes["Laser"].currentChargeTime + dt
+        end
+    end
+
+    if unlockedBallTypes["laser Beam"] then
+        local laserBeam = unlockedBallTypes["laser Beam"]
+        
+        -- If we have the same target brick as last frame, increment timer
+        if laserBeamBrick and laserBeamBrick == laserBeamTarget then
+            laserBeamTimer = laserBeamTimer + dt
+            
+            -- Deal damage if we've been on target long enough
+            if laserBeamTimer >= 2.0/laserBeam.stats.fireRate then
+                dealDamage(laserBeam, laserBeamBrick)
+                laserBeamTimer = 0  -- Reset timer after damage
+            end
+        else
+            -- New target or no target, reset timer
+            laserBeamTarget = laserBeamBrick
+            laserBeamTimer = math.max(laserBeamTimer - dt * 2, 0) -- Decrease timer if not on target
+        end
+        laserBeamBrick = nil
+        local highestY = -math.huge
+        local highestBrick
+        for _, brick in ipairs(bricks) do
+            if brick.health > 0 and not brick.destroyed and -- Add these checks
+               brick.y + brick.height > 0 and brick.y > highestY and 
+               (paddle.x + paddle.width/2 - 1 >= brick.x and paddle.x + paddle.width/2 + 1 <= brick.x + brick.width) then
+                highestY = brick.y + brick.height
+                highestBrick = brick
+            end
+        end
+        laserBeamBrick = highestBrick
+        laserBeamY = highestY
+    end
+
+    if unlockedBallTypes["Gravity well"] then
+        local gravityWell = unlockedBallTypes["Gravity well"]
+        
+        -- Find nearest brick in front of paddle
+        local paddleX = paddle.x + paddle.width/2
+        local paddleY = paddle.y
+        local nearestBrick = nil
+        local minDist = math.huge
+        
+        local highestY = -math.huge
+        for _, brick in ipairs(bricks) do
+            if brick.health > 0 and not brick.destroyed and
+               brick.y + brick.height > 0 and brick.y > highestY and 
+               (paddle.x + paddle.width/2 - 1 >= brick.x and paddle.x + paddle.width/2 + 1 <= brick.x + brick.width) then
+                highestY = brick.y + brick.height
+                nearestBrick = brick
+            end
+        end
+        
+        if nearestBrick then
+            local targetX = nearestBrick.x + nearestBrick.width/2
+            local targetY = nearestBrick.y + nearestBrick.height/2
+            
+            -- Store target for drawing
+            gravityWell.techTarget = {x = targetX, y = targetY}
+            
+            -- Attract and boost damage of balls in range
+            for _, ball in ipairs(Balls) do
+                local dx = targetX - ball.x
+                local dy = targetY - ball.y
+                local dist = math.sqrt(dx*dx + dy*dy)
+                
+                if dist <= gravityWell.stats.range*50 then
+                    -- Store original speed if we haven't already
+                    local attraction = gravityWell.attractionStrength * ball.stats.speed / math.max(dist, 10)
+                    local angle = math.atan2(dy, dx)
+                    
+                    -- Update ball velocity
+                    if ball.speedX and ball.speedY then
+                        ball.speedX = ball.speedX + math.cos(angle) * attraction * dt
+                        ball.speedY = ball.speedY + math.sin(angle) * attraction * dt
+                        
+                        -- Normalize velocity to maintain ball speed
+                        local speed = math.sqrt(ball.speedX * ball.speedX + ball.speedY * ball.speedY)
+                        local originalSpeed = ball.stats.speed + (Player.bonuses.speed or 0)
+                        if speed > originalSpeed then
+                            local scale = originalSpeed / speed
+                            ball.speedX = ball.speedX * scale
+                            ball.speedY = ball.speedY * scale
+                        end
+                    end
+                    
+                    ball.damageMultiplier = gravityWell.stats.damage
+                else
+                    local currentSpeed = math.sqrt(ball.speedX * ball.speedX + ball.speedY * ball.speedY)
+                    local originalSpeed = ball.stats.speed + (Player.bonuses.speed or 0)
+                    if currentSpeed ~= originalSpeed then
+                        local scale = originalSpeed / currentSpeed
+                        ball.speedX = ball.speedX * scale
+                        ball.speedY = ball.speedY * scale
+                    end
+                end
+            end
+
+            -- Attract bullets in range
+            for _, bullet in ipairs(bullets) do
+                local dx = targetX - bullet.x
+                local dy = targetY - bullet.y
+                local dist = math.sqrt(dx*dx + dy*dy)
+                local bulletSpeed = math.sqrt(bullet.speedX * bullet.speedX + bullet.speedY * bullet.speedY)
+                
+                if dist <= gravityWell.stats.range*50 then
+                    local attraction = gravityWell.attractionStrength * bulletSpeed / math.max(dist, 10)
+                    local angle = math.atan2(dy, dx)
+                    
+                    -- Update bullet velocity
+                    bullet.speedX = bullet.speedX + math.cos(angle) * attraction * dt * 2
+                    bullet.speedY = bullet.speedY + math.sin(angle) * attraction * dt * 2
+                    
+                    -- Normalize velocity to maintain bullet speed
+                    local speed = math.sqrt(bullet.speedX * bullet.speedX + bullet.speedY * bullet.speedY)
+                    if speed > bulletSpeed then
+                        local scale = bulletSpeed / speed
+                        bullet.speedX = bullet.speedX * scale
+                        bullet.speedY = bullet.speedY * scale
+                    end
+
+                    -- Apply damage multiplier to bullets in Gravity well
+                    bullet.damageMultiplier = gravityWell.stats.damage
+                end
+            end
+        end
+    end
+
+    if unlockedBallTypes["Saw Orbiter"] then
+        local sawBlades = unlockedBallTypes["Saw Orbiter"]
+        
+        -- Update rotation angle
+        sawBlades.currentAngle = sawBlades.currentAngle + sawBlades.stats.speed/50 * 0.4 * math.pi * dt
+
+        -- Update saw positions
+        sawBlades.sawPositions = {}
+        local angleStep = 2 * math.pi / sawBlades.stats.amount
+        
+        for i = 1, sawBlades.stats.amount do
+            local angle = sawBlades.currentAngle + (i-1) * angleStep
+            table.insert(sawBlades.sawPositions, {
+                x = paddle.x + paddle.width/2 + math.cos(angle) * sawBlades.orbitRadius,
+                y = paddle.y + paddle.height/2 + math.sin(angle) * sawBlades.orbitRadius
+            })
+        end
+
+        -- Check for collision with bricks
+        for _, sawPos in ipairs(sawBlades.sawPositions) do
+            for _, brick in ipairs(bricks) do
+                if not brick.destroyed and not brick.hitLastFrame and
+                   brick.health > 0 and brick.y + brick.height > 0 then
+                    -- Simple circle vs rectangle collision check
+                    local testX = math.max(brick.x, math.min(sawPos.x, brick.x + brick.width))
+                    local testY = math.max(brick.y, math.min(sawPos.y, brick.y + brick.height))
+                    
+                    local distX = sawPos.x - testX
+                    local distY = sawPos.y - testY
+
+                    if (distX * distX + distY * distY) <= (20 * 20) then -- 20 is saw radius
+                        dealDamage(sawBlades, brick)
+                    end
+                end
+            end
         end
     end
 end
@@ -670,10 +970,27 @@ local function updateDeadBullets(dt)
 end
 
 function Balls.update(dt, paddle, bricks)
+    -- Reset hitLastFrame for all bricks at the start of each frame
+    for _, brick in ipairs(bricks) do
+        brick.hitLastFrame = false
+    end
+
     -- Store paddle reference for Ballspawn
     paddleReference = paddle
+    updateDeadBullets(dt)
+    techUpdate(dt)
+
+    -- Update particles
+    Smoke.update(dt)
+    Explosion.update(dt)
+    
     local ballTrailLength = 150
     for _, ball in ipairs(Balls) do -- Corrected loop
+        -- Apply gravity for Ping-Pong ball
+        if ball.name == "Ping-Pong ball" then
+            ball.speedY = ball.speedY + (ball.stats.speed * 2* dt)
+        end
+
         -- Ball movement
         if Player.bonuses.speed then
             local multX, multY = normalizeVector(ball.speedX, ball.speedY)
@@ -700,23 +1017,62 @@ function Balls.update(dt, paddle, bricks)
         if not hitBrickThisFrame then
             wallCollision(ball)
         end
-    end
 
-    for i, bullet in ipairs(bullets) do
+        -- Magnetic ball behavior
+        if ball.name == "Magnetic Ball" then
+            -- Find nearest brick
+            local nearestBrick = nil
+            local minDist = math.huge
+            
+            for _, brick in ipairs(bricks) do
+                if not brick.destroyed and brick.health > 0 and brick.y + brick.height > 0 then
+                    local dx = (brick.x + brick.width/2) - ball.x
+                    local dy = (brick.y + brick.height/2) - ball.y
+                    local dist = math.sqrt(dx*dx + dy*dy)
+                    
+                    if dist < minDist then
+                        minDist = dist
+                        nearestBrick = brick
+                    end
+                end
+            end
+            
+            -- Apply magnetic attraction to nearest brick
+            if nearestBrick then
+                local dx = (nearestBrick.x + nearestBrick.width/2) - ball.x
+                local dy = (nearestBrick.y + nearestBrick.height/2) - ball.y
+                local dist = math.sqrt(dx*dx + dy*dy)
+                
+                local attraction = ball.attractionStrength / math.max(dist, 10)
+                local angle = math.atan2(dy, dx)
+                
+                ball.speedX = ball.speedX + math.cos(angle) * attraction * dt
+                ball.speedY = ball.speedY + math.sin(angle) * attraction * dt
+                
+                -- Normalize velocity to maintain ball speed
+                local speed = math.sqrt(ball.speedX * ball.speedX + ball.speedY * ball.speedY)
+                local originalSpeed = ball.stats.speed + (Player.bonuses.speed or 0)
+                if speed > originalSpeed then
+                    local scale = originalSpeed / speed
+                    ball.speedX = ball.speedX * scale
+                    ball.speedY = ball.speedY * scale
+                end
+            end
+        end
+    end    
+    for i = #bullets, 1, -1 do  -- Iterate backwards to safely remove bullets
+        local bullet = bullets[i]
         bullet.x = bullet.x + bullet.speedX * dt
         bullet.y = bullet.y + bullet.speedY * dt
-
-        local trailLength = bullet.trailLength or 50
-
-        -- Bullet trail update
-        bullet.trail = bullet.trail or {}
-        table.insert(bullet.trail, {x = bullet.x, y = bullet.y})
-        if #bullet.trail > trailLength then -- Limit the bullet trail length
-            table.remove(bullet.trail, 1)
-        end
+        
+        -- Emit smoke particles behind the bullet
+        local dirX = -bullet.speedX / math.sqrt(bullet.speedX^2 + bullet.speedY^2)
+        local dirY = -bullet.speedY / math.sqrt(bullet.speedX^2 + bullet.speedY^2)
+        Smoke.emit(bullet.x, bullet.y, dirX, dirY, 2, bullet.stats.damage)
 
         -- Check for collision with bricks
         if bullet.y >= 0 then
+            local hitBrick = false
             for _, brick in ipairs(bricks) do
                 if not brick.destroyed and not brick.hitLastFrame then
                     if bullet.x + bullet.radius > brick.x and bullet.x - bullet.radius < brick.x + brick.width and
@@ -725,15 +1081,19 @@ function Balls.update(dt, paddle, bricks)
                         -- Deal damage to the brick and remove the bullet
                         local kill = dealDamage(bullet, brick)
                         if not kill then
-                            bullet = nil
                             table.insert(deadBullets, bullet) -- Add to deadBullets for fading trail
                             table.remove(bullets, i)
                         end
-                        return
+                        hitBrick = true
+                        break  -- Exit brick loop after hitting one
                     end
                 end
             end
+            if hitBrick then
+                goto continue  -- Skip to next bullet if we hit a brick
+            end
         end
+
         -- Make bullets bounce off side walls
         if bullet.x - bullet.radius < statsWidth and bullet.speedX < 0 then
             bullet.speedX = -bullet.speedX
@@ -748,15 +1108,12 @@ function Balls.update(dt, paddle, bricks)
             table.insert(deadBullets, bullet)
             table.remove(bullets, i)
         end
-    end
-    updateDeadBullets(dt)
 
-    -- Update laser charge time if it is unlocked
-    laserChargeUpdate(dt)
+        ::continue::
+    end
 end
 
 local laserAlpha = {a = 0}
-
 local function laserShoot()
     unlockedBallTypes["Laser"].currentChargeTime = 0
     laserAlpha.a = 1
@@ -801,41 +1158,27 @@ local function drawBalls()
 end
 
 local function drawBullets()
+    -- Draw the smoke particles first (behind bullets)
+    Smoke.draw()
+      -- Draw the bullets themselves
+    love.graphics.setColor(1, 1, 1, 1)
     for _, bullet in ipairs(bullets) do
-        bullet.trail = bullet.trail or {}
-        if #bullet.trail > 1 then
-            for i = 2, #bullet.trail do
-                local p1 = bullet.trail[i-1]
-                local p2 = bullet.trail[i]
-                local t = i / #bullet.trail
-                local r = 1
-                local g = 1
-                local b = t*0.75
-                love.graphics.setColor(r, g, b, math.pow(t, 2.0))
-                love.graphics.setLineWidth(bullet.radius * mapRangeClamped(bullet.stats.damage, 1, 10, 1, 2) * (1+math.pow(1-t, 1.5)*5))
-                love.graphics.line(p1.x, p1.y, p2.x, p2.y)
-            end
-            love.graphics.setLineWidth(1)
-            
-        end
+        local scale = math.max(0.5, math.min(2.5, bullet.stats.damage * 0.1))
+        local radius = (bullet.radius or 5) * scale
+        love.graphics.circle("fill", bullet.x, bullet.y, radius)
     end
+    
     -- Draw fading trails for dead bullets
     for _, bullet in ipairs(deadBullets) do
-        if bullet.trail and #bullet.trail > 1 then
-            for i = 2, #bullet.trail do
-                local p1 = bullet.trail[i-1]
-                local p2 = bullet.trail[i]
-                local t = i / #bullet.trail
-                love.graphics.setColor(1, 1, 1, math.pow(t, 2.0) * (bullet.trailFade or 1))
-                love.graphics.setLineWidth(bullet.radius * mapRangeClamped(bullet.stats.damage, 1, 10, 0.5, 1)*2 * (1+math.pow(1-t, 1.2)))
-                love.graphics.line(p1.x, p1.y, p2.x, p2.y)
-            end
-            love.graphics.setLineWidth(1)
+        if bullet.trailFade then
+            love.graphics.setColor(1, 1, 1, bullet.trailFade * 0.5)
+            love.graphics.circle("fill", bullet.x, bullet.y, (bullet.radius or 5) * 0.05)
         end
     end
+    love.graphics.setColor(1, 1, 1, 1)
 end
 
-local function LaserDraw()
+local function techDraw()
     if unlockedBallTypes["Laser"] then
         love.graphics.setColor(1, 1, 1, 0.6)
         love.graphics.rectangle("fill", paddle.x, 0, 1, paddle.y)
@@ -853,16 +1196,109 @@ local function LaserDraw()
             love.graphics.rectangle("fill", paddle.x + (paddle.width/2)+ (paddle.width/2) * chargeRatio, 0, 1, paddle.y)
 
             --draw the laser
-            love.graphics.setColor(0,1,0,laserAlpha.a) -- Red color for the laser
+            love.graphics.setColor(0,1,0,laserAlpha.a) -- Green color for the wide laser
             love.graphics.rectangle("fill", paddle.x, 0, paddle.width, paddle.y)
+        end
+    end
+
+    -- Draw laser Beam
+    if unlockedBallTypes["laser Beam"] then
+        -- Draw the actual laser beam
+        -- Calculate charge progress
+        local chargeProgress = laserBeamTimer / (2.0/unlockedBallTypes["laser Beam"].stats.fireRate)
+        -- Interpolate color from grey to red based on charge
+        local r = 0.35 + (1 - 0.35) * chargeProgress
+        local g = 0.35 - 0.35 * chargeProgress
+        local b = 0.35 - 0.35 * chargeProgress
+        local a = 0.5 + 0.5 * chargeProgress
+        love.graphics.setColor(r, g, b, a)
+        if laserBeamBrick then
+            love.graphics.rectangle("fill", paddle.x + paddle.width/2 - 1, laserBeamBrick.y+laserBeamBrick.height, 2, paddle.y - (laserBeamBrick.y+laserBeamBrick.height))
+        else
+            love.graphics.rectangle("fill", paddle.x + paddle.width/2 - 1, 0, 2, paddle.y)
+        end
+    end    -- Draw Gravity well tech range and target
+    if unlockedBallTypes["Gravity well"] then
+        local gravityWell = unlockedBallTypes["Gravity well"]
+        if gravityWell.techTarget then
+            -- Initialize time if it doesn't exist
+            gravityWell.animTime = (gravityWell.animTime or 0) + love.timer.getDelta()*0.25
+            
+            -- Draw concentric circles that get smaller
+            local maxRadius = gravityWell.stats.range * 50
+            local numCircles = 5
+            for i = 1, numCircles do
+                local phase = (gravityWell.animTime * 0.5 + i/numCircles) % 1
+                local radius = maxRadius * (1 - phase)
+                love.graphics.setColor(gravityWell.color[1], gravityWell.color[2], gravityWell.color[3], phase)
+                love.graphics.circle("line", gravityWell.techTarget.x, gravityWell.techTarget.y, radius)
+            end
+            
+            -- Draw target indicator
+            love.graphics.setColor(gravityWell.color[1], gravityWell.color[2], gravityWell.color[3], 1)
+            local size = 20
+            love.graphics.line(
+                gravityWell.techTarget.x - size, gravityWell.techTarget.y,
+                gravityWell.techTarget.x + size, gravityWell.techTarget.y
+            )
+            love.graphics.line(
+                gravityWell.techTarget.x, gravityWell.techTarget.y - size,
+                gravityWell.techTarget.x, gravityWell.techTarget.y + size
+            )
+            
+            -- Draw attraction lines from balls in range
+            for _, ball in ipairs(Balls) do
+                local dx = gravityWell.techTarget.x - ball.x
+                local dy = gravityWell.techTarget.y - ball.y
+                local dist = math.sqrt(dx*dx + dy*dy)
+                
+                if dist <= gravityWell.stats.range then
+                    -- Draw fading line based on distance
+                    local alpha = (1 - dist/gravityWell.stats.range) * 0.5
+                    love.graphics.setColor(gravityWell.color[1], gravityWell.color[2], gravityWell.color[3], alpha)
+                    love.graphics.line(ball.x, ball.y, gravityWell.techTarget.x, gravityWell.techTarget.y)
+                end
+            end
+        end
+    end
+    if unlockedBallTypes["Saw Orbiter"] then
+        for _, sawPos in ipairs(unlockedBallTypes["Saw Orbiter"].sawPositions) do
+            love.graphics.circle("line", sawPos.x, sawPos.y, 20)
         end
     end
 end
 
-function Balls.draw()
-    drawBalls()
-    drawBullets()
-    LaserDraw()
+function Balls:draw()
+    -- Draw techs
+    techDraw()
+    
+    -- Draw balls
+    for _, ball in ipairs(Balls) do
+        -- Draw the trail
+        local ballColor = ballList[ball.name].color or {1,1,1,1}
+        if not ball.dead then
+            for i = 1, #ball.trail do
+                local p = ball.trail[i]
+                local t = i / #ball.trail
+                local trailRadius = ball.radius * ball.drawSizeBoost * math.pow(t,1.25) -- Starts at 0, grows to ball.radius
+                love.graphics.setColor(ballColor[1], ballColor[2], ballColor[3], math.pow(t,4)) -- Fade the trail
+                love.graphics.circle("fill", p.x, p.y, trailRadius)
+            end
+        end
+
+        if ball.name == "Damage boost ball" then
+            love.graphics.setColor(1, 0, 0, 1) -- Red color for damage boost ball
+            drawImageCentered(auraImg, ball.x, ball.y, (ball.stats.range + (Player.bonuses.range or 0)) * 80, (ball.stats.range + (Player.bonuses.range or 0)) * 80) -- Draw the aura image
+        end
+
+        if ball.name == "Phantom Ball" then
+            love.graphics.setColor(0, 0, 1, 1)
+            drawImageCentered(auraImg, ball.x, ball.y, (ball.stats.range + (Player.bonuses.range or 0)) * 40, (ball.stats.range + (Player.bonuses.range or 0)) * 40) -- Draw the aura image
+        end
+
+        -- Draw the ball
+        love.graphics.circle("fill", ball.x, ball.y, ball.radius * ball.drawSizeBoost)
+    end
 end
 
 return Balls

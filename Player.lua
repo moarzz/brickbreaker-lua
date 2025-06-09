@@ -1,17 +1,53 @@
 local upgradesUI = require("upgradesUI")
+local json = require("Libraries/dkjson")
+local love = love
+
+-- File path for storing game data
+local saveFilePath = "gamedata.json"
+
+-- Load game data from file
+local function loadGameData()
+    if love.filesystem.getInfo(saveFilePath) then
+        local contents = love.filesystem.read(saveFilePath)
+        if contents then
+            local data = json.decode(contents)
+            return {
+                highScore = data and data.highScore or 0,
+                gold = data and data.gold or 0
+            }
+        end
+    end
+    return {
+        highScore = 0,
+        gold = 0
+    }
+end
+
+-- Save game data to file
+local function saveGameData(score, gold)
+    local data = {
+        highScore = score,
+        gold = gold
+    }
+    local encoded = json.encode(data)
+    love.filesystem.write(saveFilePath, encoded)
+end
 
 -- This file contains the player class, it manages his level, his abilities and his stats
+local gameData = loadGameData()
 local money = 0
 damageThisFrame = 0
 Player = {
-    money = math.floor(money),
+    money = math.floor(gameData.gold),
     score = 0,
-    lives = 3,
+    highScore = gameData.highScore,
+    lives = 5,
     levelingUp = false,
     price = 1,
     newUpgradePrice = 100,
     upgradePriceMultScaling = 10,
     dead = false,
+    lastHitTime = 0,
     bonuses = { -- These bonuses are percentages
     }
 }
@@ -26,7 +62,7 @@ Player.bonusesList = {
     ballDamage = {name = "ballDamage", description = "Ball damage boost", startingPrice = 100},
     bulletDamage = {name = "bulletDamage", description = "Bullet damage boost", startingPrice = 100},
     ammo = {name = "ammo", description = "Ammo boost", startingPrice = 100},
-    range = {name = "range", description = "Range boost", startingPrice = 100},
+    range = {name = "range", description = "Range boost", startingPrice = 100}, 
     fireRate = {name = "fireRate", description = "Fire rate boost", startingPrice = 100},
     amount = {name = "amount", description = "Amount boost", startingPrice = 100},
 }
@@ -66,17 +102,38 @@ function Player.addBonus(name)
 end
 
 function Player.reset()
+    local oldScore = Player.score
+    if oldScore > Player.highScore then
+        Player.highScore = oldScore
+        saveGameData(Player.highScore, Player.money)  -- Save the new high score
+    end
+    Player.score = 0
     Player.money = 0
+    Player.goldEarned = 0
     Player.lives = 3
     Player.levelingUp = false
     Player.price = 1
     Player.dead = false
-    for name, bonus in pairs(Player.bonuses) do
-        Player.bonuses[name] = 0
-    end
+    Player.bonuses = {} -- Clear the bonuses table first
+    Player.bonusOrder = {} -- Clear the bonus order
+    Player.bonusPrice = {} -- Clear the bonus prices
+    
+    -- Initialize default bonuses from bonusesList
+    Player.bonuses = {}
 end
 
+newHighScore = false
 function Player.die()
+    -- Check and update high score
+    if Player.score > Player.highScore then
+        Player.highScore = Player.score
+        newHighScore = true
+        saveGameData(Player.highScore, Player.money)  -- Save the new high score
+    end
+
+    -- Calculate gold earned based on score
+    local goldEarned = math.floor(Player.score / 10)
+    Player.gain(goldEarned)
     toggleFreeze()
     Player.dead = true
 end
@@ -84,10 +141,11 @@ end
 local brickSpeedTween
 function Player.hit()
     Player.lives = Player.lives - 1
+    Player.lastHitTime = love.timer.getTime()
     if Player.lives <= 0 then
         Player.die()
     end
-    brickSpeed.value = -750
+    brickSpeed.value = -300 / getBrickSpeedByTime()
     brickSpeedTween = tween.new(2, brickSpeed, { value = 10 }, tween.outExpo)
     addTweenToUpdate(brickSpeedTween)
 
@@ -110,13 +168,15 @@ end
 function Player.pay(amount)
     if Player.money >= amount then
         Player.money = Player.money - amount
+        saveGameData(Player.highScore, Player.money)
     else
-        error("Player tried to pay ".. amount.."but didn't habe enough money : "..Player.money)
+        error("Player tried to pay ".. amount.."but didn't have enough money : "..Player.money)
     end
 end
 
 function Player.gain(amount)
     Player.money = Player.money + amount
+    saveGameData(Player.highScore, Player.money)
     upgradesUI.tryQueue()
 end
 

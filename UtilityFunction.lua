@@ -62,25 +62,72 @@ function playSoundEffect(soundEffect, volume, pitch, loop, clone)
 end
 
 function GameOverDraw()
-    -- Draw a gray overlay on the screen
-    love.graphics.setColor(0.5, 0.5, 0.5, 0.7) -- Gray color with 70% opacity
-    love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+    -- Draw a dark overlay on the screen
+    love.graphics.setColor(0, 0, 0, 0.8) -- Dark overlay with 80% opacity
+    love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
 
-    -- Display "Game Over" text
-    love.graphics.setColor(1, 1, 1, 1) -- White color for the text
-    setFont(48)
+    -- Reset color for UI elements
+    love.graphics.setColor(1, 1, 1, 1)
+
+    -- Draw "Game Over" text at the top
+    setFont(64)
     local text = "Game Over"
-    local textWidth = font:getWidth(text)
-    local textHeight = font:getHeight()
-    love.graphics.print(text, (love.graphics.getWidth() - textWidth) / 2, (love.graphics.getHeight() - textHeight) / 2)
+    local currentFont = love.graphics.getFont()
+    local textWidth = currentFont:getWidth(text)
+    local textHeight = currentFont:getHeight()
+    love.graphics.print(text, (screenWidth - textWidth) / 2, 100)
 
-    -- Draw the restart button
-    local buttonWidth, buttonHeight = 150, 50
-    local buttonX = (love.graphics.getWidth() - buttonWidth) / 2
-    local buttonY = (love.graphics.getHeight() + textHeight) / 2 + 20
+    -- Draw Score (top left)
+    setFont(50)
+    local scoreText = "Score: " .. formatNumber(Player.score)
+    love.graphics.print(scoreText, 50, 200)
+    local scoreWidth = currentFont:getWidth(scoreText)
 
-    if suit.Button("Restart", {align = "center"}, buttonX, buttonY, buttonWidth, buttonHeight).hit then
-        restartGame() -- Call the restart function when the button is clicked
+    -- Draw High Score below Score
+    setFont(32)
+    local highScoreText = "High Score: " .. formatNumber(Player.highScore)
+    love.graphics.print(highScoreText, 50, 270)
+
+    love.graphics.setColor(1, 0, 0, 1) -- Set color to red for the "Game Over" text
+    setFont(20)
+    if newHighScore then
+        love.graphics.print("New High Score!", scoreWidth - 100, 150, math.rad(15))
+    end
+    
+    -- Draw Money Earned (top right)
+    love.graphics.setColor(1, 1, 1, 1) -- Reset color to white
+    setFont(48)
+    local goldEarned = math.floor(Player.score / 10)
+    local goldText = "gold earned: ".. formatNumber(goldEarned) .. "$"
+    currentFont = love.graphics.getFont()
+    local moneyWidth = currentFont:getWidth(goldText)
+    love.graphics.print(goldText, screenWidth - moneyWidth - 50, 200)
+
+    -- Draw buttons
+    local buttonWidth = 400
+    local buttonHeight = 75
+    local buttonSpacing = 50
+    local totalWidth = (buttonWidth * 3) + (buttonSpacing * 2)
+    local startX = (screenWidth - totalWidth) / 2
+    local buttonY = screenHeight / 2 + 100
+
+    -- Upgrades button (left)
+    if suit.Button("Upgrades", {id = generateNextButtonID()}, startX, buttonY, buttonWidth, buttonHeight).hit then
+        currentGameState = GameState.UPGRADES
+        Player.reset()
+    end
+
+    -- Main Menu button (center)
+    if suit.Button("Main Menu", {id = generateNextButtonID()}, startX + buttonWidth + buttonSpacing, buttonY, buttonWidth, buttonHeight).hit then
+        currentGameState = GameState.MENU
+        Player.reset()
+    end    
+    
+    -- Play Again button (right)
+    if suit.Button("Play Again", {id = generateNextButtonID()}, startX + (buttonWidth + buttonSpacing) * 2, buttonY, buttonWidth, buttonHeight).hit then
+        resetGame()
+        currentGameState = GameState.PLAYING
+        initializeGameState()
     end
 
     -- Reset the color to white
@@ -267,7 +314,7 @@ function drawCenteredText(text, x, y, font, textColor)
     love.graphics.setColor(1, 1, 1, 1)
 end
 
-function drawTextWithOutline(text, x, y, textColor, outlineColor, outlineThickness)
+function drawTextWithOutline(text, x, y, font, textColor, outlineColor, outlineThickness)
     -- Set the outline color and draw the text around the main text
     love.graphics.setColor(outlineColor)
     for dx = -outlineThickness, outlineThickness, outlineThickness do
@@ -556,7 +603,7 @@ function screenFlash(duration, intensity)
     -- Create a tween for the flash effect
     local easing = tween.easing.outSine
     local delay = duration / 8
-    backgroundIntensity = intensity
+    backgroundIntensity = math.max(intensity, 0.25)
 
     local flashTween = tween.new(duration, backgroundColor, {r = 0, g = 0, b = 0, a = 0}, tween.easing.inSine)
     addTweenToUpdate(flashTween)

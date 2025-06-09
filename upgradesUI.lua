@@ -232,9 +232,17 @@ local function drawPlayerUpgrades()
             local upgradeStatButton = dress:Button("", {color = invisButtonColor, id = buttonID}, x+5, y-20, cellWidth, cellHeight*4)
             if upgradeStatButton.hit then -- Display the button for upgrading the stat
                 -- Check if the player has enough money to upgrade
+
                 if Player.money < Player.bonusPrice[bonusName] then
                     print("Not enough money to upgrade " .. bonusName)
                 else
+                    if bonusName == "ammo" then
+                        for _, ballType in pairs(Balls.getUnlockedBallTypes()) do
+                            if ballType.name == "gun" then
+                                ballType.currentAmmo = ballType.currentAmmo + 1 -- Increase ammo by 1
+                            end
+                        end
+                    end
                     -- Apply the upgrade
                     print(bonusName)
                     Player.bonusUpgrades[bonusName]() -- Call the upgrade function
@@ -252,6 +260,7 @@ local function drawPlayerUpgrades()
                 suit.layout:reset(x, y, padding, padding)
                 setFont(30)
                 if suit.Button("add stat", {color = invisButtonColor, id = buttonID, align = "center"}, suit.layout:row(w, cellHeight*4)).hit and Player.money >= Player.newUpgradePrice then
+                    Player.pay(Player.newUpgradePrice) -- Deduct the cost from the player's money
                     Player.newUpgradePrice = Player.newUpgradePrice * Player.upgradePriceMultScaling
                     setLevelUpShop(false) -- Set the level up shop with ball unlockedBallTypes
                     Player.levelingUp = true -- Set the flag to indicate leveling up
@@ -444,8 +453,16 @@ local function drawBallStats()
                         elseif statName == "amount" then
                             Balls.addBall(ballType.name) -- Add a new ball of the same type
                         elseif statName == "cooldown" then
-                            ballType.stats.cooldown = ballType.stats.cooldown - 1 -- Example action
-                            print( "stat ".. statName .. " decreased to " .. ballType.stats[statName])
+                            if ballType.stats.cooldown > 1 then -- Prevent cooldown from going to 0 or below
+                                ballType.stats.cooldown = ballType.stats.cooldown - 1
+                                print( "stat ".. statName .. " decreased to " .. ballType.stats[statName])
+                            else
+                                print(ballType.name .. "'s cooldown cannot be lowered any further")
+                                return false
+                            end
+                        elseif statName == "ammo" then
+                            ballType.currentAmmo = ballType.currentAmmo + 1 -- Increase ammo by 1
+                            ballType.stats[statName] = ballType.stats[statName] + 1 -- Example action
                         else
                             ballType.stats[statName] = ballType.stats[statName] + 1 -- Example action
                             print( "stat ".. statName .. " increased to " .. ballType.stats[statName])
@@ -470,8 +487,13 @@ local function drawBallStats()
                         elseif statName == "amount" then
                             Balls.addBall(ballType.name) -- Add a new ball of the same type
                         elseif statName == "cooldown" then
-                            ballType.stats.cooldown = ballType.stats.cooldown - 1 -- Example action
-                            print( "stat ".. statName .. " decreased to " .. ballType.stats[statName])
+                            if ballType.stats.cooldown > 1 then -- Prevent cooldown from going to 0 or below
+                                ballType.stats.cooldown = ballType.stats.cooldown - 1
+                                print( "stat ".. statName .. " decreased to " .. ballType.stats[statName])
+                            else
+                                print(ballType.name .. "'s cooldown cannot be lowered any further")
+                                return false
+                            end
                         else
                             ballType.stats[statName] = ballType.stats[statName] + 1 -- Example action
                             print( "stat ".. statName .. " increased to " .. ballType.stats[statName])
@@ -508,7 +530,7 @@ local function drawBallStats()
     end
 end
 
-local function drawSpecialUpgrades()
+local function drawPerks()
     local padding = 10 -- Padding between elements
     local cellWidth, cellHeight = 200, 50 -- Dimensions for each cell
     local rowCount = 3 -- Number of rows
@@ -574,7 +596,7 @@ function upgradesUI.draw()
 
     drawPlayerStats() -- Draw the player stats table
     drawPlayerUpgrades() -- Draw the player upgrades table
-    drawSpecialUpgrades() -- Draw the special upgrades table
+    --drawPerks() -- Draw the special upgrades table
     drawBallStats() -- Draw the ball stats table
 
     -- Draw separator lines
