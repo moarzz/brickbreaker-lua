@@ -384,8 +384,8 @@ local function ballListInit()
                 damage = 1,
             },
         },
-        ["Exploding ball"] = {
-            name = "Exploding ball",
+        ["Exploding Ball"] = {
+            name = "Exploding Ball",
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
@@ -745,7 +745,7 @@ function Balls.initialize()
     ballList = {}   
     unlockedBallTypes = {}
     ballListInit()
-    --Balls.addBall("Flame Burst") -- Add the starting ball
+    Balls.addBall("Exploding Ball") -- Add the starting ball
 end
 
 function Balls.addBall(ballName, singleBall)
@@ -905,15 +905,16 @@ local function brickCollisionEffects(ball, brick)
     if ball.name ~= "Phantom Ball" then
         ballHitVFX(ball) -- Call the ball hit VFX function
     end  
-    if ball.name == "Exploding ball" then
+    if ball.name == "Exploding Ball" then
         -- Create explosion using new particle system
-        local scale = (ball.stats.range + (Player.bonuses.range or 0)) * 0.5
+        local scale = (ball.stats.range + (Player.bonuses.range or 0)) * 0.75
         createSpriteAnimation(ball.x, ball.y, scale/3, explosionVFX, 512, 512, 0.02, 5)
         --Explosion.spawn(ball.x, ball.y, scale)
         
         -- Play explosion sound
         playSoundEffect(explosionSFX, 0.3 + scale * 0.2, math.max(1 - scale * 0.1, 0.1), false, true)
         
+        dealDamage(ball, brick)
         local bricksTouchingCircle = getBricksTouchingCircle(ball.x, ball.y, (ball.stats.range + (Player.bonuses.range or 0)) * 24)
         for _, touchingBrick in ipairs(bricksTouchingCircle) do
             if touchingBrick and touchingBrick ~= brick then -- Ensure not nil and not the original brick

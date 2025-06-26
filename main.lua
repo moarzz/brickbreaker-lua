@@ -895,7 +895,7 @@ function love.keypressed(key)
     if key == "t" then
         local total = 0
         for _, ball in ipairs(Balls) do
-            if ball.name == "Exploding ball" and ball.dead == false then
+            if ball.name == "Exploding Ball" and ball.dead == false then
                 total = total + 1
             end
         end
