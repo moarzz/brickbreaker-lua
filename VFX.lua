@@ -2,8 +2,8 @@ VFX = {}
 
 -- brick hit functions
 local function brickHitFX(brick, ball, intensity)
-    brick.color = brick.health > 12 and {1, 1, 1, 1} or getBrickColor(brick.health)
-    local colorBeforeHit = brick.color or {1, 1, 1, 1} -- Default to white if no color is set
+    brick.color = getBrickColor(brick.health)
+    local colorBeforeHit = brick.color -- Default to white if no color is set
     brick.color = {1,1,1,1}
     local colorTweenBack = tween.new(0.5, brick, {color = colorBeforeHit}, tween.outSine)
     addTweenToUpdate(colorTweenBack)
@@ -21,7 +21,7 @@ local function brickHitFX(brick, ball, intensity)
     local offsetRotation = math.atan2(offsetY, offsetX) * 0.1
     offsetX = offsetX * (mapRange(intensity, 1, 10, 5, 30) + 5)
     offsetY = offsetY * (mapRange(intensity, 1, 10, 5, 30) + 5)
-    local scaleOffset = mapRange(intensity, 1, 10, 1.2, 2)
+    local scaleOffset = mapRange(intensity, 1, 10, 1, 3)
     local hitTween = tween.new(0.05, brick, {drawScale = scaleOffset, drawOffsetX = offsetX, drawOffsetY = offsetY, drawOffsetRot = 0}, tween.outCubic)
     addTweenToUpdate(hitTween)
 
@@ -30,31 +30,20 @@ local function brickHitFX(brick, ball, intensity)
         addTweenToUpdate(hitTweenBack)
     end)
 end
-local brickParticles = {}
-local function brickHitParticles(brick, ball, intensity) --maybe ca c'est brick detroyed particles tbh
-    local particleamount = math.floor(intensity/3 + 2)
-    local particleSpeed = {100,200}
-    for i=1, particleamount do
-        local direction = {}
-        if ball.speedX and ball.speedY then
-            direction.x, direction.y = normalizeVector(ball.speedX, ball.speedY)
-        else
-            direction.x, direction.y = 0, -1 -- Default direction if ball speed is not defined
-        end
-        local particle = {
-            x = (brick.x + brick.width/2 + (ball.x or (brick.x + brick.width/2)))/2,
-            y = (brick.y + brick.height/2 + (ball.y or (brick.y + brick.height/2)))/2,
-            speed = randomFloat(200,400)*mapRangeClamped(intensity,1,10,1,3)
-        }
-        local speedX, speedY = rotateVector(direction.x*particle.speed, direction.y*particle.speed, randomFloat(-math.rad(45), math.rad(45)))
-        particle.speedX = speedX
-        particle.speedY = speedY
-        particle.size = randomFloat(1, 3) * (intensity/5 + 1.25)
-        particle.startingSize = particle.size
-        particle.color = {0.8, 0.8, 0.8, 1}
-        table.insert(brickParticles, particle)
-    end
+
+local function brickHitParticles(brick, ball, intensity)
+    -- Default to brick center if ball position is unavailable
+    local ballX = ball.x or brick.x + brick.width/2
+    local ballY = ball.y or brick.y + brick.height/2
+    
+    -- Calculate effect position using safe values
+    local effectX = (ballX + brick.x + brick.width/2)/2
+    local effectY = (ballY + brick.y + brick.height/2)/2
+    
+    createSpriteAnimation(effectX, effectY, mapRangeClamped(intensity, 1, 20, 0.25, 0.75), impactVFX, 512, 512, 0.005, 4)
 end
+
+--[[
 local function updateBrickParticles(dt)
     for i = #brickParticles, 1, -1 do
         local particle = brickParticles[i]
@@ -85,7 +74,7 @@ local function drawBrickParticles()
         love.graphics.setColor(particle.color)
         love.graphics.circle("fill", particle.x, particle.y, particle.size)
     end
-end
+end]]
 function VFX.brickHit(brick, ball, damage)
     if brick.health >= 1 then
         -- makes the brick knockback
@@ -98,7 +87,7 @@ end
 
 -- update
 function VFX.update(dt)
-    updateBrickParticles(dt)
+    --updateBrickParticles(dt)
 end
 
 -- draw
@@ -118,7 +107,7 @@ function VFX.flipDrawDebug()
     shouldDrawDebug = not shouldDrawDebug
 end
 function VFX.draw()
-    drawBrickParticles()
+    --drawBrickParticles()
     if shouldDrawDebug then 
         drawDebug()
     end

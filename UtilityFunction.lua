@@ -51,6 +51,7 @@ function restartGame()
 end
 
 function playSoundEffect(soundEffect, volume, pitch, loop, clone)
+    pitch = math.max(pitch, 0.1)
     clone = clone or true -- Default to false if not provided
     if clone then
         soundEffect = soundEffect:clone() -- Clone the sound effect if specified
@@ -79,13 +80,16 @@ function GameOverDraw()
 
     -- Draw Score (top left)
     setFont(50)
-    local scoreText = "Score: " .. formatNumber(Player.score)
+    local scoreText = "Score: " .. formatNumber(Player.score) .. " pts"
+    love.graphics.setColor(99/255, 170/255, 1, 1)
     love.graphics.print(scoreText, 50, 200)
     local scoreWidth = currentFont:getWidth(scoreText)
+    love.graphics.setColor(1, 1, 1, 1) -- Reset color to white
 
     -- Draw High Score below Score
     setFont(32)
-    local highScoreText = "High Score: " .. formatNumber(Player.highScore)
+    local highScoreText = "High Score: " .. formatNumber(Player.highScore) .. " pts"
+    love.graphics.setColor(99/255, 170/255, 1, 1)
     love.graphics.print(highScoreText, 50, 270)
 
     love.graphics.setColor(1, 0, 0, 1) -- Set color to red for the "Game Over" text
@@ -94,14 +98,16 @@ function GameOverDraw()
         love.graphics.print("New High Score!", scoreWidth - 100, 150, math.rad(15))
     end
     
-    -- Draw Money Earned (top right)
+    -- Draw gold Earned (top right)
     love.graphics.setColor(1, 1, 1, 1) -- Reset color to white
     setFont(48)
     local goldEarned = math.floor(Player.score / 10)
     local goldText = "gold earned: ".. formatNumber(goldEarned) .. "$"
     currentFont = love.graphics.getFont()
     local moneyWidth = currentFont:getWidth(goldText)
+    love.graphics.setColor(231/255, 184/255, 0, 1) -- Set color to gold
     love.graphics.print(goldText, screenWidth - moneyWidth - 50, 200)
+    love.graphics.setColor(1, 1, 1, 1)
 
     -- Draw buttons
     local buttonWidth = 400
@@ -375,6 +381,16 @@ function getTextSize(text)
 end
 
 function formatNumber(value)
+    -- Convert to number if it's a string
+    if type(value) == "string" then
+        value = tonumber(value)
+    end
+    
+    -- Return early if not a number
+    if type(value) ~= "number" then
+        return tostring(value)
+    end
+    
     if value >= 1e12 then
         return string.format("%.2gT", value / 1e12) -- Trillions
     elseif value >= 1e9 then
@@ -500,9 +516,12 @@ function boomUpdate(dt)
     end
 end
 
+local animationID = 1
 local animations = {}
-function createSpriteAnimation(x, y, scale, spritesheet, frameWidth, frameHeight, frameTime)
+function createSpriteAnimation(x, y, scale, spritesheet, frameWidth, frameHeight, frameTime, skipFrames, looping)
+    looping = looping or false
     local animation = {}
+    animation.id = animationID
     animation.x = x
     animation.y = y
     animation.scale = scale
@@ -511,8 +530,11 @@ function createSpriteAnimation(x, y, scale, spritesheet, frameWidth, frameHeight
     animation.frameHeight = frameHeight
     animation.frameTime = frameTime
     animation.elapsedTime = 0
-    animation.currentFrame = 1
+    animation.currentFrame = 1 + (skipFrames or 0)
+    animation.looping = looping or false
     animation.quads = {}
+
+    animationID = animationID + 1 -- Increment the animation ID for the next animation
 
     -- Calculate the number of frames in the spritesheet
     local sheetWidth = spritesheet:getWidth()
@@ -524,22 +546,49 @@ function createSpriteAnimation(x, y, scale, spritesheet, frameWidth, frameHeight
         end
     end
     table.insert(animations, animation) -- Store the animation in the animations table
+    return animation.id
+end
+
+function cooldownVFX(duration, x, y)
+    local timer = 0
+    local function update(dt)
+        timer = timer + dt
+        if timer >= duration then
+            -- Create a visual effect at (x, y)
+            createSpriteAnimation(x, y)
+            return true -- Stop the update
+        end
+        return false -- Continue the update
+    end
+    return update
+end
+
+function getAnimation(id)
+    for _, animation in ipairs(animations) do
+        if animation.id == id then
+            return animation -- Return the animation if found
+        end
+    end
+    return nil -- Return nil if no animation with the given ID is found
 end
 
 -- Update function for the animation
 function updateAnimations(dt)
-    for _, animation in ipairs(animations) do
+    for i = #animations, 1, -1 do
+        local animation = animations[i]
         animation.elapsedTime = animation.elapsedTime + dt
         if animation.elapsedTime >= animation.frameTime then
             animation.elapsedTime = animation.elapsedTime - animation.frameTime
             animation.currentFrame = animation.currentFrame + 1
             if animation.currentFrame > #animation.quads then
-                table.remove(animations, _) -- Remove the animation if it has finished
-                animation = nil
+                if animation.looping then
+                    animation.currentFrame = 1
+                else
+                    table.remove(animations, i) -- Remove the animation if it has finished
+                end
             end
         end
     end
-    
 end
 
 function drawAnimations()
@@ -776,6 +825,45 @@ function drawDamageNumbers()
         love.graphics.setColor(color)
         drawCenteredText(tostring(damageNumber.damage), damageNumber.x*3/damageNumber.fontSize, damageNumber.y*3/damageNumber.fontSize, love.graphics.getFont(), color) -- Draw the damage number
         love.graphics.pop()
+    end
+end
+
+function printMoney(text, centerX, centerY, angle)
+    angle = angle or math.rad(1.5) -- Default angle if not provided
+    setFont(35)
+    local moneyOffsetX = -math.cos(math.rad(5)) * getTextSize(formatNumber(text))/2
+    
+    -- Draw shadow text
+    love.graphics.setColor(0, 0, 0, 1)
+    love.graphics.print(formatNumber(text) .. "$", centerX + 4 + moneyOffsetX, centerY + 4, angle)
+    
+    -- Draw main text in money green
+    local moneyColor = {14/255, 202/255, 92/255, 1}
+    love.graphics.setColor(moneyColor)
+    love.graphics.print(formatNumber(text) .. "$", centerX + moneyOffsetX, centerY, angle)
+    
+    -- Reset color
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
+function makePalette(c1, c2, c3, c4, c5, c6, c7)
+    local colors = {c1, c2, c3, c4, c5, c6, c7}
+    return function(t)
+        t = math.max(0, math.min(1, t))
+        local seg = 6
+        local pos = t * seg
+        local idx = math.floor(pos) + 1
+        local frac = pos - math.floor(pos)
+        if idx >= seg + 1 then
+            idx = seg
+            frac = 1
+        end
+        local a, b = colors[idx], colors[idx + 1]
+        return {
+            a[1] + (b[1] - a[1]) * frac,
+            a[2] + (b[2] - a[2]) * frac,
+            a[3] + (b[3] - a[3]) * frac
+        }
     end
 end
 

@@ -6,61 +6,122 @@ local love = love
 local saveFilePath = "gamedata.json"
 
 -- Load game data from file
-local function loadGameData()
+function loadGameData()
     if love.filesystem.getInfo(saveFilePath) then
         local contents = love.filesystem.read(saveFilePath)
         if contents then
             local data = json.decode(contents)
             return {
                 highScore = data and data.highScore or 0,
-                gold = data and data.gold or 0
+                gold = data and data.gold or 0,
+                startingMoney = data and data.startingMoney or 0,
+                permanentUpgrades = data and data.permanentUpgrades or {},
+                permanentUpgradePrices = data and data.permanentUpgradePrices or {
+                    amount = 100,
+                    speed = 100,
+                    damage = 100,
+                    -- ... other default prices
+                }
             }
         end
     end
     return {
         highScore = 0,
-        gold = 0
+        gold = 0,
+        startingMoney = 0,
+        permanentUpgrades = {},
+        permanentUpgradePrices = {
+            amount = 100,
+            speed = 100,
+            damage = 100,
+            -- ... other default prices
+        }
     }
 end
 
--- Save game data to file
-local function saveGameData(score, gold)
-    local data = {
-        highScore = score,
-        gold = gold
-    }
-    local encoded = json.encode(data)
-    love.filesystem.write(saveFilePath, encoded)
-end
-
--- This file contains the player class, it manages his level, his abilities and his stats
-local gameData = loadGameData()
-local money = 0
-damageThisFrame = 0
 Player = {
-    money = math.floor(gameData.gold),
+    money = 0,
+    startingMoney = 0,
+    gold = 0,
     score = 0,
-    highScore = gameData.highScore,
-    lives = 5,
+    highScore = 0,
+    lives = 3,
     levelingUp = false,
     price = 1,
     newUpgradePrice = 100,
     upgradePriceMultScaling = 10,
     dead = false,
-    lastHitTime = 0,
+    lastHitTime = 0,    permanentUpgrades = {}, -- Store permanent upgrades
+    permanentUpgradePrices = {
+        speed = 100,
+        damage = 100,
+        ballDamage = 100,
+        bulletDamage = 100,
+        cooldown = 100,
+        fireRate = 100,
+        ammo = 100,
+        range = 100,
+        amount = 100,
+        paddleSize = 100,
+        paddleSpeed = 100,
+    },
     bonuses = { -- These bonuses are percentages
-    }
+    },
+    perks = {},
+    level = 1,
+    xp = 0,
+    levelThresholds = {5000, 50000}, -- XP needed for each level
 }
+-- Save game data to file        l
+function saveGameData()  -- Add startingMoney parameter
+    local data = {
+        highScore = Player.highScore,
+        gold = Player.gold,
+        startingMoney = Player.startingMoney,
+        permanentUpgrades = {
+            paddleSize = Player.permanentUpgrades.paddleSize or 0,
+            paddleSpeed = Player.permanentUpgrades.paddleSpeed or 0,
+            -- Keep other upgrades...
+            speed = Player.permanentUpgrades.speed or 0,
+            damage = Player.permanentUpgrades.damage or 0,
+            --ballDamage = Player.permanentUpgrades.ballDamage or 0,
+            --bulletDamage = Player.permanentUpgrades.bulletDamage or 0,
+            cooldown = Player.permanentUpgrades.cooldown or 0,
+            fireRate = Player.permanentUpgrades.fireRate or 0,
+            ammo = Player.permanentUpgrades.ammo or 0,
+            range = Player.permanentUpgrades.range or 0,
+            amount = Player.permanentUpgrades.amount or 0
+        },
+        permanentUpgradePrices = Player.permanentUpgradePrices
+    }
+    local encoded = json.encode(data, { indent = true }) -- Added indent for better readability
+    love.filesystem.write(saveFilePath, encoded)
+end
+
+-- This file contains the player class, it manages his level, his abilities and his stats
+local gameData = loadGameData()
+function Player.loadJsonValues()
+    Player.startingMoney = gameData.startingMoney or 0
+    Player.money = gameData.startingMoney or 0
+    Player.gold = gameData.gold or 0
+    Player.highScore = gameData.highScore
+    Player.permanentUpgrades = gameData.permanentUpgrades or {}
+    -- Apply paddle upgrades after loading
+    if paddle then
+        Player.bonusUpgrades.paddleSpeed()
+        Player.bonusUpgrades.paddleSize()
+    end
+end
+
+local money = 0
+damageThisFrame = 0
 
 Player.bonusOrder = {}
 Player.bonusPrice = {}
 Player.bonusesList = {
-    --income = {name = "income", description = "Money income", startingPrice = 50},
     speed = {name = "speed", description = "Ball speed", startingPrice = 100},
     paddleSize = {name = "paddleSize", description = "Paddle size", startingPrice = 100},
     damage = {name = "damage", description = "Damage boost", startingPrice = 100},
-    ballDamage = {name = "ballDamage", description = "Ball damage boost", startingPrice = 100},
-    bulletDamage = {name = "bulletDamage", description = "Bullet damage boost", startingPrice = 100},
     ammo = {name = "ammo", description = "Ammo boost", startingPrice = 100},
     range = {name = "range", description = "Range boost", startingPrice = 100}, 
     fireRate = {name = "fireRate", description = "Fire rate boost", startingPrice = 100},
@@ -69,29 +130,129 @@ Player.bonusesList = {
 
 Player.bonusUpgrades = {
     --income = function() Player.bonuses.income = Player.bonuses.income + 1 end,
-    speed = function() Player.bonuses.speed = Player.bonuses.speed + 1 end,
-    --paddleSpeed = function() Player.bonuses.paddleSpeed = Player.bonuses.paddleSpeed + 1
-        --paddle.speed = paddle.speed + 200 end,
-    paddleSize = function() Player.bonuses.paddleSize = Player.bonuses.paddleSize + 1 
-        paddle.width = paddle.width+65 end,
+    speed = function() Player.bonuses.speed = Player.bonuses.speed + 1 end,    
+    paddleSpeed = function() 
+        paddle.speed = 400 + (Player.permanentUpgrades.paddleSpeed or 0) * 200
+    end,
+    paddleSize = function()
+        -- This is handled in permanentUpgrades.lua now
+        if Player.permanentUpgrades.paddleSize then
+            paddle.width = 100 + (Player.permanentUpgrades.paddleSize * 65)
+        end
+    end,
     damage = function() Player.bonuses.damage = Player.bonuses.damage + 1 end,
-    ballDamage = function() Player.bonuses.ballDamage = Player.bonuses.ballDamage + 2 end,
-    bulletDamage = function() Player.bonuses.bulletDamage = Player.bonuses.bulletDamage + 2 end,
+    --ballDamage = function() Player.bonuses.ballDamage = Player.bonuses.ballDamage + 2 end,
+    --bulletDamage = function() Player.bonuses.bulletDamage = Player.bonuses.bulletDamage + 2 end,
     ammo = function() Player.bonuses.ammo = Player.bonuses.ammo + 1 end,
     range = function() Player.bonuses.range = Player.bonuses.range + 1 end,
     fireRate = function() Player.bonuses.fireRate = Player.bonuses.fireRate + 1 end,
-    amount = function() Player.bonuses.amount = Player.bonuses.amount + 1 
-        local ballsToAdd = {}
-        print("#unlocked ball types: " .. #Balls.getUnlockedBallTypes())
+    amount = function() 
+    Player.bonuses.amount = (Player.bonuses.amount or 0) + 1
+        -- For each unlocked ball type
+        local index = 0
         for _, ballType in pairs(Balls.getUnlockedBallTypes()) do
-            print("Ball type:", ballType.name)
-            table.insert(ballsToAdd, ballType.name)
+            if ballType.type == "ball" then  -- On  ly add actual balls
+                Balls.addBall(ballType.name, true)  -- Pass true to indicate single ball add
+            end
+            index = index + 1
         end
-        for _, ballName in ipairs(ballsToAdd) do
-            print("Adding ball: " .. ballName)
-            Balls.addBall(ballName)
-        end
+        print("#unlocked ball types: " .. index)
     end,
+}
+
+Player.perksList = {
+    --[[superSpeed = {name = "superSpeed", description = "doubles ball speed. if amount <= 3"},
+    cellularDivision = {name = "cellularDivision", description = "doubles amount. damage is halved."},
+    warriorSpirit = {name = "warriorSpirit", description = "doubles damage. speed is halved."},]]
+    bulletStorm = {name = "bulletStorm", description = "doubles fire rate."},
+    explosiveBullets = {name = "explosiveBullets", description = "bullets explode on impact, dealing damage to nearby bricks.", 
+        onUnlock = function()
+            print("Explosive bullets perk unlocked!")
+            Player.perks.explosiveBullets = true
+        end
+    },
+    multishot = {
+        name = "multishot",
+        description = "Bullets split into three projectiles after traveling a short distance. Bullet damage is reduced by 50% rounded up."
+    },
+    speedBounce = {name = "speedBounce", description = "Temporarily increases ball speed on bounce."},
+    techSupremacy = {name = "techSupremacy", description = "doubles damage of all tech items"},
+    brickBreaker = {
+        name = "brickBreaker",
+        description = "5% chance to instantly destroy any brick regardless of health when they take damage"
+    },
+    paddleSquared = {
+        name = "paddleSquared",
+        description = "paddleBounce effects trigger twice"
+    },
+    --[[particle accelerator = {
+        name = "particleAccelerator",
+        description = "Increases the speed of everything aside from the bricks by 50%"
+    },
+    popBounce = {name = "popBounce", description = "on paddleBounce, deal DAMAGE to a random brick."},
+    chainReaction = {
+        name = "Chain Reaction",
+        description = "When a brick is destroyed, adjacent bricks take DAMAGE damage"
+    },]]
+}
+
+Player.perkUpgrades = {
+    superSpeed = function()
+        Player.bonuses.speed = (Player.bonuses.speed or 0) * 2
+    end,
+    
+    cellularDivision = function()
+        Player.bonuses.amount = (Player.bonuses.amount or 0) * 2
+        Player.bonuses.damage = (Player.bonuses.damage or 0) / 2
+        Balls.amountIncrease()
+    end,
+    
+    warriorSpirit = function()
+        Player.bonuses.damage = (Player.bonuses.damage or 0) * 2
+        Player.bonuses.speed = (Player.bonuses.speed or 0) / 2
+    end,
+    
+    bulletStorm = function()
+        Player.perks.bulletStorm = true
+        print("bullet storm perk unlocked!")
+    end,
+    
+    explosiveBullets = function()
+        print("got explosive bullet.")
+        Player.perks.explosiveBullets = true
+    end,
+    
+    speedBounce = function()
+        Player.perks.speedBounce = true
+    end,
+
+    techSupremacy = function() 
+        Player.perks.techSupremacy = true
+    end,
+    
+    popBounce = function()
+        Player.perks.popBounce = true
+    end,
+    
+    brickBreaker = function()
+        Player.perks.brickBreaker = true
+    end,
+    
+    paddleSquared = function()
+        Player.perks.paddleSquared = true
+    end,
+    multishot = function()
+        Player.perks.multishot = true
+        print("multishot perk unlocked!")
+    end,
+    
+    magneticField = function()
+        Player.perks.magneticField = true
+    end,
+    
+    chainReaction = function()
+        Player.perks.chainReaction = true
+    end
 }
 
 function Player.addBonus(name)
@@ -101,41 +262,78 @@ function Player.addBonus(name)
     print("added bonus : ".. name ..  ", #Player.bonuses : " .. tableLength(Player.bonuses))
 end
 
+function Player.addPerk(name)
+    -- Add the perk to the player's perks table if it doesn't exist
+    if not Player.perks[name] then
+        Player.perks[name] = true
+        -- Call the perk's upgrade function if it exists
+        if Player.perkUpgrades[name] then
+            Player.perkUpgrades[name]()
+        end
+        print("Added perk: " .. name)
+    else
+        print("Player already has perk: " .. name)
+    end
+end
+
 function Player.reset()
     local oldScore = Player.score
     if oldScore > Player.highScore then
         Player.highScore = oldScore
-        saveGameData(Player.highScore, Player.money)  -- Save the new high score
+        saveGameData()  -- Save the new high score
     end
+    Player.startingMoney = gameData.startingMoney or 0
     Player.score = 0
-    Player.money = 0
+    Player.money = gameData.startingMoney or 0
+    Player.gold = gameData.gold or 0
     Player.goldEarned = 0
     Player.lives = 3
     Player.levelingUp = false
     Player.price = 1
     Player.dead = false
     Player.bonuses = {} -- Clear the bonuses table first
+    Player.perks = {} -- Clear the perks table
     Player.bonusOrder = {} -- Clear the bonus order
     Player.bonusPrice = {} -- Clear the bonus prices
     
     -- Initialize default bonuses from bonusesList
     Player.bonuses = {}
+
+    Player.levelingUp = false
+    Player.dead = false
+    Player.money = Player.startingMoney or 0
+    -- Apply paddle upgrades
+    Player.bonusUpgrades.paddleSpeed()
+    Player.bonusUpgrades.paddleSize()
 end
 
+function Player.gain(amount)
+    Player.money = Player.money + amount
+    Player.score = Player.score + amount
+    Player.xp = Player.score -- XP follows score
+    Player.checkLevelUp() -- Check for level up after gaining XP
+    saveGameData()
+    upgradesUI.tryQueue()
+end
+
+function Player.addGold(amount)
+    Player.gold = Player.gold + amount
+    saveGameData()
+end
 newHighScore = false
 function Player.die()
     -- Check and update high score
     if Player.score > Player.highScore then
         Player.highScore = Player.score
         newHighScore = true
-        saveGameData(Player.highScore, Player.money)  -- Save the new high score
     end
 
     -- Calculate gold earned based on score
-    local goldEarned = math.floor(Player.score / 10)
-    Player.gain(goldEarned)
+    local goldEarned = math.floor(Player.score / mapRange(Player.score, 0, 5000, 10, 100))
+    Player.addGold(goldEarned)
     toggleFreeze()
     Player.dead = true
+    saveGameData()  -- Save the new high score
 end
 
 local brickSpeedTween
@@ -168,16 +366,90 @@ end
 function Player.pay(amount)
     if Player.money >= amount then
         Player.money = Player.money - amount
-        saveGameData(Player.highScore, Player.money)
+        saveGameData()
     else
         error("Player tried to pay ".. amount.."but didn't have enough money : "..Player.money)
     end
 end
 
-function Player.gain(amount)
-    Player.money = Player.money + amount
-    saveGameData(Player.highScore, Player.money)
-    upgradesUI.tryQueue()
+function Player:save()    local saveData = {
+        startingMoney = self.startingMoney,
+        permanentUpgrades = {
+            moneyBonus = self.moneyBonus or 0,
+            damageBonus = self.damageBonus or 0,
+            speedBonus = self.speedBonus or 0,
+            healthBonus = self.healthBonus or 0,
+            extraBallBonus = self.extraBallBonus or 0,
+            criticalBonus = self.criticalBonus or 0,
+            paddleSize = self.permanentUpgrades.paddleSize or 0,
+            paddleSpeed = self.permanentUpgrades.paddleSpeed or 0
+        }
+    }
+    
+    local jsonStr = json.encode(saveData, { indent = true })
+    love.filesystem.write("savedata.json", jsonStr)
+end
+
+function Player:load()
+    if love.filesystem.getInfo("savedata.json") then
+        local contents = love.filesystem.read("savedata.json")
+        local data = json.decode(contents)
+        
+        if data then
+            self.startingMoney = data.startingMoney or 0
+            self.money = self.startingMoney
+            self.gold = data.gold or 0
+
+              -- Load permanent upgrades
+            if data.permanentUpgrades then
+                self.moneyBonus = data.permanentUpgrades.moneyBonus or 0
+                self.damageBonus = data.permanentUpgrades.damageBonus or 0
+                self.speedBonus = data.permanentUpgrades.speedBonus or 0
+                self.healthBonus = data.permanentUpgrades.healthBonus or 0
+                self.extraBallBonus = data.permanentUpgrades.extraBallBonus or 0
+                self.criticalBonus = data.permanentUpgrades.criticalBonus or 0
+                self.permanentUpgrades.paddleSize = data.permanentUpgrades.paddleSize or 0
+                self.permanentUpgrades.paddleSpeed = data.permanentUpgrades.paddleSpeed or 0
+            end
+        end
+    end
+end
+
+-- Calculate what percentage through the current level we are
+function Player.getXPProgress()
+    local currentThreshold = Player.levelThresholds[Player.level] or math.huge
+    local previousThreshold = Player.level > 1 and Player.levelThresholds[Player.level - 1] or 0
+    local xpInCurrentLevel = Player.xp - previousThreshold
+    local xpNeededForLevel = currentThreshold - previousThreshold
+    return xpInCurrentLevel / xpNeededForLevel
+end
+
+-- Check if player should level up
+function Player.checkLevelUp()
+    if Player.level <= #Player.levelThresholds and Player.xp >= Player.levelThresholds[Player.level] then
+        Player.level = Player.level + 1
+        setLevelUpShop(true, true)
+        Player.levelingUp = true -- This will trigger the upgrade UI
+        return true
+    end
+    return false
+end
+
+-- This existing code in Balls.lua already handles explosive bullets
+if Player.perks.explosiveBullets then
+    -- Create explosion effect
+    local scale = (bullet.stats.damage * 0.5)
+    createSpriteAnimation(bullet.x, bullet.y, scale/3, explosionVFX, 512, 512, 0.02, 5)
+    playSoundEffect(explosionSFX, 0.3 + scale * 0.2, math.max(1 - scale * 0.1, 0.1), false, true)
+    
+    -- Damage nearby bricks
+    local radius = bullet.stats.damage * 24 -- Explosion radius based on bullet damage
+    local bricksTouchingCircle = getBricksTouchingCircle(bullet.x, bullet.y, radius)
+    for _, touchingBrick in ipairs(bricksTouchingCircle) do
+        if touchingBrick ~= brick then -- Don't hit the same brick twice
+            dealDamage(bullet, touchingBrick)
+        end
+    end
 end
 
 return Player

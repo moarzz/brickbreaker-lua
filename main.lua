@@ -3,6 +3,7 @@ Player = require("Player") -- player logic
 Balls = require("Balls") -- ball logic
 Timer = require("Libraries.timer") -- timer library
 local upgradesUI = require("upgradesUI") -- upgrade UI logic
+local permanentUpgrades = require("permanentUpgrades") -- permanent upgrades UI
 shaders = require("shaders") -- shader logic
 suit = require("Libraries.Suit") -- UI library
 tween = require("Libraries.tween") -- tweening library
@@ -13,11 +14,15 @@ local Explosion = require("particleSystems.explosion") -- Explosion particle sys
 -- Game states
 GameState = {
     MENU = "menu",
+    START_SELECT = "start_select", -- Add this line
     PLAYING = "playing",
     SETTINGS = "settings",
     UPGRADES = "upgrades"
 }
 currentGameState = GameState.MENU
+
+-- Add this variable to store the player's choice
+local startingChoice = nil
 
 --screen dimensions
 statsWidth = 450 -- Width of the stats area
@@ -59,7 +64,7 @@ function resetGame()
     -- Reset paddle to default position and size
     paddle = {
         x = screenWidth / 2 - 50,
-        y = screenHeight - 300,
+        y = screenHeight - 400,
         width = 130,
         widthMult = 1,
         height = 20,
@@ -75,12 +80,8 @@ function resetGame()
     Player.reset()
     
     -- Reset balls
-    if Balls then
-        for i = #Balls, 1, -1 do
-            table.remove(Balls, i)
-        end
-        Balls.initialize()
-    end
+    balls = {}
+    Balls.initialize()
 
     -- Reset timers
     Timer.clear()
@@ -101,6 +102,54 @@ function resetGame()
             table.remove(explosions, i)
         end
     end
+end
+
+local function loadAssets()
+    --load images
+    auraImg = love.graphics.newImage("assets/sprites/aura.png")
+    brickImg = love.graphics.newImage("assets/sprites/brick.png")
+        -- UI
+    uiLabelImg = love.graphics.newImage("assets/sprites/UI/ballUI backgroundTop.png")
+    uiSmallWindowImg = love.graphics.newImage("assets/sprites/UI/newBallBackground.png")
+    uiWindowImg = love.graphics.newImage("assets/sprites/UI/ballBackground.png")
+    uiBigWindowImg = love.graphics.newImage("assets/sprites/UI/ballBackground_20.png")
+        --Icons
+    iconsImg = {
+        amount = love.graphics.newImage("assets/sprites/UI/icons/amount.png"),
+        ammo = love.graphics.newImage("assets/sprites/UI/icons/ammo.png"),
+        damage = love.graphics.newImage("assets/sprites/UI/icons/damage.png"),
+        cooldown = love.graphics.newImage("assets/sprites/UI/icons/cooldown.png"),
+        fireRate = love.graphics.newImage("assets/sprites/UI/icons/fireRate.png"),
+        speed = love.graphics.newImage("assets/sprites/UI/icons/speed.png"),
+        range = love.graphics.newImage("assets/sprites/UI/icons/range.png"),
+        ballDamage = love.graphics.newImage("assets/sprites/UI/icons/ballDamage.png"),
+        paddleSize = love.graphics.newImage("assets/sprites/UI/icons/paddleSize.png"),
+        bulletDamage = love.graphics.newImage("assets/sprites/UI/icons/bulletDamage.png"),
+        income = love.graphics.newImage("assets/sprites/UI/icons/income.png"),
+    }
+
+    -- load sounds
+    backgroundMusic = love.audio.newSource("assets/SFX/game song.mp3", "static")
+    brickHitSFX = love.audio.newSource("assets/SFX/brickBoop.mp3", "static")
+    paddleBoopSFX = love.audio.newSource("assets/SFX/paddleBoop.mp3", "static")
+    wallBoopSFX = love.audio.newSource("assets/SFX/wallBoop.mp3", "static")
+    explosionSFX = love.audio.newSource("assets/SFX/explosion.mp3", "static") -- Add explosion sound if available
+    brickDeathSfX = love.audio.newSource("assets/SFX/brickDeath.mp3", "static")
+
+    -- load shaders
+    backgroundShader = love.graphics.newShader("Shaders/background.glsl")
+    glowShader = love.graphics.newShader("Shaders/glow.glsl")
+
+    -- load spriteSheets
+    loadingVFX = love.graphics.newImage("assets/sprites/UI/loading.png")
+    impactVFX = love.graphics.newImage("assets/sprites/VFX/Impact.png")
+    smokeVFX = love.graphics.newImage("assets/sprites/VFX/smoke.png")
+    sparkVFX = love.graphics.newImage("assets/sprites/VFX/spark.png")
+    explosionVFX = love.graphics.newImage("assets/sprites/VFX/explosion.png")
+    fireballVFX = love.graphics.newImage("assets/sprites/VFX/fireball.png")
+    sawBladesVFX = love.graphics.newImage("assets/sprites/VFX/sawBlades.png")
+
+    Player.loadJsonValues()
 end
 
 local function getMaxBrickHealth()
@@ -190,7 +239,7 @@ local function addMoreBricks()
                 print("spawning more bricks")
                 for i=1 , 10 do
                     generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 50) --generate 100 scaling rows of bricks
-                    currentRowPopulation = currentRowPopulation + 1 + math.floor(currentRowPopulation/25)
+                    currentRowPopulation = currentRowPopulation + 1 + math.floor(currentRowPopulation/50)
                 end
                 return
             else 
@@ -205,8 +254,8 @@ function getBrickColor(health)
     -- Starting at yellow (60) and going counter-clockwise
     
     -- Use a square root function to slow down the color change at higher health values
-    local scaledHealth = math.sqrt(health / 100) * 100
-    local hue = 86 - (scaledHealth - 1) * (360/100)
+    local scaledHealth = math.sqrt(health / 200) * 200
+    local hue = 100 - (scaledHealth - 1) * (360/100)
     
     -- Wrap hue to keep it in 0-360 range
     if hue < 0 then hue = hue + 360 end
@@ -242,45 +291,6 @@ function initializeBricks()
 
     --check for adding more bricks every 0.5 seconds
     Timer.every(0.5, function() addMoreBricks() end)
-end
-
--- shaders
-local backgroundShader
-
-local function loadAssets()
-    --load images
-    auraImg = love.graphics.newImage("assets/sprites/aura.png")
-    brickImg = love.graphics.newImage("assets/sprites/brick.png")
-        -- UI
-    uiLabelImg = love.graphics.newImage("assets/sprites/UI/ballUI backgroundTop.png")
-    uiWindowImg = love.graphics.newImage("assets/sprites/UI/ballBackground.png")
-    uiBigWindowImg = love.graphics.newImage("assets/sprites/UI/ballBackground_20.png")
-        --Icons
-    iconsImg = {
-        amount = love.graphics.newImage("assets/sprites/UI/icons/amount.png"),
-        ammo = love.graphics.newImage("assets/sprites/UI/icons/ammo.png"),
-        damage = love.graphics.newImage("assets/sprites/UI/icons/damage.png"),
-        cooldown = love.graphics.newImage("assets/sprites/UI/icons/cooldown.png"),
-        fireRate = love.graphics.newImage("assets/sprites/UI/icons/fireRate.png"),
-        speed = love.graphics.newImage("assets/sprites/UI/icons/speed.png"),
-        range = love.graphics.newImage("assets/sprites/UI/icons/range.png"),
-        ballDamage = love.graphics.newImage("assets/sprites/UI/icons/ballDamage.png"),
-        paddleSize = love.graphics.newImage("assets/sprites/UI/icons/paddleSize.png"),
-        bulletDamage = love.graphics.newImage("assets/sprites/UI/icons/bulletDamage.png"),
-        income = love.graphics.newImage("assets/sprites/UI/icons/income.png"),
-    }
-
-    -- load sounds
-    backgroundMusic = love.audio.newSource("assets/SFX/game song.mp3", "static")
-    brickHitSFX = love.audio.newSource("assets/SFX/brickBoop.mp3", "static")
-    paddleBoopSFX = love.audio.newSource("assets/SFX/paddleBoop.mp3", "static")
-    wallBoopSFX = love.audio.newSource("assets/SFX/wallBoop.mp3", "static")
-    explosionSFX = love.audio.newSource("assets/SFX/explosion.mp3", "static") -- Add explosion sound if available
-    brickDeathSfX = love.audio.newSource("assets/SFX/brickDeath.mp3", "static")
-
-    -- load shaders
-    backgroundShader = love.graphics.newShader("Shaders/background.glsl")
-    glowShader = love.graphics.newShader("Shaders/glow.glsl")
 end
 
 function initializeGameState()
@@ -339,17 +349,33 @@ function love.load()
         y = screenHeight - 300,
         width = 130,
         widthMult = 1,
-        height = 20,
+        height = 20,    
         speed = 400,
         currrentSpeedX = 0,
         speedMult = 1
     }
+
+    local data = loadGameData()
+    Player.permanentUpgrades = data.permanentUpgrades
+    Player.permanentUpgradePrices = data.permanentUpgradePrices
+    Player.gold = data.gold
+    Player.startingMoney = data.startingMoney
+end
+
+function getHighestBrickY()
+    local highestY = -math.huge  -- Start with lowest possible number
+    for _, brick in ipairs(bricks) do
+        if not brick.destroyed and brick.y > highestY then
+            highestY = brick.y
+        end
+    end
+    return highestY
 end
 
 function getBrickSpeedByTime()
     -- Scale speed from 0.5 to 5.0 over 10 minutes
     local timeSinceStart = love.timer.getTime() - gameStartTime
-    return timeSinceStart < 600 and mapRangeClamped(timeSinceStart, 0, 600, 0.5, 1.0) or mapRange(timeSinceStart, 600, 2000, 1.0, 10.0)
+    return timeSinceStart < 600 and mapRangeClamped(timeSinceStart, 0, 600, 0.5, 1.0) or mapRange(timeSinceStart, 600, 2000, 1.0, 5.0)
 end
 
 local function getBrickSpeedMult() 
@@ -357,7 +383,7 @@ local function getBrickSpeedMult()
     local posMult = 1
     for i, brick in ipairs(bricks) do
         if not brick.destroyed then
-            posMult = mapRangeClamped(brick.y, 0, (paddle.y/2 - brickHeight)*3/4, 10, 1)
+            posMult = mapRangeClamped(brick.y, 0, (paddle.y/2 - brickHeight), 10, 1)
             break
         end
     end
@@ -411,7 +437,8 @@ screenOffset = {x=0,y=0}
 local startTime = -10
 local gameTime = 0  -- Tracks actual elapsed gameplay time
 
-function love.update(dt)    
+function love.update(dt)
+    dt = dt * 1.75
     --send info to background shader
     backgroundShader:send("time", love.timer.getTime())                   
     backgroundShader:send("resolution", {screenWidth, screenHeight})
@@ -470,24 +497,24 @@ function love.update(dt)
             paddle.currentSpeedX, paddle.currentSpeedY = 0, 0
             if love.keyboard.isDown("left") or love.keyboard.isDown("a") then
                 paddle.x = paddle.x - paddle.speed * paddle.speedMult * dt
-                paddle.currrentSpeedX = paddle.currrentSpeedX - 400
+                paddle.currentSpeedX = paddle.currrentSpeedX - 400
             end
             if love.keyboard.isDown("right") or love.keyboard.isDown("d") then
                 paddle.x = paddle.x + paddle.speed * paddle.speedMult * dt
-                paddle.currrentSpeedX = paddle.currrentSpeedX + 400
+                paddle.currentSpeedX = paddle.currrentSpeedX + 400
             end
-            if love.keyboard.isDown("up") or love.keyboard.isDown("w") then
+            --[[if love.keyboard.isDown("up") or love.keyboard.isDown("w") then
                 paddle.y = paddle.y - paddle.speed * paddle.speedMult * dt
-                paddle.currrentSpeedY = paddle.currrentSpeedY - 400
+                paddle.currentSpeedY = paddle.currentSpeedY - 400
             end
             if love.keyboard.isDown("down") or love.keyboard.isDown("s") then
                 paddle.y = paddle.y + paddle.speed * paddle.speedMult * dt
-                paddle.currrentSpeedY = paddle.currrentSpeedY + 400
-            end
+                paddle.currentSpeedY = paddle.currentSpeedY + 400
+            end]]
 
             -- Keep paddle within screen bounds
             paddle.x = math.max(statsWidth, math.min(screenWidth - statsWidth - paddle.width, paddle.x))
-            paddle.y = math.max(screenHeight - 300, math.min(screenHeight - paddle.height, paddle.y))
+            paddle.y = math.max(screenHeight - 300, math.min(screenHeight - paddle.height - 10, paddle.y))
 
             -- Update Balls
             Balls.update(dt, paddle, bricks, Player)
@@ -537,8 +564,7 @@ function drawMenu()
       -- Play button
     local buttonID = generateNextButtonID()
     if suit.Button("Play", {id=buttonID}, centerX, startY, buttonWidth, buttonHeight).hit then
-        currentGameState = GameState.PLAYING
-        initializeGameState() -- Properly initialize everything when starting the game
+        currentGameState = GameState.START_SELECT -- Go to selection screen
     end
     
     -- Settings button
@@ -551,6 +577,43 @@ function drawMenu()
     buttonID = generateNextButtonID()
     if suit.Button("Upgrades", {id=buttonID}, centerX, startY + (buttonHeight + buttonSpacing) * 2, buttonWidth, buttonHeight).hit then
         currentGameState = GameState.UPGRADES
+    end
+
+    -- draw highscore
+    suit.Label("Highscore: " .. formatNumber(Player.highScore), {align = "center"}, 100, 100)
+end
+
+-- Add a new function for the starting item selection screen
+local function drawStartSelect()
+    local centerX = screenWidth / 2 - buttonWidth / 2
+    local startY = screenHeight / 2 - buttonHeight
+    setFont(36)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.print("Choose your starting item:", centerX, startY - 100)
+
+    local ballBtn = suit.Button("Ball", {id="start_ball"}, centerX, startY, buttonWidth, buttonHeight)
+    local pistolBtn = suit.Button("Pistol", {id="start_pistol"}, centerX, startY + buttonHeight + 40, buttonWidth, buttonHeight)
+    local nothingBtn = suit.Button("Nothing", {id="start_nothing"}, centerX, startY + (buttonHeight + 40) * 2, buttonWidth, buttonHeight)
+
+    if ballBtn.hit then
+        startingChoice = "Ball"
+        currentGameState = GameState.PLAYING
+        initializeGameState()
+        -- Only add Ball as starting ball
+        Balls.initialize()
+        Balls.addBall("Ball")
+    elseif pistolBtn.hit then
+        startingChoice = "Pistol"
+        currentGameState = GameState.PLAYING
+        initializeGameState()
+        -- Only add Pistol as starting ball
+        Balls.initialize()
+        Balls.addBall("Pistol")
+    elseif nothingBtn.hit then
+        startingChoice = "Nothing"
+        currentGameState = GameState.PLAYING
+        initializeGameState()
+        Balls.initialize()
     end
 end
 
@@ -589,14 +652,6 @@ function drawBricks()
     end
 end
 
-local function drawStatsArea()
-    -- Draw stats area background
-    love.graphics.setColor(0.2, 0.2, 0.2, 1) -- Dark gray background
-   -- love.graphics.rectangle("fill", 0, 0, statsWidth, screenHeight)
-
-    love.graphics.setColor(1, 1, 1, 1) -- Reset color to white for other drawings
-end
-
 local frozenTime = 0
 local lastFreezeTime = 0
 
@@ -622,8 +677,10 @@ local function drawGameTimer()
 end
 
 function love.draw()
-    resetButtonLastID()-- resets the button ID to 1 so it stays consistent
-      if currentGameState == GameState.MENU then
+    resetButtonLastID()
+    love.graphics.setColor(1, 1, 1, 1)
+
+    if currentGameState == GameState.MENU then
         -- Draw background
         love.graphics.setShader(backgroundShader)
         love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
@@ -631,6 +688,25 @@ function love.draw()
         
         -- Draw menu
         drawMenu()
+        -- Draw SUIT UI elements
+        suit.draw()
+        return
+    end
+
+    if currentGameState == GameState.START_SELECT then
+        drawStartSelect()
+        suit.draw()
+        return
+    end
+
+    if currentGameState == GameState.UPGRADES then
+        -- Draw background
+        love.graphics.setShader(backgroundShader)
+        love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
+        love.graphics.setShader()
+
+        -- Draw permanent upgrades
+        permanentUpgrades.draw()
         -- Draw SUIT UI elements
         suit.draw()
         return
@@ -691,8 +767,6 @@ function love.draw()
     drawAnimations() -- Draw animations
     
     love.graphics.pop()
-
-    drawStatsArea() -- Draw the stats area
     
     upgradesUI.draw()
 
@@ -749,7 +823,10 @@ function love.keypressed(key)
     end
 
     if key == "b" then
-        damageNumber(4,screenWidth/2,screenHeight/2,{1,1,1,1})
+        Player.level = Player.level + 1
+        setLevelUpShop(true, true)
+        Player.levelingUp = true -- This will trigger the upgrade UI
+        --damageNumber(4,screenWidth/2,screenHeight/2,{1,1,1,1})
     end
 
     --money manipulation
@@ -797,6 +874,23 @@ function love.keypressed(key)
         end
     end
 
+    if key == "q" then
+        print("highscore : " .. Player.highScore)
+        print("Player.gold : " .. Player.gold)
+        print("Player.startingMoney : " .. Player.startingMoney)
+        print("#permanentUpgrades : " .. #Player.permanentUpgrades)
+    end
+
+    if key == "7" then
+        Player.gold = 0
+        saveGameData()
+    end
+    if key == "8" then 
+        Player.gold = Player.gold + 1000
+        saveGameData()
+    end
+
+
     --print brick speed mult calculation
     if key == "t" then
         local total = 0
@@ -821,7 +915,7 @@ function love.keypressed(key)
     if key == "-" then
         for _, brick in ipairs(bricks) do
             if not brick.destroyed then
-                brick.health = brick.health + 1
+                brick.health = brick.health - 1
                 brick.color = getBrickColor(brick.health)
             end
         end
@@ -834,18 +928,10 @@ end
 
 function love.mousepressed(x, y, button)
     if button == 2 then
-        -- Check if click is in play area
-        if x > statsWidth and x < screenWidth - statsWidth then
-            -- Trigger explosion at mouse position with random scale between 0.5 and 2
-            local scale = 0.5 + math.random() * 1.5
-            Explosion.spawn(x, y, scale)
-            -- Play explosion sound with volume based on scale
-            playSoundEffect(explosionSFX, 0.3 + scale * 0.2, 1 - scale * 0.1, false, true)
-        else
-            -- Handle UI upgrade click
-            if currentlyHoveredButton then
-                upgradesUI.queueUpgrade(currentlyHoveredButton)
-            end
+        -- Handle UI upgrade click
+        if currentlyHoveredButton then
+            upgradesUI.queueUpgrade(currentlyHoveredButton)
         end
     end
 end
+
