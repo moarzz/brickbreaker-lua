@@ -40,7 +40,7 @@ local function brickHitParticles(brick, ball, intensity)
     local effectX = (ballX + brick.x + brick.width/2)/2
     local effectY = (ballY + brick.y + brick.height/2)/2
     
-    createSpriteAnimation(effectX, effectY, mapRangeClamped(intensity, 1, 20, 0.25, 0.75), impactVFX, 512, 512, 0.005, 4)
+    createSpriteAnimation(effectX, effectY, mapRangeClamped(intensity, 1, 20, 0.25, 0.65), impactVFX, 512, 512, 0.005, 4)
 end
 
 --[[

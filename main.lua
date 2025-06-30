@@ -14,10 +14,11 @@ local Explosion = require("particleSystems.explosion") -- Explosion particle sys
 -- Game states
 GameState = {
     MENU = "menu",
-    START_SELECT = "start_select", -- Add this line
+    START_SELECT = "start_select",
     PLAYING = "playing",
     SETTINGS = "settings",
-    UPGRADES = "upgrades"
+    UPGRADES = "upgrades",
+    TUTORIAL = "tutorial"
 }
 currentGameState = GameState.MENU
 
@@ -80,7 +81,10 @@ function resetGame()
     Player.reset()
     
     -- Reset balls
-    balls = {}
+    for i = #Balls, 1, -1 do
+        Balls[i] = nil
+    end
+    Balls.clearUnlockedBallTypes()
     Balls.initialize()
 
     -- Reset timers
@@ -108,6 +112,7 @@ local function loadAssets()
     --load images
     auraImg = love.graphics.newImage("assets/sprites/aura.png")
     brickImg = love.graphics.newImage("assets/sprites/brick.png")
+    muzzleFlashImg = love.graphics.newImage("assets/sprites/muzzleFlash.png")
         -- UI
     uiLabelImg = love.graphics.newImage("assets/sprites/UI/ballUI backgroundTop.png")
     uiSmallWindowImg = love.graphics.newImage("assets/sprites/UI/newBallBackground.png")
@@ -134,7 +139,8 @@ local function loadAssets()
     paddleBoopSFX = love.audio.newSource("assets/SFX/paddleBoop.mp3", "static")
     wallBoopSFX = love.audio.newSource("assets/SFX/wallBoop.mp3", "static")
     explosionSFX = love.audio.newSource("assets/SFX/explosion.mp3", "static") -- Add explosion sound if available
-    brickDeathSfX = love.audio.newSource("assets/SFX/brickDeath.mp3", "static")
+    brickDeathSFX = love.audio.newSource("assets/SFX/brickDeath.mp3", "static")
+    gunShootSFX = love.audio.newSource("assets/SFX/gunShoot.mp3", "static") -- Add gun shoot sound if available
 
     -- load shaders
     backgroundShader = love.graphics.newShader("Shaders/background.glsl")
@@ -197,20 +203,15 @@ local function addMoreBricks(dt)
 end
 
 local function generateRow(brickCount, yPos)
-    local row = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-    local rowOffset = mapRangeClamped(math.random(0,10),0,10, -brickWidth/4, brickWidth/4)
+    local row = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+    local rowOffset = mapRangeClamped(math.random(0,10),0,10, 0, brickWidth)
     for i = 1, brickCount do
-        n = math.random(12)
+        local n = math.random(11)
         row[n] = row[n] + 1
     end
     for xPos, brickHealth in ipairs(row) do
         if brickHealth > 0 then
-            local brickColor
-            if brickHealth > 12 then --ca marche pour live mais je vais devoir le changer pour une fonction qui set la couleur selon une fonction sqrt
-                brickColor = {1,1,1,1}
-            else
-                brickColor = getBrickColor(brickHealth)
-            end
+            local brickColor = getBrickColor(brickHealth)
             table.insert(bricks, {
                 id = #bricks + 1,
                 x = statsWidth + (xPos - 1) * (brickWidth + brickSpacing) + 5 + rowOffset,
@@ -346,7 +347,7 @@ function love.load()
     -- Paddle
     paddle = {
         x = screenWidth / 2 - 50,
-        y = screenHeight - 300,
+        y = screenHeight - 400,
         width = 130,
         widthMult = 1,
         height = 20,    
@@ -375,7 +376,7 @@ end
 function getBrickSpeedByTime()
     -- Scale speed from 0.5 to 5.0 over 10 minutes
     local timeSinceStart = love.timer.getTime() - gameStartTime
-    return timeSinceStart < 600 and mapRangeClamped(timeSinceStart, 0, 600, 0.5, 1.0) or mapRange(timeSinceStart, 600, 2000, 1.0, 5.0)
+    return timeSinceStart < 600 and mapRangeClamped(timeSinceStart, 0, 600, 0.35, 1.0) or mapRange(timeSinceStart, 600, 2000, 1.0, 5.0)
 end
 
 local function getBrickSpeedMult() 
@@ -437,7 +438,9 @@ screenOffset = {x=0,y=0}
 local startTime = -10
 local gameTime = 0  -- Tracks actual elapsed gameplay time
 
-function love.update(dt)
+
+local function gameFixedUpdate(dt)
+    dt = 1/60 -- Fixed delta time for consistent updates
     dt = dt * 1.75
     --send info to background shader
     backgroundShader:send("time", love.timer.getTime())                   
@@ -503,18 +506,24 @@ function love.update(dt)
                 paddle.x = paddle.x + paddle.speed * paddle.speedMult * dt
                 paddle.currentSpeedX = paddle.currrentSpeedX + 400
             end
-            --[[if love.keyboard.isDown("up") or love.keyboard.isDown("w") then
+            if love.keyboard.isDown("up") or love.keyboard.isDown("w") then
                 paddle.y = paddle.y - paddle.speed * paddle.speedMult * dt
                 paddle.currentSpeedY = paddle.currentSpeedY - 400
             end
             if love.keyboard.isDown("down") or love.keyboard.isDown("s") then
                 paddle.y = paddle.y + paddle.speed * paddle.speedMult * dt
                 paddle.currentSpeedY = paddle.currentSpeedY + 400
-            end]]
+            end
+
+            if math.abs(paddle.currentSpeedX) > 350 and math.abs(paddle.currentSpeedY) > 350 then
+                -- If both left/right and up/down are pressed, reduce speed to prevent diagonal speed boost
+                paddle.currentSpeedX = paddle.currentSpeedX * 0.7071 -- Reduce by sqrt(2)/2
+                paddle.currentSpeedY = paddle.currentSpeedY * 0.7071 -- Reduce by sqrt(2)/2
+            end
 
             -- Keep paddle within screen bounds
             paddle.x = math.max(statsWidth, math.min(screenWidth - statsWidth - paddle.width, paddle.x))
-            paddle.y = math.max(screenHeight - 300, math.min(screenHeight - paddle.height - 10, paddle.y))
+            paddle.y = math.max(math.max(getHighestBrickY() + brickHeight*6, 5*screenHeight/16), math.min(screenHeight - paddle.height - 10, paddle.y))
 
             -- Update Balls
             Balls.update(dt, paddle, bricks, Player)
@@ -545,6 +554,17 @@ function love.update(dt)
     
 end
 
+local accumulator = 0
+local fixed_dt = 1/60
+
+function love.update(dt)
+    accumulator = accumulator + dt
+    while accumulator >= fixed_dt do
+        gameFixedUpdate(fixed_dt) -- Your game logic here, using fixed_dt
+        accumulator = accumulator - fixed_dt
+    end
+end
+
 -- Menu settings
 local menuFont
 local buttonWidth = 400
@@ -561,22 +581,30 @@ function drawMenu()
     local titleWidth = love.graphics.getFont():getWidth(title)
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.print(title, screenWidth/2 - titleWidth/2, startY - 100)
-      -- Play button
+
+    -- Play button
     local buttonID = generateNextButtonID()
     if suit.Button("Play", {id=buttonID}, centerX, startY, buttonWidth, buttonHeight).hit then
         currentGameState = GameState.START_SELECT -- Go to selection screen
     end
-    
+
+    -- Tutorial button
+    buttonID = generateNextButtonID()
+    if suit.Button("Tutorial", {id=buttonID}, centerX, startY + buttonHeight + buttonSpacing, buttonWidth, buttonHeight).hit then
+        currentGameState = GameState.TUTORIAL
+    end
+
     -- Settings button
     buttonID = generateNextButtonID()
-    if suit.Button("Settings", {id=buttonID}, centerX, startY + buttonHeight + buttonSpacing, buttonWidth, buttonHeight).hit then
-        currentGameState = GameState.SETTINGS
+    if suit.Button("Settings", {id=buttonID}, centerX, startY + (buttonHeight + buttonSpacing) * 2, buttonWidth, buttonHeight).hit then
+        --currentGameState = GameState.SETTINGS
     end
-    
+
     -- Upgrades button
     buttonID = generateNextButtonID()
-    if suit.Button("Upgrades", {id=buttonID}, centerX, startY + (buttonHeight + buttonSpacing) * 2, buttonWidth, buttonHeight).hit then
+    if suit.Button("Upgrades", {id=buttonID}, centerX, startY + (buttonHeight + buttonSpacing) * 3, buttonWidth, buttonHeight).hit then
         currentGameState = GameState.UPGRADES
+        loadGameData() -- Load game data when entering upgrades screen
     end
 
     -- draw highscore
@@ -700,6 +728,7 @@ function love.draw()
     end
 
     if currentGameState == GameState.UPGRADES then
+        loadGameData() -- Load game data
         -- Draw background
         love.graphics.setShader(backgroundShader)
         love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
@@ -730,12 +759,14 @@ function love.draw()
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.rectangle("fill", paddle.x, paddle.y, paddle.width * paddle.widthMult, paddle.height)
 
-    Balls.draw(Balls) -- Draw balls
-
     love.graphics.setCanvas(glowCanvas.bright)
     love.graphics.clear()
-
     drawBricks() -- Draw bricks
+
+    love.graphics.setCanvas(glowCanvas.normal)
+    Balls.draw(Balls) -- Draw balls
+
+    love.graphics.setCanvas()
 
     -- Apply glow effect and draw to main canvas
     love.graphics.setColor(1,1,1,1)
@@ -756,8 +787,8 @@ function love.draw()
     -- Draw everything else normally
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.rectangle("fill", paddle.x, paddle.y, paddle.width * paddle.widthMult, paddle.height)
-    Balls.draw(Balls) -- Draw balls again for solid appearance
     drawBricks() -- Draw bricks again for solid appearance
+    Balls.draw(Balls) -- Draw balls again for solid appearance
 
     -- Draw explosions
     Explosion.draw()
@@ -765,6 +796,8 @@ function love.draw()
     drawDamageNumbers() -- Draw damage numbers
 
     drawAnimations() -- Draw animations
+
+    drawMuzzleFlashes() -- Draw muzzle flashes
     
     love.graphics.pop()
     

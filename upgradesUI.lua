@@ -113,21 +113,33 @@ function setLevelUpShop(isForBall, isForPerks)
             end
         end
         
+        local currentBallType = nil
         -- Choose random unowned balls to display
         for i = 1, math.min(3, #availableBalls) do
             if #availableBalls > 0 then
-                local index = math.random(1, #availableBalls)
-                local currentBallType = availableBalls[index]
-                
+                local bruh = true
+                local index
+                while bruh do
+                    bruh = false
+                    index = math.random(1, #availableBalls)
+                    currentBallType = availableBalls[index]
+                    if unlockedBallNames[currentBallType.name] then
+                        bruh = true
+                    end
+                    if Balls.getBallList()[currentBallType.name].canBuy then
+                        bruh = true
+                    end
+                end
+                local thisBallType = currentBallType
                 table.insert(displayedUpgrades, {
-                    name = currentBallType.name,
-                    description = currentBallType.description,
+                    name = thisBallType.name,
+                    description = thisBallType.description,
                     effect = function()
-                        Balls.addBall(currentBallType.name) -- Add the new ball type to the game
+                        print("will add ball: " .. thisBallType.name)
+                        Balls.addBall(thisBallType.name)
                     end
                 })
-                
-                -- Remove this ball from available options
+                -- Remove this ball from available options using the correct index
                 table.remove(availableBalls, index)
             end
         end
@@ -168,9 +180,17 @@ function setLevelUpShop(isForBall, isForPerks)
         -- Player upgrades
         local advantagiousBonuses = {}
         for _, item in pairs(Balls.getUnlockedBallTypes()) do
-            for statName, stat in ipairs(Balls.getUnlockedBallTypes()) do
+            for statName, stat in pairs(item.stats) do
+                local doit = true
                 if not Player.bonuses[statName] then
-                    table.insert(advantagiousBonuses, stat)
+                    for _, bonus in ipairs(advantagiousBonuses) do
+                        if bonus == statName then
+                            doit = false -- If this bonus is already in the list, skip it
+                        end
+                    end
+                    if doit then
+                        table.insert(advantagiousBonuses, statName)
+                    end
                 end
             end
         end
@@ -178,7 +198,7 @@ function setLevelUpShop(isForBall, isForPerks)
         local availableBonuses = {}
         for name, bonus in pairs(Player.bonusesList) do
             if not Player.bonuses[name] then
-                table.insert(availableBonuses, bonus)
+                table.insert(availableBonuses, name)
             end
         end
         
@@ -187,19 +207,56 @@ function setLevelUpShop(isForBall, isForPerks)
             if #availableBonuses > 0 then
                 local index = 1
                 local currentBonus = nil
+                print("#advantagiousBonuses: " .. #advantagiousBonuses)
+                print("#availableBonuses: " .. #availableBonuses)
                 if #advantagiousBonuses > 0 then
-                    index = math.random(1, #advantagiousBonuses)
-                    currentBonus = advantagiousBonuses[index]
+                    local bruh = true
+                    while bruh do 
+                        index = math.random(1, #advantagiousBonuses)
+                        currentBonus = advantagiousBonuses[index]
+                        for _, displayedUpgrade in ipairs(displayedUpgrades) do
+                            if displayedUpgrade.name == currentBonus then
+                                currentBonus = nil
+                            end
+                        end
+                        if currentBonus ~= nil then
+                            bruh = false
+                        end
+                    end
+                    for id, bonusName in ipairs(availableBonuses) do
+                        if bonusName == currentBonus then
+                            availableBonuses[id] = nil
+                        end
+                    end
+                    advantagiousBonuses[index] = nil -- Remove this bonus from the advantagiousBonuses list
+                    print("true")
                 else
-                    index = math.random(1, #availableBonuses)
-                    currentBonus = availableBonuses[index]
+                    local bruh = true
+                    while bruh do
+                        index = math.random(1, #availableBonuses)
+                        currentBonus = availableBonuses[index]
+                        for _, displayedUpgrade in ipairs(displayedUpgrades) do
+                            if displayedUpgrade.name == currentBonus then
+                                currentBonus = nil
+                            end
+                        end
+                        if currentBonus ~= nil then
+                            bruh = false
+                        end
+                    end
+                    availableBonuses[index] = nil -- Remove this bonus from the availableBonuses list
+                    print("false")
                 end
+
+                print("Current bonus: " .. tostring(currentBonus or "nil"))
+                print("index: " .. tostring(index))
                 table.insert(displayedUpgrades, {
-                    name = currentBonus.name,
-                    description = currentBonus.description,
+                    name = Player.bonusesList[currentBonus].name,
+                    description = Player.bonusesList[currentBonus].description,
                     effect = function()
-                        Player.addBonus(currentBonus.name) -- Add the new bonus to the player
-                        Player.bonusUpgrades[currentBonus.name]() -- Call the upgrade function
+                        print("Adding bonus: " .. currentBonus)
+                        Player.addBonus(currentBonus) -- Add the new bonus to the player
+                        Player.bonusUpgrades[currentBonus]() -- Call the upgrade function
                     end
                 })
                 
@@ -274,7 +331,7 @@ local function drawPlayerUpgrades()
             -- draw value
             setFont(35)
             suit.layout:padding(0, 0)
-            suit.Label(tostring("+ " .. tostring(Player.bonuses[bonusName] or 0)), {align = "center"}, x, y+50, cellWidth, 100) -- Display the stat value
+            suit.Label(tostring((bonusName ~= "cooldown" and "+ " or "") .. tostring(Player.bonuses[bonusName] or 0)), {align = "center"}, x, y+50, cellWidth, 100) -- Display the stat value
 
             -- draw stat icon
             local iconX = x + cellWidth/2 - iconsImg[statName]:getWidth()*1.75/2
@@ -495,7 +552,11 @@ local function drawBallStats()
                 -- Add permanent upgrades to the display value
                 local permanentUpgradeValue = Player.permanentUpgrades[statName] or 0
                 local bonusValue = Player.bonuses[statName] or 0
-                suit.Label(tostring(statValue + bonusValue + permanentUpgradeValue), {align = "center"}, x, y-25, cellWidth, 100) -- Display the stat value
+                if statName == "amount" then
+                    suit.Label(tostring(statValue + permanentUpgradeValue), {align = "center"}, x, y-25, cellWidth, 100)
+                else
+                    suit.Label(tostring(statValue + bonusValue + permanentUpgradeValue), {align = "center"}, x, y-25, cellWidth, 100)
+                end
 
                 -- draw stat icon
                 local iconX = x + cellWidth/2 - iconsImg[statName]:getWidth()*1.75/2
@@ -643,7 +704,6 @@ local function drawLevelUpShop()
             print("Clicked on upgrade: " .. currentUpgrade.name)
             currentUpgrade.effect() -- Apply the effect of the upgrade
             Player.levelingUp = false -- Close the level up shop
-            print("levelingup : "..tostring(Player.levelingUp) )
             break
         end
     end
@@ -653,10 +713,10 @@ local function drawLevelUpShop()
     local buttonID = "reroll_button" -- Unique ID for the reroll button
     suit.layout:reset(x, y, 10, 10) -- Reset layout for the reroll button
     setFont(30)
-    --[[if suit.Button("Reroll", {id = buttonID, align = "center"}, suit.layout:row(w,h)).hit then
+    if suit.Button("Reroll", {id = buttonID, align = "center"}, suit.layout:row(w,h)).hit then
         local isBallShop = levelUpShopType == "ball"
         setLevelUpShop(isBallShop) -- Reroll the upgrades
-    end]]
+    end
 
 end
 

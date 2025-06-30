@@ -7,25 +7,8 @@ local saveFilePath = "gamedata.json"
 
 -- Load game data from file
 function loadGameData()
-    if love.filesystem.getInfo(saveFilePath) then
-        local contents = love.filesystem.read(saveFilePath)
-        if contents then
-            local data = json.decode(contents)
-            return {
-                highScore = data and data.highScore or 0,
-                gold = data and data.gold or 0,
-                startingMoney = data and data.startingMoney or 0,
-                permanentUpgrades = data and data.permanentUpgrades or {},
-                permanentUpgradePrices = data and data.permanentUpgradePrices or {
-                    amount = 100,
-                    speed = 100,
-                    damage = 100,
-                    -- ... other default prices
-                }
-            }
-        end
-    end
-    return {
+    print("Loading game data")
+    local data = {
         highScore = 0,
         gold = 0,
         startingMoney = 0,
@@ -37,6 +20,26 @@ function loadGameData()
             -- ... other default prices
         }
     }
+    if love.filesystem.getInfo(saveFilePath) then
+        local contents = love.filesystem.read(saveFilePath)
+        if contents then
+            local fileData = json.decode(contents)
+            if fileData then
+                data.highScore = fileData.highScore or 0
+                data.gold = fileData.gold or 0
+                data.startingMoney = fileData.startingMoney or 0
+                data.permanentUpgrades = fileData.permanentUpgrades or {}
+                data.permanentUpgradePrices = fileData.permanentUpgradePrices or data.permanentUpgradePrices
+            end
+        end
+    end
+    -- Update Player object directly
+    Player.highScore = data.highScore
+    Player.gold = data.gold
+    Player.startingMoney = data.startingMoney
+    Player.permanentUpgrades = data.permanentUpgrades
+    Player.permanentUpgradePrices = data.permanentUpgradePrices
+    return data
 end
 
 Player = {
@@ -62,7 +65,7 @@ Player = {
         ammo = 100,
         range = 100,
         amount = 100,
-        paddleSize = 100,
+        --paddleSize = 100,
         paddleSpeed = 100,
     },
     bonuses = { -- These bonuses are percentages
@@ -126,6 +129,7 @@ Player.bonusesList = {
     range = {name = "range", description = "Range boost", startingPrice = 100}, 
     fireRate = {name = "fireRate", description = "Fire rate boost", startingPrice = 100},
     amount = {name = "amount", description = "Amount boost", startingPrice = 100},
+    cooldown = {name = "cooldown", description = "Cooldown reduction", startingPrice = 100},
 }
 
 Player.bonusUpgrades = {
@@ -158,6 +162,9 @@ Player.bonusUpgrades = {
         end
         print("#unlocked ball types: " .. index)
     end,
+    cooldown = function()
+        Player.bonuses.cooldown = (Player.bonuses.cooldown or 0) - 1
+    end
 }
 
 Player.perksList = {
@@ -185,7 +192,11 @@ Player.perksList = {
         name = "paddleSquared",
         description = "paddleBounce effects trigger twice"
     },
-    --[[particle accelerator = {
+    --[[phantomBullets = {
+        name = "phantomBullets",
+        description = "Bullets pass through bricks without losing damage, but deal 50% damage to them (rounded up)."
+    },
+    particle accelerator = {
         name = "particleAccelerator",
         description = "Increases the speed of everything aside from the bricks by 50%"
     },
@@ -352,7 +363,7 @@ end
 
 local function checkForHit()
     for _, brick in ipairs(bricks) do
-        if brick.y + brick.height > paddle.y then
+        if brick.y + brick.height > screenHeight - 200 then
             Player.hit()
             damageScreenVisuals(0.25, 100)
         end
@@ -381,7 +392,7 @@ function Player:save()    local saveData = {
             healthBonus = self.healthBonus or 0,
             extraBallBonus = self.extraBallBonus or 0,
             criticalBonus = self.criticalBonus or 0,
-            paddleSize = self.permanentUpgrades.paddleSize or 0,
+            --paddleSize = self.permanentUpgrades.paddleSize or 0,
             paddleSpeed = self.permanentUpgrades.paddleSpeed or 0
         }
     }

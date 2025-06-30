@@ -101,7 +101,7 @@ function GameOverDraw()
     -- Draw gold Earned (top right)
     love.graphics.setColor(1, 1, 1, 1) -- Reset color to white
     setFont(48)
-    local goldEarned = math.floor(Player.score / 10)
+    local goldEarned = math.floor(Player.score / mapRange(Player.score, 0, 5000, 10, 100))
     local goldText = "gold earned: ".. formatNumber(goldEarned) .. "$"
     currentFont = love.graphics.getFont()
     local moneyWidth = currentFont:getWidth(goldText)
@@ -132,8 +132,7 @@ function GameOverDraw()
     -- Play Again button (right)
     if suit.Button("Play Again", {id = generateNextButtonID()}, startX + (buttonWidth + buttonSpacing) * 2, buttonY, buttonWidth, buttonHeight).hit then
         resetGame()
-        currentGameState = GameState.PLAYING
-        initializeGameState()
+        currentGameState = GameState.START_SELECT
     end
 
     -- Reset the color to white
@@ -684,6 +683,31 @@ function damageScreenVisuals(duration, intensity, direction)
             50), math.floor(mapRangeClamped(intensity, 1, 100, 3, 6)),
             direction)
     end
+end
+
+local muzzleFlashes = {}
+
+function muzzleFlash(x, y, angle)
+    table.insert(muzzleFlashes, {
+        x = x,
+        y = y,
+        angle = angle or 0,
+        frame = love.timer.getTime()
+    })
+end
+
+function drawMuzzleFlashes()
+    for i = #muzzleFlashes, 1, -1 do
+        local flash = muzzleFlashes[i]
+        -- Only draw if it's the current frame
+        if love.timer.getTime() - flash.frame < (1 / love.timer.getFPS() + 0.001) then
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.draw(muzzleFlashImg, flash.x, flash.y - muzzleFlashImg:getHeight()/4, flash.angle, 0.25, 0.25, muzzleFlashImg:getWidth()/2, muzzleFlashImg:getHeight()/2)
+        else
+            table.remove(muzzleFlashes, i)
+        end
+    end
+    love.graphics.setColor(1, 1, 1, 1)
 end
 
 -- Function to create different types of explosions
