@@ -7,7 +7,6 @@ local saveFilePath = "gamedata.json"
 
 -- Load game data from file
 function loadGameData()
-    print("Loading game data")
     local data = {
         highScore = 0,
         gold = 0,
@@ -18,7 +17,8 @@ function loadGameData()
             speed = 100,
             damage = 100,
             -- ... other default prices
-        }
+        },
+        startingItems = {"Ball", "Pistol", "Nothing"},
     }
     if love.filesystem.getInfo(saveFilePath) then
         local contents = love.filesystem.read(saveFilePath)
@@ -30,6 +30,7 @@ function loadGameData()
                 data.startingMoney = fileData.startingMoney or 0
                 data.permanentUpgrades = fileData.permanentUpgrades or {}
                 data.permanentUpgradePrices = fileData.permanentUpgradePrices or data.permanentUpgradePrices
+                data.startingItems = fileData.startingItems or data.startingItems
             end
         end
     end
@@ -39,6 +40,25 @@ function loadGameData()
     Player.startingMoney = data.startingMoney
     Player.permanentUpgrades = data.permanentUpgrades
     Player.permanentUpgradePrices = data.permanentUpgradePrices
+    Player.startingItems = data.startingItems
+
+    -- Sync unlockedStartingBalls with startingItems for compatibility with UI
+    Player.unlockedStartingBalls = {}
+    if Player.startingItems then
+        -- If startingItems is a list (array), convert to set
+        if #Player.startingItems > 0 then
+            for _, key in ipairs(Player.startingItems) do
+                Player.unlockedStartingBalls[key] = true
+            end
+        else
+            -- If startingItems is a table with keys (legacy), treat as set
+            for key, unlocked in pairs(Player.startingItems) do
+                if unlocked then
+                    Player.unlockedStartingBalls[key] = true
+                end
+            end
+        end
+    end
     return data
 end
 
@@ -76,7 +96,7 @@ Player = {
     levelThresholds = {5000, 50000}, -- XP needed for each level
 }
 -- Save game data to file        l
-function saveGameData()  -- Add startingMoney parameter
+function saveGameData()
     local data = {
         highScore = Player.highScore,
         gold = Player.gold,
@@ -95,9 +115,10 @@ function saveGameData()  -- Add startingMoney parameter
             range = Player.permanentUpgrades.range or 0,
             amount = Player.permanentUpgrades.amount or 0
         },
-        permanentUpgradePrices = Player.permanentUpgradePrices
+        permanentUpgradePrices = Player.permanentUpgradePrices,
+        startingItems = Player.startingItems or {"Ball", "Pistol", "Nothing"},
     }
-    local encoded = json.encode(data, { indent = true }) -- Added indent for better readability
+    local encoded = json.encode(data, { indent = true })
     love.filesystem.write(saveFilePath, encoded)
 end
 
@@ -132,17 +153,27 @@ Player.bonusesList = {
     cooldown = {name = "cooldown", description = "Cooldown reduction", startingPrice = 100},
 }
 
+Player.permanentUpgradePrices = {
+    speed = 100,
+    damage = 100,
+    ballDamage = 100,
+    bulletDamage = 100,
+    cooldown = 100,
+    fireRate = 100,
+    ammo = 100,
+    range = 100,
+    amount = 100,
+    paddleSize = 100, -- This is now handled in permanentUpgrades.lua
+}
+
 Player.bonusUpgrades = {
     --income = function() Player.bonuses.income = Player.bonuses.income + 1 end,
     speed = function() Player.bonuses.speed = Player.bonuses.speed + 1 end,    
-    paddleSpeed = function() 
-        paddle.speed = 400 + (Player.permanentUpgrades.paddleSpeed or 0) * 200
-    end,
     paddleSize = function()
         -- This is handled in permanentUpgrades.lua now
-        if Player.permanentUpgrades.paddleSize then
-            paddle.width = 100 + (Player.permanentUpgrades.paddleSize * 65)
-        end
+        paddle.width = paddle.width + 75
+        paddle.x = math.max(paddle.x - 37.5, statsWidth)  -- Adjust position to keep it centered
+        Player.bonuses.paddleSize = (Player.bonuses.paddleSize or 0) + 1
     end,
     damage = function() Player.bonuses.damage = Player.bonuses.damage + 1 end,
     --ballDamage = function() Player.bonuses.ballDamage = Player.bonuses.ballDamage + 2 end,
@@ -151,7 +182,7 @@ Player.bonusUpgrades = {
     range = function() Player.bonuses.range = Player.bonuses.range + 1 end,
     fireRate = function() Player.bonuses.fireRate = Player.bonuses.fireRate + 1 end,
     amount = function() 
-    Player.bonuses.amount = (Player.bonuses.amount or 0) + 1
+        Player.bonuses.amount = (Player.bonuses.amount or 0) + 1
         -- For each unlocked ball type
         local index = 0
         for _, ballType in pairs(Balls.getUnlockedBallTypes()) do
@@ -164,7 +195,7 @@ Player.bonusUpgrades = {
     end,
     cooldown = function()
         Player.bonuses.cooldown = (Player.bonuses.cooldown or 0) - 1
-    end
+    end,
 }
 
 Player.perksList = {
@@ -313,9 +344,6 @@ function Player.reset()
     Player.levelingUp = false
     Player.dead = false
     Player.money = Player.startingMoney or 0
-    -- Apply paddle upgrades
-    Player.bonusUpgrades.paddleSpeed()
-    Player.bonusUpgrades.paddleSize()
 end
 
 function Player.gain(amount)

@@ -66,7 +66,7 @@ function resetGame()
     paddle = {
         x = screenWidth / 2 - 50,
         y = screenHeight - 400,
-        width = 130,
+        width = 150,
         widthMult = 1,
         height = 20,
         speed = 400,
@@ -166,7 +166,7 @@ local function getMaxBrickHealth()
 end
 
 local function spawnBrick()
-    local x = statsWidth + math.random() * (screenWidth - statsWidth * 2 - brickWidth)
+    local x = statsWidth + math.random() * (screenWidth - statsWidth * 2 - brickWidth) + 20
     local maxHealth = getMaxBrickHealth()
     local health = math.random(1, maxHealth)
     local brickColor = getBrickColor(health)
@@ -614,34 +614,49 @@ end
 -- Add a new function for the starting item selection screen
 local function drawStartSelect()
     local centerX = screenWidth / 2 - buttonWidth / 2
-    local startY = screenHeight / 2 - buttonHeight
+    local startY = screenHeight / 3
     setFont(36)
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.print("Choose your starting item:", centerX, startY - 100)
+    love.graphics.print("Choose your starting item", screenWidth / 2 - getTextSize("Choose your starting item") / 2, startY - 100)
 
-    local ballBtn = suit.Button("Ball", {id="start_ball"}, centerX, startY, buttonWidth, buttonHeight)
-    local pistolBtn = suit.Button("Pistol", {id="start_pistol"}, centerX, startY + buttonHeight + 40, buttonWidth, buttonHeight)
-    local nothingBtn = suit.Button("Nothing", {id="start_nothing"}, centerX, startY + (buttonHeight + 40) * 2, buttonWidth, buttonHeight)
+    -- Define the canonical order
+    local canonicalOrder = {"Ball", "Pistol", "Laser Beam", "Saw Blades", "Nothing"}
+    local displayNames = {
+        ["Ball"] = "Ball",
+        ["Pistol"] = "Pistol",
+        ["Laser Beam"] = "Laser Beam",
+        ["Saw Blades"] = "Saw Blades",
+        ["Nothing"] = "Nothing"
+    }
 
-    if ballBtn.hit then
-        startingChoice = "Ball"
-        currentGameState = GameState.PLAYING
-        initializeGameState()
-        -- Only add Ball as starting ball
-        Balls.initialize()
-        Balls.addBall("Ball")
-    elseif pistolBtn.hit then
-        startingChoice = "Pistol"
-        currentGameState = GameState.PLAYING
-        initializeGameState()
-        -- Only add Pistol as starting ball
-        Balls.initialize()
-        Balls.addBall("Pistol")
-    elseif nothingBtn.hit then
-        startingChoice = "Nothing"
-        currentGameState = GameState.PLAYING
-        initializeGameState()
-        Balls.initialize()
+    -- Build the startingItems list in canonical order, only if unlocked
+    local startingItems = {}
+    for _, name in ipairs(canonicalOrder) do
+        if name == "Ball" or (Player.unlockedStartingBalls and Player.unlockedStartingBalls[name]) then
+            table.insert(startingItems, {name = name, id = "start_"..name:gsub(" ", "_"), label = displayNames[name]})
+        elseif name == "Nothing" then
+            -- Always include Nothing if unlocked or in startingItems
+            if Player.unlockedStartingBalls and Player.unlockedStartingBalls["Nothing"] then
+                table.insert(startingItems, {name = name, id = "start_"..name:gsub(" ", "_"), label = displayNames[name]})
+            end
+        end
+    end
+    table.insert(startingItems, {name = "Nothing", id = "start_Nothing", label = "Nothing"}) -- Always include Nothing at the top
+
+    -- Draw buttons for each starting item
+    local btnY = startY
+    for i, item in ipairs(startingItems) do
+        local btn = suit.Button(item.label, {id = item.id}, centerX, btnY, buttonWidth, buttonHeight)
+        if btn.hit then
+            startingChoice = item.name
+            currentGameState = GameState.PLAYING
+            initializeGameState()
+            Balls.initialize()
+            if item.name ~= "Nothing" then
+                Balls.addBall(item.name)
+            end
+        end
+        btnY = btnY + buttonHeight + 40
     end
 end
 
@@ -734,10 +749,10 @@ function love.draw()
         love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
         love.graphics.setShader()
 
-        -- Draw permanent upgrades
-        permanentUpgrades.draw()
         -- Draw SUIT UI elements
         suit.draw()
+        -- Draw permanent upgrades
+        permanentUpgrades.draw()
         return
     end
 

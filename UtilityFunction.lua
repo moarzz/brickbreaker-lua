@@ -852,7 +852,10 @@ function drawDamageNumbers()
     end
 end
 
-function printMoney(text, centerX, centerY, angle)
+function printMoney(text, centerX, centerY, angle, buyable)
+    if buyable == nil then
+        buyable = true
+    end
     angle = angle or math.rad(1.5) -- Default angle if not provided
     setFont(35)
     local moneyOffsetX = -math.cos(math.rad(5)) * getTextSize(formatNumber(text))/2
@@ -862,7 +865,7 @@ function printMoney(text, centerX, centerY, angle)
     love.graphics.print(formatNumber(text) .. "$", centerX + 4 + moneyOffsetX, centerY + 4, angle)
     
     -- Draw main text in money green
-    local moneyColor = {14/255, 202/255, 92/255, 1}
+    local moneyColor = buyable and {14/255, 202/255, 92/255, 1} or {164/255, 14/255, 14/255,1} -- Green for buyable, red for not buyable
     love.graphics.setColor(moneyColor)
     love.graphics.print(formatNumber(text) .. "$", centerX + moneyOffsetX, centerY, angle)
     

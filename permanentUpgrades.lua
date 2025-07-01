@@ -16,27 +16,21 @@ local invisButtonColor = {
 local upgrades = data.upgrades and {
     speed = data.upgrades.speed or 0,
     damage = data.upgrades.damage or 0,
-    --ballDamage = data.upgrades.ballDamage or 0,
-    --bulletDamage = data.upgrades.bulletDamage or 0,
     cooldown = data.upgrades.cooldown or 0,
     fireRate = data.upgrades.fireRate or 0,
     ammo = data.upgrades.ammo or 0,
     range = data.upgrades.range or 0,
     amount = data.upgrades.amount or 0,
     paddleSize = data.upgrades.paddleSize or 0,
-    paddleSpeed = data.upgrades.paddleSpeed or 0
 } or {
     speed = 0,
     damage = 0,
-    --ballDamage = 0,
-    --bulletDamage = 0,
     cooldown = 0,
     fireRate = 0,
     ammo = 0,
     range = 0,
     amount = 0,
     paddleSize = 0,
-    paddleSpeed = 0
 }
 
 local bonusPriceDefaults = {
@@ -59,10 +53,72 @@ local function formatNumber(num)
     end
 end
 
+local function startingItemsDraw()
+    -- === Unlockable Starting Items Menu ===
+    local menuX = screenWidth - 350
+    local menuY = 170
+    local menuWidth = 300
+    local buttonHeight = 150
+    local buttonSpacing = 30
+    setFont(32)
+    suit.Label("Unlock Starting Items", {align = "center"}, menuX - menuWidth, menuY, menuWidth*2, 40)
+    menuX = menuX - menuWidth/2  -- Center the label
+    menuY = menuY + 80  -- Adjust Y position for the label
+
+    local unlockables = {
+        {name = "Pistol", label = "Pistol\n\n", key = "Pistol", price = 500},
+        {name = "Laser Beam", label = "Laser Beam\n\n", key = "Laser Beam", price = 2500},
+        {name = "Saw Blades", label = "Saw Blades\n\n", key = "Saw Blades", price = 5000},
+    }
+    Player.unlockedStartingBalls = Player.unlockedStartingBalls or {}
+    for i, item in ipairs(unlockables) do
+        local y = menuY + (i-1) * (buttonHeight + buttonSpacing + 50)  -- Add extra spacing for icons
+        local unlocked = Player.unlockedStartingBalls[item.key]
+        local affordable = Player.gold >= item.price
+        local color = {0.35,0.35,0.35,0.5}
+        local buttonID = generateNextButtonID()
+        local label = unlocked and (item.label .. " (Unlocked)") or (item.label)
+        local buttonColor = {
+            normal = {bg = color, fg = {1,1,1}},
+            hovered = {bg = {math.min(color[1]+0.2,1), math.min(color[2]+0.2,1), math.min(color[3]+0.2,1), 1}, fg = {1,1,1}},
+            active = {bg = {math.max(color[1]-0.2,0), math.max(color[2]-0.2,0), math.max(color[3]-0.2,0), 1}, fg = {1,1,1}}
+        }
+        if not unlocked then
+            if suit.Button(label, {color = buttonColor, id = buttonID}, menuX, y, menuWidth, buttonHeight).hit then
+                if affordable then
+                    Player.gold = Player.gold - item.price
+                    Player.unlockedStartingBalls[item.key] = true
+                    -- Add to startingItems in Player and save
+                    Player.startingItems = Player.startingItems or {}
+                    Player.startingItems[item.key] = true
+                    saveGameData()
+                    print("Unlocked starting item: " .. item.key)
+                else
+                    print("Not enough gold to unlock " .. item.key)
+                end
+            end
+            local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(item.price))/2
+            -- Draw price with shadow and color (see printMoney logic)
+            local moneyText = formatNumber(item.price) .. "$"
+            local moneyColor = affordable and {14/255, 202/255, 92/255, 1} or {164/255, 14/255, 14/255,1}
+            local shadowOffset = 4
+            setFont(35)
+            love.graphics.setColor(0,0,0,1)
+            love.graphics.print(moneyText, menuX + menuWidth - 20 + moneyOffsetX + shadowOffset, y + shadowOffset, math.rad(5))
+            love.graphics.setColor(moneyColor)
+            love.graphics.print(moneyText, menuX + menuWidth - 20 + moneyOffsetX, y, math.rad(5))
+            love.graphics.setColor(1,1,1,1)
+        else
+            suit.Label(label, {align = "center"}, menuX, y, menuWidth, buttonHeight)
+        end
+    end
+end
+
 function permanentUpgrades.draw()
     local padding = 20
     local cellWidth = 200
     local x, y = padding, padding    
+    startingItemsDraw()  -- Draw the starting items menu
 
     -- Back button using uiLabelImg
     love.graphics.draw(uiLabelImg, 20, 20, 0, 0.75, 0.75)
@@ -148,52 +204,11 @@ function permanentUpgrades.draw()
                 -- Apply any immediate effects of the upgrade
                 if upgradeName == "paddleSize" then
                     Player.bonusUpgrades.paddleSize()
-                elseif upgradeName == "paddleSpeed" then
-                    Player.bonusUpgrades.paddleSpeed()
                 end
                 saveGameData()  -- Make sure this is called
                 print(upgradeName .. " upgraded to " .. Player.permanentUpgrades[upgradeName])
             end
         end
-    end
-
-    -- Add starting money upgrade button on the right
-    local rightX = screenWidth - 350  -- Position from right edge
-    local startY = 250  -- Align with other upgrades vertically
-    
-    -- Draw starting money upgrade section
-    setFont(28)
-    suit.Label("Starting Money", {align = "center"}, rightX - 50, startY - 50, 300, 40)
-    startY = startY + 25
-    
-    -- Render price
-    setFont(45)
-    local startMoneyPrice = Player.bonusPrice["startMoney"] or 1000  -- Default price if not set
-    local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(startMoneyPrice))/2
-    local moneyColor = Player.gold >= startMoneyPrice and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
-    love.graphics.setColor(moneyColor)
-    printMoney(formatNumber(Player.startingMoney) or 0 .. "$", rightX + 100, startY)
-    love.graphics.setColor(1,1,1,1)
-
-    -- Draw current value
-    setFont(35)
-    local startingValue = Player.startMoney or 0
-    local buttonID = generateNextButtonID()
-    if suit.Button("+10", {color = invisButtonColor, align = "center", id = buttonID}, rightX, startY + 50, 125, 75).hit and Player.gold >= 10 then
-        Player.startMoney = (Player.startMoney or 0) + 10
-        Player.gold = Player.gold - 10  -- Deduct gold when upgrading starting money
-        saveGameData()  -- Save after upgrade
-    end
-    if suit.Button("+" .. formatNumber(Player.gold), {color = invisButtonColor, align = "center"}, rightX + 125, startY + 50, 125, 75).hit then
-        Player.startMoney = (Player.startMoney or 0) + Player.gold  -- Increase starting money by gold
-        Player.gold = 0  -- Reset gold after using it
-        saveGameData()  -- Save after upgrade
-    end
-
-    -- Draw money icon
-    if iconsImg["money"] then
-        local iconX = rightX + 100 - iconsImg["money"]:getWidth()*1.75/2
-        love.graphics.draw(iconsImg["money"], iconX, startY + 125, 0, 1.75, 1.75)
     end
     
     -- Grid layout settings
@@ -208,6 +223,8 @@ function permanentUpgrades.draw()
     -- Draw upgrade buttons in a grid
     local row = 0
     local col = 0
+
+    
 
     dress:draw()
 end

@@ -101,7 +101,7 @@ local function dealDamage(ball, brick)
         end
         damage = math.min(damage, brick.health)
         if Player.perks.brickBreaker then
-            if math.random(1,100) <= 5 then
+            if math.random(1,100) < 5 then
                 damage = brick.health
             end
         end
@@ -149,7 +149,6 @@ end
 -- Update bullet damage in shoot function
 local function shoot(gunName)
     if unlockedBallTypes[gunName] then
-        playSoundEffect(gunShootSFX, 0.5, 1, false, true)
         for _, ballType in pairs(unlockedBallTypes) do
             print("checking ballType: " .. ballType.name)
             if ballType.onShoot then
@@ -160,6 +159,7 @@ local function shoot(gunName)
         local bulletStormMult = Player.perks.bulletStorm and 2 or 1
         local gun = unlockedBallTypes[gunName]
         if gun.currentAmmo > 0 then
+            playSoundEffect(gunShootSFX, 0.5, 1, false, true)
             local speedOffset = (paddle.currentSpeedX or 0) * 0.4
             local bulletDamage = gun.stats.damage + 
                 (Player.bonuses.damage or 0) + 
@@ -480,9 +480,9 @@ local function ballListInit()
 
             stats = {
                 damage = 1,
-                cooldown = 3,
+                cooldown = 5,
                 ammo = 12,
-                fireRate = 4,
+                fireRate = 5,
             },
         },
         ["Machine Gun"] = {
@@ -503,8 +503,8 @@ local function ballListInit()
 
             stats = {
                 damage = 1,
-                cooldown = 6,
-                ammo = 12,
+                cooldown = 8,
+                ammo = 15,
                 fireRate = 10,
             },
         },
@@ -670,8 +670,10 @@ local function ballListInit()
                 speed = 150, -- Rotations per second
             },
             sawPositions = {}, -- Will store current positions of saws
+            sawAnimations = {}, -- Will store animation IDs
             currentAngle = 0, -- Current rotation angle
-            orbitRadius = 250
+            orbitRadius = 250,
+            damageCooldowns = {}, -- Add this line to track cooldowns per saw per brick
         },
         ["Fireball"] = {
             name = "Fireball",
@@ -791,6 +793,7 @@ function Balls.initialize()
     ballList = {}   
     unlockedBallTypes = {}
     ballListInit()
+    --Balls.addBall("Saw Blades") -- Add Saw Blades as a starting ball
 end
 
 function Balls.addBall(ballName, singleBall)
@@ -1275,12 +1278,13 @@ local function techUpdate(dt)
     -- Saw Blades damage logic and animation update
     if unlockedBallTypes["Saw Blades"] then
         local sawBlades = unlockedBallTypes["Saw Blades"]
-        local numSaws = (sawBlades.stats.amount or 1)
+        local numSaws = (sawBlades.stats.amount or 1) + (Player.bonuses.amount or 0) + (Player.permanentUpgrades.amount or 0)
         local orbitRadius = sawBlades.orbitRadius or 250
         local paddleCenterX = paddle.x + paddle.width / 2
         local paddleCenterY = paddle.y + paddle.height / 2
         sawBlades.sawPositions = sawBlades.sawPositions or {}
         sawBlades.sawAnimations = sawBlades.sawAnimations or {}
+        sawBlades.damageCooldowns = sawBlades.damageCooldowns or {} -- Initialize cooldown table
         sawBlades.currentAngle = (sawBlades.currentAngle or 0) + (sawBlades.stats.speed or 150) * dt * 0.01
         for i = 1, numSaws do
             local angle = sawBlades.currentAngle + (2 * math.pi * (i - 1) / numSaws)
@@ -1298,7 +1302,7 @@ local function techUpdate(dt)
                 anim.y = y
             end
             -- Saw Blades collision with bricks
-            for _, brick in ipairs(bricks) do
+            for b, brick in ipairs(bricks) do
                 if not brick.destroyed and brick.health > 0 then
                     -- Check collision (circle-rectangle)
                     local closestX = math.max(brick.x, math.min(x, brick.x + brick.width))
@@ -1308,7 +1312,29 @@ local function techUpdate(dt)
                     local distSq = dx*dx + dy*dy
                     local sawRadius = 32 -- Half of 64px frame, adjust if needed
                     if distSq <= sawRadius * sawRadius then
-                        dealDamage({stats={damage=sawBlades.stats.damage}}, brick)
+                        -- Damage cooldown logic
+                        sawBlades.damageCooldowns[i] = sawBlades.damageCooldowns[i] or {}
+                        sawBlades.damageCooldowns[i][b] = sawBlades.damageCooldowns[i][b] or 0
+                        if sawBlades.damageCooldowns[i][b] <= 0 then
+                            dealDamage({stats={damage=sawBlades.stats.damage}}, brick)
+                            sawBlades.damageCooldowns[i][b] = 0.2 -- 0.2 second cooldown
+                            local anim = getAnimation(sawBlades.sawAnimations[i])
+                            if anim then
+                                -- Cancel only this saw's previous scale tween
+                                if anim.scaleTweenID then
+                                    removeTween(anim.scaleTweenID)
+                                    anim.scaleTweenID = nil
+                                end
+                                anim.scale = 3.0
+                                local sawBladeScaleTween = tween.new(0.2, anim, {scale = 2.0}, tween.inQuad)
+                                addTweenToUpdate(sawBladeScaleTween)
+                                anim.scaleTweenID = sawBladeScaleTween.id -- Store this tween's ID on the anim
+                            end
+                        end
+                    end
+                    -- Cooldown tick down
+                    if sawBlades.damageCooldowns[i] and sawBlades.damageCooldowns[i][b] then
+                        sawBlades.damageCooldowns[i][b] = math.max(0, sawBlades.damageCooldowns[i][b] - dt)
                     end
                 end
             end
