@@ -113,6 +113,9 @@ local function loadAssets()
     auraImg = love.graphics.newImage("assets/sprites/aura.png")
     brickImg = love.graphics.newImage("assets/sprites/brick.png")
     muzzleFlashImg = love.graphics.newImage("assets/sprites/muzzleFlash.png")
+    brickPiece1Img = love.graphics.newImage("assets/sprites/brickPiece1.png")
+    brickPiece2Img = love.graphics.newImage("assets/sprites/brickPiece2.png")
+    brickPiece3Img = love.graphics.newImage("assets/sprites/brickPiece3.png")
         -- UI
     uiLabelImg = love.graphics.newImage("assets/sprites/UI/ballUI backgroundTop.png")
     uiSmallWindowImg = love.graphics.newImage("assets/sprites/UI/newBallBackground.png")
@@ -151,6 +154,8 @@ local function loadAssets()
     impactVFX = love.graphics.newImage("assets/sprites/VFX/Impact.png")
     smokeVFX = love.graphics.newImage("assets/sprites/VFX/smoke.png")
     sparkVFX = love.graphics.newImage("assets/sprites/VFX/spark.png")
+    lightningVFX = love.graphics.newImage("assets/sprites/VFX/spark.png")
+    chainLightningVFX = love.graphics.newImage("assets/sprites/VFX/chainLightning.png")
     explosionVFX = love.graphics.newImage("assets/sprites/VFX/explosion.png")
     fireballVFX = love.graphics.newImage("assets/sprites/VFX/fireball.png")
     sawBladesVFX = love.graphics.newImage("assets/sprites/VFX/sawBlades.png")
@@ -202,51 +207,98 @@ local function addMoreBricks(dt)
     end
 end
 
+local unavailableXpos = {}
+local currentRow = 1
+local nextRowDebuff = 0
 local function generateRow(brickCount, yPos)
-    local row = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-    local rowOffset = mapRangeClamped(math.random(0,10),0,10, 0, brickWidth)
+    brickCount = brickCount - nextRowDebuff
+    nextRowDebuff = 0 -- Reset next row debuff for the next row
+    if brickCount >= 1000 then
+        print("SPAWN BOSS MOUAHAHAHAHAA")
+    end
+    local row = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+    local rowOffset = 0--mapRangeClamped(math.random(0,10),0,10, 0, brickWidth)
     for i = 1, brickCount do
-        local n = math.random(11)
+        local bruh = true
+        local n = 1
+        while bruh do
+            n = math.random(12)
+            if not unavailableXpos[n] then 
+                bruh = false
+            end
+        end
         row[n] = row[n] + 1
     end
+    unavailableXpos = {}
+    local bigBrickLocations = {}
     for xPos, brickHealth in ipairs(row) do
         if brickHealth > 0 then
-            local brickColor = getBrickColor(brickHealth)
-            table.insert(bricks, {
-                id = #bricks + 1,
-                x = statsWidth + (xPos - 1) * (brickWidth + brickSpacing) + 5 + rowOffset,
-                y = yPos,
-                drawOffsetX = 0,
-                drawOffsetY = 0,
-                drawOffsetRot = 0,
-                drawScale = 1,
-                width = brickWidth,
-                height = brickHeight,
-                destroyed = false,
-                health = brickHealth,
-                color = {brickColor[1], brickColor[2], brickColor[3], 1}, -- Set the color with full opacity
-                hitLastFrame = false
-            })
+            if (not bigBrickLocations[xPos-1]) then
+                if xPos < 11 and math.random(1, 100) < math.floor(mapRangeClamped(brickCount, 1, 1000, 0, 25)) and row[xPos+1] > 0 then
+                    if (brickHealth + row[xPos+1]) * 2 >= 50 then
+                        bigBrickLocations[xPos] = true
+                        unavailableXpos[xPos] = true
+                        unavailableXpos[xPos+1] = true
+                        local bigBrickHealth = (brickHealth + row[xPos+1])*2
+                        local brickColor = getBrickColor(bigBrickHealth)
+                        nextRowDebuff = brickHealth + row[xPos+1] -- Set the next row debuff to the health of the big brick
+                        table.insert(bricks, {
+                            type = "big",
+                            id = #bricks + 1,
+                            x = statsWidth + (xPos - 1) * (brickWidth + brickSpacing) + 5 + rowOffset,
+                            y = yPos - (brickHeight + brickSpacing/2),
+                            drawOffsetX = 0,
+                            drawOffsetY = 0,
+                            drawOffsetRot = 0,
+                            drawScale = 1,
+                            width = brickWidth*2,
+                            height = brickHeight*2,
+                            destroyed = false,
+                            health = bigBrickHealth,
+                            color = {brickColor[1], brickColor[2], brickColor[3], 1}, -- Set the color with full opacity
+                            hitLastFrame = false
+                        })
+                        nextRowDebuff = brickHealth + row[xPos+1]
+                    end
+                else
+                    local brickColor = getBrickColor(brickHealth)
+                    table.insert(bricks, {
+                        type = "small",
+                        id = #bricks + 1,
+                        x = statsWidth + (xPos - 1) * (brickWidth + brickSpacing) + 5 + rowOffset,
+                        y = yPos,
+                        drawOffsetX = 0,
+                        drawOffsetY = 0,
+                        drawOffsetRot = 0,
+                        drawScale = 1,
+                        width = brickWidth,
+                        height = brickHeight,
+                        destroyed = false,
+                        health = brickHealth,
+                        color = {brickColor[1], brickColor[2], brickColor[3], 1}, -- Set the color with full opacity
+                        hitLastFrame = false
+                    })
+                end
+            end
         end
     end
+    currentRow = currentRow + 1
     return row
 end
 
 local currentRowPopulation
 local function addMoreBricks()
-    for i = #bricks, 0, -1 do
-        if bricks[i] then
-            if bricks[i].y > -50 then
-                print("spawning more bricks")
-                for i=1 , 10 do
-                    generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 50) --generate 100 scaling rows of bricks
-                    currentRowPopulation = currentRowPopulation + 1 + math.floor(currentRowPopulation/50)
-                end
-                return
-            else 
-                return
-            end--else print("bricks are too high to spawn more") end
-        end
+    if bricks[#bricks] then
+        if bricks[#bricks].y > -50 then
+            print("spawning more bricks")
+            for i=1 , 10 do
+                generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 50) --generate 100 scaling rows of bricks
+                currentRowPopulation = currentRowPopulation + 1 + math.floor(currentRow/20)
+            end
+            return
+        else 
+            return
+        end--else print("bricks are too high to spawn more") end
     end
 end
 
@@ -301,11 +353,11 @@ function initializeGameState()
     frozenTime = 0
     lastFreezeTime = 0
 
-    -- Initialize Balls
-    Balls.initialize()
-    
-    -- Initialize bricks
+    -- Initialize bricks FIRST
     initializeBricks()
+    
+    -- Then initialize Balls
+    Balls.initialize()
 end
 
 function love.load()
@@ -319,7 +371,7 @@ function love.load()
     -- Load the MP3 file
     playSoundEffect(backgroundMusic, 0.5, 1, true, false) -- Play the background music
     brickFont = love.graphics.newFont(14)    -- Set fullscreen mode
-    love.window.setMode(1920, 1080, {fullscreen = true, vsync = true})    -- Get screen dimensions
+    love.window.setMode(1920, 1080, {fullscreen = true, vsync = false})    -- Get screen dimensions
     screenWidth, screenHeight = love.graphics.getDimensions()
     gameCanvas = love.graphics.newCanvas(screenWidth, screenHeight)
     uiCanvas = love.graphics.newCanvas(screenWidth, screenHeight)
@@ -347,7 +399,7 @@ function love.load()
     -- Paddle
     paddle = {
         x = screenWidth / 2 - 50,
-        y = screenHeight - 400,
+        y = screenHeight/4,
         width = 130,
         widthMult = 1,
         height = 20,    
@@ -364,6 +416,8 @@ function love.load()
 end
 
 function getHighestBrickY()
+    -- Defensive: ensure bricks is always a table
+    if type(bricks) ~= "table" then bricks = {} end
     local highestY = -math.huge  -- Start with lowest possible number
     for _, brick in ipairs(bricks) do
         if not brick.destroyed and brick.y > highestY then
@@ -438,7 +492,23 @@ screenOffset = {x=0,y=0}
 local startTime = -10
 local gameTime = 0  -- Tracks actual elapsed gameplay time
 
+local function brickPiecesUpdate(dt)
+    for _, brickpiece in ipairs(brickPieces) do
+        if not brickpiece.destroyed then
+            brickpiece.y = brickpiece.y + brickpiece.speedY * dt
+            brickpiece.x = brickpiece.x + brickpiece.speedX * dt
+            brickpiece.speedY = brickpiece.speedY + 500 * dt -- Apply gravity
 
+            if brickpiece.y > screenHeight + 50 then
+                brickpiece.destroyed = true -- Remove piece if it goes off screen
+                brickpiece = nil
+            end
+        end
+    end
+end
+
+brickKilledThisFrame = false
+local damageCooldown = 0 -- Cooldown for damage visuals
 local function gameFixedUpdate(dt)
     dt = 1/60 -- Fixed delta time for consistent updates
     dt = dt * 1.75
@@ -450,12 +520,13 @@ local function gameFixedUpdate(dt)
     local backgroundIntensity = Player.score <= 100 and mapRangeClamped(Player.score,1,100, 0.0, 0.15) or (Player.score <= 5000 and mapRangeClamped(Player.score, 100, 5000, 0.15, 0.5) or mapRangeClamped(Player.score, 5000, 100000, 0.5, 1.0))
 
     if currentGameState == GameState.PLAYING then
-            KeywordSystem:update() -- Update the keyword system
+        KeywordSystem:update() -- Update the keyword system
         -- overwrites backgroundIntensity if using debugging window
         if shouldDrawDebug then
             backgroundIntensity = VFX.backgroundIntensityOverwrite 
         end
 
+        brickPiecesUpdate(dt) -- Update brick pieces
         backgroundShader:send("intensity", backgroundIntensity)
         if startTime == -10 then
             startTime = love.timer.getTime()+0.5
@@ -497,29 +568,32 @@ local function gameFixedUpdate(dt)
         -- checks if game is frozen
         if not Player.levelingUp and not UtilityFunction.freeze then
             -- Paddle movement
-            paddle.currentSpeedX, paddle.currentSpeedY = 0, 0
+            local moveX, moveY = 0, 0
             if love.keyboard.isDown("left") or love.keyboard.isDown("a") then
-                paddle.x = paddle.x - paddle.speed * paddle.speedMult * dt
-                paddle.currentSpeedX = paddle.currrentSpeedX - 400
+                moveX = moveX - 1
             end
             if love.keyboard.isDown("right") or love.keyboard.isDown("d") then
-                paddle.x = paddle.x + paddle.speed * paddle.speedMult * dt
-                paddle.currentSpeedX = paddle.currrentSpeedX + 400
+                moveX = moveX + 1
             end
-            if love.keyboard.isDown("up") or love.keyboard.isDown("w") then
-                paddle.y = paddle.y - paddle.speed * paddle.speedMult * dt
-                paddle.currentSpeedY = paddle.currentSpeedY - 400
-            end
-            if love.keyboard.isDown("down") or love.keyboard.isDown("s") then
-                paddle.y = paddle.y + paddle.speed * paddle.speedMult * dt
-                paddle.currentSpeedY = paddle.currentSpeedY + 400
+            --if love.keyboard.isDown("up") or love.keyboard.isDown("w") then
+                moveY = moveY - 0.2
+            --end
+            --[[if love.keyboard.isDown("down") or love.keyboard.isDown("s") then
+                moveY = moveY + 1
             end
 
-            if math.abs(paddle.currentSpeedX) > 350 and math.abs(paddle.currentSpeedY) > 350 then
-                -- If both left/right and up/down are pressed, reduce speed to prevent diagonal speed boost
-                paddle.currentSpeedX = paddle.currentSpeedX * 0.7071 -- Reduce by sqrt(2)/2
-                paddle.currentSpeedY = paddle.currentSpeedY * 0.7071 -- Reduce by sqrt(2)/2
-            end
+            -- Normalize diagonal movement
+            if moveX ~= 0 and moveY ~= 0 then
+                moveX = moveX * 0.7071
+                moveY = moveY * 0.7071
+            end]]
+
+            paddle.x = paddle.x + moveX * paddle.speed * paddle.speedMult * dt
+            paddle.y = paddle.y + moveY * paddle.speed * paddle.speedMult * dt
+
+            -- Optionally update currentSpeedX/currentSpeedY for other logic
+            paddle.currentSpeedX = moveX * paddle.speed * paddle.speedMult
+            paddle.currentSpeedY = moveY * paddle.speed * paddle.speedMult
 
             -- Keep paddle within screen bounds
             paddle.x = math.max(statsWidth, math.min(screenWidth - statsWidth - paddle.width, paddle.x))
@@ -542,11 +616,20 @@ local function gameFixedUpdate(dt)
 
             updateAnimations(dt) -- Update animations
 
-
-            if damageThisFrame > 0 then
+            if damageCooldown > 0 then
+                damageCooldown = damageCooldown - dt -- Reduce damage cooldown
+            end
+            
+            if brickKilledThisFrame and damageCooldown <= 0 then
+                -- Play brick hit sound effect
+                playSoundEffect(brickDeathSFX, 0.35, 1, false, true)
+            end
+            if damageThisFrame > 0 and damageCooldown <= 0 then
                 damageScreenVisuals(mapRangeClamped(damageThisFrame,1,20,0.25, 0.5), damageThisFrame)
                 playSoundEffect(brickHitSFX, mapRangeClamped(damageThisFrame, 1,10, 0.4,1.0), mapRangeClamped(damageThisFrame,1,20,0.5,1), false, true)
+                damageCooldown = 0.025 -- Set cooldown for damage visuals
             end
+            brickKilledThisFrame = false -- Reset brick hit state for the next frame
             damageThisFrame = 0 -- Reset damage this frame
             VFX.update(dt) -- Update VFX
         end
@@ -556,7 +639,6 @@ end
 
 local accumulator = 0
 local fixed_dt = 1/60
-
 function love.update(dt)
     accumulator = accumulator + dt
     while accumulator >= fixed_dt do
@@ -651,7 +733,6 @@ local function drawStartSelect()
             startingChoice = item.name
             currentGameState = GameState.PLAYING
             initializeGameState()
-            Balls.initialize()
             if item.name ~= "Nothing" then
                 Balls.addBall(item.name)
             end
@@ -666,32 +747,48 @@ function drawBricks()
             -- Ensure brick color is valid
             local color = brick.color or {1, 1, 1, 1}
             love.graphics.setColor(color) -- Set brick color
-            
-            -- Calculate the origin for rotation (center of the brick)
-            local originX = brick.width / 2
-            local originY = brick.height / 2
 
-            -- Draw the brick with rotation around its center
+            -- Use drawScale for scaling, default to 1 if not set
+            local scale = brick.drawScale or 1
+            local scaleX = scale * (brick.width / brickImg:getWidth())
+            local scaleY = scale * (brick.height / brickImg:getHeight())
+
+            -- Centered scaling: adjust position so scaling keeps brick centered
+            local centerX = brick.x + brick.width / 2 + brick.drawOffsetX
+            local centerY = brick.y + brick.height / 2 + brick.drawOffsetY
+
             love.graphics.draw(
                 brickImg,
-                brick.x + brick.drawOffsetX + originX, -- Adjust x position
-                brick.y + brick.drawOffsetY + originY, -- Adjust y position
-                brick.drawOffsetRot, -- Rotation angle
-                brick.width / brickImg:getWidth(), -- Scale X
-                brick.height / brickImg:getHeight(), -- Scale Y
-                originX, -- Origin X (center of the brick)
-                originY -- Origin Y (center of the brick)
+                centerX,
+                centerY,
+                brick.drawOffsetRot,
+                scaleX,
+                scaleY,
+                brickImg:getWidth() / 2,
+                brickImg:getHeight() / 2
             )
 
-            -- Draw the brick's HP using drawTextWithOutline
+            -- Draw the brick's HP using drawTextWithOutline, centered in the scaled brick
             local textColor = {1, 1, 1, 1} -- White text color
             local outlineColor = {0, 0, 0, 1} -- Black outline color
             local outlineThickness = 1
             local hpText = tostring(brick.health or 0)
 
             setFont(18)
-            drawTextWithOutline(hpText, brick.x + brick.width / 2, brick.y + brick.height / 2, love.graphics.getFont(), textColor, outlineColor, outlineThickness)
+            drawTextWithOutline(
+                hpText,
+                centerX,
+                centerY,
+                love.graphics.getFont(),
+                textColor,
+                outlineColor,
+                outlineThickness
+            )
         end
+    end
+    for _, brickPiece in ipairs(brickPieces) do
+        love.graphics.setColor(brickPiece.color) -- Reset color to white
+        love.graphics.draw(brickPiece.img, brickPiece.x, brickPiece.y, 0, brickPiece.width / brickPiece.img:getWidth(), brickPiece.height / brickPiece.img:getHeight())
     end
 end
 
@@ -779,7 +876,7 @@ function love.draw()
     drawBricks() -- Draw bricks
 
     love.graphics.setCanvas(glowCanvas.normal)
-    Balls.draw(Balls) -- Draw balls
+    Balls:draw() -- Draw balls
 
     love.graphics.setCanvas()
 
@@ -879,7 +976,7 @@ function love.keypressed(key)
 
     --money manipulation
     if key == "m" then
-        Player.money = Player.money + 10000000000000000 -- Add 1000 money for testing
+        Player.money = Player.money < 10 and 10 or Player.money * 10
     end
     if key == "n" then
         Player.money = 0

@@ -66,9 +66,9 @@ local function startingItemsDraw()
     menuY = menuY + 80  -- Adjust Y position for the label
 
     local unlockables = {
-        {name = "Pistol", label = "Pistol\n\n", key = "Pistol", price = 500},
-        {name = "Laser Beam", label = "Laser Beam\n\n", key = "Laser Beam", price = 2500},
-        {name = "Saw Blades", label = "Saw Blades\n\n", key = "Saw Blades", price = 5000},
+        {name = "Pistol", label = "Pistol", key = "Pistol", price = 100},
+        {name = "Laser Beam", label = "Laser Beam", key = "Laser Beam", price = 250},
+        {name = "Saw Blades", label = "Saw Blades", key = "Saw Blades", price = 500},
     }
     Player.unlockedStartingBalls = Player.unlockedStartingBalls or {}
     for i, item in ipairs(unlockables) do
@@ -200,7 +200,7 @@ function permanentUpgrades.draw()
                     Player.permanentUpgrades[upgradeName] = 1
                 end
                 Player.gold = Player.gold - price
-                Player.permanentUpgradePrices[upgradeName] = price * 10
+                Player.permanentUpgradePrices[upgradeName] = price * 5
                 -- Apply any immediate effects of the upgrade
                 if upgradeName == "paddleSize" then
                     Player.bonusUpgrades.paddleSize()

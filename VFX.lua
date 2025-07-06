@@ -21,7 +21,7 @@ local function brickHitFX(brick, ball, intensity)
     local offsetRotation = math.atan2(offsetY, offsetX) * 0.1
     offsetX = offsetX * (mapRange(intensity, 1, 10, 5, 30) + 5)
     offsetY = offsetY * (mapRange(intensity, 1, 10, 5, 30) + 5)
-    local scaleOffset = mapRange(intensity, 1, 10, 1, 3)
+    local scaleOffset = mapRangeClamped(intensity, 1, 20, 1, 3)
     local hitTween = tween.new(0.05, brick, {drawScale = scaleOffset, drawOffsetX = offsetX, drawOffsetY = offsetY, drawOffsetRot = 0}, tween.outCubic)
     addTweenToUpdate(hitTween)
 
@@ -35,12 +35,17 @@ local function brickHitParticles(brick, ball, intensity)
     -- Default to brick center if ball position is unavailable
     local ballX = ball.x or brick.x + brick.width/2
     local ballY = ball.y or brick.y + brick.height/2
-    
+
     -- Calculate effect position using safe values
     local effectX = (ballX + brick.x + brick.width/2)/2
     local effectY = (ballY + brick.y + brick.height/2)/2
-    
-    createSpriteAnimation(effectX, effectY, mapRangeClamped(intensity, 1, 20, 0.25, 0.65), impactVFX, 512, 512, 0.005, 4)
+
+    -- Only trigger the animation once every 0.5s per brick
+    brick._lastImpactVFX = brick._lastImpactVFX or 0
+    if love.timer.getTime() - brick._lastImpactVFX >= 0.5 then
+        createSpriteAnimation(effectX, effectY, mapRangeClamped(intensity, 1, 20, 0.25, 0.65), impactVFX, 512, 512, 0.005, 4)
+        brick._lastImpactVFX = love.timer.getTime()
+    end
 end
 
 --[[

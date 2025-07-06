@@ -101,7 +101,7 @@ function GameOverDraw()
     -- Draw gold Earned (top right)
     love.graphics.setColor(1, 1, 1, 1) -- Reset color to white
     setFont(48)
-    local goldEarned = math.floor(Player.score / mapRange(Player.score, 0, 5000, 10, 100))
+    local goldEarned = math.floor(2 * math.sqrt(Player.score))
     local goldText = "gold earned: ".. formatNumber(goldEarned) .. "$"
     currentFont = love.graphics.getFont()
     local moneyWidth = currentFont:getWidth(goldText)
@@ -217,7 +217,6 @@ function setFont(...)
             -- default font type
             font = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf",fontSize)
             Fonts[fontSize] = font -- Cache the new font
-            print("Font created and cached: " .. fontSize)
         end
     else 
         if Fonts[fontType .. tostring(fontSize)] then
@@ -225,7 +224,6 @@ function setFont(...)
         else
             font = love.graphics.newFont(fontType, fontSize)
             Fonts[fontType .. tostring(fontSize)] = font
-            print("Font created and cached: " .. fontSize .. " " .. fontType)
         end
     end
     love.graphics.setFont(font) -- Set the font in Love2D
@@ -391,13 +389,13 @@ function formatNumber(value)
     end
     
     if value >= 1e12 then
-        return string.format("%.2gT", value / 1e12) -- Trillions
+        return string.format("%.3gT", value / 1e12) -- Trillions
     elseif value >= 1e9 then
-        return string.format("%.2gB", value / 1e9) -- Billions
+        return string.format("%.3gB", value / 1e9) -- Billions
     elseif value >= 1e6 then
-        return string.format("%.2gM", value / 1e6) -- Millions
+        return string.format("%.3gM", value / 1e6) -- Millions
     elseif value >= 1e3 then
-        return string.format("%.2gK", value / 1e3) -- Thousands
+        return string.format("%.3gK", value / 1e3) -- Thousands
     else
         return tostring(value) -- Less than 1000, no suffix
     end
@@ -517,13 +515,15 @@ end
 
 local animationID = 1
 local animations = {}
-function createSpriteAnimation(x, y, scale, spritesheet, frameWidth, frameHeight, frameTime, skipFrames, looping)
+function createSpriteAnimation(x, y, scale, spritesheet, frameWidth, frameHeight, frameTime, skipFrames, looping, scaleX, scaleY, angle, color)
     looping = looping or false
     local animation = {}
     animation.id = animationID
     animation.x = x
     animation.y = y
     animation.scale = scale
+    animation.scaleX = scaleX or 1 -- Default to 1 if not provided
+    animation.scaleY = scaleY or 1 -- Default to 1 if not provided
     animation.spritesheet = spritesheet
     animation.frameWidth = frameWidth
     animation.frameHeight = frameHeight
@@ -532,6 +532,8 @@ function createSpriteAnimation(x, y, scale, spritesheet, frameWidth, frameHeight
     animation.currentFrame = 1 + (skipFrames or 0)
     animation.looping = looping or false
     animation.quads = {}
+    animation.angle = angle or 0 -- Default to 0 if not provided
+    animation.color = color or {1,1,1,1} -- Default alpha value for the animation
 
     animationID = animationID + 1 -- Increment the animation ID for the next animation
 
@@ -592,18 +594,20 @@ end
 
 function drawAnimations()
     for _, animation in ipairs(animations) do
+        love.graphics.setColor(animation.color) -- Reset color to white before drawing animations
         love.graphics.draw(
             animation.spritesheet,
             animation.quads[animation.currentFrame],
             animation.x,
             animation.y,
-            0, -- Rotation (default to 0)
-            animation.scale, -- Scale X
-            animation.scale, -- Scale Y
+            math.rad(animation.angle), -- Rotation (default to 0)
+            animation.scale * animation.scaleX, -- Scale X
+            animation.scale * animation.scaleY, -- Scale Y
             animation.frameWidth / 2, -- Origin X (half the frame width)
             animation.frameHeight / 2 -- Origin Y (half the frame height)
         )
     end
+    love.graphics.setColor(1, 1, 1, 1) -- Reset color to white after drawing animations
 end
 
 -- Example: Elastic tween that ends with the same value
@@ -625,6 +629,7 @@ function screenShake(duration, intensity, vibrationCount, direction)
     -- This function has 1 more vibration than vibrationCount
     direction = direction or {1, 0} -- Default direction
     intensity = intensity or 10 -- Default intensity
+    intensity = mapRangeClamped(intensity, 1, 100, 1, 50)
     duration = duration or 0.5 -- Default duration
     vibrationCount = vibrationCount or 3 -- Default number of vibrations
     local delay = 0 -- Default duration multiplier
@@ -657,7 +662,12 @@ function screenFlash(duration, intensity)
     addTweenToUpdate(flashTween)
 end
 
+local canDamageScreenVisuals = true
 function damageScreenVisuals(duration, intensity, direction)
+    canDamageScreenVisuals = false -- Prevent further damage until the current effect is done
+    Timer.after(0.25, function()
+        canDamageScreenVisuals = true -- Allow further damage after the duration
+    end)
 
     --local directionX, directionY = normalizeVector(math.random(-1000, 1000), math.random(-1000, 1000)) -- Random direction for the screen shake
     local directionX, directionY = normalizeVector(5, 3) -- Fixed direction for the screen shake
@@ -819,7 +829,7 @@ function damageNumber(damage, x, y, color)
     }
     table.insert(damageNumbers, damageNumber)
 
-    local sizeTween = tween.new(0.75, damageNumber, {fontSize = damage < 10 and mapRange(damage, 0, 10, 1, 5) or mapRange(damage, 10, 50, 5, 8)}, tween.easing.outBack)
+    local sizeTween = tween.new(0.75, damageNumber, {fontSize = damage < 10 and mapRange(damage, 0, 10, 1, 3) or mapRangeClamped(damage, 10, 50, 3, 5)}, tween.easing.outBack)
     addTweenToUpdate(sizeTween) 
 
     local xRandom, yRandom = math.random(-15, 15), -15 - math.random(20)

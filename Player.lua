@@ -68,7 +68,7 @@ Player = {
     gold = 0,
     score = 0,
     highScore = 0,
-    lives = 3,
+    lives = 2,
     levelingUp = false,
     price = 1,
     newUpgradePrice = 100,
@@ -116,7 +116,7 @@ function saveGameData()
             amount = Player.permanentUpgrades.amount or 0
         },
         permanentUpgradePrices = Player.permanentUpgradePrices,
-        startingItems = Player.startingItems or {"Ball", "Pistol", "Nothing"},
+        startingItems = Player.startingItems or {"Ball"},
     }
     local encoded = json.encode(data, { indent = true })
     love.filesystem.write(saveFilePath, encoded)
@@ -168,7 +168,13 @@ Player.permanentUpgradePrices = {
 
 Player.bonusUpgrades = {
     --income = function() Player.bonuses.income = Player.bonuses.income + 1 end,
-    speed = function() Player.bonuses.speed = Player.bonuses.speed + 1 end,    
+    speed = function() Player.bonuses.speed = Player.bonuses.speed + 1 
+    for _, ball in ipairs(Balls) do
+        if ball.type == "ball" then
+            Balls.adjustSpeed(ball.name)
+        end
+    end
+    end,    
     paddleSize = function()
         -- This is handled in permanentUpgrades.lua now
         paddle.width = paddle.width + 75
@@ -217,13 +223,17 @@ Player.perksList = {
     techSupremacy = {name = "techSupremacy", description = "doubles damage of all tech items"},
     brickBreaker = {
         name = "brickBreaker",
-        description = "5% chance to instantly destroy any brick regardless of health when they take damage"
+        description = "5% chance to instantly destroy any small brick regardless of health when they take damage"
     },
     paddleSquared = {
         name = "paddleSquared",
         description = "paddleBounce effects trigger twice"
     },
-    --[[phantomBullets = {
+    --[[timeKeeper = {
+        name = "timeKeeper",
+        description = "all cooldown are reduced by 50% (rounded up).",
+    },
+    phantomBullets = {
         name = "phantomBullets",
         description = "Bullets pass through bricks without losing damage, but deal 50% damage to them (rounded up)."
     },
@@ -263,6 +273,10 @@ Player.perkUpgrades = {
         print("got explosive bullet.")
         Player.perks.explosiveBullets = true
     end,
+
+    timeKeeper = function()
+        Player.perks.timeKeeper = true
+    end,
     
     speedBounce = function()
         Player.perks.speedBounce = true
@@ -283,6 +297,7 @@ Player.perkUpgrades = {
     paddleSquared = function()
         Player.perks.paddleSquared = true
     end,
+    
     multishot = function()
         Player.perks.multishot = true
         print("multishot perk unlocked!")
@@ -350,7 +365,6 @@ function Player.gain(amount)
     Player.money = Player.money + amount
     Player.score = Player.score + amount
     Player.xp = Player.score -- XP follows score
-    Player.checkLevelUp() -- Check for level up after gaining XP
     saveGameData()
     upgradesUI.tryQueue()
 end
@@ -368,7 +382,7 @@ function Player.die()
     end
 
     -- Calculate gold earned based on score
-    local goldEarned = math.floor(Player.score / mapRange(Player.score, 0, 5000, 10, 100))
+    local goldEarned = math.floor(2 * math.sqrt(Player.score))
     Player.addGold(goldEarned)
     toggleFreeze()
     Player.dead = true
@@ -376,22 +390,27 @@ function Player.die()
 end
 
 local brickSpeedTween
+local canTakeDamage = true
 function Player.hit()
-    Player.lives = Player.lives - 1
-    Player.lastHitTime = love.timer.getTime()
-    if Player.lives <= 0 then
-        Player.die()
-    end
-    brickSpeed.value = -300 / getBrickSpeedByTime()
-    brickSpeedTween = tween.new(2, brickSpeed, { value = 10 }, tween.outExpo)
-    addTweenToUpdate(brickSpeedTween)
+    if canTakeDamage then
+        canTakeDamage = false
+        Timer.after(4, function() canTakeDamage = true end)
+        Player.lives = Player.lives - 1
+        Player.lastHitTime = love.timer.getTime()
+        if Player.lives <= 0 then
+            Player.die()
+        end
+        brickSpeed.value = -300 / getBrickSpeedByTime()
+        brickSpeedTween = tween.new(2, brickSpeed, { value = 10 }, tween.outExpo)
+        addTweenToUpdate(brickSpeedTween)
 
-    print("Player hit! Lives left: " .. Player.lives)
+        print("Player hit! Lives left: " .. Player.lives)
+    end
 end
 
 local function checkForHit()
     for _, brick in ipairs(bricks) do
-        if brick.y + brick.height > screenHeight - 200 then
+        if brick.y + brick.height > screenHeight - brickHeight * 6 + paddle.height then
             Player.hit()
             damageScreenVisuals(0.25, 100)
         end
@@ -452,26 +471,6 @@ function Player:load()
             end
         end
     end
-end
-
--- Calculate what percentage through the current level we are
-function Player.getXPProgress()
-    local currentThreshold = Player.levelThresholds[Player.level] or math.huge
-    local previousThreshold = Player.level > 1 and Player.levelThresholds[Player.level - 1] or 0
-    local xpInCurrentLevel = Player.xp - previousThreshold
-    local xpNeededForLevel = currentThreshold - previousThreshold
-    return xpInCurrentLevel / xpNeededForLevel
-end
-
--- Check if player should level up
-function Player.checkLevelUp()
-    if Player.level <= #Player.levelThresholds and Player.xp >= Player.levelThresholds[Player.level] then
-        Player.level = Player.level + 1
-        setLevelUpShop(true, true)
-        Player.levelingUp = true -- This will trigger the upgrade UI
-        return true
-    end
-    return false
 end
 
 -- This existing code in Balls.lua already handles explosive bullets
