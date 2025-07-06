@@ -204,6 +204,20 @@ Player.bonusUpgrades = {
     end,
 }
 
+Player.upgradePaddle = {
+    paddleSize = function()
+        -- This is handled in permanentUpgrades.lua now
+        paddle.width = paddle.width + 25
+        paddle.x = math.max(paddle.x - 25, statsWidth)  -- Adjust position to keep it centered
+        Player.permanentUpgrades.paddleSize = (Player.permanentUpgrades.paddleSize or 0) + 1
+    end,
+    
+    paddleSpeed = function()
+        Player.permanentUpgrades.paddleSpeed = (Player.permanentUpgrades.paddleSpeed or 0) + 1
+        paddle.speed = paddle.speed + 75
+    end,
+}
+
 Player.perksList = {
     --[[superSpeed = {name = "superSpeed", description = "doubles ball speed. if amount <= 3"},
     cellularDivision = {name = "cellularDivision", description = "doubles amount. damage is halved."},

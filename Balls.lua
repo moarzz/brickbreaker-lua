@@ -930,7 +930,7 @@ local function ballListInit()
                 range = 4
             },
         },
-        ["Poison Dart"] = {
+        --[["Poison Dart"] = {
             name = "Poison Dart",
             type = "spell",
             x = screenWidth / 2,
@@ -949,7 +949,7 @@ local function ballListInit()
                 range = 3,
                 fireRate = 3,
             },
-        },
+        },]]
         ["Lightning Strike"] = {
             name = "Lightning Strike",
             type = "spell",

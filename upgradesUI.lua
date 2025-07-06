@@ -106,6 +106,97 @@ local function drawPlayerStats()
     local x,y = suit.layout:nextRow()
 end
 
+local paddleSizePrice = 25
+local paddleSpeedPrice = 25
+local function drawPaddleUpgrades()
+    local winX = 10
+    local winY = screenHeight - uiWindowImg:getHeight() - 10
+    love.graphics.draw(uiWindowImg, winX, winY) -- Draw the background window image
+    love.graphics.draw(uiLabelImg, winX + uiWindowImg:getWidth()/2 - 195, winY - uiLabelImg:getHeight()/2, 0, 1.5, 1) -- Draw the title background image
+    setFont(25)
+    suit.Label("Paddle Upgrades", {align = "center"}, winX + 15, winY - 22, uiWindowImg:getWidth() - 20, 50) -- Draw the title
+
+    -- Button layout
+    local padding = 20
+    local cellWidth = (uiWindowImg:getWidth() - 3 * padding) / 2
+    local cellHeight = 120
+    local buttonHeight = 80
+    local y = winY + 60
+    local x1 = winX + padding
+    local x2 = winX + cellWidth + 2 * padding
+
+    -- PaddleSize Upgrade Button
+    local paddleSizePrice = paddleSizePrice or 100
+    setFont(30)
+    -- Price (top right)
+    local priceText = formatNumber(paddleSizePrice) .. "$"
+    local priceWidth = getTextSize(priceText)
+    local priceX = x1 + cellWidth - priceWidth - 10
+    local priceY = y + 10
+    love.graphics.setColor(0,0,0,1)
+    love.graphics.print(priceText, priceX+2, priceY+2, math.rad(5))
+    local canAffordSize = Player.money >= paddleSizePrice
+    local moneyColor = canAffordSize and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
+    love.graphics.setColor(moneyColor)
+    love.graphics.print(priceText, priceX, priceY, math.rad(5))
+    love.graphics.setColor(1,1,1,1)
+    -- Icon
+    if iconsImg and iconsImg["paddleSize"] then
+        local iconScale = 1.75
+        local iconW = iconsImg["paddleSize"]:getWidth() * iconScale
+        local iconH = iconsImg["paddleSize"]:getHeight() * iconScale
+        love.graphics.draw(iconsImg["paddleSize"], x1 + cellWidth/2 - iconW/2, y + 40, 0, iconScale, iconScale)
+    end
+    -- Value label
+    setFont(35)
+    suit.Label("+ " .. tostring(Player.paddleStats and Player.paddleStats.paddleSize or 0), {align = "center"}, x1, y + 90, cellWidth, 40)
+    -- Upgrade button
+    local buttonID1 = generateNextButtonID()
+    if suit.Button("", {color = invisButtonColor, id = buttonID1}, x1, y, cellWidth, buttonHeight).hit then
+        if canAffordSize then
+            Player.pay(paddleSizePrice)
+            if Player.upgradePaddle then Player.upgradePaddle["paddleSize"]() end
+            paddleSizePrice = paddleSizePrice * 2
+        else
+            print("Not enough money for paddleSize upgrade")
+        end
+    end
+
+    -- Separator (vertical)
+    love.graphics.setColor(0.5,0.5,0.5,1)
+    love.graphics.rectangle("fill", x1 + cellWidth + padding/2, y + 10, 2, buttonHeight - 20)
+    love.graphics.setColor(1,1,1,1)
+
+    -- PaddleSpeed Upgrade Button
+    setFont(30)
+    local priceText2 = formatNumber(paddleSpeedPrice) .. "$"
+    local priceWidth2 = getTextSize(priceText2)
+    local priceX2 = x2 + cellWidth - priceWidth2 - 10
+    local priceY2 = y + 10
+    love.graphics.setColor(0,0,0,1)
+    love.graphics.print(priceText2, priceX2+2, priceY2+2, math.rad(5))
+    local canAffordSpeed = Player.money >= paddleSpeedPrice
+    local moneyColor2 = canAffordSpeed and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
+    love.graphics.setColor(moneyColor2)
+    love.graphics.print(priceText2, priceX2, priceY2, math.rad(5))
+    love.graphics.setColor(1,1,1,1)
+    -- No icon for paddleSpeed
+    -- Value label
+    setFont(35)
+    suit.Label("+ " .. tostring(Player.paddleStats and Player.paddleStats.paddleSpeed or 0), {align = "center"}, x2, y + 90, cellWidth, 40)
+    -- Upgrade button
+    local buttonID2 = generateNextButtonID()
+    if suit.Button("", {color = invisButtonColor, id = buttonID2}, x2, y, cellWidth, buttonHeight).hit then
+        if canAffordSpeed then
+            Player.pay(paddleSpeedPrice)
+            if Player.upgradePaddle then Player.upgradePaddle["paddleSpeed"]() end
+            paddleSpeedPrice = paddleSpeedPrice * 2
+        else
+            print("Not enough money for paddleSpeed upgrade")
+        end
+    end
+end
+
 local newPerkPrice = 10000 -- Price for unlocking a new perk
 local perkName = ""
 local function drawPerkUpgrade()
@@ -114,9 +205,9 @@ local function drawPerkUpgrade()
         perkamount = perkamount + 1
     end
     if perkamount == 0 then
-        local uiSmallWindowW = uiSmallWindowImg:getWidth() - 25
-        local uiSmallWindowH = uiSmallWindowImg:getHeight() - 27
-        local winX = screenWidth / 2 - uiSmallWindowW / 2
+        local uiSmallWindowW = uiWindowImg:getWidth()
+        local uiSmallWindowH = uiWindowImg:getHeight()
+        local winX = screenWidth / 2
         local winY = screenHeight - uiSmallWindowH - 10
         love.graphics.draw(uiSmallWindowImg, winX, winY)
         setFont(30)
@@ -147,11 +238,11 @@ local function drawPerkUpgrade()
             print("Player perks : " .. perkname)
         end
         --print("Player perks : " .. Player.perks)
-        local uiSmallWindowW = uiSmallWindowImg:getWidth() - 25
-        local uiSmallWindowH = uiSmallWindowImg:getHeight() - 27
-        local winX = screenWidth / 2 - uiSmallWindowW / 2 - 10
-        local winY = screenHeight - (uiSmallWindowH + 50)/2 - 5
-        love.graphics.draw(uiSmallWindowImg, winX, winY)
+        local uiSmallWindowW = uiWindowImg:getWidth()
+        local uiSmallWindowH = uiWindowImg:getHeight()
+        local winX = screenWidth / 2
+        local winY = screenHeight - uiSmallWindowH - 10
+        love.graphics.draw(uiWindowImg, winX, winY)
         for perkname, _ in pairs(Player.perks) do
             love.graphics.print(perkname, winX + 10, winY + 40 + (#Player.perks * 30))
         end
@@ -526,15 +617,14 @@ end
 local function drawPlayerSpells()
     local spells = getUnlockedSpells()
     local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
-    local statsWidth = 430
     local cellWidth, cellHeight = 200, 50
     -- Place to the left, under drawPlayerUpgrades()
-    local x = 10
+    local x = screenWidth/2 - uiWindowImg:getWidth() - 10
     -- Find the y position just below drawPlayerUpgrades (which starts at y+75 and draws a window at y+25, then rows)
     -- We'll estimate a safe y offset: upgrades window (60px title + 75px offset + 25px window + 3*210px rows) + some margin
     local upgradesRows = math.max(math.ceil((#Player.bonusOrder)/2), 1)
     local upgradesHeight = 75 + 25 + upgradesRows * 210 + 60
-    local y = upgradesHeight + 390
+    local y = screenHeight - uiWindowImg:getHeight() - 10
 
     -- Only show the unlock spell button if at least 3 balls (of any type) are unlocked
     local unlockedBallsCount = 0
@@ -543,8 +633,8 @@ local function drawPlayerSpells()
     end
     if #spells == 0 then
         -- Show unlock button
-        local uiSmallWindowW = uiSmallWindowImg:getWidth() - 25
-        local uiSmallWindowH = uiSmallWindowImg:getHeight() - 27
+        local uiSmallWindowW = uiSmallWindowImg:getWidth()
+        local uiSmallWindowH = uiSmallWindowImg:getHeight()
         local winX = x
         local winY = y
         love.graphics.draw(uiSmallWindowImg, winX, winY)
@@ -965,6 +1055,7 @@ function upgradesUI.draw()
     drawPlayerUpgrades() -- Draw the player upgrades table
     drawBallStats() -- Draw the ball stats table
     drawPerkUpgrade() -- Draw the player perks table
+    drawPaddleUpgrades()
 
     drawPlayerSpells() -- Draw the player spells table at the bottom
 
