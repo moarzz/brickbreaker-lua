@@ -505,7 +505,7 @@ function Player.die()
     end
 
     -- Calculate gold earned based on score
-    local goldEarned = math.floor(mapRangeClamped(math.sqrt(Player.score), 0, 100, 2, 6) * math.sqrt(Player.score))
+    local goldEarned = math.floor(mapRangeClamped(math.sqrt(Player.score), 0, 100, 1.5, 6) * math.sqrt(Player.score))
     Player.addGold(goldEarned)
     toggleFreeze()
     Player.dead = true

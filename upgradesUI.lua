@@ -784,6 +784,9 @@ local function drawBallStats()
                 if statName == "damage" and Player.currentCore == "Damage Core" then
                     value = value * 4 -- Double damage for Damage Core
                 end
+                if statName == "cooldown" then
+                    value = math.max(0, value)
+                end
                 suit.Label(tostring(value), {align = "center"}, x, y-25, cellWidth, 100)
 
                 -- draw stat icon
@@ -819,7 +822,7 @@ local function drawBallStats()
                 if upgradeStatButton.hit and canUpgrade then
                     if Player.money < ballType.price then
                             print("Not enough money to upgrade " .. ballType.name .. "'s " .. statName)
-                    elseif statName == "cooldown" and statValue <= 0 then
+                    elseif statName == "cooldown" and getStat(ballName, "cooldown") <= 0 then
                         print("cannot upgrade cooldown any further")
                     else
                         setFont(16)

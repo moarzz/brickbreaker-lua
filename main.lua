@@ -497,7 +497,7 @@ end
 function getBrickSpeedByTime()
     -- Scale speed from 0.5 to 5.0 over 10 minutes
     local timeSinceStart = love.timer.getTime() - gameStartTime
-    return mapRange(timeSinceStart, 0, 450, 0.35, 1.0)
+    return mapRangeClamped(timeSinceStart, 0, 450, 0.35, 1.0)
 end
 
 local function getBrickSpeedMult() 
@@ -1031,7 +1031,7 @@ local function drawGameTimer()
     -- Draw timer
     local font = love.graphics.getFont()
     local textWidth = font:getWidth(timeString)
-    local x = screenWidth / 2 - textWidth / 2
+    local x = screenWidth / 2 - 105
     local y = screenHeight - 175
     
     love.graphics.setColor(1, 1, 1, 1)
@@ -1075,7 +1075,7 @@ function drawPauseMenu()
     -- Main Menu button
     local menuBtn = suit.Button("Main Menu", {id="pause_menu"}, centerX, btnY, buttonWidth, buttonHeight)
     if menuBtn.hit then
-        local goldEarned = math.floor(mapRangeClamped(math.sqrt(Player.score), 0, 100, 2, 6) * math.sqrt(Player.score))
+        local goldEarned = math.floor(mapRangeClamped(math.sqrt(Player.score), 0, 100, 1.5, 6) * math.sqrt(Player.score))
         Player.addGold(goldEarned)
         saveGameData()
         resetGame()
@@ -1085,7 +1085,7 @@ function drawPauseMenu()
     -- Exit Game button
     local exitBtn = suit.Button("Exit Game", {id="pause_exit"}, centerX, btnY, buttonWidth, buttonHeight)
     if exitBtn.hit then
-        local goldEarned = math.floor(mapRangeClamped(math.sqrt(Player.score), 0, 100, 2, 6) * math.sqrt(Player.score))
+        local goldEarned = math.floor(mapRangeClamped(math.sqrt(Player.score), 0, 100, 1.5, 6) * math.sqrt(Player.score))
         Player.addGold(goldEarned)
         saveGameData()
         love.event.quit()
@@ -1264,15 +1264,15 @@ function love.draw()
     
     love.graphics.pop()
     
+    -- Draw the game timer
+    drawGameTimer()
+
     upgradesUI.draw()
 
     -- Draw the UI elements using Suit
     suit.draw()
     dress:draw()    -- Draw tooltip last (on top of everything)
     KeywordSystem:drawTooltip()
-
-    -- Draw the game timer
-    drawGameTimer()
 
     love.graphics.setCanvas(gameCanvas)
     VFX.draw() -- Draw VFX
