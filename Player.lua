@@ -311,13 +311,13 @@ Player.availableCores = {
         price = 400,
     },
     {
-        name = "Damage Core",
-        description = "amount and fireRate are always 2 and damage is multiplied by 4",
+        name = "Magnetic Core",
+        description = "Shoots gravity force field at nearest brick in front of paddle.",
         price = 600,
     },
     {
-        name = "Magnetic Core",
-        description = "Shoots gravity force field at nearest brick in front of paddle.",
+        name = "Burn Core",
+        description = "tech items burn bricks when they deal damage.",
         price = 800,
     },
     {
@@ -326,13 +326,13 @@ Player.availableCores = {
         price = 1000,
     },
     {
-        name = "Burn Core",
-        description = "tech items burn bricks when they deal damage.",
-        price = 1200,
-    },
-    {
         name = "Phantom Core",
         description = "Bullets pass through bricks without losing damage, but deal 25% damage\n(rounded up).",
+        price = 1200,
+    },
+    {   
+        name = "Damage Core",
+        description = "amount and fireRate are always 2 and damage is multiplied by 4",
         price = 1400,
     },
     {
@@ -341,21 +341,26 @@ Player.availableCores = {
         price = 1600,
     },
     {
-        name = "brickBreaker core",
-        description = "damage you deal has a 5% chance of destroying a brick instantly",
+        name = "Brickbreaker Core",
+        description = "Damage you deal has a 5% chance of destroying a brick instantly",
         price = 1800,
     },
+    --[[{
+        name = "Fated Core",
+        description = "Choose the weapon and stat upgrades available before the game starts",
+        price = 2000
+    }]]
 }
 
 Player.coreDescriptions = {
     ["Bouncy Core"] = "On bounce, balls gain a deprecating speed boost.",
     ["Spray and Pray Core"] = "Guns shoot 50% faster but are a lot less accurate.",
-    ["Burn Core"] = "tech items deal burn damage.",
+    ["Burn Core"] = "Tech items deal burn damage.",
     ["Magnetic Core"] = "Shoots gravity force field at nearest brick in front of paddle.",
-    ["BrickBreaker core"] = "damage you deal has a 5% chance of destroying a brick instantly",
+    ["Brickbreaker Core"] = "Damage you deal has a 5% chance of destroying a brick instantly",
     ["Cooldown Core"] = "Every cooldown item starts at a cooldown of 2, cooldown can't be lowered.",
     ["Economy Core"] = "Everything costs 50% less.",
-    ["Damage Core"] = "amount and fireRate are always 2 and damage is multiplied by 5",
+    ["Damage Core"] = "Amount and fireRate are always 2 and damage is multiplied by 5",
     ["Phantom Core"] = "Bullets pass through bricks without losing damage, but deal 25% damage\n(rounded up).",
     ["Farm Core"] = "After every 10 bricks destroyed, give +1 to a random one of your item's stat \n(-1 for cooldown)",
     

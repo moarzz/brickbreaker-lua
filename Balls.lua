@@ -296,7 +296,7 @@ function dealDamage(ball, brick, burnDamage)
     if Player.perks.multishot and (ball.type == "bullet" or ball.type == "gun") then
         damage = math.ceil(damage / 2.0)
     end
-    if Player.currentCore == "BrickBreaker Core" and brick.type ~= "boss" then
+    if Player.currentCore == "Brickbreaker Core" and brick.type ~= "boss" then
         if math.random(1,100) <= 5 then
             damage = brick.health
         end
@@ -772,7 +772,7 @@ local function cast(spellName, brick)
             local fireballStartTween = tween.new(0.25, fireballs[#fireballs], {radius = 10 * range}, tween.outExpo)
             addTweenToUpdate(fireballStartTween)
         end
-        Timer.after(10/(unlockedBallTypes["Fireball"].stats.fireRate + (Player.bonuses.fireRate or 0) + (Player.permanentUpgrades.fireRate or 0)), function()
+        Timer.after(10/(unlockedBallTypes["Fireball"].stats.fireRate + (Player.bonuses.fireRate or 0) + (Player.permanentUpgrades.fireRate or 0)) + 2, function()
             -- Refill Fireball spell after cooldown
             cast("Fireball")
         end)
@@ -1369,7 +1369,7 @@ local function ballListInit()
             size = 1,
             noAmount = true,
             rarity = "uncommon",
-            startingPrice = 100,
+            startingPrice = 50,
             description = "shoots fireballs that pass through bricks. Very slow fire rate.",
             color = {1, 0.5, 0, 1}, -- Orange color for Fireball
             counter = 0,
@@ -1380,8 +1380,8 @@ local function ballListInit()
             end,
             stats = {
                 amount = 1,
-                damage = 3,
-                range = 2,
+                damage = 1,
+                range = 1,
                 fireRate = 1, -- once every 6 seconds
             }
         },
@@ -1762,7 +1762,7 @@ local function brickCollisionCheck(ball, bricks, Player)
                 local overlapX = math.min(ball.x + ball.radius - brick.x, brick.x + brick.width - ball.x + ball.radius)
                 local overlapY = math.min(ball.y + ball.radius - brick.y, brick.y + brick.height - ball.y + ball.radius)
                 if Player.currentCore == "Bouncy Core" then
-                    ball.speedExtra = math.min((ball.speedExtra or 1) + 5, 10)
+                    ball.speedExtra = math.min((ball.speedExtra or 1) + 6, 15)
                 end
 
                 brickCollisionEffects(ball, brick)
@@ -1788,7 +1788,7 @@ local function brickCollisionCheck(ball, bricks, Player)
                 if ball.name == "Magnetic Ball" then
                     local normalizedSpeedX, normalizedSpeedY = normalizeVector(ball.x - (brick.x + brick.width/2), ball.y - (brick.y + brick.height/2))
                     local speed = math.sqrt(ball.speedX^2 + ball.speedY^2)
-                    local knockback = 0.7 * math.pow((ball.stats.speed + (Player.bonuses.speed or 0) + (Player.perks.speed or 0) + 300), 0.75) -- You can tweak 0.8 for more/less knockback scaling with speed
+                    local knockback = 0.75 * math.pow((ball.stats.speed + (Player.bonuses.speed or 0) + (Player.perks.speed or 0) + 300), 0.75) -- You can tweak 0.8 for more/less knockback scaling with speed
                     ball.speedX = ball.speedX + normalizedSpeedX * knockback
                     ball.speedY = ball.speedY + normalizedSpeedY * knockback
                 end
@@ -1809,7 +1809,7 @@ local function paddleCollisionCheck(ball, paddle)
         ball.speedX = (hitPosition - 0.5) * 2 * math.abs(ballSpeed * 0.99)
         ball.speedY = math.sqrt(ballSpeed^2 - ball.speedX^2) * (ball.speedY > 0 and 1 or -1)
         if Player.currentCore == "Bouncy Core" then
-            ball.speedExtra = math.min((ball.speedExtra or 1) + 5, 10)
+            ball.speedExtra = math.min((ball.speedExtra or 1) + 6, 15)
         end
         --[[if unlockedBallTypes["Laser"] then
             unlockedBallTypes["Laser"].currentChargeTime = unlockedBallTypes["Laser"].currentChargeTime + 1 -- Reset charge time
@@ -1842,7 +1842,7 @@ local function wallCollisionCheck(ball)
         ball.speedX = -ball.speedX
         ball.x = statsWidth + ball.radius -- Ensure the ball is not stuck in the wall
         if Player.currentCore == "Bouncy Core" then
-            ball.speedExtra = math.min((ball.speedExtra or 1) + 5, 10)
+            ball.speedExtra = math.min((ball.speedExtra or 1) + 6, 15)
         end
         if ball.y < screenWidth then
             playSoundEffect(wallBoopSFX, 0.5, 0.5)
@@ -1852,7 +1852,7 @@ local function wallCollisionCheck(ball)
         ball.speedX = -ball.speedX
         ball.x = screenWidth - statsWidth - ball.radius -- Ensure the ball is not stuck in the wall
         if Player.currentCore == "Bouncy Core" then
-            ball.speedExtra = math.min((ball.speedExtra or 1) + 5, 10)
+            ball.speedExtra = math.min((ball.speedExtra or 1) + 6, 15)
         end
         if ball.y < screenWidth then
             playSoundEffect(wallBoopSFX, 1, 0.5)
@@ -1863,7 +1863,7 @@ local function wallCollisionCheck(ball)
         ball.speedY = -ball.speedY
         ball.y = ball.radius -- Ensure the ball is not stuck in the wall
         if Player.currentCore == "Bouncy Core" then
-            ball.speedExtra = math.min((ball.speedExtra or 1) + 5, 10)
+            ball.speedExtra = math.min((ball.speedExtra or 1) + 6, 15)
         end
         playSoundEffect(wallBoopSFX, 1, 0.5)
         wallHit = true
@@ -1871,7 +1871,7 @@ local function wallCollisionCheck(ball)
         ball.speedY = -ball.speedY
         ball.y = screenHeight - ball.radius
         if Player.currentCore == "Bouncy Core" then
-            ball.speedExtra = math.min((ball.speedExtra or 1) + 5, 10)
+            ball.speedExtra = math.min((ball.speedExtra or 1) + 6, 15)
         end
         playSoundEffect(wallBoopSFX, 1, 0.5)
         if ball.name == "Ping-Pong ball" and ball.speedY < 0 then
@@ -2652,7 +2652,7 @@ function Balls.update(dt, paddle, bricks)
                     local dx = (nearestBrick.x + nearestBrick.width/2) - ball.x
                     local dy = (nearestBrick.y + nearestBrick.height/2) - ball.y
                     local dist = math.sqrt(dx*dx + dy*dy)
-                    local attraction = mapRange((ball.attractionStrength / math.max(dist, 10)) * math.pow(ball.stats.speed + ((Player.bonuses.speed or 0) + (Player.permanentUpgrades.speed or 0))*50 + (ball.speedExtra or 0) * 10, 1.45), 1, 10, 1, 20) * 0.01
+                    local attraction = mapRange((ball.attractionStrength / math.max(dist, 10)) * math.pow(ball.stats.speed + ((Player.bonuses.speed or 0) + (Player.permanentUpgrades.speed or 0))*50 + (ball.speedExtra or 0) * 10, 1.4), 1, 10, 1, 20) * 0.01
                     attraction = attraction * mapRangeClamped(ball.stats.speed + ((Player.bonuses.speed or 0) + (Player.permanentUpgrades.speed or 0))*50 + (ball.speedExtra or 0)*10, 1, 500, 0.5, 2)
                     local angle = math.atan2(dy, dx)
                     ball.speedX = ball.speedX + math.cos(angle) * attraction * dt

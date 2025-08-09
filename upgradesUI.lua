@@ -292,43 +292,12 @@ end]]
 
 local levelUpShopType = "ball"
 local displayedUpgrades = {} -- This should be an array, not a table with string keys
-function setLevelUpShop(isForBall, isForPerks, isForSpells)
+function setLevelUpShop(isForBall, isForPerks)
     isForPerks = isForPerks or false -- Default to false if not provided
     isForSpells = isForSpells or false
     if isForPerks then isForBall = false end -- If perks are requested, set isForBall to false
     displayedUpgrades = {} -- Clear the displayed upgrades
-    if isForSpells then
-        levelUpShopType = "spell"
-        -- Spell unlocks
-        local unlockedSpellNames = {}
-        for _, ball in pairs(Balls.getUnlockedBallTypes()) do
-            if ball.type == "spell" then
-                unlockedSpellNames[ball.name] = true
-            end
-        end
-        local availableSpells = {}
-        for name, ballType in pairs(Balls.getBallList()) do
-            if ballType.type == "spell" and not unlockedSpellNames[name] then
-                table.insert(availableSpells, ballType)
-            end
-        end
-        -- Choose up to 3 random unowned spells to display
-        local numToShow = math.min(3, #availableSpells)
-        for i = 1, numToShow do
-            if #availableSpells > 0 then
-                local index = math.random(1, #availableSpells)
-                local thisSpellType = availableSpells[index]
-                table.insert(displayedUpgrades, {
-                    name = thisSpellType.name,
-                    description = thisSpellType.description,
-                    effect = function()
-                        Balls.addBall(thisSpellType.name)
-                    end
-                })
-                table.remove(availableSpells, index)
-            end
-        end
-    elseif isForBall then
+    if isForBall then
         levelUpShopType = "ball"
         -- Ball unlocks
         local unlockedBallNames = {}
@@ -418,8 +387,9 @@ function setLevelUpShop(isForBall, isForPerks, isForSpells)
                             doit = false -- If this bonus is already in the list, skip it
                         end
                     end
-                    if doit then
+                    if doit and (not ((Player.currentCore == "Damage Core") and (statName == "fireRate" or statName == "amount"))) and not (Player.currentCore == "Cooldown Core" and statName == "cooldown")then
                         table.insert(advantagiousBonuses, statName)
+                        print("advantagious statName = " .. statName)
                     end
                 end
             end
@@ -429,6 +399,7 @@ function setLevelUpShop(isForBall, isForPerks, isForSpells)
         for bonusName, bonus in pairs(Player.bonusesList) do
             if (not Player.bonuses[bonusName]) and not ((Player.currentCore == "Damage Core") and (bonusName == "fireRate" or bonusName == "amount")) and not (Player.currentCore == "Cooldown Core" and bonusName == "cooldown") then
                 table.insert(availableBonuses, bonusName)
+                print("available bonusName = " .. bonusName)
             end
         end
         

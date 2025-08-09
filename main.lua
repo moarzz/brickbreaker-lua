@@ -1075,6 +1075,9 @@ function drawPauseMenu()
     -- Main Menu button
     local menuBtn = suit.Button("Main Menu", {id="pause_menu"}, centerX, btnY, buttonWidth, buttonHeight)
     if menuBtn.hit then
+        local goldEarned = math.floor(mapRangeClamped(math.sqrt(Player.score), 0, 100, 2, 6) * math.sqrt(Player.score))
+        Player.addGold(goldEarned)
+        saveGameData()
         resetGame()
         currentGameState = GameState.MENU
     end
@@ -1082,6 +1085,9 @@ function drawPauseMenu()
     -- Exit Game button
     local exitBtn = suit.Button("Exit Game", {id="pause_exit"}, centerX, btnY, buttonWidth, buttonHeight)
     if exitBtn.hit then
+        local goldEarned = math.floor(mapRangeClamped(math.sqrt(Player.score), 0, 100, 2, 6) * math.sqrt(Player.score))
+        Player.addGold(goldEarned)
+        saveGameData()
         love.event.quit()
     end
 end
