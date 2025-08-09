@@ -107,7 +107,7 @@ end
 brickPieces = {}
 local function brickDestroyed(brick)
     Player.bricksDestroyed = (Player.bricksDestroyed or 0) + 1
-    if Player.bricksDestroyed % 50 == 0 and Player.currentCore == "Farm Core"then
+    if Player.bricksDestroyed % 25 == 0 and Player.currentCore == "Farm Core"then
         -- Give a random stat boost to an item
         local itemIndex = math.random(1, tableLength(unlockedBallTypes))
         local i = 1

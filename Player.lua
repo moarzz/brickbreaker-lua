@@ -362,7 +362,7 @@ Player.coreDescriptions = {
     ["Economy Core"] = "Everything costs 50% less.",
     ["Damage Core"] = "Amount and fireRate are always 2 and damage is multiplied by 5",
     ["Phantom Core"] = "Bullets pass through bricks without losing damage, but deal 25% damage\n(rounded up).",
-    ["Farm Core"] = "After every 10 bricks destroyed, give +1 to a random one of your item's stat \n(-1 for cooldown)",
+    ["Farm Core"] = "After every 25 bricks destroyed, give +1 to a random one of your item's stat \n(-1 for cooldown)",
     
 }
 
