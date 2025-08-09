@@ -22,6 +22,7 @@ local upgrades = data.upgrades and {
     range = data.upgrades.range or 0,
     amount = data.upgrades.amount or 0,
     paddleSize = data.upgrades.paddleSize or 0,
+    health = data.upgrades.health or 0,
 } or {
     speed = 0,
     damage = 0,
@@ -55,24 +56,31 @@ end
 
 local function startingItemsDraw()
     -- === Unlockable Starting Items Menu ===
-    local menuX = screenWidth - 350
-    local menuY = 170
-    local menuWidth = 300
-    local buttonHeight = 150
-    local buttonSpacing = 30
+    local menuX = screenWidth - 300
+    local menuY = 110
+    local menuWidth = 275
+    local buttonHeight = 130
+    local buttonSpacing = 35
     setFont(32)
     suit.Label("Unlock Starting Items", {align = "center"}, menuX - menuWidth, menuY, menuWidth*2, 40)
-    menuX = menuX - menuWidth/2  -- Center the label
+    menuX = menuX - menuWidth/2*2  -- Center the label
     menuY = menuY + 80  -- Adjust Y position for the label
 
     local unlockables = {
         {name = "Pistol", label = "Pistol", key = "Pistol", price = 100},
         {name = "Laser Beam", label = "Laser Beam", key = "Laser Beam", price = 250},
-        {name = "Saw Blades", label = "Saw Blades", key = "Saw Blades", price = 500},
+        {name = "Fireball", label = "Fireball", key = "Fireball", price = 500},
     }
     Player.unlockedStartingBalls = Player.unlockedStartingBalls or {}
+    local itemsPerCol = 5
+    local total = #unlockables
+    local colWidth = menuWidth + 20
+    local rowHeight = buttonHeight + buttonSpacing
     for i, item in ipairs(unlockables) do
-        local y = menuY + (i-1) * (buttonHeight + buttonSpacing + 50)  -- Add extra spacing for icons
+        local col = math.floor((i-1) / itemsPerCol)
+        local row = (i-1) % itemsPerCol
+        local x = menuX + col * colWidth + menuWidth/2 -- colWidth/2
+        local y = menuY + row * rowHeight
         local unlocked = Player.unlockedStartingBalls[item.key]
         local affordable = Player.gold >= item.price
         local color = {0.35,0.35,0.35,0.5}
@@ -84,7 +92,7 @@ local function startingItemsDraw()
             active = {bg = {math.max(color[1]-0.2,0), math.max(color[2]-0.2,0), math.max(color[3]-0.2,0), 1}, fg = {1,1,1}}
         }
         if not unlocked then
-            if suit.Button(label, {color = buttonColor, id = buttonID}, menuX, y, menuWidth, buttonHeight).hit then
+            if suit.Button(label, {color = buttonColor, id = buttonID}, x, y, menuWidth, buttonHeight).hit then
                 if affordable then
                     Player.gold = Player.gold - item.price
                     Player.unlockedStartingBalls[item.key] = true
@@ -104,13 +112,81 @@ local function startingItemsDraw()
             local shadowOffset = 4
             setFont(35)
             love.graphics.setColor(0,0,0,1)
-            love.graphics.print(moneyText, menuX + menuWidth - 20 + moneyOffsetX + shadowOffset, y + shadowOffset, math.rad(5))
+            love.graphics.print(moneyText, x + menuWidth - 20 + moneyOffsetX + shadowOffset, y + shadowOffset, math.rad(5))
             love.graphics.setColor(moneyColor)
-            love.graphics.print(moneyText, menuX + menuWidth - 20 + moneyOffsetX, y, math.rad(5))
+            love.graphics.print(moneyText, x + menuWidth - 20 + moneyOffsetX, y, math.rad(5))
             love.graphics.setColor(1,1,1,1)
         else
-            suit.Label(label, {align = "center"}, menuX, y, menuWidth, buttonHeight)
+            suit.Label(label, {align = "center"}, x, y, menuWidth, buttonHeight)
         end
+    end
+end
+
+local function paddleCoresDraw()
+    -- === Paddle Cores Menu ===
+    local menuX = 1000
+    local menuY = 110
+    local menuWidth = 300
+    local buttonHeight = 150
+    local buttonSpacing = 30
+    setFont(32)
+    suit.Label("Paddle Cores", {align = "center"}, menuX - menuWidth, menuY, menuWidth*2, 40)
+    menuX = menuX - menuWidth/2*2  -- Center the label
+    menuY = menuY + 80  -- Adjust Y position for the label
+
+    -- Use Player.availableCores directly instead of overwriting it
+    Player.paddleCores = Player.paddleCores or {}
+    
+    local i = 0
+    for _, core in ipairs(Player.availableCores) do
+        i = i + 1
+        local colWidth = menuWidth + 20
+        local rowHeight = buttonHeight + buttonSpacing
+        local col = math.floor((i-1) / 5)
+        local row = (i-1) % 5
+        local x = menuX + col * colWidth
+        local y = menuY + row * rowHeight
+        
+        -- Check if the core is unlocked using the full name
+        local unlocked = Player.paddleCores[core.name]
+        local affordable = Player.gold >= core.price
+        
+        local color = {0.35,0.35,0.35,0.5}
+        local buttonID = generateNextButtonID()
+        
+        local label = unlocked and (core.name .. " (Unlocked)") or core.name
+        local buttonColor = {
+            normal = {bg = color, fg = {1,1,1}},
+            hovered = {bg = {math.min(color[1]+0.2,1), math.min(color[2]+0.2,1), math.min(color[3]+0.2,1), 1}, fg = {1,1,1}},
+            active = {bg = {math.max(color[1]-0.2,0), math.max(color[2]-0.2,0), math.max(color[3]-0.2,0), 1}, fg = {1,1,1}}
+        }
+        
+        if not unlocked then
+            if suit.Button(label, {color = buttonColor, id = buttonID}, x, y, colWidth, buttonHeight).hit then
+                if affordable then
+                    Player.gold = Player.gold - core.price
+                    Player.paddleCores[core.name] = true
+                    saveGameData()
+                    print("Unlocked paddle core: " .. core.name)
+                else
+                    print("Not enough gold to unlock " .. core.name)
+                end
+            end
+            local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(core.price))/2
+            -- Draw price with shadow and color
+            local moneyText = formatNumber(core.price) .. "$"
+            local moneyColor = affordable and {14/255, 202/255, 92/255, 1} or {164/255, 14/255, 14/255,1}
+            local shadowOffset = 4
+            setFont(35)
+            love.graphics.setColor(0,0,0,1)
+            love.graphics.print(moneyText, x + colWidth - 20 + moneyOffsetX + shadowOffset, y + shadowOffset, math.rad(5))
+            love.graphics.setColor(moneyColor)
+            love.graphics.print(moneyText, x + colWidth - 20 + moneyOffsetX, y, math.rad(5))
+            love.graphics.setColor(1,1,1,1)
+        else
+            suit.Label(label, {align = "center"}, x, y, colWidth, buttonHeight)
+        end
+        ::continue::
     end
 end
 
@@ -119,6 +195,7 @@ function permanentUpgrades.draw()
     local cellWidth = 200
     local x, y = padding, padding    
     startingItemsDraw()  -- Draw the starting items menu
+    paddleCoresDraw()
 
     -- Back button using uiLabelImg
     love.graphics.draw(uiLabelImg, 20, 20, 0, 0.75, 0.75)
@@ -152,7 +229,7 @@ function permanentUpgrades.draw()
     love.graphics.setColor(1,1,1,1)
 
     -- Draw rest of UI (title and upgrades)
-    y = y + 150  -- Add spacing after money/score display
+    y = y + 90  -- Add spacing after money/score display
     setFont(28)
     suit.Label("Stat Upgrades", {align = "center", valign = "center"}, x - 85, y, uiLabelImg:getWidth()*1.5, uiLabelImg:getHeight())
     y = y - 120
@@ -195,7 +272,11 @@ function permanentUpgrades.draw()
             else
                 -- Apply the upgrade
                 if Player.permanentUpgrades[upgradeName] then
-                    Player.permanentUpgrades[upgradeName] = Player.permanentUpgrades[upgradeName] + 1
+                    if upgradeName == "cooldown" then
+                        Player.permanentUpgrades[upgradeName] = Player.permanentUpgrades[upgradeName] - 1
+                    else
+                        Player.permanentUpgrades[upgradeName] = Player.permanentUpgrades[upgradeName] + 1
+                    end
                 else
                     Player.permanentUpgrades[upgradeName] = 1
                 end

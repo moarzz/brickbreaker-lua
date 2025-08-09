@@ -14,35 +14,21 @@ vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
     vec2 pixel = 1.0 / resolution;
     
     // Use two passes of blur for a more natural glow
-    // First pass - wider radius for outer glow
-    for(int i = -8; i <= 8; i++) {
-        for(int j = -8; j <= 8; j++) {
-            vec2 offset = vec2(float(i), float(j)) * pixel * 2.0;
+    // First pass - 10x10 kernel for wider outer glow
+    for(int i = -4; i <= 4; i++) {
+        for(int j = -4; j <= 4; j++) {
+            vec2 offset = vec2(float(i), float(j)) * pixel * 3.0;
             vec4 sample = Texel(tex, texture_coords + offset);
-            float weight = 1.0 - length(vec2(i, j)) / 12.0;
+            float weight = 1.0 - length(vec2(i, j)) / 7.5;
             weight = max(0.0, weight);
             glow += sample * sample.a * weight;
         }
     }
-    glow = glow / 100.0; // Normalize the glow
+    glow = glow / 32.0; // Normalize the glow
 
-    // Second pass - tighter radius for inner glow
-    vec4 innerGlow = vec4(0.0);
-    for(int i = -4; i <= 4; i++) {
-        for(int j = -4; j <= 4; j++) {
-            vec2 offset = vec2(float(i), float(j)) * pixel;
-            vec4 sample = Texel(tex, texture_coords + offset);
-            float weight = 1.0 - length(vec2(i, j)) / 6.0;
-            weight = max(0.0, weight);
-            innerGlow += sample * sample.a * weight;
-        }
-    }
-    innerGlow = innerGlow / 40.0; // Normalize the inner glow
-
-    // Combine both glows with the original color
-    vec4 finalColor = texcolor + (glow + innerGlow) * intensity;
-    finalColor.a = max(texcolor.a, (glow.a + innerGlow.a) * intensity);
-    
+    // Combine glow with the original color (no inner glow)
+    vec4 finalColor = texcolor + glow * intensity;
+    finalColor.a = max(texcolor.a, glow.a * intensity);
     return finalColor * color;
 }
 

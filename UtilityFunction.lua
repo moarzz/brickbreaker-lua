@@ -92,6 +92,16 @@ function GameOverDraw()
     love.graphics.setColor(99/255, 170/255, 1, 1)
     love.graphics.print(highScoreText, 50, 270)
 
+    -- Draw the number of bricks destroyed (bottom right corner, above gold earned)
+    setFont(40)
+    local bricksDestroyedText = "Bricks Destroyed: " .. tostring(Player.bricksDestroyed or 0)
+    love.graphics.setColor(1, 0.8, 0.4, 1)
+    local bricksTextWidth = love.graphics.getFont():getWidth(bricksDestroyedText)
+    local bricksTextX = screenWidth - bricksTextWidth - 50
+    local bricksTextY = 270
+    love.graphics.print(bricksDestroyedText, bricksTextX, bricksTextY)
+    love.graphics.setColor(1, 1, 1, 1)
+
     love.graphics.setColor(1, 0, 0, 1) -- Set color to red for the "Game Over" text
     setFont(20)
     if newHighScore then
@@ -101,7 +111,7 @@ function GameOverDraw()
     -- Draw gold Earned (top right)
     love.graphics.setColor(1, 1, 1, 1) -- Reset color to white
     setFont(48)
-    local goldEarned = math.floor(2 * math.sqrt(Player.score))
+    local goldEarned = math.floor(math.floor(mapRangeClamped(math.sqrt(Player.score), 0, 100, 1.5, 6) * math.sqrt(Player.score)))
     local goldText = "gold earned: ".. formatNumber(goldEarned) .. "$"
     currentFont = love.graphics.getFont()
     local moneyWidth = currentFont:getWidth(goldText)
@@ -229,7 +239,7 @@ function setFont(...)
     love.graphics.setFont(font) -- Set the font in Love2D
 end -- Missing 'end' added here
 
-function drawImageCentered(image, x, y, targetWidth, targetHeight)
+function drawImageCentered(image, x, y, targetWidth, targetHeight, angle)
     -- Get the original dimensions of the image
     local imageWidth = image:getWidth()
     local imageHeight = image:getHeight()
@@ -242,8 +252,8 @@ function drawImageCentered(image, x, y, targetWidth, targetHeight)
     local drawX = x - (targetWidth / 2)
     local drawY = y - (targetHeight / 2)
 
-    -- Draw the image
-    love.graphics.draw(image, drawX, drawY, 0, scaleX, scaleY)
+    -- Draw the image with optional angle (defaults to 0 if not provided)
+    love.graphics.draw(image, drawX, drawY, angle or 0, scaleX, scaleY)
 end
 
 function areBallsInRange(ball1, ball2, range)
@@ -515,6 +525,11 @@ end
 
 local animationID = 1
 local animations = {}
+
+function resetAnimations()
+    animations = {} -- Reset the animations table
+    animationID = 1 -- Reset the animation ID counter
+end
 function createSpriteAnimation(x, y, scale, spritesheet, frameWidth, frameHeight, frameTime, skipFrames, looping, scaleX, scaleY, angle, color)
     looping = looping or false
     local animation = {}
@@ -573,10 +588,29 @@ function getAnimation(id)
     return nil -- Return nil if no animation with the given ID is found
 end
 
+function removeAnimation(id)
+    for i = #animations, 1, -1 do
+        if animations[i] == nil then
+            table.remove(animations, i) -- Remove nil animations
+            goto continue -- Skip to the next iteration
+        end
+        if animations[i].id == id then
+            animations[i] = nil
+            return true -- Return true to indicate successful removal
+        end
+        ::continue::
+    end
+    return false -- Return false if no animation with the given ID is found
+end
+
 -- Update function for the animation
 function updateAnimations(dt)
     for i = #animations, 1, -1 do
         local animation = animations[i]
+        if not animation then
+            table.remove(animations, i) -- Remove nil animations
+            goto continue -- Skip to the next iteration
+        end
         animation.elapsedTime = animation.elapsedTime + dt
         if animation.elapsedTime >= animation.frameTime then
             animation.elapsedTime = animation.elapsedTime - animation.frameTime
@@ -589,6 +623,7 @@ function updateAnimations(dt)
                 end
             end
         end
+        ::continue::
     end
 end
 
@@ -625,6 +660,33 @@ local function createElasticTween(duration, subject, property, overshoot, easing
 end
 
 currentScreenShakeIntensity = 0 -- Initialize the screen shake intensity
+local currentScreenShakeDirection = true
+local screenShaking = false
+local function singularScreenShake(intensity, rightDirection)
+    screenShaking = true
+    local shakeTween = nil
+    local easing = tween.easing.outSine
+    local delay = 0
+    local duration = 0.5
+
+    if rightDirection then
+        shakeTween = tween.new(duration/(vibrationCount+1), screenOffset, {x = -currentScreenShakeIntensity*direction[1], y = -currentScreenShakeIntensity*direction[2]}, easing)
+    else
+        shakeTween = tween.new(duration/(vibrationCount+1), screenOffset, {x = currentScreenShakeIntensity*direction[1], y = currentScreenShakeIntensity*direction[2]}, easing)
+    end
+    addTweenToUpdate(shakeTween)
+
+    Timer.after(delay, function() 
+        currentScreenShakeDirection = not currentScreenShakeDirection
+        if currentScreenShakeIntensity >= 1 then
+            singularScreenShake(currentScreenShakeIntensity, currentScreenShakeDirection)
+        else
+            screenShaking = false
+            currentScreenShakeIntensity = 0
+        end
+    end)
+end
+
 function screenShake(duration, intensity, vibrationCount, direction)
     -- This function has 1 more vibration than vibrationCount
     direction = direction or {1, 0} -- Default direction
@@ -650,6 +712,10 @@ function screenShake(duration, intensity, vibrationCount, direction)
         end)
         delay = delay + (duration/(vibrationCount + 1))
     end
+end
+
+function screenShakeIntensityDeprecation(dt)
+    currentScreenShakeIntensity = math.max(currentScreenShakeIntensity - dt * currentScreenShakeIntensity * 2, 0)
 end
 
 function screenFlash(duration, intensity)
@@ -684,15 +750,18 @@ function damageScreenVisuals(duration, intensity, direction)
     end
 
     --screen shake logic
-    intensity = intensity / 3
-    if intensity > currentScreenShakeIntensity then
+    --currentScreenShakeIntensity = math.max((intensity/3)^0.5, currentScreenShakeIntensity)
+    --singularScreenShake(currentScreenShakeDirection, currentScreenShakeDirection)
+
+
+    --[[if intensity > currentScreenShakeIntensity then
         screenShake(duration, mapRangeClamped(intensity , 
             mapRangeClamped(intensity,1,10,1,10), 
             100, 
             mapRangeClamped(intensity, mapRangeClamped(intensity,1,5,1,5), 10, mapRangeClamped(intensity,1,5,2,10), 15), 
             50), math.floor(mapRangeClamped(intensity, 1, 100, 3, 6)),
             direction)
-    end
+    end]]
 end
 
 local muzzleFlashes = {}
@@ -818,19 +887,26 @@ function createBrickExplosion(brick)
 end
 
 local damageNumbers = {} -- Table to store damage numbers
+
+function resetDamageNumbers()
+    damageNumbers = {} -- Reset the damage numbers table
+end
+
 function damageNumber(damage, x, y, color)
+    -- Limit to 50 active damage numbers
+    if #damageNumbers >= 50 then return end
     local damageNumber = {
         x = x,
         y = y,
         damage = damage,
-        color = color or {1, 0, 0, 1}, -- Default to red if no color is provsided
+        color = color or {1, 0, 0, 1}, -- Default to red if no color is provided
         alpha = 1,
         fontSize = 0
     }
     table.insert(damageNumbers, damageNumber)
 
     local sizeTween = tween.new(0.75, damageNumber, {fontSize = damage < 10 and mapRange(damage, 0, 10, 1, 3) or mapRangeClamped(damage, 10, 50, 3, 5)}, tween.easing.outBack)
-    addTweenToUpdate(sizeTween) 
+    addTweenToUpdate(sizeTween)
 
     local xRandom, yRandom = math.random(-15, 15), -15 - math.random(20)
     local offsetTween = tween.new(0.75, damageNumber, {x = x + xRandom, y = y + yRandom}, tween.easing.outQuad)
@@ -902,6 +978,20 @@ function makePalette(c1, c2, c3, c4, c5, c6, c7)
             a[3] + (b[3] - a[3]) * frac
         }
     end
+end
+
+function getBricksInRectangle(x, y, width, height)
+    local bricksInRect = {}
+    for _, brick in ipairs(bricks) do
+        if not brick.destroyed then
+            -- Check for rectangle overlap
+            if brick.x < x + width and brick.x + brick.width > x and
+               brick.y < y + height and brick.y + brick.height > y then
+                table.insert(bricksInRect, brick)
+            end
+        end
+    end
+    return bricksInRect
 end
 
 return UtilityFunction

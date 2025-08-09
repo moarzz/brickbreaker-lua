@@ -7,18 +7,20 @@ local saveFilePath = "gamedata.json"
 
 -- Load game data from file
 function loadGameData()
+    
     local data = {
         highScore = 0,
         gold = 0,
         startingMoney = 0,
         permanentUpgrades = {},
+        paddleCores = {["Bouncy Core"] = true},  -- Initialize paddleCores
         permanentUpgradePrices = {
             amount = 100,
             speed = 100,
             damage = 100,
             -- ... other default prices
         },
-        startingItems = {"Ball", "Pistol", "Nothing"},
+        startingItems = {"Ball", "Nothing"},
     }
     if love.filesystem.getInfo(saveFilePath) then
         local contents = love.filesystem.read(saveFilePath)
@@ -29,6 +31,7 @@ function loadGameData()
                 data.gold = fileData.gold or 0
                 data.startingMoney = fileData.startingMoney or 0
                 data.permanentUpgrades = fileData.permanentUpgrades or {}
+                data.paddleCores = fileData.paddleCores or {["Bouncy Core"] = true}
                 data.permanentUpgradePrices = fileData.permanentUpgradePrices or data.permanentUpgradePrices
                 data.startingItems = fileData.startingItems or data.startingItems
             end
@@ -41,6 +44,7 @@ function loadGameData()
     Player.permanentUpgrades = data.permanentUpgrades
     Player.permanentUpgradePrices = data.permanentUpgradePrices
     Player.startingItems = data.startingItems
+    Player.paddleCores = data.paddleCores
 
     -- Sync unlockedStartingBalls with startingItems for compatibility with UI
     Player.unlockedStartingBalls = {}
@@ -66,15 +70,20 @@ Player = {
     money = 0,
     startingMoney = 0,
     gold = 0,
+    rerolls = 0,
     score = 0,
     highScore = 0,
-    lives = 2,
+    bricksDestroyed = 0,
+    lives = 1,
+    currentCore = "Bouncy Core",
     levelingUp = false,
     price = 1,
     newUpgradePrice = 100,
+    selectedPaddleCore = "Bouncy Core",
     upgradePriceMultScaling = 10,
     dead = false,
-    lastHitTime = 0,    permanentUpgrades = {}, -- Store permanent upgrades
+    lastHitTime = 0,    
+    permanentUpgrades = {}, -- Store permanent upgrades
     permanentUpgradePrices = {
         speed = 100,
         damage = 100,
@@ -87,6 +96,7 @@ Player = {
         amount = 100,
         --paddleSize = 100,
         paddleSpeed = 100,
+        health = 500,
     },
     bonuses = { -- These bonuses are percentages
     },
@@ -94,9 +104,23 @@ Player = {
     level = 1,
     xp = 0,
     levelThresholds = {5000, 50000}, -- XP needed for each level
+    paddleCores = {["Bouncy Core"] = true},  -- Stores unlockedpaddle cores
 }
+
 -- Save game data to file        l
 function saveGameData()
+    local hasBasicCore = false
+    if Player.paddleCores then
+        for core, _ in pairs(Player.paddleCores) do
+            if core == "Bouncy Core" then
+                hasBasicCore = true
+                break
+            end
+        end
+    end
+    if not hasBasicCore then
+        Player.paddleCores["Bouncy Core"] = true  -- Ensure Basic Core is always present
+    end
     local data = {
         highScore = Player.highScore,
         gold = Player.gold,
@@ -107,14 +131,14 @@ function saveGameData()
             -- Keep other upgrades...
             speed = Player.permanentUpgrades.speed or 0,
             damage = Player.permanentUpgrades.damage or 0,
-            --ballDamage = Player.permanentUpgrades.ballDamage or 0,
-            --bulletDamage = Player.permanentUpgrades.bulletDamage or 0,
             cooldown = Player.permanentUpgrades.cooldown or 0,
             fireRate = Player.permanentUpgrades.fireRate or 0,
             ammo = Player.permanentUpgrades.ammo or 0,
             range = Player.permanentUpgrades.range or 0,
-            amount = Player.permanentUpgrades.amount or 0
+            amount = Player.permanentUpgrades.amount or 0,
+            health = Player.permanentUpgrades.health or 0,
         },
+        paddleCores = Player.paddleCores or {["Bouncy Core"] = true},  -- Change this line
         permanentUpgradePrices = Player.permanentUpgradePrices,
         startingItems = Player.startingItems or {"Ball"},
     }
@@ -177,8 +201,8 @@ Player.bonusUpgrades = {
     end,    
     paddleSize = function()
         -- This is handled in permanentUpgrades.lua now
-        paddle.width = paddle.width + 75
-        paddle.x = math.max(paddle.x - 37.5, statsWidth)  -- Adjust position to keep it centered
+        paddle.width = paddle.width + 100
+        paddle.x = math.max(paddle.x - 50, statsWidth)  -- Adjust position to keep it centered
         Player.bonuses.paddleSize = (Player.bonuses.paddleSize or 0) + 1
     end,
     damage = function() Player.bonuses.damage = Player.bonuses.damage + 1 end,
@@ -207,8 +231,8 @@ Player.bonusUpgrades = {
 Player.upgradePaddle = {
     paddleSize = function()
         -- This is handled in permanentUpgrades.lua now
-        paddle.width = paddle.width + 25
-        paddle.x = math.max(paddle.x - 25, statsWidth)  -- Adjust position to keep it centered
+        paddle.width = paddle.width + 30
+        paddle.x = math.max(paddle.x - 30, statsWidth)  -- Adjust position to keep it centered
         Player.permanentUpgrades.paddleSize = (Player.permanentUpgrades.paddleSize or 0) + 1
     end,
     
@@ -223,10 +247,10 @@ Player.perksList = {
     cellularDivision = {name = "cellularDivision", description = "doubles amount. damage is halved."},
     warriorSpirit = {name = "warriorSpirit", description = "doubles damage. speed is halved."},]]
     bulletStorm = {name = "bulletStorm", description = "doubles fire rate."},
-    explosiveBullets = {name = "explosiveBullets", description = "bullets explode on impact, dealing damage to nearby bricks.", 
+    burningBullets = {name = "burningBullets", description = "bullets explode on impact, dealing damage to nearby bricks.", 
         onUnlock = function()
             print("Explosive bullets perk unlocked!")
-            Player.perks.explosiveBullets = true
+            Player.perks.burningBullets = true
         end
     },
     multishot = {
@@ -242,6 +266,14 @@ Player.perksList = {
     paddleSquared = {
         name = "paddleSquared",
         description = "paddleBounce effects trigger twice"
+    },
+    --[[shreddingFlames = {
+        name = "shreddingFlames",
+        description = "Burning bricks take 50% more damage from all sources (rounded up)."
+    },
+    timeWarp = {
+        name = "timeWarp",
+        description = "All cooldowns are reduced to 1 (cannot go to 0).",
     },
     --[[timeKeeper = {
         name = "timeKeeper",
@@ -260,6 +292,73 @@ Player.perksList = {
         name = "Chain Reaction",
         description = "When a brick is destroyed, adjacent bricks take DAMAGE damage"
     },]]
+}
+
+Player.availableCores = {
+    {
+        name = "Bouncy Core",
+        description = "On bounce, balls gain a deprecating speed boost.",
+        price = 0,
+    },
+    {
+        name = "Spray and Pray Core",
+        description = "Guns shoot 50% faster but are a lot less accurate.",
+        price = 200,
+    },
+    {
+        name = "Cooldown Core",
+        description = "Cooldown is always 2.",
+        price = 400,
+    },
+    {
+        name = "Damage Core",
+        description = "amount and fireRate are always 2 and damage is multiplied by 4",
+        price = 600,
+    },
+    {
+        name = "Magnetic Core",
+        description = "Shoots gravity force field at nearest brick in front of paddle.",
+        price = 800,
+    },
+    {
+        name = "Economy Core",
+        description = "Everything costs 50% less.",
+        price = 1000,
+    },
+    {
+        name = "Burn Core",
+        description = "tech items burn bricks when they deal damage.",
+        price = 1200,
+    },
+    {
+        name = "Phantom Core",
+        description = "Bullets pass through bricks without losing damage, but deal 25% damage\n(rounded up).",
+        price = 1400,
+    },
+    {
+        name = "Farm Core",
+        description = "After every 50 bricks destroyed, give +1 to a random one of your item's stat \n(-1 for cooldown)",
+        price = 1600,
+    },
+    {
+        name = "brickBreaker core",
+        description = "damage you deal has a 5% chance of destroying a brick instantly",
+        price = 1800,
+    },
+}
+
+Player.coreDescriptions = {
+    ["Bouncy Core"] = "On bounce, balls gain a deprecating speed boost.",
+    ["Spray and Pray Core"] = "Guns shoot 50% faster but are a lot less accurate.",
+    ["Burn Core"] = "tech items deal burn damage.",
+    ["Magnetic Core"] = "Shoots gravity force field at nearest brick in front of paddle.",
+    ["BrickBreaker core"] = "damage you deal has a 5% chance of destroying a brick instantly",
+    ["Cooldown Core"] = "Every cooldown item starts at a cooldown of 2, cooldown can't be lowered.",
+    ["Economy Core"] = "Everything costs 50% less.",
+    ["Damage Core"] = "amount and fireRate are always 2 and damage is multiplied by 5",
+    ["Phantom Core"] = "Bullets pass through bricks without losing damage, but deal 25% damage\n(rounded up).",
+    ["Farm Core"] = "After every 10 bricks destroyed, give +1 to a random one of your item's stat \n(-1 for cooldown)",
+    
 }
 
 Player.perkUpgrades = {
@@ -283,9 +382,9 @@ Player.perkUpgrades = {
         print("bullet storm perk unlocked!")
     end,
     
-    explosiveBullets = function()
+    burningBullets = function()
         print("got explosive bullet.")
-        Player.perks.explosiveBullets = true
+        Player.perks.burningBullets = true
     end,
 
     timeKeeper = function()
@@ -298,6 +397,10 @@ Player.perkUpgrades = {
 
     techSupremacy = function() 
         Player.perks.techSupremacy = true
+    end,
+
+    shreddingFlames = function()
+        Player.perks.shreddingFlames = true
     end,
     
     popBounce = function()
@@ -329,7 +432,7 @@ Player.perkUpgrades = {
 function Player.addBonus(name)
     Player.bonuses[name] = 0
     table.insert(Player.bonusOrder, name)
-    Player.bonusPrice[name] = Player.bonusesList[name].startingPrice
+    Player.bonusPrice[name] = Player.currentCore == "Economy Core" and Player.bonusesList[name].startingPrice/2 or Player.bonusesList[name].startingPrice
     print("added bonus : ".. name ..  ", #Player.bonuses : " .. tableLength(Player.bonuses))
 end
 
@@ -387,6 +490,7 @@ function Player.addGold(amount)
     Player.gold = Player.gold + amount
     saveGameData()
 end
+
 newHighScore = false
 function Player.die()
     -- Check and update high score
@@ -396,7 +500,7 @@ function Player.die()
     end
 
     -- Calculate gold earned based on score
-    local goldEarned = math.floor(2 * math.sqrt(Player.score))
+    local goldEarned = math.floor(mapRangeClamped(math.sqrt(Player.score), 0, 100, 2, 6) * math.sqrt(Player.score))
     Player.addGold(goldEarned)
     toggleFreeze()
     Player.dead = true
@@ -424,7 +528,7 @@ end
 
 local function checkForHit()
     for _, brick in ipairs(bricks) do
-        if brick.y + brick.height > screenHeight - brickHeight * 6 + paddle.height then
+        if brick.y + brick.height > screenHeight - brickHeight * 6 + paddle.height/2 then
             Player.hit()
             damageScreenVisuals(0.25, 100)
         end
@@ -483,23 +587,6 @@ function Player:load()
                 self.permanentUpgrades.paddleSize = data.permanentUpgrades.paddleSize or 0
                 self.permanentUpgrades.paddleSpeed = data.permanentUpgrades.paddleSpeed or 0
             end
-        end
-    end
-end
-
--- This existing code in Balls.lua already handles explosive bullets
-if Player.perks.explosiveBullets then
-    -- Create explosion effect
-    local scale = (bullet.stats.damage * 0.5)
-    createSpriteAnimation(bullet.x, bullet.y, scale/3, explosionVFX, 512, 512, 0.02, 5)
-    playSoundEffect(explosionSFX, 0.3 + scale * 0.2, math.max(1 - scale * 0.1, 0.1), false, true)
-    
-    -- Damage nearby bricks
-    local radius = bullet.stats.damage * 24 -- Explosion radius based on bullet damage
-    local bricksTouchingCircle = getBricksTouchingCircle(bullet.x, bullet.y, radius)
-    for _, touchingBrick in ipairs(bricksTouchingCircle) do
-        if touchingBrick ~= brick then -- Don't hit the same brick twice
-            dealDamage(bullet, touchingBrick)
         end
     end
 end

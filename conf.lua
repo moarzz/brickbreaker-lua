@@ -1,3 +1,17 @@
 function love.conf(t)
-    t.console = true -- Enable the console
+    t.identity = 'brickbreaker-lua'           -- The name of the save directory
+    t.version = "11.4"                        -- The LÖVE version this game was made for
+
+    -- Window settings
+    t.window.title = "Brick Breaker"          -- The window title
+    t.window.width = 1920                     -- The window width
+    t.window.height = 1080                    -- The window height
+    t.window.fullscreen = true                -- Enable fullscreen
+    t.window.vsync = 0                        -- Disable VSync
+    t.window.minwidth = 800                   -- Minimum window width
+    t.window.minheight = 600                  -- Minimum window height
+
+    -- Performance
+    --t.gammacorrect = true                    -- Enable gamma-correct rendering
+    --t.window.refreshrate = 120                -- Target refresh rate (cap FPS)
 end

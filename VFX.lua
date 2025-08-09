@@ -1,8 +1,15 @@
 VFX = {}
 
 -- brick hit functions
+function VFX.switch()
+    dmgVFXOn = not dmgVFXOn
+end
+
 local function brickHitFX(brick, ball, intensity)
-    brick.color = getBrickColor(brick.health)
+    if not dmgVFXOn then
+        return
+    end
+    brick.color = getBrickColor(brick.health, brick.type == "big", brick.type == "boss")
     local colorBeforeHit = brick.color -- Default to white if no color is set
     brick.color = {1,1,1,1}
     local colorTweenBack = tween.new(0.5, brick, {color = colorBeforeHit}, tween.outSine)
@@ -21,7 +28,7 @@ local function brickHitFX(brick, ball, intensity)
     local offsetRotation = math.atan2(offsetY, offsetX) * 0.1
     offsetX = offsetX * (mapRange(intensity, 1, 10, 5, 30) + 5)
     offsetY = offsetY * (mapRange(intensity, 1, 10, 5, 30) + 5)
-    local scaleOffset = mapRangeClamped(intensity, 1, 20, 1, 3)
+    local scaleOffset = mapRangeClamped(intensity, 1, 20, 1, 2)
     local hitTween = tween.new(0.05, brick, {drawScale = scaleOffset, drawOffsetX = offsetX, drawOffsetY = offsetY, drawOffsetRot = 0}, tween.outCubic)
     addTweenToUpdate(hitTween)
 
@@ -40,46 +47,25 @@ local function brickHitParticles(brick, ball, intensity)
     local effectX = (ballX + brick.x + brick.width/2)/2
     local effectY = (ballY + brick.y + brick.height/2)/2
 
-    -- Only trigger the animation once every 0.5s per brick
+    -- Only trigger the animation once every 1s per brick
     brick._lastImpactVFX = brick._lastImpactVFX or 0
-    if love.timer.getTime() - brick._lastImpactVFX >= 0.5 then
-        createSpriteAnimation(effectX, effectY, mapRangeClamped(intensity, 1, 20, 0.25, 0.65), impactVFX, 512, 512, 0.005, 4)
+    if love.timer.getTime() - brick._lastImpactVFX >= 1 then
+        -- Count current impactVFX animations on screen
+        local impactCount = 0
+        if _G.spriteAnimations then
+            for _, anim in pairs(_G.spriteAnimations) do
+                if anim and anim.img == impactVFX then
+                    impactCount = impactCount + 1
+                end
+            end
+        end
+        if dmgVFXOn and impactCount < 20 then
+            createSpriteAnimation(effectX, effectY, mapRangeClamped(intensity, 1, 20, 0.25, 0.65), impactVFX, 512, 512, 0.005, 4)
+        end
         brick._lastImpactVFX = love.timer.getTime()
     end
 end
 
---[[
-local function updateBrickParticles(dt)
-    for i = #brickParticles, 1, -1 do
-        local particle = brickParticles[i]
-         -- particle movement
-        particle.x = particle.x + particle.speedX * dt
-        particle.y = particle.y + particle.speedY * dt
-
-        --Particle wall collision
-        if particle.x - particle.size <= statsWidth then
-            particle.x = statsWidth + particle.size
-            particle.speedX = -particle.speedX
-        end
-        if particle.x + particle.size >= screenWidth - statsWidth then
-            particle.x = screenWidth - statsWidth - particle.size
-            particle.speedX = -particle.speedX
-        end
-        particle.speedY = particle.speedY - dt * -980
-        if particle.y > screenHeight + 50 then
-            table.remove(brickParticles,i)
-        end
-
-        particle.size = math.max(particle.size - dt * 4,0)
-        particle.color = {particle.size/particle.startingSize, particle.size/particle.startingSize, particle.size/particle.startingSize, particle.size/particle.startingSize}
-    end
-end
-local function drawBrickParticles()
-    for _, particle in ipairs(brickParticles) do
-        love.graphics.setColor(particle.color)
-        love.graphics.circle("fill", particle.x, particle.y, particle.size)
-    end
-end]]
 function VFX.brickHit(brick, ball, damage)
     if brick.health >= 1 then
         -- makes the brick knockback
