@@ -1505,7 +1505,7 @@ function Balls.initialize()
     darts = {}
     resetPaddlePrices()
     Player.newUpgradePrice = Player.currentCore == "Economy Core" and 50 or 100
-    --Balls.addBall("Fireball")
+    Balls.addBall("Rocket Launcher")
 end
 
 function getStat(ballTypeName, statName)
@@ -1920,7 +1920,7 @@ local function techUpdate(dt)
             laserBeamTimer = laserBeamTimer + dt
             
             -- Deal damage if we've been on target long enough
-            if laserBeamTimer >= 1.5/((Player.currentCore == "Damage Core" and 2 or laserBeam.stats.fireRate)) then
+            if laserBeamTimer >= 1.5/((Player.currentCore == "Damage Core" and 2 or (laserBeam.stats.fireRate + (Player.bonuses.fireRate or 0) + (Player.permanentUpgrades.fireRate or 0)))) then
                 dealDamage(laserBeam, laserBeamBrick)
                 laserBeamTimer = 0  -- Reset timer after damage
             end
@@ -2975,15 +2975,15 @@ local function techDraw()
     if unlockedBallTypes["Laser Beam"] then
         -- Draw the actual Laser Beam
         -- Calculate charge progress
-        local chargeProgress = laserBeamTimer / 1.5/((Player.currentCore == "Damage Core" and 2 or unlockedBallTypes["Laser Beam"].stats.fireRate))
+        local chargeProgress = laserBeamTimer / (1.5/((Player.currentCore == "Damage Core" and 2 or (unlockedBallTypes["Laser Beam"].stats.fireRate + (Player.bonuses.fireRate or 0) + (Player.permanentUpgrades.fireRate or 0)))))
         -- Interpolate color from grey to red based on charge
         local r = 0.35 + (1 - 0.35) * chargeProgress
         local g = 0.35 - 0.35 * chargeProgress
         local b = 0.35 - 0.35 * chargeProgress
-        local a = 0.5 + 0.4 * chargeProgress
+        local a = 0.25 + 0.75 * chargeProgress
         love.graphics.setColor(r, g, b, a)
         if laserBeamBrick then
-            love.graphics.rectangle("fill", paddle.x + paddle.width/2 - 1, laserBeamBrick.y + laserBeamBrick.height - 2, 2, paddle.y - (laserBeamBrick.y+laserBeamBrick.height))
+            love.graphics.rectangle("fill", paddle.x + paddle.width/2 - 1, laserBeamBrick.y + laserBeamBrick.height - 1, 2, paddle.y - (laserBeamBrick.y+laserBeamBrick.height))
         else
             love.graphics.rectangle("fill", paddle.x + paddle.width/2 - 1, 0, 2, paddle.y)
         end

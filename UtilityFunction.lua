@@ -591,11 +591,12 @@ end
 function removeAnimation(id)
     for i = #animations, 1, -1 do
         if animations[i] == nil then
-            table.remove(animations, i) -- Remove nil animations
+            table.remove(animations, i)
             goto continue -- Skip to the next iteration
         end
         if animations[i].id == id then
-            animations[i] = nil
+            table.remove(animations, i)
+            --animations[i] = nil
             return true -- Return true to indicate successful removal
         end
         ::continue::
