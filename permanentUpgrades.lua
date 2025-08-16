@@ -21,7 +21,7 @@ local upgrades = data.upgrades and {
     ammo = data.upgrades.ammo or 0,
     range = data.upgrades.range or 0,
     amount = data.upgrades.amount or 0,
-    paddleSize = data.upgrades.paddleSize or 0,
+    --paddleSize = data.upgrades.paddleSize or 0,
     health = data.upgrades.health or 0,
 } or {
     speed = 0,
@@ -31,7 +31,7 @@ local upgrades = data.upgrades and {
     ammo = 0,
     range = 0,
     amount = 0,
-    paddleSize = 0,
+    --paddleSize = 0,
 }
 
 local bonusPriceDefaults = {

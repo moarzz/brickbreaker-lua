@@ -25,7 +25,7 @@ end
 function restartGame()
     -- Reset Player
     Player.money = 0
-    Player.lives = 3
+    Player.lives = 1
     Player.dead = false
     Player.bonuses = {
         critChance = 0,
@@ -111,7 +111,7 @@ function GameOverDraw()
     -- Draw gold Earned (top right)
     love.graphics.setColor(1, 1, 1, 1) -- Reset color to white
     setFont(48)
-    local goldEarned = math.floor(math.floor(mapRangeClamped(math.sqrt(Player.score), 0, 100, 1.5, 6) * math.sqrt(Player.score)))
+    local goldEarned = math.floor(mapRangeClamped(math.sqrt(Player.score), 0, 300, 1.5, 6) * math.sqrt(Player.score))
     local goldText = "gold earned: ".. formatNumber(goldEarned) .. "$"
     currentFont = love.graphics.getFont()
     local moneyWidth = currentFont:getWidth(goldText)
@@ -248,12 +248,13 @@ function drawImageCentered(image, x, y, targetWidth, targetHeight, angle)
     local scaleX = targetWidth / imageWidth
     local scaleY = targetHeight / imageHeight
 
-    -- Calculate the top-left corner to center the image
-    local drawX = x - (targetWidth / 2)
-    local drawY = y - (targetHeight / 2)
+    -- Calculate the offset to center the rotation pivot
+    local offsetX = imageWidth / 2
+    local offsetY = imageHeight / 2
 
-    -- Draw the image with optional angle (defaults to 0 if not provided)
-    love.graphics.draw(image, drawX, drawY, angle or 0, scaleX, scaleY)
+    -- Draw the image with center rotation
+    -- The offset parameters shift the pivot point to the center of the original image
+    love.graphics.draw(image, x, y, angle or 0, scaleX, scaleY, offsetX, offsetY)
 end
 
 function areBallsInRange(ball1, ball2, range)
@@ -790,103 +791,6 @@ function drawMuzzleFlashes()
     love.graphics.setColor(1, 1, 1, 1)
 end
 
--- Function to create different types of explosions
-function createExplosionAt(x, y, type, size)
-    -- Default values if not specified
-    type = type or "normal"
-    size = size or 1.0
-    
-    -- Sound effect
-    if explosionSFX then
-        -- Vary pitch slightly for variety
-        local pitch = 0.9 + math.random() * 0.2
-        playSoundEffect(explosionSFX, 0.8, pitch, false, false)
-    end
-    
-    -- Visual effect based on type
-    if type == "normal" then
-        -- Create both white background explosion and particle explosion
-        Explosion.createBackgroundExplosion(x, y, 300 * size, 0.7 * size)
-        Explosion.createExplosion(x, y, math.floor(300 * size))
-        
-        -- Small screen shake
-        screenShake(0.2 * size, 3 * size)
-        
-    elseif type == "big" then
-        -- Create a larger white background explosion
-        Explosion.createBackgroundExplosion(x, y, 500 * size, 1.0 * size)
-        
-        -- Create particle explosion
-        Explosion.createExplosion(x, y, math.floor(800 * size))
-        
-        -- Bigger screen shake
-        screenShake(0.4 * size, 8 * size)
-        
-        -- Spawn additional smaller explosions
-        for i = 1, 3 do
-            local offsetX = (math.random() * 2 - 1) * 100 * size
-            local offsetY = (math.random() * 2 - 1) * 100 * size
-            
-            -- Delayed smaller explosions
-            Timer.after(0.1 * i, function()
-                Explosion.createBackgroundExplosion(x + offsetX, y + offsetY, 200 * size, 0.5 * size)
-                Explosion.createExplosion(x + offsetX, y + offsetY, math.floor(200 * size))
-            end)
-        end
-        
-    elseif type == "chain" then
-        -- Create initial white background explosion
-        Explosion.createBackgroundExplosion(x, y, 400 * size, 0.8 * size)
-        
-        -- Create initial particle explosion
-        Explosion.createExplosion(x, y, math.floor(500 * size))
-        
-        -- Medium screen shake
-        screenShake(0.3 * size, 5 * size)
-        
-        -- Chain reaction of explosions
-        for i = 1, 6 do
-            Timer.after(0.15 * i, function()
-                local distance = i * 50 * size
-                local angle = math.random() * math.pi * 2
-                local nextX = x + math.cos(angle) * distance
-                local nextY = y + math.sin(angle) * distance
-                
-                Explosion.createBackgroundExplosion(nextX, nextY, 200 * size, 0.6 * size)
-                Explosion.createExplosion(nextX, nextY, math.floor(300 * size))
-                
-                -- Small shake for each chain explosion
-                screenShake(0.15 * size, 3 * size)
-                
-                -- Play sound with decreasing volume
-                if explosionSFX then
-                    local volume = 0.7 - (i * 0.1)
-                    if volume > 0.3 then
-                        playSoundEffect(explosionSFX, volume, 1.1 - (i * 0.05), false, false)
-                    end
-                end
-            end)
-        end
-    end
-end
-
--- New function to create explosions when bricks are destroyed
-function createBrickExplosion(brick)
-    if not brick then return end
-    
-    -- Create a small white background explosion
-    Explosion.createBackgroundExplosion(brick.x + brick.width/2, brick.y + brick.height/2, 
-                                       brick.width * 2, 0.4)
-    
-    -- Create a small particle explosion
-    Explosion.createExplosion(brick.x + brick.width/2, brick.y + brick.height/2, 
-                             math.floor(100 + brick.health * 10))
-    
-    -- Small screen shake based on brick health
-    local shakeIntensity = math.min(3, brick.health * 0.2)
-    screenShake(0.1, shakeIntensity)
-end
-
 local damageNumbers = {} -- Table to store damage numbers
 
 function resetDamageNumbers()
@@ -894,8 +798,6 @@ function resetDamageNumbers()
 end
 
 function damageNumber(damage, x, y, color)
-    -- Limit to 50 active damage numbers
-    if #damageNumbers >= 50 then return end
     local damageNumber = {
         x = x,
         y = y,

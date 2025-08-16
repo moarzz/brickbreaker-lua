@@ -103,7 +103,7 @@ Player = {
     perks = {},
     level = 1,
     xp = 0,
-    levelThresholds = {5000, 50000}, -- XP needed for each level
+    levelThreshold = 50, -- XP needed for each level
     paddleCores = {["Bouncy Core"] = true},  -- Stores unlockedpaddle cores
 }
 
@@ -126,8 +126,8 @@ function saveGameData()
         gold = Player.gold,
         startingMoney = Player.startingMoney,
         permanentUpgrades = {
-            paddleSize = Player.permanentUpgrades.paddleSize or 0,
-            paddleSpeed = Player.permanentUpgrades.paddleSpeed or 0,
+            -- paddleSize = Player.permanentUpgrades.paddleSize or 0,
+            -- paddleSpeed = Player.permanentUpgrades.paddleSpeed or 0,
             -- Keep other upgrades...
             speed = Player.permanentUpgrades.speed or 0,
             damage = Player.permanentUpgrades.damage or 0,
@@ -168,7 +168,6 @@ Player.bonusOrder = {}
 Player.bonusPrice = {}
 Player.bonusesList = {
     speed = {name = "speed", description = "Ball speed", startingPrice = 100},
-    paddleSize = {name = "paddleSize", description = "Paddle size", startingPrice = 100},
     damage = {name = "damage", description = "Damage boost", startingPrice = 100},
     ammo = {name = "ammo", description = "Ammo boost", startingPrice = 100},
     range = {name = "range", description = "Range boost", startingPrice = 100}, 
@@ -187,7 +186,7 @@ Player.permanentUpgradePrices = {
     ammo = 100,
     range = 100,
     amount = 100,
-    paddleSize = 100, -- This is now handled in permanentUpgrades.lua
+    --paddleSize = 100, -- This is now handled in permanentUpgrades.lua
 }
 
 Player.bonusUpgrades = {
@@ -232,7 +231,7 @@ Player.upgradePaddle = {
     paddleSize = function()
         -- This is handled in permanentUpgrades.lua now
         paddle.width = paddle.width + 30
-        paddle.x = math.max(paddle.x - 30, statsWidth)  -- Adjust position to keep it centered
+        paddle.x = paddle.x - 30  -- Adjust position to keep it centered
         Player.permanentUpgrades.paddleSize = (Player.permanentUpgrades.paddleSize or 0) + 1
     end,
     
@@ -240,58 +239,6 @@ Player.upgradePaddle = {
         Player.permanentUpgrades.paddleSpeed = (Player.permanentUpgrades.paddleSpeed or 0) + 1
         paddle.speed = paddle.speed + 75
     end,
-}
-
-Player.perksList = {
-    --[[superSpeed = {name = "superSpeed", description = "doubles ball speed. if amount <= 3"},
-    cellularDivision = {name = "cellularDivision", description = "doubles amount. damage is halved."},
-    warriorSpirit = {name = "warriorSpirit", description = "doubles damage. speed is halved."},]]
-    bulletStorm = {name = "bulletStorm", description = "doubles fire rate."},
-    burningBullets = {name = "burningBullets", description = "bullets explode on impact, dealing damage to nearby bricks.", 
-        onUnlock = function()
-            print("Explosive bullets perk unlocked!")
-            Player.perks.burningBullets = true
-        end
-    },
-    multishot = {
-        name = "multishot",
-        description = "Bullets split into three projectiles after traveling a short distance. Bullet damage is reduced by 50% rounded up."
-    },
-    speedBounce = {name = "speedBounce", description = "Temporarily increases ball speed on bounce."},
-    techSupremacy = {name = "techSupremacy", description = "doubles damage of all tech items"},
-    brickBreaker = {
-        name = "brickBreaker",
-        description = "5% chance to instantly destroy any small brick regardless of health when they take damage"
-    },
-    paddleSquared = {
-        name = "paddleSquared",
-        description = "paddleBounce effects trigger twice"
-    },
-    --[[shreddingFlames = {
-        name = "shreddingFlames",
-        description = "Burning bricks take 50% more damage from all sources (rounded up)."
-    },
-    timeWarp = {
-        name = "timeWarp",
-        description = "All cooldowns are reduced to 1 (cannot go to 0).",
-    },
-    --[[timeKeeper = {
-        name = "timeKeeper",
-        description = "all cooldown are reduced by 50% (rounded up).",
-    },
-    phantomBullets = {
-        name = "phantomBullets",
-        description = "Bullets pass through bricks without losing damage, but deal 50% damage to them (rounded up)."
-    },
-    particle accelerator = {
-        name = "particleAccelerator",
-        description = "Increases the speed of everything aside from the bricks by 50%"
-    },
-    popBounce = {name = "popBounce", description = "on paddleBounce, deal DAMAGE to a random brick."},
-    chainReaction = {
-        name = "Chain Reaction",
-        description = "When a brick is destroyed, adjacent bricks take DAMAGE damage"
-    },]]
 }
 
 Player.availableCores = {
@@ -306,13 +253,13 @@ Player.availableCores = {
         price = 200,
     },
     {
-        name = "Cooldown Core",
-        description = "Cooldown is always 2.",
+        name = "Poke Core",
+        description = "Damage and cooldown are halved and every other stat is doubled",
         price = 400,
     },
     {
-        name = "Magnetic Core",
-        description = "Shoots gravity force field at nearest brick in front of paddle.",
+        name = "Economy Core",
+        description = "Everything costs 50% less.",
         price = 600,
     },
     {
@@ -321,48 +268,37 @@ Player.availableCores = {
         price = 800,
     },
     {
-        name = "Economy Core",
-        description = "Everything costs 50% less.",
-        price = 1000,
-    },
-    {
         name = "Phantom Core",
-        description = "Bullets pass through bricks without losing damage, but deal 25% damage\n(rounded up).",
-        price = 1200,
+        description = "Bullets pass through bricks without losing damage, but deal 33% damage\n(rounded up).",
+        price = 1000,
     },
     {   
         name = "Damage Core",
-        description = "amount and fireRate are always 2 and damage is multiplied by 4",
-        price = 1400,
+        description = "amount and fireRate are always 1 and damage is multiplied by 5",
+        price = 1200,
     },
     {
         name = "Farm Core",
-        description = "After every 50 bricks destroyed, give +1 to a random one of your item's stat \n(-1 for cooldown)",
-        price = 1600,
+        description = "After every 100 bricks destroyed, give +1 to a random stat for each of your items \n(-1 for cooldown)",
+        price = 1400,
     },
     {
         name = "Brickbreaker Core",
         description = "Damage you deal has a 5% chance of destroying a brick instantly",
-        price = 1800,
+        price = 1600,
     },
-    --[[{
-        name = "Fated Core",
-        description = "Choose the weapon and stat upgrades available before the game starts",
-        price = 2000
-    }]]
 }
 
 Player.coreDescriptions = {
     ["Bouncy Core"] = "On bounce, balls gain a deprecating speed boost.",
-    ["Spray and Pray Core"] = "Guns shoot 50% faster but are a lot less accurate.",
+    ["Spray and Pray Core"] = "Guns shoot twice as fast but are a lot less accurate.",
     ["Burn Core"] = "Tech items deal burn damage.",
-    ["Magnetic Core"] = "Shoots gravity force field at nearest brick in front of paddle.",
-    ["Brickbreaker Core"] = "Damage you deal has a 5% chance of destroying a brick instantly",
-    ["Cooldown Core"] = "Every cooldown item starts at a cooldown of 2, cooldown can't be lowered.",
+    ["Brickbreaker Core"] = "Damage you deal has a 5% chance of destroying a brick instantly \n(except for boss)",
     ["Economy Core"] = "Everything costs 50% less.",
-    ["Damage Core"] = "Amount and fireRate are always 2 and damage is multiplied by 5",
-    ["Phantom Core"] = "Bullets pass through bricks without losing damage, but deal 25% damage\n(rounded up).",
-    ["Farm Core"] = "After every 25 bricks destroyed, give +1 to a random one of your item's stat \n(-1 for cooldown)",
+    ["Damage Core"] = "Amount and fireRate are always 1 and damage is multiplied by 5",
+    ["Phantom Core"] = "Bullets pass through bricks without losing damage, but deal 33% damage\n(rounded up).",
+    ["Farm Core"] = "After every 100 bricks destroyed, all your weapons gain +1 to a random stat\n(-1 for cooldown)",
+    ["Poke Core"] = "Damage and Cooldown are halved and every other stat is doubled"
     
 }
 
@@ -466,7 +402,7 @@ function Player.reset()
     Player.money = gameData.startingMoney or 0
     Player.gold = gameData.gold or 0
     Player.goldEarned = 0
-    Player.lives = 3
+    Player.lives = 1
     Player.levelingUp = false
     Player.price = 1
     Player.dead = false
@@ -487,7 +423,11 @@ function Player.gain(amount)
     Player.money = Player.money + amount
     Player.score = Player.score + amount
     Player.xp = Player.score -- XP follows score
-    saveGameData()
+    if Player.levelThreshold <= Player.score then
+        Player.upgradePaddle["paddleSpeed"]()
+        Player.upgradePaddle["paddleSize"]()
+        Player.levelThreshold = Player.levelThreshold * 2
+    end
     upgradesUI.tryQueue()
 end
 
@@ -505,7 +445,7 @@ function Player.die()
     end
 
     -- Calculate gold earned based on score
-    local goldEarned = math.floor(mapRangeClamped(math.sqrt(Player.score), 0, 100, 1.5, 6) * math.sqrt(Player.score))
+    local goldEarned = math.floor(mapRangeClamped(math.sqrt(Player.score), 0, 300, 1.5, 6) * math.sqrt(Player.score))
     Player.addGold(goldEarned)
     toggleFreeze()
     Player.dead = true
@@ -589,8 +529,8 @@ function Player:load()
                 self.healthBonus = data.permanentUpgrades.healthBonus or 0
                 self.extraBallBonus = data.permanentUpgrades.extraBallBonus or 0
                 self.criticalBonus = data.permanentUpgrades.criticalBonus or 0
-                self.permanentUpgrades.paddleSize = data.permanentUpgrades.paddleSize or 0
-                self.permanentUpgrades.paddleSpeed = data.permanentUpgrades.paddleSpeed or 0
+                -- self.permanentUpgrades.paddleSize = data.permanentUpgrades.paddleSize or 0
+                -- self.permanentUpgrades.paddleSpeed = data.permanentUpgrades.paddleSpeed or 0
             end
         end
     end

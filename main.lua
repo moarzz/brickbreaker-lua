@@ -42,22 +42,26 @@ local minSpawnRate = 0.1 -- Minimum time between spawns
 local spawnAcceleration = 0.01 -- How much faster spawning gets per second
 local currentSpawnRate = 1.0 -- Current time between spawns
 local gameStartTime = 0
+local gameTime = 0  -- Tracks actual elapsed gameplay time
+local bossSpawned = false
+local spawnBossNextRow = false
 
 function resetGame()
     -- Reset game state
     currentGameState = GameState.MENU
     
     -- Reset game timers
-    gameStartTime = 0
+    gameStartTime = love.timer.getTime()
     gameTime = 0
     frozenTime = 0
     lastFreezeTime = 0
-    startTime = -10
     
     -- Reset gameplay variables
     playRate = 1
     backgroundIntensity = 0
     spawnTimer = 0
+    bossSpawned = false
+    spawnBossNextRow = false
     currentSpawnRate = 1.0
     currentRowPopulation = 1
     damageThisFrame = 0
@@ -89,7 +93,6 @@ function resetGame()
     end
     Balls.clearUnlockedBallTypes()
     Balls.initialize()
-
 
     -- Reset timers
     Timer.clear()
@@ -194,52 +197,15 @@ local function getMaxBrickHealth()
     return maxHealth
 end
 
-local function spawnBrick()
-    local x = statsWidth + math.random() * (screenWidth - statsWidth * 2 - brickWidth) + 20
-    local maxHealth = getMaxBrickHealth()
-    local health = math.random(1, maxHealth)
-    local brickColor = getBrickColor(health)
-    
-    table.insert(bricks, {
-        id = #bricks + 1,
-        x = x,
-        y = -brickHeight - 5, -- Spawn just above screen
-        drawOffsetX = 0,
-        drawOffsetY = 0,
-        drawOffsetRot = 0,
-        drawScale = 1,
-        width = brickWidth,
-        height = brickHeight,
-        destroyed = false,
-        health = health,
-        color = {brickColor[1], brickColor[2], brickColor[3], 1},
-        hitLastFrame = false
-    })
-end
-
-local function addMoreBricks(dt)
-    -- Update spawn rate
-    currentSpawnRate = math.max(minSpawnRate, baseSpawnRate - spawnAcceleration * (love.timer.getTime() - gameStartTime))
-    
-    -- Update spawn timer
-    spawnTimer = spawnTimer + dt
-    
-    -- Spawn new brick if it's time
-    if spawnTimer >= currentSpawnRate then
-        spawnTimer = spawnTimer - currentSpawnRate
-        spawnBrick()
-    end
-end
-
-local bossWidth, bossHeight = 1000, 600
+local bossWidth, bossHeight = 500, 300
 local bossHealth = 2500
-local bossSpawned = false
 local brickId = 1
+local bossBrickSpawnTimer
 local function spawnBoss()
     -- Center the boss brick at the top
     print("Spawning boss brick")
     local bossX = screenWidth / 2 - bossWidth / 2
-    local bossY = -bossHeight
+    local bossY = -bossHeight - (brickHeight + brickSpacing) * 2
     local brickColor = getBrickColor(bossHealth, false, true)
     table.insert(bricks, {
         type = "boss",
@@ -258,38 +224,85 @@ local function spawnBoss()
         hitLastFrame = false
     })
     brickId = brickId + 1
+    bossBrickSpawnTimer = Timer.every(5, function() 
+        table.insert(bricks, {
+            type = "big",
+            id = brickId,
+            x = bossX + 5 + math.random(1, math.floor(bossWidth - brickWidth*2 - 5)),
+            y = bossY + bossHeight - brickHeight*2 - 25,
+            drawOffsetX = 0,
+            drawOffsetY = 0,
+            drawOffsetRot = 0,
+            drawScale = 1,
+            speedMult = 2,
+            width = brickWidth*2,
+            height = brickHeight*2,
+            destroyed = false,
+            health = math.random(100,150),
+            color = {brickColor[1], brickColor[2], brickColor[3], 1},
+            hitLastFrame = false
+        })
+        brickId = brickId + 1
+    end)
 end
 
 local unavailableXpos = {}
+local bossRows = {}
 local currentRow = 1
 local nextRowDebuff = 0
 local function generateRow(brickCount, yPos)
     brickCount = brickCount - nextRowDebuff
     nextRowDebuff = 0 -- Reset next row debuff for the next row
-    --[[if brickCount >= 1000 and not bossSpawned then
-        print("SPAWN BOSS MOUAHAHAHAHAA")
-        spawnBoss()
-        bossSpawned = true
-    end]]
     local row = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
     local rowOffset = 0--mapRangeClamped(math.random(0,10),0,10, 0, brickWidth)
-    for i = 1, brickCount do
-        local bruh = true
-        local n = 1
-        while bruh do
-            n = math.random(12)
-            if not unavailableXpos[n] then 
-                bruh = false
-            end
+    
+    if bossSpawned then
+        for i = 4, 9 do
+            bossRows[i] = true
         end
-        row[n] = row[n] + 1
     end
+    
+    -- Pre-calculate available positions
+    local availablePositions = {}
+    for i = 1, 12 do
+        if not (unavailableXpos[i] or bossRows[i]) then
+            table.insert(availablePositions, i)
+        end
+    end
+    
+    -- If no available positions, return early
+    if #availablePositions == 0 then
+        unavailableXpos = {}
+        currentRow = currentRow + 1
+        return row
+    end
+    
+    -- Distribute bricks using weighted random distribution
+    local remaining = brickCount
+    for i = 1, #availablePositions do
+        local pos = availablePositions[i]
+        local expectedShare = remaining / (#availablePositions - i + 1)
+        
+        -- Add some randomness while keeping it efficient
+        local actualShare = math.max(0, math.floor(expectedShare + math.random(-expectedShare/4, expectedShare/4)))
+        
+        row[pos] = actualShare
+        remaining = remaining - actualShare
+    end
+    
+    -- Distribute any remaining bricks
+    while remaining > 0 do
+        local pos = availablePositions[math.random(#availablePositions)]
+        row[pos] = row[pos] + 1
+        remaining = remaining - 1
+    end
+    
     unavailableXpos = {}
     local bigBrickLocations = {}
     for xPos, brickHealth in ipairs(row) do
         if brickHealth > 0 then
             if (not bigBrickLocations[xPos-1]) then
-                if xPos < 11 and math.random(1, 100) < math.floor(mapRangeClamped(brickCount, 1, 1000, 0, 25)) and row[xPos+1] > 0 then
+                if xPos < 11 and math.random(1, 100) < math.floor(mapRangeClamped(brickCount, 1, 1000, 0, 25)) and row[xPos+1] > 0 and not bossSpawned then
                     if (brickHealth + row[xPos+1]) * 2 >= 50 then
                         bigBrickLocations[xPos] = true
                         unavailableXpos[xPos] = true
@@ -344,18 +357,18 @@ local function generateRow(brickCount, yPos)
     return row
 end
 
-local spawnBossNextRow = false
---local currentRowPopulation
+--This function is called every 0.5 seconds to see if we should add more bricks, if we should, it adds 10 rows using the generateRow() function
 local function addMoreBricks()
     if bricks[#bricks] then
         if bricks[#bricks].y > -50 then
             print("spawning more bricks")
             for i=1 , 10 do
-                generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 50) --generate 100 scaling rows of bricks
-                currentRowPopulation = currentRowPopulation + 1 + math.floor(currentRow/20)
+                generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
+                currentRowPopulation = currentRowPopulation + 1 + math.floor(currentRow/15)
                 if spawnBossNextRow and not bossSpawned then
                     spawnBoss()
                     bossSpawned = true
+                    spawnBossNextRow = false
                     currentRowPopulation = 500
                 end
             end
@@ -363,6 +376,18 @@ local function addMoreBricks()
         else 
             return
         end--else print("bricks are too high to spawn more") end
+    end
+end
+
+local function brickGarbageCollection()
+    for i=#bricks, 1, -1 do
+        if bricks[i] then
+            if bricks[i].destroyed == true then
+                table.remove(bricks, i)
+            end
+        elseif bricks[i] == nil then
+            table.remove(bricks, i)
+        end
     end
 end
 
@@ -388,6 +413,7 @@ function getBrickColor(health, bigBrick, boss, colorHealth)
 end
 
 function initializeBricks()
+    bossRows = {}
     -- Bricks
     bricks = {}
     brickWidth = 75
@@ -404,8 +430,16 @@ function initializeBricks()
         currentRowPopulation = currentRowPopulation + 1 + math.floor(currentRowPopulation/25)
     end
 
+    -- remove the bossSpawnTimer on gameStart if it exists
+    if bossBrickSpawnTimer then
+        Timer.cancel(bossBrickSpawnTimer)
+    end
+
     --check for adding more bricks every 0.5 seconds
     Timer.every(0.5, function() addMoreBricks() end)
+
+    -- garbage collection every 0.5
+    Timer.every(0.5, function() brickGarbageCollection() end)
 end
 
 function initializeGameState()
@@ -488,7 +522,7 @@ function getHighestBrickY()
     local highestY = -math.huge  -- Start with lowest possible number
     for _, brick in ipairs(bricks) do
         if not brick.destroyed and brick.y > highestY then
-            highestY = brick.y
+            highestY = brick.y + brick.height
         end
     end
     return highestY
@@ -497,14 +531,14 @@ end
 function getBrickSpeedByTime()
     -- Scale speed from 0.5 to 5.0 over 10 minutes
     local timeSinceStart = love.timer.getTime() - gameStartTime
-    return mapRangeClamped(timeSinceStart, 0, 450, 0.35, 1.0)
+    return mapRangeClamped(timeSinceStart, 0, 420, 0.35, 1.5)
 end
 
 local function getBrickSpeedMult() 
     -- Get the position-based multiplier
     local posMult = 1
     for i, brick in ipairs(bricks) do
-        if not brick.destroyed then
+        if not brick.destroyed and brick.type ~= "boss" then
             posMult = mapRangeClamped(brick.y, 100, (screenHeight/2 - brick.height), 10, 1)
             break
         end
@@ -548,9 +582,9 @@ local function moveBricksDown(dt)
         for _, brick in ipairs(bricks) do
             if not brick.destroyed then
                 if brick.type == "boss" then
-                    brick.y = brick.y + brickSpeed.value * dt * speedMult * 0.5
+                    brick.y = brick.y + brickSpeed.value * dt * speedMult * 0.67
                 else
-                    brick.y = brick.y + brickSpeed.value * dt * speedMult
+                    brick.y = brick.y + brickSpeed.value * dt * speedMult * (brick.speedMult or 1)
                 end
             end
         end
@@ -565,8 +599,6 @@ local function reduceBackgroundBrightness()
 end
 
 screenOffset = {x=0,y=0}
-local startTime = -10
-local gameTime = 0  -- Tracks actual elapsed gameplay time
 
 local function brickPiecesUpdate(dt)
     for _, brickpiece in ipairs(brickPieces) do
@@ -596,15 +628,6 @@ end
 local function garbageCollectDynamicObjects()
     if brickPieces then
         cleanTable(brickPieces, function(obj) return obj.destroyed or obj.dead or obj.remove or obj.toRemove end)
-    end
-    if fireballs then
-        cleanTable(fireballs, function(obj) return obj.destroyed or obj.dead or obj.remove or obj.toRemove end)
-    end
-    if darts then
-        cleanTable(darts, function(obj) return obj.destroyed or obj.dead or obj.remove or obj.toRemove end)
-    end
-    if deadBullets then
-        cleanTable(deadBullets, function(obj) return obj.destroyed or obj.dead or obj.remove or obj.toRemove end)
     end
     -- Add more as needed for other dynamic object tables
 end
@@ -641,9 +664,6 @@ local function gameFixedUpdate(dt)
         -- Garbage collect dynamic objects
         garbageCollectDynamicObjects()
         backgroundShader:send("intensity", backgroundIntensity)
-        if startTime == -10 then
-            startTime = love.timer.getTime()+0.5
-        end
         local sineShaderIntensity = 0.3 -- Default base intensity
 
 
@@ -672,7 +692,7 @@ local function gameFixedUpdate(dt)
 
         local function updateGameTime(dt)
             if not UtilityFunction.freeze and not Player.levelingUp then
-                gameTime = gameTime + dt * playRate
+                gameTime = gameTime + 1/60 * playRate
             end
         end
         
@@ -699,7 +719,7 @@ local function gameFixedUpdate(dt)
 
             -- Keep paddle within screen bounds
             paddle.x = math.max(statsWidth - (paddle.width/2) + 65, math.min(screenWidth - statsWidth - paddle.width + (paddle.width/2) - 65, paddle.x))
-            paddle.y = math.max(math.max(getHighestBrickY() + brickHeight*6, screenHeight/2 + 100), math.min(screenHeight - paddle.height - 10, paddle.y))
+            paddle.y = math.max(math.max(getHighestBrickY() + brickHeight*5, screenHeight/2 + 100), math.min(screenHeight - paddle.height - 10, paddle.y))
 
             -- Update Balls
             Balls.update(dt, paddle, bricks, Player)
@@ -729,7 +749,7 @@ local function gameFixedUpdate(dt)
             damageThisFrame = damageThisFrame or 0 -- Reset damage this frame
             if damageThisFrame > 0 and damageCooldown <= 0 then
                 damageScreenVisuals(mapRangeClamped(damageThisFrame,1,20,0.25, 0.5), damageThisFrame)
-                playSoundEffect(brickHitSFX, mapRangeClamped(damageThisFrame, 1,10, 0.4,1.0) * 0.8, mapRangeClamped(damageThisFrame,1,20,0.5,1), false, true)
+                playSoundEffect(brickHitSFX, mapRangeClamped(math.sqrt(damageThisFrame), 1,4, 0.4, 1) * 0.8, mapRangeClamped(math.sqrt(damageThisFrame),1,6,0.5,1.1), false, true)
                 damageCooldown = 0.05 -- Set cooldown for damage visuals
                 damageThisFrame = 0 -- Reset damage this frame
             end
@@ -748,6 +768,8 @@ function love.update(dt)
         gameFixedUpdate(fixed_dt) -- Your game logic here, using fixed_dt
         accumulator = accumulator - fixed_dt
     end
+    -- print("Memory:", collectgarbage("count"))
+    -- collectgarbage("step", 1)
 end
 
 -- Menu settings
@@ -941,7 +963,44 @@ function drawBricks()
     local batch = love.graphics.newSpriteBatch(brickImg, #bricks)
     local batchData = {} -- Store info for HP text
 
-    -- Draw boss bricks first (not batched)
+    -- Batch all bricks (except boss)
+    for _, brick in ipairs(bricks) do
+        if (not brick.type or brick.type ~= "boss") and not brick.destroyed and brick.y + brick.height > screenTop - 10 and brick.y < screenBottom + 10 then
+            local color = brick.color or {1, 1, 1, 1}
+            local scale = brick.drawScale or 1
+            local scaleX = scale * (brick.width / brickImg:getWidth())
+            local scaleY = scale * (brick.height / brickImg:getHeight())
+            local centerX = brick.x + brick.width / 2 + brick.drawOffsetX
+            local centerY = brick.y + brick.height / 2 + brick.drawOffsetY
+            batch:setColor(color)
+            local id = batch:add(
+                centerX,
+                centerY,
+                brick.drawOffsetRot,
+                scaleX,
+                scaleY,
+                brickImg:getWidth() / 2,
+                brickImg:getHeight() / 2
+            )
+            table.insert(batchData, {centerX=centerX, centerY=centerY, health=brick.health})
+        end
+    end
+
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(batch)
+
+    -- Draw HP text for batched bricks
+    setFont(15)
+    local font = love.graphics.getFont()
+    for _, data in ipairs(batchData) do
+        local hpText = tostring(data.health or 0)
+        love.graphics.setColor(0, 0, 0, 1)
+        love.graphics.print(hpText, data.centerX+2, data.centerY+2, 0, 1.2, 1.2, font:getWidth(hpText)/2, font:getHeight()/2)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.print(hpText, data.centerX, data.centerY, 0, 1.2, 1.2, font:getWidth(hpText)/2, font:getHeight()/2)
+    end
+
+    -- Draw boss bricks last (not batched)
     for _, brick in ipairs(bricks) do
         if brick.type == "boss" and not brick.destroyed and brick.y + brick.height > screenTop - 10 and brick.y < screenBottom + 10 then
             local color = brick.color or {1, 1, 1, 1}
@@ -971,42 +1030,6 @@ function drawBricks()
         end
     end
 
-    -- Batch all other bricks
-    for _, brick in ipairs(bricks) do
-        if (not brick.type or brick.type ~= "boss") and not brick.destroyed and brick.y + brick.height > screenTop - 10 and brick.y < screenBottom + 10 then
-            local color = brick.color or {1, 1, 1, 1}
-            local scale = brick.drawScale or 1
-            local scaleX = scale * (brick.width / brickImg:getWidth())
-            local scaleY = scale * (brick.height / brickImg:getHeight())
-            local centerX = brick.x + brick.width / 2 + brick.drawOffsetX
-            local centerY = brick.y + brick.height / 2 + brick.drawOffsetY
-            batch:setColor(color)
-            local id = batch:add(
-                centerX,
-                centerY,
-                brick.drawOffsetRot,
-                scaleX,
-                scaleY,
-                brickImg:getWidth() / 2,
-                brickImg:getHeight() / 2
-            )
-            table.insert(batchData, {centerX=centerX, centerY=centerY, health=brick.health})
-        end
-    end
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.draw(batch)
-
-    -- Draw HP text for batched bricks
-    setFont(15)
-    local font = love.graphics.getFont()
-    for _, data in ipairs(batchData) do
-        local hpText = tostring(data.health or 0)
-        love.graphics.setColor(0, 0, 0, 1)
-        love.graphics.print(hpText, data.centerX+2, data.centerY+2, 0, 1.2, 1.2, font:getWidth(hpText)/2, font:getHeight()/2)
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.print(hpText, data.centerX, data.centerY, 0, 1.2, 1.2, font:getWidth(hpText)/2, font:getHeight()/2)
-    end
-
     -- Draw brick pieces (not batched)
     for _, brickPiece in ipairs(brickPieces) do
         love.graphics.setColor(brickPiece.color)
@@ -1017,9 +1040,9 @@ end
 local frozenTime = 0
 local lastFreezeTime = 0
 
-local hasSpawnedBoss = false
+local hasSpawnedBoss = false    
 local function drawGameTimer()
-    local countdownTime = 420 - gameTime
+    local countdownTime = 5 - gameTime
     if countdownTime <= 0 and not hasSpawnedBoss then
         spawnBossNextRow = true
         hasSpawnedBoss = true
@@ -1067,7 +1090,10 @@ function drawPauseMenu()
     btnY = btnY + buttonHeight + 30
     -- Restart button (same as play again)
     local restartBtn = suit.Button("Restart", {id="pause_restart"}, centerX, btnY, buttonWidth, buttonHeight)
+    local goldEarned = math.floor(mapRangeClamped(math.sqrt(Player.score), 0, 300, 1.5, 6) * math.sqrt(Player.score))
     if restartBtn.hit then
+        Player.addGold(goldEarned)
+        saveGameData()
         resetGame()
         currentGameState = GameState.START_SELECT
     end
@@ -1075,7 +1101,6 @@ function drawPauseMenu()
     -- Main Menu button
     local menuBtn = suit.Button("Main Menu", {id="pause_menu"}, centerX, btnY, buttonWidth, buttonHeight)
     if menuBtn.hit then
-        local goldEarned = math.floor(mapRangeClamped(math.sqrt(Player.score), 0, 100, 1.5, 6) * math.sqrt(Player.score))
         Player.addGold(goldEarned)
         saveGameData()
         resetGame()
@@ -1085,7 +1110,6 @@ function drawPauseMenu()
     -- Exit Game button
     local exitBtn = suit.Button("Exit Game", {id="pause_exit"}, centerX, btnY, buttonWidth, buttonHeight)
     if exitBtn.hit then
-        local goldEarned = math.floor(mapRangeClamped(math.sqrt(Player.score), 0, 100, 1.5, 6) * math.sqrt(Player.score))
         Player.addGold(goldEarned)
         saveGameData()
         love.event.quit()
@@ -1410,7 +1434,7 @@ function love.keypressed(key)
     end
 
     if key == "i" then
-        Balls.addBall("Machine Gun")
+        print(#bricks)
     end
 end
 

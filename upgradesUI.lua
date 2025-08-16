@@ -151,7 +151,7 @@ function resetPaddlePrices()
     paddleSpeedPrice = Player.currentCore == "Economy Core" and 5 or 10
 end
 
-local function drawPaddleUpgrades()
+--[[local function drawPaddleUpgrades()
     local winX = 0
     local winY = screenHeight - uiWindowImg:getHeight() + 70
     love.graphics.draw(uiSmallWindowImg, winX, winY) -- Draw the background window image
@@ -240,7 +240,7 @@ local function drawPaddleUpgrades()
             print("Not enough money for paddleSpeed upgrade")
         end
     end
-end
+end]]
 
 --[[
 local newPerkPrice = Player.currentCore == "Economy Core" and 10000 or 20000 -- Price for unlocking a new perk
@@ -392,6 +392,9 @@ function setLevelUpShop(isForBall, isForPerks)
                         print("advantagious statName = " .. statName)
                     end
                 end
+            end
+            if (not item.noAmount) and Player.bonuses.amount == nil then
+                table.insert(advantagiousBonuses, "amount")
             end
         end
         levelUpShopType = "playerUpgrade"
@@ -764,13 +767,6 @@ local function drawBallStats()
                 -- draw value
                 setFont(35)
                 suit.layout:padding(0, 0)
-                if statName == "damage" then
-                    if ballType.type == "ball" and (Player.bonuses["ballDamage"] or Player.permanentUpgrades["ballDamage"]) then
-                        statValue = statValue + (Player.bonuses["ballDamage"] or 0) + (Player.permanentUpgrades["ballDamage"] or 0)
-                    elseif ballType.type == "gun" and (Player.bonuses["bulletDamage"] or Player.permanentUpgrades["bulletDamage"]) then
-                        statValue = statValue + (Player.bonuses["bulletDamage"] or 0) + (Player.permanentUpgrades["bulletDamage"] or 0)
-                    end
-                end
                 -- Add permanent upgrades to the display value
                 local permanentUpgradeValue = Player.permanentUpgrades[statName] or 0
                 local bonusValue = Player.bonuses[statName] or 0
@@ -779,15 +775,26 @@ local function drawBallStats()
                     value = value - permanentUpgradeValue - bonusValue + bonusValue * ballType.ammoMult -- Adjust ammo value based on ammoMult
                 end
                 if (statName == "fireRate" or statName == "amount") and Player.currentCore == "Damage Core" then
-                    value = 2
+                    value = 1
                 end
-                if statName == "damage" and Player.currentCore == "Damage Core" then
-                    value = value * 4 -- Double damage for Damage Core
+                if statName == "damage" then
+                    if Player.currentCore == "Damage Core" then
+                        value = value * 5 -- Double damage for Damage Core
+                    elseif Player.currentCore == "Phantom Core" and ballType.type == "gun" then
+                        value = value / 3
+                    end
+                end
+                if statName == "amount" and ballType.noAmount == false then
+                    value = value - (Player.bonuses.amount or 0)
                 end
                 if statName == "cooldown" then
                     value = math.max(0, value)
                 end
-                suit.Label(tostring(value), {align = "center"}, x, y-25, cellWidth, 100)
+                if Player.currentCore == "Phantom Core" and ballType.type == "gun" and statName == "damage" then
+                    suit.Label(tostring(string.format("%.1f", value)), {align = "center"}, x, y-25, cellWidth, 100)
+                else
+                    suit.Label(tostring(value), {align = "center"}, x, y-25, cellWidth, 100)
+                end
 
                 -- draw stat icon
                 local iconX = x + cellWidth/2 - iconsImg[statName]:getWidth()*1.75/2
@@ -813,7 +820,7 @@ local function drawBallStats()
                 if statName == "cooldown" and Player.currentCore == "Cooldown Core" then
                     canUpgrade = false -- Cannot upgrade cooldown if using Cooldown Core
                 end
-                if statName == "ammo" and ((ballType.stats.cooldown or 1000) + (Player.bonuses["cooldown"] or 0) + (Player.permanentUpgrades["cooldown"] or 0)) <= 0 then
+                if statName == "ammo" and (((ballType.stats.cooldown or 1000) + (Player.bonuses["cooldown"] or 0) + (Player.permanentUpgrades["cooldown"] or 0)) <= 0 and ballType.name ~= "Turret Generator") then
                     canUpgrade = false -- Cannot upgrade ammo if cooldown is already at 0
                 end
                 if ((statName == "fireRate" or statName == "amount") and Player.currentCore == "Damage Core")then
@@ -967,7 +974,7 @@ function upgradesUI.draw()
     drawPlayerUpgrades() -- Draw the player upgrades table
     drawBallStats() -- Draw the ball stats table
     --drawPerkUpgrade() -- Draw the player perks table
-    drawPaddleUpgrades()
+    --drawPaddleUpgrades()
 
     -- Draw separator lines
     love.graphics.setColor(0.6, 0.6, 0.6, 0.6*math.max(math.min(math.max(0, 1-math.abs(Balls.getMinX()-statsWidth)/100), 1),math.min(math.max(0, 1-math.abs(paddle.x-statsWidth)/100), 1))) -- Light gray
