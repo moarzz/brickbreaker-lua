@@ -82,7 +82,8 @@ Player = {
     selectedPaddleCore = "Bouncy Core",
     upgradePriceMultScaling = 10,
     dead = false,
-    lastHitTime = 0,    
+    lastHitTime = 0,
+    queuedUpgrades = {},    
     permanentUpgrades = {}, -- Store permanent upgrades
     permanentUpgradePrices = {
         speed = 100,
@@ -102,6 +103,9 @@ Player = {
     },
     perks = {},
     level = 1,
+    newWeaponLevelRequirement = 5,
+    newStatLevelRequirement = 10,
+    xpForNextLevel = 25,
     xp = 0,
     levelThreshold = 50, -- XP needed for each level
     paddleCores = {["Bouncy Core"] = true},  -- Stores unlockedpaddle cores
@@ -230,14 +234,14 @@ Player.bonusUpgrades = {
 Player.upgradePaddle = {
     paddleSize = function()
         -- This is handled in permanentUpgrades.lua now
-        paddle.width = paddle.width + 30
-        paddle.x = paddle.x - 30  -- Adjust position to keep it centered
+        paddle.width = paddle.width + 15
+        paddle.x = paddle.x - 15  -- Adjust position to keep it centered
         Player.permanentUpgrades.paddleSize = (Player.permanentUpgrades.paddleSize or 0) + 1
     end,
     
     paddleSpeed = function()
         Player.permanentUpgrades.paddleSpeed = (Player.permanentUpgrades.paddleSpeed or 0) + 1
-        paddle.speed = paddle.speed + 75
+        paddle.speed = paddle.speed + 40
     end,
 }
 
@@ -250,55 +254,50 @@ Player.availableCores = {
     {
         name = "Spray and Pray Core",
         description = "Guns shoot 50% faster but are a lot less accurate.",
-        price = 200,
-    },
-    {
-        name = "Poke Core",
-        description = "Damage and cooldown are halved and every other stat is doubled",
-        price = 400,
+        price = 250,
     },
     {
         name = "Economy Core",
-        description = "Everything costs 50% less.",
-        price = 600,
-    },
-    {
-        name = "Burn Core",
-        description = "tech items burn bricks when they deal damage.",
-        price = 800,
+        description = "Everything costs 50% less. Start with 100 $",
+        price = 500,
     },
     {
         name = "Phantom Core",
-        description = "Bullets pass through bricks without losing damage, but deal 33% damage\n(rounded up).",
-        price = 1000,
+        description = "Bullets pass through bricks without losing damage, but deal 50% damage\n(rounded down).",
+        price = 750,
     },
     {   
         name = "Damage Core",
         description = "amount and fireRate are always 1 and damage is multiplied by 5",
-        price = 1200,
+        price = 1000,
     },
     {
         name = "Farm Core",
         description = "After every 100 bricks destroyed, give +1 to a random stat for each of your items \n(-1 for cooldown)",
-        price = 1400,
+        price = 1500,
     },
     {
         name = "Brickbreaker Core",
-        description = "Damage you deal has a 5% chance of destroying a brick instantly",
-        price = 1600,
+        description = "Damage you deal has a 10% chance of destroying a brick instantly",
+        price = 2500,
+    },
+    {
+        name = "Madness Core",
+        description = "Damage is divided by 4. Cooldown is halved. Every other stat is doubled",
+        price = 5000,
     },
 }
 
 Player.coreDescriptions = {
     ["Bouncy Core"] = "On bounce, balls gain a deprecating speed boost.",
     ["Spray and Pray Core"] = "Guns shoot twice as fast but are a lot less accurate.",
-    ["Burn Core"] = "Tech items deal burn damage.",
-    ["Brickbreaker Core"] = "Damage you deal has a 5% chance of destroying a brick instantly \n(except for boss)",
-    ["Economy Core"] = "Everything costs 50% less.",
+    -- ["Burn Core"] = "Tech items deal burn damage.",
+    ["Brickbreaker Core"] = "Damage you deal has a 10% chance of destroying a brick instantly \n(except for boss)",
+    ["Economy Core"] = "Everything costs 50% less. Start with 100$",
     ["Damage Core"] = "Amount and fireRate are always 1 and damage is multiplied by 5",
-    ["Phantom Core"] = "Bullets pass through bricks without losing damage, but deal 33% damage\n(rounded up).",
-    ["Farm Core"] = "After every 100 bricks destroyed, all your weapons gain +1 to a random stat\n(-1 for cooldown)",
-    ["Poke Core"] = "Damage and Cooldown are halved and every other stat is doubled"
+    ["Phantom Core"] = "Bullets pass through bricks without losing damage, but deal half damage\n(rounded down, minimum 1).",
+    ["Farm Core"] = "After every 80 bricks destroyed, all your weapons gain +1 to a random stat, but you cannot upgrade ball stats\n(-1 for cooldown)",
+    ["Madness Core"] = "Damage is divided by 4. \nCooldown is halved. \nevery other stat is doubled"
     
 }
 
@@ -419,14 +418,30 @@ function Player.reset()
     Player.money = Player.startingMoney or 0
 end
 
+function Player.levelUp()
+    Player.level = Player.level + 1
+    if Player.level % Player.newWeaponLevelRequirement == 0 then
+        Player.newWeaponLevelRequirement = Player.newWeaponLevelRequirement + 10
+        unlockNewWeaponQueued = true
+        Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.15)
+    elseif Player.level % Player.newStatLevelRequirement == 0 then
+        Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.15)
+        unlockNewStatQueued = true
+        Player.newStatLevelRequirement = Player.newStatLevelRequirement + 10
+    end
+    Player.xp = 0
+    Player.upgradePaddle["paddleSpeed"]()
+    Player.upgradePaddle["paddleSize"]()
+    Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.25)
+    lvlUpPopup()
+end
+
 function Player.gain(amount)
     Player.money = Player.money + amount
     Player.score = Player.score + amount
-    Player.xp = Player.score -- XP follows score
-    if Player.levelThreshold <= Player.score then
-        Player.upgradePaddle["paddleSpeed"]()
-        Player.upgradePaddle["paddleSize"]()
-        Player.levelThreshold = Player.levelThreshold * 2
+    Player.xp = Player.xp + amount -- XP follows score
+    if Player.xp >= Player.xpForNextLevel then
+        Player.levelUp()
     end
     upgradesUI.tryQueue()
 end
@@ -439,15 +454,23 @@ end
 newHighScore = false
 function Player.die()
     -- Check and update high score
+    Balls.clear()
+    Balls.initialize()
     if Player.score > Player.highScore then
         Player.highScore = Player.score
         newHighScore = true
     end
-
+    deathTimerOver = false
+    deathTweenValues.speed = getBrickSpeedMult()  -- Store the current speed for the death animation
+    local deathTransitionTween = tween.new(1.35, deathTweenValues, {speed = 50, overlayOpacity = 1}, tween.inQuad)
+    addTweenToUpdate(deathTransitionTween)
+    Timer.after(1.35, function()
+        toggleFreeze()
+        deathTimerOver = true
+    end)
     -- Calculate gold earned based on score
-    local goldEarned = math.floor(mapRangeClamped(math.sqrt(Player.score), 0, 300, 1.5, 6) * math.sqrt(Player.score))
+    local goldEarned = math.floor(math.sqrt(Player.score) <= 300 and (mapRangeClamped(math.sqrt(Player.score), 0, 300, 1.5, 3) * math.sqrt(Player.score)) or (mapRangeClamped(math.sqrt(Player.score), 300, 600, 3, 5) * math.sqrt(Player.score)))
     Player.addGold(goldEarned)
-    toggleFreeze()
     Player.dead = true
     saveGameData()  -- Save the new high score
 end
@@ -455,20 +478,23 @@ end
 local brickSpeedTween
 local canTakeDamage = true
 function Player.hit()
+    Player.lives = Player.lives - 1
+    if Player.lives <= 0 then
+        Player.die()
+    end
+    --[[
     if canTakeDamage then
         canTakeDamage = false
         Timer.after(4, function() canTakeDamage = true end)
         Player.lives = Player.lives - 1
         Player.lastHitTime = love.timer.getTime()
-        if Player.lives <= 0 then
-            Player.die()
+            brickSpeed.value = -300 / getBrickSpeedByTime()
+            brickSpeedTween = tween.new(2, brickSpeed, { value = 10 }, tween.outExpo)
+            addTweenToUpdate(brickSpeedTween)
         end
-        brickSpeed.value = -300 / getBrickSpeedByTime()
-        brickSpeedTween = tween.new(2, brickSpeed, { value = 10 }, tween.outExpo)
-        addTweenToUpdate(brickSpeedTween)
 
         print("Player hit! Lives left: " .. Player.lives)
-    end
+    end]]
 end
 
 local function checkForHit()
@@ -493,7 +519,8 @@ function Player.pay(amount)
     end
 end
 
-function Player:save()    local saveData = {
+function Player:save()
+    local saveData = {
         startingMoney = self.startingMoney,
         permanentUpgrades = {
             moneyBonus = self.moneyBonus or 0,

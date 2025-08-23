@@ -144,152 +144,6 @@ local function drawPlayerStats()
     local x,y = suit.layout:nextRow(),y
 end
 
-local paddleSizePrice = Player.currentCore == "Economy Core" and 5 or 10
-local paddleSpeedPrice = Player.currentCore == "Economy Core" and 5 or 10
-function resetPaddlePrices()
-    paddleSizePrice = Player.currentCore == "Economy Core" and 5 or 10
-    paddleSpeedPrice = Player.currentCore == "Economy Core" and 5 or 10
-end
-
---[[local function drawPaddleUpgrades()
-    local winX = 0
-    local winY = screenHeight - uiWindowImg:getHeight() + 70
-    love.graphics.draw(uiSmallWindowImg, winX, winY) -- Draw the background window image
-    love.graphics.draw(uiLabelImg, winX + uiWindowImg:getWidth()/2 - 210, winY - uiLabelImg:getHeight()/2+ 10, 0, 1.5, 1) -- Draw the title background image
-    setFont(25)
-    suit.Label("Paddle Upgrades", {align = "center"}, winX + 10, winY - 15, uiWindowImg:getWidth() - 20, 50) -- Draw the title
-
-    -- Button layout
-    local padding = 20
-    local cellWidth = (uiWindowImg:getWidth() - 3 * padding) / 2
-    local cellHeight = 120
-    local buttonHeight = 80
-    local y = winY + 60
-    local x1 = winX + padding
-    local x2 = winX + cellWidth + 2 * padding
-
-    -- PaddleSize Upgrade Button
-    setFont(30)
-    -- Price (top right)
-    local priceText = formatNumber(paddleSizePrice) .. "$"
-    local priceWidth = getTextSize(priceText)
-    local priceX = x1 + cellWidth - priceWidth - 10
-    local priceY = y + 10
-    love.graphics.setColor(0,0,0,1)
-    love.graphics.print(priceText, priceX+2, priceY+2, math.rad(5))
-    local canAffordSize = Player.money >= paddleSizePrice
-    local moneyColor = canAffordSize and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
-    love.graphics.setColor(moneyColor)
-    love.graphics.print(priceText, priceX, priceY, math.rad(5))
-    love.graphics.setColor(1,1,1,1)
-    -- Icon
-    if iconsImg and iconsImg["paddleSize"] then
-        local iconScale = 1.75
-        local iconW = iconsImg["paddleSize"]:getWidth() * iconScale
-        local iconH = iconsImg["paddleSize"]:getHeight() * iconScale
-        love.graphics.draw(iconsImg["paddleSize"], x1 + cellWidth/2 - iconW/2, y + 40, 0, iconScale, iconScale)
-    end
-    -- Value label
-    setFont(35)
-    local buttonID1 = generateNextButtonID()
-    if suit.Button("", {color = invisButtonColor, id = buttonID1}, x1, y, cellWidth, buttonHeight).hit then
-        if canAffordSize then
-            Player.pay(paddleSizePrice)
-            if Player.upgradePaddle then Player.upgradePaddle["paddleSize"]() end
-            paddleSizePrice = paddleSizePrice * 2
-        else
-            print("Not enough money for paddleSize upgrade")
-        end
-    end
-
-    -- Separator (vertical)
-    love.graphics.setColor(0.5,0.5,0.5,1)
-    love.graphics.rectangle("fill", x1 + cellWidth + padding/2, y + 10, 2, buttonHeight - 20)
-    love.graphics.setColor(1,1,1,1)
-
-    -- PaddleSpeed Upgrade Button
-    setFont(30)
-    local priceText2 = formatNumber(paddleSpeedPrice) .. "$"
-    local priceWidth2 = getTextSize(priceText2)
-    local priceX2 = x2 + cellWidth - priceWidth2 - 10
-    local priceY2 = y + 10
-    love.graphics.setColor(0,0,0,1)
-    love.graphics.print(priceText2, priceX2+2, priceY2+2, math.rad(5))
-    local canAffordSpeed = Player.money >= paddleSpeedPrice
-    local moneyColor2 = canAffordSpeed and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
-    love.graphics.setColor(moneyColor2)
-    love.graphics.print(priceText2, priceX2, priceY2, math.rad(5))
-    love.graphics.setColor(1,1,1,1)
-    -- No icon for paddleSpeed
-    if iconsImg and iconsImg["paddleSpeed"] then
-        local iconScale = 1.75
-        local iconW = iconsImg["paddleSpeed"]:getWidth() * iconScale
-        local iconH = iconsImg["paddleSpeed"]:getHeight() * iconScale
-        love.graphics.draw(iconsImg["paddleSpeed"], x2 + cellWidth/2 - iconW/2, y + 40, 0, iconScale, iconScale)
-    end
-    -- Value label
-    setFont(35)
-    -- Upgrade button
-    local buttonID2 = generateNextButtonID()
-    if suit.Button("", {color = invisButtonColor, id = buttonID2}, x2, y, cellWidth, buttonHeight).hit then
-        if canAffordSpeed then
-            Player.pay(paddleSpeedPrice)
-            if Player.upgradePaddle then Player.upgradePaddle["paddleSpeed"]() end
-            paddleSpeedPrice = paddleSpeedPrice * 2
-        else
-            print("Not enough money for paddleSpeed upgrade")
-        end
-    end
-end]]
-
---[[
-local newPerkPrice = Player.currentCore == "Economy Core" and 10000 or 20000 -- Price for unlocking a new perk
-local perkName = ""
-local function drawPerkUpgrade()
-    newPerkPrice = Player.currentCore == "Economy Core" and 10000 or 20000
-    local perkamount = 0
-    for _,_ in pairs(Player.perks) do
-        perkamount = perkamount + 1
-    end
-    local uiSmallWindowW = uiWindowImg:getWidth()
-    local uiSmallWindowH = uiWindowImg:getHeight()
-    local winX = 0
-    local winY = screenHeight - uiSmallWindowH - 100
-    love.graphics.draw(uiSmallWindowImg, winX, winY)
-    setFont(30)
-    if perkamount == 0 then
-        local angle = math.rad(1.5)
-        local priceText = formatNumber(newPerkPrice) .. "$"
-        local priceWidth = getTextSize(priceText)
-        local priceX = winX + (uiSmallWindowW - priceWidth) / 2
-        local priceY = winY + 20
-
-        -- Draw shadow text
-        love.graphics.setColor(0, 0, 0, 1)
-        love.graphics.print(priceText, priceX + 2, priceY + 2, angle)
-        -- Draw main text in money green
-        local canAfford = Player.money >= newPerkPrice
-        local moneyColor = canAfford and {14/255, 202/255, 92/255, 1} or {164/255, 14/255, 14/255,1}
-        love.graphics.setColor(moneyColor)
-        love.graphics.print(priceText, priceX, priceY, angle)
-        love.graphics.setColor(1, 1, 1, 1)
-        setFont(35)
-        if suit.Button("Unlock new perk", {align = "center", color = invisButtonColor}, winX + 10, winY + 10, uiSmallWindowW - 20, uiSmallWindowH - 20).hit and canAfford then
-            Player.pay(newPerkPrice)
-            newPerkPrice = newPerkPrice * 2
-            setLevelUpShop(false, true, false) -- Only show spells in the shop
-            Player.levelingUp = true
-        end
-    else
-        for perkname, _ in pairs(Player.perks) do
-            print("Player perks : " .. perkname)
-        end
-        for perkname, _ in pairs(Player.perks) do
-            love.graphics.print(perkname, winX + uiWindowImg:getWidth()/2 - getTextSize(perkname)/2, winY + uiWindowImg:getHeight()/2 - 40)
-        end
-    end 
-end]]
-
 local levelUpShopType = "ball"
 local displayedUpgrades = {} -- This should be an array, not a table with string keys
 function setLevelUpShop(isForBall, isForPerks)
@@ -475,6 +329,7 @@ function setLevelUpShop(isForBall, isForPerks)
     end
 end
 
+addStatQueued = false -- Flag to indicate if the "add stat" button was queued
 local function drawPlayerUpgrades()
     local padding = 10 -- Padding between elements
     local cellWidth, cellHeight = 200, 50 -- Dimensions for each cell
@@ -536,7 +391,7 @@ local function drawPlayerUpgrades()
             -- draw value
             setFont(35)
             suit.layout:padding(0, 0)
-            suit.Label(tostring((bonusName ~= "cooldown" and "+ " or "") .. tostring(Player.bonuses[bonusName] or 0)), {align = "center"}, x, y+50, cellWidth, 100) -- Display the stat value
+            suit.Label(tostring((bonusName ~= "cooldown" and "+ " or "") .. tostring(Player.bonuses[bonusName] or 0)), {align = "center"}, x -5, y+50, cellWidth, 100) -- Display the stat value
 
             -- draw stat icon
             local iconX = x + cellWidth/2 - iconsImg[statName]:getWidth()*1.75/2
@@ -560,11 +415,28 @@ local function drawPlayerUpgrades()
             local buttonID
             buttonID = generateNextButtonID() -- Generate a unique ID for the button
             local upgradeStatButton = dress:Button("", {color = invisButtonColor, id = buttonID}, x+5, y-20, cellWidth, cellHeight*4)
-            if upgradeStatButton.hit then -- Display the button for upgrading the stat
-                -- Check if the player has enough money to upgrade
+            -- Check if the player has enough money to upgrade
+            local upgradeQueued = false
+            if Player.queuedUpgrades then
+                if Player.queuedUpgrades[1] == bonusName then
+                    upgradeQueued = true
+                end
+            end
+            if upgradeStatButton.hit or (upgradeQueued and Player.money >= Player.bonusPrice[bonusName]) then
                 if Player.money < Player.bonusPrice[bonusName] then
                     print("Not enough money to upgrade " .. bonusName)
+                    table.insert(Player.queuedUpgrades, bonusName)
                 else
+                    playSoundEffect(upgradeSFX, 0.5, 0.95, false)
+                    if upgradeQueued then
+                        -- Remove the queued upgrade if the player has enough money now
+                        for i = #Player.queuedUpgrades, 1, -1 do
+                            if Player.queuedUpgrades[i] == bonusName then
+                                table.remove(Player.queuedUpgrades, i)
+                                break
+                            end
+                        end
+                    end
                     -- Always pay first, then increase the price
                     Player.pay(Player.bonusPrice[bonusName]) -- Deduct the cost from the player's money
                     Player.bonusUpgrades[bonusName]() -- Call the upgrade function
@@ -582,6 +454,19 @@ local function drawPlayerUpgrades()
                     end
                 end
             end
+            local upgradeCount = 0
+            for _, queuedUpgrade in ipairs(Player.queuedUpgrades) do
+                if queuedUpgrade == statName then
+                    upgradeCount = upgradeCount + 1
+                end
+            end 
+            setFont(30)
+            if upgradeCount > 0 then
+                love.graphics.setColor(161/255, 231/255, 1, 1)
+                love.graphics.print((statName == "cooldown" and "-" or "+") .. upgradeCount, x + cellWidth/3*2 - 5, y + 35) -- Display queued upgrade count
+            end
+            love.graphics.setColor(1,1,1,1)
+
             if upgradeStatButton.entered then
                 hoveredStatName = statName
             elseif upgradeStatButton.left and hoveredStatName == statName then
@@ -591,48 +476,32 @@ local function drawPlayerUpgrades()
         end
         if intIndex < 5 then
             if currentCol < 2 then
-                local buttonID = generateNextButtonID()
                 local x,y,w,h = definition.cell(currentCol+1)
-                suit.layout:reset(x, y, padding, padding)
+                -- Calculate center position
+                local labelWidth = w*3/4
+                local centerX = x + (w - labelWidth)/2
+                suit.layout:reset(centerX, y - 65, padding, padding)
                 setFont(30)
-                if suit.Button("add stat", {color = invisButtonColor, id = buttonID, align = "center"}, suit.layout:row(w, cellHeight*4)).hit and Player.money >= Player.newUpgradePrice then
-                    Player.pay(Player.newUpgradePrice) -- Deduct the cost from the player's money
+                suit.Label("Unlock New Stat at lvl " .. Player.newStatLevelRequirement, {color = {normal = {fg = {1,1,1}}, hovered = {fg = {1,1,1}}, active = {fg = {1,1,1}}}, align = "center"}, suit.layout:row(labelWidth, cellHeight*4))
+                if unlockNewStatQueued then
                     Player.newUpgradePrice = Player.newUpgradePrice * Player.upgradePriceMultScaling
                     setLevelUpShop(false) -- Set the level up shop with ball unlockedBallTypes
                     Player.levelingUp = true -- Set the flag to indicate leveling up
+                    unlockNewStatQueued = false
                 end
                 setFont(16)
-
-                -- render price
-                setFont(45)
-                local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(Player.newUpgradePrice))/2
-                love.graphics.setColor(0,0,0,1)
-                love.graphics.print(formatNumber(Player.newUpgradePrice) .. "$",x + 104 + moneyOffsetX, y+4, math.rad(5))
-                local moneyColor = Player.money >= Player.newUpgradePrice and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
-                love.graphics.setColor(moneyColor)
-                love.graphics.print(formatNumber(Player.newUpgradePrice) .. "$",x + 100 + moneyOffsetX, y, math.rad(5))
-                love.graphics.setColor(1,1,1,1)
             elseif i == math.max(rowCount,1) then
                 y = y + 210 -- Add padding to the y position for the next row
-                suit.layout:reset(10, y + 10, padding, padding)
+                -- Calculate center position for full width label
+                suit.layout:reset(10, y - 10, padding, padding)
                 setFont(30)
-                if suit.Button("add stat", {color = invisButtonColor, id = buttonID, align = "center"}, suit.layout:row(statsWidth - 20, cellHeight*4)).hit and Player.money >= Player.newUpgradePrice then
-                    Player.pay(Player.newUpgradePrice) -- Deduct the cost from the player's money
+                suit.Label("Unlock New Stat at lvl " .. Player.newStatLevelRequirement, {color = {normal = {fg = {1,1,1}}, hovered = {fg = {1,1,1}}, active = {fg = {1,1,1}}}, align = "center"}, suit.layout:row(w, cellHeight*4))
+                if unlockNewStatQueued then
                     Player.newUpgradePrice = Player.newUpgradePrice * Player.upgradePriceMultScaling
                     setLevelUpShop(false) -- Set the level up shop with ball unlockedBallTypes
                     Player.levelingUp = true -- Set the flag to indicate leveling up
+                    unlockNewStatQueued = false
                 end
-                setFont(16)
-
-                -- render price
-                setFont(45)
-                local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(Player.newUpgradePrice))/2
-                love.graphics.setColor(0,0,0,1)
-                love.graphics.print(formatNumber(Player.newUpgradePrice) .. "$",x + 104 + moneyOffsetX, y+4, math.rad(5))
-                local moneyColor = Player.money >= Player.newUpgradePrice and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
-                love.graphics.setColor(moneyColor)
-                love.graphics.print(formatNumber(Player.newUpgradePrice) .. "$",x + 100 + moneyOffsetX, y, math.rad(5))
-                love.graphics.setColor(1,1,1,1)
             end
         end
         y = y + 210
@@ -641,6 +510,7 @@ local function drawPlayerUpgrades()
     end
 end
 
+unlockNewWeaponQueued = false
 local function drawBallStats()  
     local x, y = suit.layout:nextRow() -- Get the next row position
     local x, y = screenWidth - statsWidth + 10, 10 -- Starting position for the ball stats
@@ -650,7 +520,7 @@ local function drawBallStats()
 
     --draw Title
     setFont(28) -- Set font for the title
-    love.graphics.draw(uiLabelImg, screenWidth-statsWidth/2-140*1.1, -12,0,1.1,1.1)
+    love.graphics.draw(uiLabelImg, screenWidth-statsWidth/2-140 * 1.1, -12,0,1.1,1.1)
     suit.Label("Ball Types", {align = "center"}, screenWidth-statsWidth/2-140*1.1, 5, 280 * 1.1, 30)
     suit.layout:row(statsWidth, 60)
     local x,y = suit.layout:nextRow()
@@ -680,27 +550,29 @@ local function drawBallStats()
         setFont(20)
         local typeColor = {normal = {fg = {0.6,0.6,0.6,1}}}
         y = y + uiLabelImg:getHeight()/2
-        suit.Label(ballType.type or "Unk type", {color = typeColor, align = "center"}, x + statsWidth/2-50-7, y, 100, 50)
+        --suit.Label(ballType.type or "Unk type", {color = typeColor, align = "center"}, x + statsWidth/2-50-7, y, 100, 50)
 
         -- price label
-        setFont(50)
-        local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(ballType.price))/2
-        love.graphics.setColor(0,0,0,1)
-        love.graphics.print(formatNumber(ballType.price) .. "$",x + statsWidth/2 + 104 +moneyOffsetX, y+4, math.rad(5))
-        local moneyColor = Player.money >= ballType.price and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
-        love.graphics.setColor(moneyColor)
-        love.graphics.print(formatNumber(ballType.price) .. "$",x + statsWidth/2 + 100 +moneyOffsetX, y, math.rad(5))
-        love.graphics.setColor(1,1,1,1)
+        if Player.currentCore ~= "Farm Core" then
+            setFont(50)
+            local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(ballType.price))/2
+            love.graphics.setColor(0,0,0,1)
+            love.graphics.print(formatNumber(ballType.price) .. "$",x + statsWidth/2 + 104 +moneyOffsetX, y+4, math.rad(5))
+            local moneyColor = Player.money >= ballType.price and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
+            love.graphics.setColor(moneyColor)
+            love.graphics.print(formatNumber(ballType.price) .. "$",x + statsWidth/2 + 100 +moneyOffsetX, y, math.rad(5))
+            love.graphics.setColor(1,1,1,1)
+        end
 
         -- damageDealt label (top right, mirroring price)
         local damageDealt = ballType.damageDealt or 0
         local dmgText = tostring(formatNumber(damageDealt)) .. " dmg"
-        local dmgOffsetX = -math.cos(math.rad(5))*getTextSize(dmgText)/2
         setFont(30)
+        local dmgOffsetX = -math.cos(math.rad(-2.5))*getTextSize(dmgText)/2
         local dmgTextWidth = love.graphics.getFont():getWidth(dmgText)
 
         -- Place at top right of the window, mirroring price
-        local dmgX = screenWidth - statsWidth*3/4 + 20
+        local dmgX = screenWidth - statsWidth*3/4
         local dmgY = y + 13
         love.graphics.setColor(0,0,0,1)
         love.graphics.print(dmgText, dmgX + 4 + dmgOffsetX, dmgY + 4,math.rad(-2.5))
@@ -780,8 +652,11 @@ local function drawBallStats()
                 if statName == "damage" then
                     if Player.currentCore == "Damage Core" then
                         value = value * 5 -- Double damage for Damage Core
-                    elseif Player.currentCore == "Phantom Core" and ballType.type == "gun" then
-                        value = value / 3
+                    elseif Player.currentCore == "Phantom Core" and (ballType.type == "gun" or ballType.name == "Turret Generator" or ballType.name == "Gun Ball")then
+                        value = value / 2
+                    end
+                    if ballName == "Sniper" then
+                        value = value * 10
                     end
                 end
                 if statName == "amount" and ballType.noAmount == false then
@@ -790,7 +665,14 @@ local function drawBallStats()
                 if statName == "cooldown" then
                     value = math.max(0, value)
                 end
-                if Player.currentCore == "Phantom Core" and ballType.type == "gun" and statName == "damage" then
+                if Player.currentCore == "Madness Core" then
+                    if statName == "damage" or statName == "cooldown" then
+                        value = value * 0.5 -- Half damage and cooldown for Madness Core
+                    else
+                        value = value * 2 -- Double speed for Madness Core
+                    end
+                end
+                if (Player.currentCore == "Phantom Core" and ballType.type == "gun" and statName == "damage") or (Player.currentCore == "Madness Core" and (statName == "damage" or statName == "cooldown")) then
                     suit.Label(tostring(string.format("%.1f", value)), {align = "center"}, x, y-25, cellWidth, 100)
                 else
                     suit.Label(tostring(value), {align = "center"}, x, y-25, cellWidth, 100)
@@ -816,6 +698,7 @@ local function drawBallStats()
                 local buttonID
                 buttonID = generateNextButtonID() -- Generate a unique ID for the button
                 local upgradeStatButton = dress:Button("", {color = invisButtonColor, id = buttonID}, x, y-10, cellWidth, 150)
+                -- Right-click to remove all queued upgrades of this stat
                 local canUpgrade = true
                 if statName == "cooldown" and Player.currentCore == "Cooldown Core" then
                     canUpgrade = false -- Cannot upgrade cooldown if using Cooldown Core
@@ -826,12 +709,32 @@ local function drawBallStats()
                 if ((statName == "fireRate" or statName == "amount") and Player.currentCore == "Damage Core")then
                     canUpgrade = false -- Cannot upgrade fireRate or amount if using Damage Core
                 end
-                if upgradeStatButton.hit and canUpgrade then
+                local upgradeQueued = false
+                if ballType.queuedUpgrades then
+                    if ballType.queuedUpgrades[1] == statName then
+                        upgradeQueued = true
+                    end
+                end
+                if (upgradeStatButton.hit or (upgradeQueued and Player.money >= ballType.price)) and canUpgrade and Player.currentCore ~= "Farm Core" then
                     if Player.money < ballType.price then
-                            print("Not enough money to upgrade " .. ballType.name .. "'s " .. statName)
+                        -- queue upgrade
+                        if (not (statName == "cooldown" and getStat(ballName, "cooldown") <= 0)) and #ballType.queuedUpgrades <= 2 then
+                            table.insert(ballType.queuedUpgrades, statName)
+                        end
+                        print("Not enough money to upgrade " .. ballType.name .. "'s " .. statName)
                     elseif statName == "cooldown" and getStat(ballName, "cooldown") <= 0 then
                         print("cannot upgrade cooldown any further")
+                        playSoundEffect(upgradeSFX, 0.5, 0.95, false)
                     else
+                        playSoundEffect(upgradeSFX, 0.5, 0.95, false)
+                        if upgradeQueued then
+                            for i, queuedUpgrade in ipairs(ballType.queuedUpgrades) do
+                                if queuedUpgrade == statName then
+                                    table.remove(ballType.queuedUpgrades, i)
+                                    break
+                                end
+                            end
+                        end
                         setFont(16)
                         print("Upgrading " .. ballType.name .. "'s " .. statName)
                         local stat = ballType.stats[statName] or 0-- Get the current stat value
@@ -858,7 +761,20 @@ local function drawBallStats()
                 elseif upgradeStatButton.left and hoveredStatName == statName then
                     hoveredStatName = nil
                 end
+                
+                local upgradeCount = 0
+                for _, queuedUpgrade in ipairs(ballType.queuedUpgrades) do
+                    if queuedUpgrade == statName then
+                        upgradeCount = upgradeCount + 1
+                    end
+                end
+                setFont(30)
+                if upgradeCount > 0 then
+                    love.graphics.setColor(161/255, 231/255, 1, 1)
+                    love.graphics.print((statName == "cooldown" and "-" or "+") .. upgradeCount, x + cellWidth/3*2 - 5, y - 5) -- Display queued upgrade count\
+                end
                 intIndex = intIndex + 1
+                love.graphics.setColor(1,1,1,1)
             end
         end
         suit.layout:row(statsWidth, 20) -- Add spacing for the separator
@@ -872,38 +788,20 @@ local function drawBallStats()
         suit.layout:reset(x, y, 10, 10)
         love.graphics.draw(uiSmallWindowImg, x-25,y) -- Draw the background window image
         x = x - 10
-        y = y + 10
+        y = y
         suit.layout:reset(x, y, 10, 10)
         -- Button to unlock a new ball type
         setFont(30)
         local angle = angle or math.rad(1.5) -- Default angle if not provided
-
-        local price = Balls.getNextBallPrice()
-        price = Player.currentCore == "Economy Core" and math.floor(price * 0.5) or price -- Apply Economy Core discount
-        --draw money text
-        x = x + (uiSmallWindowImg:getWidth() - 25)/4 * 3
-        y = y + 7
-        setFont(50)
-        local moneyOffsetX = -math.cos(math.rad(5)) * getTextSize(formatNumber(price))/2
-
-        -- Draw shadow text
-        love.graphics.setColor(0, 0, 0, 1)
-        love.graphics.print(formatNumber(price) .. "$", x + 4 + moneyOffsetX, y + 4, angle)
-
-        -- Draw main text in money green
-        local canAfford = Player.money >= price
-        local moneyColor = canAfford and {14/255, 202/255, 92/255, 1} or {164/255, 14/255, 14/255,1}
-        love.graphics.setColor(moneyColor)
-        love.graphics.print(formatNumber(price) .. "$", x + moneyOffsetX, y, angle)
-
-        -- Reset color
         love.graphics.setColor(1, 1, 1, 1)
         setFont(35)
-        if suit.Button("unlock new weapon", {align = "center", color = invisButtonColor}, suit.layout:row(uiSmallWindowImg:getWidth() - 25, uiSmallWindowImg:getHeight() - 27)).hit and Player.money >= Balls.getNextBallPrice() then
-                Player.pay(Balls.getNextBallPrice())
-                Balls.NextBallPriceIncrease()
-                setLevelUpShop(true) -- Set the level up shop with ball unlockedBallTypes
-                Player.levelingUp = true -- Set the flag to indicate leveling up
+        local levelRequirement = Player.newWeaponLevelRequirement or 5
+        suit.Button("unlock new weapon at lvl " .. levelRequirement, {align = "center", color = invisButtonColor}, suit.layout:row(uiSmallWindowImg:getWidth() - 25, uiSmallWindowImg:getHeight() - 27))
+        if unlockNewWeaponQueued then
+            Balls.NextBallPriceIncrease()
+            setLevelUpShop(true) -- Set the level up shop with ball unlockedBallTypes
+            Player.levelingUp = true -- Set the flag to indicate leveling up
+            unlockNewWeaponQueued = false
         end
     end
 end
@@ -944,6 +842,7 @@ local function drawLevelUpShop()
         local buttonID = "upgrade_" .. index
         suit.layout:reset(buttonX, buttonY, 10, 10) -- Reset layout for each button
         if suit.Button("", {id = buttonID, align = "center"}, suit.layout:col(buttonWidth, buttonHeight)).hit then
+            playSoundEffect(upgradeSFX, 0.5, 0.95, false)
             -- Button clicked: apply the effect and close the shop
             print("Clicked on upgrade: " .. currentUpgrade.name)
             currentUpgrade.effect() -- Apply the effect of the upgrade
@@ -977,9 +876,9 @@ function upgradesUI.draw()
     --drawPaddleUpgrades()
 
     -- Draw separator lines
-    love.graphics.setColor(0.6, 0.6, 0.6, 0.6*math.max(math.min(math.max(0, 1-math.abs(Balls.getMinX()-statsWidth)/100), 1),math.min(math.max(0, 1-math.abs(paddle.x-statsWidth)/100), 1))) -- Light gray
+    love.graphics.setColor(0.6, 0.6, 0.6, 0.6*math.max(math.min(math.max(0, 1-math.abs(Balls.getMinX()-statsWidth)/100), 1),math.min(math.max(0, 1-math.max(paddle.x-statsWidth,0)/100), 1))) -- Light gray
     love.graphics.rectangle("fill", statsWidth, 0, 1, screenHeight) -- Separator line
-    love.graphics.setColor(0.6, 0.6, 0.6, 0.6*math.max(math.min(math.max(0, 1-math.abs(Balls.getMaxX()-(screenWidth - statsWidth))/100), 1), math.min(math.max(0, 1-math.abs(paddle.x + paddle.width-(screenWidth - statsWidth))/100))))
+    love.graphics.setColor(0.6, 0.6, 0.6, 0.6*math.max(math.min(math.max(0, 1-math.abs(Balls.getMaxX()-(screenWidth - statsWidth))/100), 1), math.min(math.max(0, 1-math.max((screenWidth - statsWidth) - (paddle.x + paddle.width),0)/100))))
     love.graphics.rectangle("fill", screenWidth - statsWidth, 0, 1, screenHeight)
     love.graphics.setColor(0.6, 0.6, 0.6, 0.6* mapRangeClamped(math.abs(getHighestBrickY() + brickHeight - paddle.y), 0, 150, 1, 0)) -- Reset color to white
     love.graphics.rectangle("fill", statsWidth, paddle.y, screenWidth - statsWidth * 2, 1) -- Draw the paddle area

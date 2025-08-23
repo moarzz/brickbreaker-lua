@@ -20,7 +20,7 @@ function FlamethrowerVFX:new(x, y, direction)
     self.time = 0 -- For turbulence calculations
     
     -- Flame properties
-    self.baseSpeed = 450
+    self.baseSpeed = 550
     self.speedVariation = 80
     self.spread = math.pi / 6 -- 30 degrees spread
     self.range = 500

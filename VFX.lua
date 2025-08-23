@@ -41,8 +41,7 @@ end
 local impactCount = 0
 local function brickHitParticles(brick, ball, intensity)
     -- Default to brick center if ball position is unavailable
-    --[[
-    local ballX = ball.x or brick.x + brick.width/2
+    --[[local ballX = ball.x or brick.x + brick.width/2
     local ballY = ball.y or brick.y + brick.height/2
 
     -- Calculate effect position using safe values
@@ -62,7 +61,6 @@ local function brickHitParticles(brick, ball, intensity)
         end
         if dmgVFXOn and impactCount < 20 then
             createSpriteAnimation(effectX, effectY, mapRangeClamped(intensity, 1, 20, 0.25, 0.65), impactVFX, 512, 512, 0.005, 4)
-            Timer.after()
         end
         brick._lastImpactVFX = love.timer.getTime()
     end]]

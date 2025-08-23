@@ -142,8 +142,8 @@ local function paddleCoresDraw()
         i = i + 1
         local colWidth = menuWidth + 20
         local rowHeight = buttonHeight + buttonSpacing
-        local col = math.floor((i-1) / 5)
-        local row = (i-1) % 5
+        local col = math.floor((i-1) / 4)
+        local row = (i-1) % 4
         local x = menuX + col * colWidth
         local y = menuY + row * rowHeight
         
@@ -197,13 +197,6 @@ function permanentUpgrades.draw()
     startingItemsDraw()  -- Draw the starting items menu
     paddleCoresDraw()
 
-    -- Back button using uiLabelImg
-    love.graphics.draw(uiLabelImg, 20, 20, 0, 0.75, 0.75)
-    if dress:Button("Back", {color = invisButtonColor}, 20, 20, uiLabelImg:getWidth()*0.75, uiLabelImg:getHeight()*0.75).hit then
-        currentGameState = GameState.MENU
-    end
-    setFont(28)
-
     -- Draw money and score at the top
     local statsLayout = {
         min_width = 430,
@@ -244,15 +237,23 @@ function permanentUpgrades.draw()
 
         local x = padding + col * (cellWidth + padding)
         local y = y + row * 200  -- Space for price, value and icon        -- Render price
-        setFont(45)
-        local price = Player.permanentUpgradePrices[upgradeName] or 100  -- Default price if not set
-        local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(price))/2
-        love.graphics.setColor(0,0,0,1)
-        love.graphics.print(formatNumber(price) .. "$", x + 104 + moneyOffsetX, y + 4, math.rad(5))
-        local moneyColor = Player.gold >= price and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
-        love.graphics.setColor(moneyColor)
-        love.graphics.print(formatNumber(price) .. "$", x + 100 + moneyOffsetX, y, math.rad(5))
-        love.graphics.setColor(1,1,1,1)
+        local price
+        if Player.permanentUpgrades[upgradeName] < 2 and (not (upgradeName == "cooldown" and Player.permanentUpgrades[upgradeName] <= -2)) then
+            setFont(45)
+            price = Player.permanentUpgradePrices[upgradeName] or 100  -- Default price if not set
+            local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(price))/2
+            love.graphics.setColor(0,0,0,1)
+            love.graphics.print(formatNumber(price) .. "$", x + 104 + moneyOffsetX, y + 4, math.rad(5))
+            local moneyColor = Player.gold >= price and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
+            love.graphics.setColor(moneyColor)
+            love.graphics.print(formatNumber(price) .. "$", x + 100 + moneyOffsetX, y, math.rad(5))
+            love.graphics.setColor(1,1,1,1)
+        else
+            setFont(25)
+            local text = "Max Level"
+            local offsetX = -getTextSize(text)/2
+            love.graphics.print(text, x + 110 + offsetX, y)
+        end
 
         -- Draw value
         setFont(35)
@@ -266,7 +267,7 @@ function permanentUpgrades.draw()
         local buttonID = generateNextButtonID()
         local upgradeStatButton = dress:Button("", {color = invisButtonColor, id = buttonID}, x+5, y-20, cellWidth, 200)
         
-        if upgradeStatButton.hit then
+        if upgradeStatButton.hit and (Player.permanentUpgrades[upgradeName] < 2 and (not (upgradeName == "cooldown" and Player.permanentUpgrades[upgradeName] <= -2))) then
             if Player.gold < price then
                 print("Not enough money to upgrade " .. upgradeName)
             else
@@ -281,7 +282,7 @@ function permanentUpgrades.draw()
                     Player.permanentUpgrades[upgradeName] = 1
                 end
                 Player.gold = Player.gold - price
-                Player.permanentUpgradePrices[upgradeName] = price * 5
+                Player.permanentUpgradePrices[upgradeName] = price * 10
                 -- Apply any immediate effects of the upgrade
                 if upgradeName == "paddleSize" then
                     Player.bonusUpgrades.paddleSize()

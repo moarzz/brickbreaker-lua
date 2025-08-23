@@ -111,7 +111,7 @@ function GameOverDraw()
     -- Draw gold Earned (top right)
     love.graphics.setColor(1, 1, 1, 1) -- Reset color to white
     setFont(48)
-    local goldEarned = math.floor(mapRangeClamped(math.sqrt(Player.score), 0, 300, 1.5, 6) * math.sqrt(Player.score))
+    local goldEarned = math.floor(math.sqrt(Player.score) <= 300 and (mapRangeClamped(math.sqrt(Player.score), 0, 300, 1.5, 3) * math.sqrt(Player.score)) or (mapRangeClamped(math.sqrt(Player.score), 300, 600, 3, 5) * math.sqrt(Player.score)))
     local goldText = "gold earned: ".. formatNumber(goldEarned) .. "$"
     currentFont = love.graphics.getFont()
     local moneyWidth = currentFont:getWidth(goldText)
@@ -125,22 +125,22 @@ function GameOverDraw()
     local buttonSpacing = 50
     local totalWidth = (buttonWidth * 3) + (buttonSpacing * 2)
     local startX = (screenWidth - totalWidth) / 2
-    local buttonY = screenHeight / 2 + 100
+    local buttonY = screenHeight / 2 + 200
 
     -- Upgrades button (left)
-    if suit.Button("Upgrades", {id = generateNextButtonID()}, startX, buttonY, buttonWidth, buttonHeight).hit then
+    if dress:Button("Upgrades", {id = generateNextButtonID()}, startX, buttonY, buttonWidth, buttonHeight).hit then
         currentGameState = GameState.UPGRADES
         Player.reset()
     end
 
     -- Main Menu button (center)
-    if suit.Button("Main Menu", {id = generateNextButtonID()}, startX + buttonWidth + buttonSpacing, buttonY, buttonWidth, buttonHeight).hit then
+    if dress:Button("Main Menu", {id = generateNextButtonID()}, startX + buttonWidth + buttonSpacing, buttonY + 75, buttonWidth, buttonHeight).hit then
         currentGameState = GameState.MENU
         Player.reset()
     end    
     
     -- Play Again button (right)
-    if suit.Button("Play Again", {id = generateNextButtonID()}, startX + (buttonWidth + buttonSpacing) * 2, buttonY, buttonWidth, buttonHeight).hit then
+    if dress:Button("Play Again", {id = generateNextButtonID()}, startX + (buttonWidth + buttonSpacing) * 2, buttonY, buttonWidth, buttonHeight).hit then
         resetGame()
         currentGameState = GameState.START_SELECT
     end
@@ -485,7 +485,7 @@ function addExplosion(x, y, radius, duration, speed, color)
 end
 
 -- function to calculate circle hitboxes
-function getBricksTouchingCircle(circleX, circleY, radius)
+function getBricksInCircle(circleX, circleY, radius)
     local bricksTouchingCircle = {}
 
     for _, brick in ipairs(bricks) do
@@ -525,13 +525,14 @@ function boomUpdate(dt)
 end
 
 local animationID = 1
-local animations = {}
+animations = {}
 
 function resetAnimations()
     animations = {} -- Reset the animations table
     animationID = 1 -- Reset the animation ID counter
 end
-function createSpriteAnimation(x, y, scale, spritesheet, frameWidth, frameHeight, frameTime, skipFrames, looping, scaleX, scaleY, angle, color)
+
+function createSpriteAnimation(x, y, scale, spritesheet, frameWidth, frameHeight, frameTime, skipFrames, looping, scaleX, scaleY, angle, color, isFire, brickId)
     looping = looping or false
     local animation = {}
     animation.id = animationID
@@ -550,6 +551,8 @@ function createSpriteAnimation(x, y, scale, spritesheet, frameWidth, frameHeight
     animation.quads = {}
     animation.angle = angle or 0 -- Default to 0 if not provided
     animation.color = color or {1,1,1,1} -- Default alpha value for the animation
+    animation.isFire = isFire or false -- Flag to indicate if this is a fire animation
+    animation.brickId = brickId or nil -- Store the brick ID if applicable
 
     animationID = animationID + 1 -- Increment the animation ID for the next animation
 
@@ -587,6 +590,57 @@ function getAnimation(id)
         end
     end
     return nil -- Return nil if no animation with the given ID is found
+end
+
+local lvlUpTexts = {}
+local currentPopupId = 1
+function lvlUpPopup()
+    playSoundEffect(lvlUpSFX, 0.55, 1, false)
+    local popup = {
+        id = currentPopupId,
+        x = paddle.x + paddle.width/2,
+        y = paddle.y + paddle.height/2,
+        size = 0,
+        color = {0, 0.25, 1, 1}  -- RGB + Alpha
+    }
+    currentPopupId = currentPopupId + 1 -- Increment the popup ID for the next popup
+    local popupSizeTween = tween.new(0.1, popup, {size = 50}, tween.easing.outExpo)
+    addTweenToUpdate(popupSizeTween)
+    Timer.after(0.1, function() 
+        local popupSizeTweenOut = tween.new(1.4, popup, {size = 0}, tween.easing.inExpo)
+        addTweenToUpdate(popupSizeTweenOut)
+    end)
+    local xVelocity = math.random(-50, 50) + mapRangeClamped(paddle.x + paddle.width/2, statsWidth, screenWidth - statsWidth, 150, -150)
+    local totalLengthTween = tween.new(1.5, popup, {x = popup.x + xVelocity, y = popup.y + math.random(-300, -150)}, tween.easing.outExpo)
+    addTweenToUpdate(totalLengthTween)
+    table.insert(lvlUpTexts, popup)
+    Timer.after(1.5, function()
+        -- Remove the popup after the total length tween is complete
+        for i = #lvlUpTexts, 1, -1 do
+            if lvlUpTexts[i].id == popup.id then
+                table.remove(lvlUpTexts, i)
+                break
+            end
+        end
+    end)
+end
+
+function drawLvlUpPopups()
+    for i = #lvlUpTexts, 1, -1 do
+        local popup = lvlUpTexts[i]
+        if not popup then
+            table.remove(lvlUpTexts, i)
+            goto continue
+        end
+        if popup.size > 0 then  -- Only draw if size is positive
+            setFont(math.max(1, math.ceil(popup.size)))
+            love.graphics.setColor(popup.color[1], popup.color[2], popup.color[3], popup.color[4] or 1)
+            setFont(math.max(1, math.floor(popup.size)))  -- Ensure font size is at least 1 and is an integer
+            love.graphics.print("Level Up!", popup.x - getTextSize("Level Up!")/2, popup.y)  -- Center the text
+        end
+        ::continue::
+    end
+    love.graphics.setColor(1, 1, 1, 1) -- Reset color to white after drawing popups
 end
 
 function removeAnimation(id)
@@ -828,6 +882,37 @@ function damageNumber(damage, x, y, color)
     end)
 end
 
+function healNumber(number, x, y)
+    local healNumber = {
+        x = x,
+        y = y,
+        damage = number,
+        color = {125/255, 1, 0, 1},
+        alpha = 1,
+        fontSize = 0
+    }
+    table.insert(damageNumbers, healNumber)
+
+    local sizeTween = tween.new(0.75, healNumber, {fontSize = number < 10 and mapRange(number, 0, 10, 1, 3) or mapRangeClamped(number, 10, 50, 3, 5)}, tween.easing.outBack)
+    addTweenToUpdate(sizeTween)
+
+    local xRandom, yRandom = math.random(-15, 15), -15 - math.random(20)
+    local offsetTween = tween.new(0.75, healNumber, {x = x + xRandom, y = y + yRandom}, tween.easing.outQuad)
+    addTweenToUpdate(offsetTween)
+     Timer.after(0.40, function()
+        local alphaTween = tween.new(0.35, healNumber, {alpha = 0}, tween.easing.outCirc)
+        addTweenToUpdate(alphaTween)
+    end)
+    Timer.after(0.75, function()
+        for i = #damageNumbers, 1, -1 do
+            if damageNumbers[i] == damageNumbers then
+                table.remove(damageNumbers, i) -- Remove the damage number after its duration
+                break
+            end
+        end
+    end)
+end
+
 function drawDamageNumbers()
     for _, damageNumber in ipairs(damageNumbers) do
         setFont("assets/Fonts/KenneyBlocks.ttf", 60)
@@ -839,6 +924,7 @@ function drawDamageNumbers()
         drawCenteredText(tostring(damageNumber.damage), damageNumber.x*3/damageNumber.fontSize, damageNumber.y*3/damageNumber.fontSize, love.graphics.getFont(), color) -- Draw the damage number
         love.graphics.pop()
     end
+    love.graphics.setColor(1,1,1,1)
 end
 
 function printMoney(text, centerX, centerY, angle, buyable)

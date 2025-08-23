@@ -13,6 +13,7 @@ function suit.new(theme)
 		theme = theme or default_theme,
 		mouse_x = 0, mouse_y = 0,
 		mouse_button_down = false,
+		mouse_right_down = false,
 		candidate_text = {text="", start=0, length=0},
 
 		draw_queue = {n = 0},
@@ -96,7 +97,7 @@ end
 -- mouse handling
 function suit:mouseInRect(x,y,w,h)
 	return self.mouse_x >= x and self.mouse_y >= y and
-	       self.mouse_x <= x+w and self.mouse_y <= y+h
+		   self.mouse_x <= x+w and self.mouse_y <= y+h
 end
 
 function suit:registerMouseHit(id, ul_x, ul_y, hit)
@@ -127,6 +128,10 @@ function suit:updateMouse(x, y, button_down)
 	self.mouse_x, self.mouse_y = x,y
 	if button_down ~= nil then
 		self.mouse_button_down = button_down
+	end
+	-- Update right mouse button state
+	if love.mouse.isDown then
+		self.mouse_right_down = love.mouse.isDown(2)
 	end
 end
 
