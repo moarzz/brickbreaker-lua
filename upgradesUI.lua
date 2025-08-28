@@ -146,10 +146,14 @@ end
 
 local levelUpShopType = "ball"
 local displayedUpgrades = {} -- This should be an array, not a table with string keys
+local tweenSpeed = 2 -- Adjust this to control fade in speed
+
 function setLevelUpShop(isForBall, isForPerks)
+    levelUpShopAlpha = 0
     isForPerks = isForPerks or false -- Default to false if not provided
     isForSpells = isForSpells or false
     if isForPerks then isForBall = false end -- If perks are requested, set isForBall to false
+    shouldTweenAlpha = true
     displayedUpgrades = {} -- Clear the displayed upgrades
     if isForBall then
         levelUpShopType = "ball"
@@ -162,7 +166,22 @@ function setLevelUpShop(isForBall, isForPerks)
         local availableBalls = {}
         for name, ballType in pairs(Balls.getBallList()) do
             if (not unlockedBallNames[name]) then
-                table.insert(availableBalls, ballType)
+                local iterations = 3
+                local ballList = Balls.getBallList()
+                if ballList[ballType.name].rarity == "common" then
+                    iterations = 7
+                elseif ballList[ballType.name].rarity == "uncommon" then
+                    iterations = 5
+                elseif ballList[ballType.name].rarity == "rare" then
+                    iterations = 3
+                elseif ballList[ballType.name].rarity == "legendary" then
+                    iterations = 3
+                else 
+                    iterations = 7
+                end
+                for i = 1, iterations do
+                    table.insert(availableBalls, ballType)
+                end
             end
         end
         local currentBallType = nil
@@ -178,10 +197,18 @@ function setLevelUpShop(isForBall, isForPerks)
                     if unlockedBallNames[currentBallType.name] then
                         bruh = true
                     end
-            local canBuy = Balls.getBallList()[currentBallType.name].canBuy
-            if canBuy and not canBuy() then
-                bruh = true
-            end
+                    local canBuy = Balls.getBallList()[currentBallType.name].canBuy
+                    if canBuy then
+                        if not canBuy() then
+                            bruh = true
+                        end
+                    end
+                    for _, upgrade in ipairs(displayedUpgrades) do
+                        if upgrade.name == currentBallType.name then
+                            bruh = true
+                            break
+                        end
+                    end
                 end
                 local thisBallType = currentBallType
                 table.insert(displayedUpgrades, {
@@ -193,7 +220,7 @@ function setLevelUpShop(isForBall, isForPerks)
                     end
                 })
                 -- Remove this ball from available options using the correct index
-                table.remove(availableBalls, index)
+                -- table.remove(availableBalls, index)
             end
         end
     elseif isForPerks then
@@ -234,18 +261,24 @@ function setLevelUpShop(isForBall, isForPerks)
         local advantagiousBonuses = {}
         for _, item in pairs(Balls.getUnlockedBallTypes()) do
             for statName, stat in pairs(item.stats) do
-                local doit = true
                 if not Player.bonuses[statName] then
+                -- Only add if it's allowed for current core and not already in list
+                if not ((Player.currentCore == "Damage Core") and (statName == "fireRate" or statName == "amount")) 
+                and not (Player.currentCore == "Cooldown Core" and statName == "cooldown") then
+                    -- Check if already exists
+                    local alreadyExists = false
                     for _, bonus in ipairs(advantagiousBonuses) do
-                        if bonus == statName and (not ((Player.currentCore == "Damage Core") and (statName == "fireRate" or statName == "amount"))) and not (Player.currentCore == "Cooldown Core" and statName == "cooldown") then
-                            doit = false -- If this bonus is already in the list, skip it
+                        if bonus == statName then
+                            alreadyExists = true
+                            break
                         end
                     end
-                    if doit and (not ((Player.currentCore == "Damage Core") and (statName == "fireRate" or statName == "amount"))) and not (Player.currentCore == "Cooldown Core" and statName == "cooldown")then
+                    -- Add if new
+                    if not alreadyExists then
                         table.insert(advantagiousBonuses, statName)
-                        print("advantagious statName = " .. statName)
                     end
                 end
+            end
             end
             if (not item.noAmount) and Player.bonuses.amount == nil then
                 table.insert(advantagiousBonuses, "amount")
@@ -269,7 +302,9 @@ function setLevelUpShop(isForBall, isForPerks)
                 print("#availableBonuses: " .. #availableBonuses)
                 if #advantagiousBonuses > 0 then
                     local bruh = true
+                    local iterations = 0
                     while bruh do 
+                        iterations = iterations + 1
                         index = math.random(1, #advantagiousBonuses)
                         currentBonus = advantagiousBonuses[index]
                         for _, displayedUpgrade in ipairs(displayedUpgrades) do
@@ -278,6 +313,9 @@ function setLevelUpShop(isForBall, isForPerks)
                             end
                         end
                         if currentBonus ~= nil then
+                            bruh = false
+                        end
+                        if iterations >= 100 then
                             bruh = false
                         end
                     end
@@ -290,7 +328,9 @@ function setLevelUpShop(isForBall, isForPerks)
                     print("true")
                 else
                     local bruh = true
+                    local iterations = 0
                     while bruh do
+                        iterations = iterations + 1
                         index = math.random(1, #availableBonuses)
                         currentBonus = availableBonuses[index]
                         for _, displayedUpgrade in ipairs(displayedUpgrades) do
@@ -301,6 +341,9 @@ function setLevelUpShop(isForBall, isForPerks)
                         if currentBonus ~= nil then
                             bruh = false
                         end
+                        if iterations >= 100 then
+                            bruh = false
+                        end
                     end
                     availableBonuses[index] = nil -- Remove this bonus from the availableBonuses list
                     print("false")
@@ -308,15 +351,17 @@ function setLevelUpShop(isForBall, isForPerks)
 
                 print("Current bonus: " .. tostring(currentBonus or "nil"))
                 print("index: " .. tostring(index))
-                table.insert(displayedUpgrades, {
-                    name = Player.bonusesList[currentBonus].name,
-                    description = Player.bonusesList[currentBonus].description,
-                    effect = function()
-                        print("Adding bonus: " .. currentBonus)
-                        Player.addBonus(currentBonus) -- Add the new bonus to the player
-                        Player.bonusUpgrades[currentBonus]() -- Call the upgrade function
-                    end
-                })
+                if currentBonus then
+                    table.insert(displayedUpgrades, {
+                        name = Player.bonusesList[currentBonus].name,
+                        description = Player.bonusesList[currentBonus].description,
+                        effect = function()
+                            print("Adding bonus: " .. currentBonus)
+                            Player.addBonus(currentBonus) -- Add the new bonus to the player
+                            Player.bonusUpgrades[currentBonus]() -- Call the upgrade function
+                        end
+                    })
+                end
                 
                 -- Remove this bonus from available options
                 if #advantagiousBonuses > 0 then
@@ -467,10 +512,8 @@ local function drawPlayerUpgrades()
             end
             love.graphics.setColor(1,1,1,1)
 
-            if upgradeStatButton.entered then
+            if love.mouse.getX() < x+5 + cellWidth and love.mouse.getX() > x+5 and love.mouse.getY() < y-20 + cellHeight*4 and love.mouse.getY() > y-20 then
                 hoveredStatName = statName
-            elseif upgradeStatButton.left and hoveredStatName == statName then
-                hoveredStatName = nil
             end
             intIndex = intIndex + 1
         end
@@ -555,12 +598,12 @@ local function drawBallStats()
         -- price label
         if Player.currentCore ~= "Farm Core" then
             setFont(50)
-            local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(ballType.price))/2
+            local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(math.ceil(ballType.price)))/2
             love.graphics.setColor(0,0,0,1)
-            love.graphics.print(formatNumber(ballType.price) .. "$",x + statsWidth/2 + 104 +moneyOffsetX, y+4, math.rad(5))
-            local moneyColor = Player.money >= ballType.price and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
+            love.graphics.print(formatNumber(math.ceil(ballType.price)) .. "$",x + statsWidth/2 + 104 +moneyOffsetX, y+4, math.rad(5))
+            local moneyColor = Player.money >= math.ceil(ballType.price) and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
             love.graphics.setColor(moneyColor)
-            love.graphics.print(formatNumber(ballType.price) .. "$",x + statsWidth/2 + 100 +moneyOffsetX, y, math.rad(5))
+            love.graphics.print(formatNumber(math.ceil(ballType.price)) .. "$",x + statsWidth/2 + 100 +moneyOffsetX, y, math.rad(5))
             love.graphics.setColor(1,1,1,1)
         end
 
@@ -700,14 +743,16 @@ local function drawBallStats()
                 local upgradeStatButton = dress:Button("", {color = invisButtonColor, id = buttonID}, x, y-10, cellWidth, 150)
                 -- Right-click to remove all queued upgrades of this stat
                 local canUpgrade = true
+                -- Core-specific restrictions
                 if statName == "cooldown" and Player.currentCore == "Cooldown Core" then
                     canUpgrade = false -- Cannot upgrade cooldown if using Cooldown Core
                 end
+                if ((statName == "fireRate" or statName == "amount") and Player.currentCore == "Damage Core") then
+                    canUpgrade = false -- Cannot upgrade fireRate or amount if using Damage Core
+                end
+                -- Ammo restrictions
                 if statName == "ammo" and (((ballType.stats.cooldown or 1000) + (Player.bonuses["cooldown"] or 0) + (Player.permanentUpgrades["cooldown"] or 0)) <= 0 and ballType.name ~= "Turret Generator") then
                     canUpgrade = false -- Cannot upgrade ammo if cooldown is already at 0
-                end
-                if ((statName == "fireRate" or statName == "amount") and Player.currentCore == "Damage Core")then
-                    canUpgrade = false -- Cannot upgrade fireRate or amount if using Damage Core
                 end
                 local upgradeQueued = false
                 if ballType.queuedUpgrades then
@@ -715,13 +760,21 @@ local function drawBallStats()
                         upgradeQueued = true
                     end
                 end
-                if (upgradeStatButton.hit or (upgradeQueued and Player.money >= ballType.price)) and canUpgrade and Player.currentCore ~= "Farm Core" then
-                    if Player.money < ballType.price then
-                        -- queue upgrade
-                        if (not (statName == "cooldown" and getStat(ballName, "cooldown") <= 0)) and #ballType.queuedUpgrades <= 2 then
-                            table.insert(ballType.queuedUpgrades, statName)
+                if ((upgradeStatButton.hit or (upgradeQueued and Player.money >= math.ceil(ballType.price))) and canUpgrade and Player.currentCore ~= "Farm Core") then
+                    if Player.money < math.ceil(ballType.price) then
+                        local cooldownQueued = 0
+                        for _, queuedUpgrade in ipairs(ballType.queuedUpgrades) do
+                            if queuedUpgrade == "cooldown" then
+                                cooldownQueued = cooldownQueued + 1
+                            end
                         end
-                        print("Not enough money to upgrade " .. ballType.name .. "'s " .. statName)
+                        if not (statName == "cooldown" and getStat(ballName, "cooldown") - cooldownQueued <= 0) then
+                            -- queue upgrade
+                            if (not (statName == "cooldown" and getStat(ballName, "cooldown") <= 0)) and #ballType.queuedUpgrades <= 2 then
+                                table.insert(ballType.queuedUpgrades, statName)
+                            end
+                            print("Not enough money to upgrade " .. ballType.name .. "'s " .. statName)
+                        end
                     elseif statName == "cooldown" and getStat(ballName, "cooldown") <= 0 then
                         print("cannot upgrade cooldown any further")
                         playSoundEffect(upgradeSFX, 0.5, 0.95, false)
@@ -753,12 +806,12 @@ local function drawBallStats()
                             ballType.stats[statName] = ballType.stats[statName] + 1 -- Example action
                             print( "stat ".. statName .. " increased to " .. ballType.stats[statName])
                         end
-                        Player.pay(ballType.price) -- Deduct the cost from the player's money
+                        Player.pay(math.ceil(ballType.price)) -- Deduct the cost from the player's money
                         ballType.price = ballType.price * 2 -- Increase the price of the ball
                     end
                 elseif upgradeStatButton.entered then
                     hoveredStatName = statName
-                elseif upgradeStatButton.left and hoveredStatName == statName then
+                elseif upgradeStatButton.left then
                     hoveredStatName = nil
                 end
                 
@@ -821,33 +874,58 @@ local function drawPerks()
     suit.Label("Player Upgrades", {align = "center", valign = "center"}, suit.layout:row(statsWidth - 20, 60)) -- Title row
 end
 
-local function drawLevelUpShop()
+function drawLevelUpShop()
     -- Initialize layout for the buttons
     local buttonWidth = (love.graphics.getWidth() - 300) / 3 - 60
     local buttonHeight = love.graphics.getHeight() - 200
     local buttonY = 100
+    -- print("level up shop opacity: " .. levelUpShopAlpha)
+    local opacity = levelUpShopAlpha or 1
+    --print("level up shop opacity: " .. opacity)
+
+    -- Create a custom theme table that includes opacity
+    local customTheme = {
+        color = {
+            normal = {bg = {0,0,0,0}, fg = {1,1,1,opacity}},
+            hovered = {bg = {0.19,0.6,0.73,opacity*0.2}, fg = {1,1,1,opacity}},
+            active = {bg = {1,0.6,0,opacity*0.2}, fg = {1,1,1,opacity}}
+        }
+    }
 
     for index, currentUpgrade in ipairs(displayedUpgrades) do
         -- Calculate button position
         local buttonX = 175 + (index - 1) * ((love.graphics.getWidth() - 300) / 3)
 
-        -- Use suit to create a button
-        suit.layout:reset(buttonX, buttonY, 10, 10) -- Reset layout for each button
-        setFont(35)
-        dress:Label(currentUpgrade.name, {align = "center"}, suit.layout:row(buttonWidth, 100)) -- Display the button label
-        setFont(24)
-        dress:Label(currentUpgrade.description, {align = "center"}, suit.layout:row(buttonWidth, buttonHeight - 100)) -- Display the button description
+        -- Use suit to create a button with opacity
+        suit.layout:reset(buttonX, buttonY, 10, 10)
 
-        -- Use the upgrade's index as the button ID to ensure uniqueness
+        -- Check if mouse is over the button and brighten color if so
+        local mx, my = love.mouse.getPosition()
+        local isMouseOver = mx >= buttonX and mx <= buttonX + buttonWidth and my >= buttonY and my <= buttonY + buttonHeight
+        if isMouseOver then
+            love.graphics.setColor(48/255 * 0.8, 153/255 * 0.8, 186/255 * 0.8, opacity)
+        else
+            love.graphics.setColor(0.175, 0.175, 0.175, opacity) -- Brighter background
+        end
+        love.graphics.rectangle("fill", buttonX, buttonY, buttonWidth, buttonHeight)
+        -- Draw labels with opacity
+        love.graphics.setColor(1,1,1,opacity)
+        setFont(35)
+        dress:Label(currentUpgrade.name, {align = "center", color = {normal = {fg = {1,1,1,opacity}}}}, suit.layout:row(buttonWidth, 100))
+        setFont(24)
+        dress:Label(currentUpgrade.description, {align = "center", color = {normal = {fg = {1,1,1,opacity}}}}, suit.layout:row(buttonWidth, buttonHeight - 100))
+
+        -- Register the invisible button with the custom theme
         local buttonID = "upgrade_" .. index
-        suit.layout:reset(buttonX, buttonY, 10, 10) -- Reset layout for each button
-        if suit.Button("", {id = buttonID, align = "center"}, suit.layout:col(buttonWidth, buttonHeight)).hit then
+        suit.layout:reset(buttonX, buttonY, 10, 10)
+        local buttonHit = suit.Button("", {id = buttonID, align = "center", color = customTheme.color}, suit.layout:col(buttonWidth, buttonHeight)).hit
+        
+        if buttonHit and opacity >= 0.995 then
             playSoundEffect(upgradeSFX, 0.5, 0.95, false)
             -- Button clicked: apply the effect and close the shop
             print("Clicked on upgrade: " .. currentUpgrade.name)
             currentUpgrade.effect() -- Apply the effect of the upgrade
             Player.levelingUp = false -- Close the level up shop
-            break
         end
     end
     local x, y = suit.layout:nextRow()
@@ -864,10 +942,6 @@ local function drawLevelUpShop()
 end
 
 function upgradesUI.draw()
-    
-    if Player.levelingUp then
-        drawLevelUpShop()
-    end
 
     drawPlayerStats() -- Draw the player stats table
     drawPlayerUpgrades() -- Draw the player upgrades table
@@ -893,11 +967,15 @@ function upgradesUI.draw()
         local tw = love.graphics.getFont():getWidth(hoveredStatName)
         local th = love.graphics.getFont():getHeight()
         love.graphics.setColor(0,0,0,0.7)
-        love.graphics.rectangle("fill", mx+18, my-8, tw+16, th+10, 6, 6)
+        love.graphics.rectangle("fill", mx-80 - tw, my-8, tw+86, th+65, 6, 6)
         love.graphics.setColor(1,1,1,1)
-        love.graphics.print(hoveredStatName, mx+26, my-4)
+        love.graphics.print(hoveredStatName, mx - tw - 40, my-4)
     end
     love.graphics.setColor(1,1,1,1)
+end
+
+function upgradesUI.update(dt)
+    
 end
 
 return upgradesUI

@@ -50,7 +50,14 @@ function restartGame()
     UtilityFunction.freeze = false
 end
 
+SFXs = {}
 function playSoundEffect(soundEffect, volume, pitch, loop, clone)
+    if soundEffect ~= backgroundMusicSFX then
+        volume = (sfxVolume or 1) * (volume or 1) -- Adjust volume based on global sfxVolume
+    end
+    if Player.dead and currentGameState == GameState.PLAYING then
+        return
+    end
     pitch = math.max(pitch, 0.1)
     clone = clone or true -- Default to false if not provided
     if clone then
@@ -593,6 +600,7 @@ function getAnimation(id)
 end
 
 local lvlUpTexts = {}
+local boostTexts = {}
 local currentPopupId = 1
 function lvlUpPopup()
     playSoundEffect(lvlUpSFX, 0.55, 1, false)
@@ -603,22 +611,45 @@ function lvlUpPopup()
         size = 0,
         color = {0, 0.25, 1, 1}  -- RGB + Alpha
     }
+    local textString = Player.level % 2 == 0 and "+Size" or "+Speed"
+    local popup2 = {
+        id = currentPopupId,
+        text = textString,
+        x = paddle.x + paddle.width/2,
+        y = paddle.y + paddle.height/2,
+        size = 0,
+        color = {0, 0.25, 1, 1}  -- RGB + Alpha
+    }
     currentPopupId = currentPopupId + 1 -- Increment the popup ID for the next popup
     local popupSizeTween = tween.new(0.1, popup, {size = 50}, tween.easing.outExpo)
     addTweenToUpdate(popupSizeTween)
-    Timer.after(0.1, function() 
-        local popupSizeTweenOut = tween.new(1.4, popup, {size = 0}, tween.easing.inExpo)
+    local popupSizeTween2 = tween.new(0.1, popup2, {size = 30}, tween.easing.outExpo)
+    addTweenToUpdate(popupSizeTween2)
+    Timer.after(1.6, function() 
+        local popupSizeTweenOut = tween.new(0.4, popup, {size = 0}, tween.easing.inExpo)
         addTweenToUpdate(popupSizeTweenOut)
+        local popupSizeTweenOut2 = tween.new(0.4, popup2, {size = 0}, tween.easing.inExpo)
+        addTweenToUpdate(popupSizeTweenOut2)
     end)
     local xVelocity = math.random(-50, 50) + mapRangeClamped(paddle.x + paddle.width/2, statsWidth, screenWidth - statsWidth, 150, -150)
-    local totalLengthTween = tween.new(1.5, popup, {x = popup.x + xVelocity, y = popup.y + math.random(-300, -150)}, tween.easing.outExpo)
+    local yVelocity = math.random(-275, -150)
+    local totalLengthTween = tween.new(2, popup, {x = popup.x + xVelocity, y = popup.y + yVelocity}, tween.easing.outExpo)
     addTweenToUpdate(totalLengthTween)
+    local totalLengthTween2 = tween.new(2, popup2, {x = popup2.x + xVelocity * 1, y = popup2.y + yVelocity*0.6}, tween.easing.outExpo)
+    addTweenToUpdate(totalLengthTween2)
     table.insert(lvlUpTexts, popup)
-    Timer.after(1.5, function()
+    table.insert(boostTexts, popup2)
+    Timer.after(2, function()
         -- Remove the popup after the total length tween is complete
         for i = #lvlUpTexts, 1, -1 do
             if lvlUpTexts[i].id == popup.id then
                 table.remove(lvlUpTexts, i)
+                break
+            end
+        end
+        for i = #boostTexts, 1, -1 do
+            if boostTexts[i].id == popup2.id then
+                table.remove(boostTexts, i)
                 break
             end
         end
@@ -637,6 +668,20 @@ function drawLvlUpPopups()
             love.graphics.setColor(popup.color[1], popup.color[2], popup.color[3], popup.color[4] or 1)
             setFont(math.max(1, math.floor(popup.size)))  -- Ensure font size is at least 1 and is an integer
             love.graphics.print("Level Up!", popup.x - getTextSize("Level Up!")/2, popup.y)  -- Center the text
+        end
+        ::continue::
+    end
+    for i = #boostTexts, 1, -1 do
+        local popup = boostTexts[i]
+        if not popup then
+            table.remove(boostTexts, i)
+            goto continue
+        end
+        if popup.size > 0 then  -- Only draw if size is positive
+            setFont(math.max(1, math.ceil(popup.size)))
+            love.graphics.setColor(1,1,1,1)
+            setFont(math.max(1, math.floor(popup.size)))  -- Ensure font size is at least 1 and is an integer
+            love.graphics.print(popup.text, popup.x - getTextSize("Boost!")/2, popup.y)  -- Center the text
         end
         ::continue::
     end

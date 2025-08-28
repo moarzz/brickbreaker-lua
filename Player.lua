@@ -39,6 +39,7 @@ function loadGameData()
     end
     -- Update Player object directly
     Player.highScore = data.highScore
+    Player.fastestTime = data.fastestTime
     Player.gold = data.gold
     Player.startingMoney = data.startingMoney
     Player.permanentUpgrades = data.permanentUpgrades
@@ -73,6 +74,7 @@ Player = {
     rerolls = 0,
     score = 0,
     highScore = 0,
+    fastestTime = 1000000, -- in seconds
     bricksDestroyed = 0,
     lives = 1,
     currentCore = "Bouncy Core",
@@ -127,6 +129,7 @@ function saveGameData()
     end
     local data = {
         highScore = Player.highScore,
+        fastestTime = Player.fastestTime,
         gold = Player.gold,
         startingMoney = Player.startingMoney,
         permanentUpgrades = {
@@ -156,7 +159,8 @@ function Player.loadJsonValues()
     Player.startingMoney = gameData.startingMoney or 0
     Player.money = gameData.startingMoney or 0
     Player.gold = gameData.gold or 0
-    Player.highScore = gameData.highScore
+    Player.highScore = gameData.highScore or 0
+    Player.fastestTime = gameData.fastestTime or 10000
     Player.permanentUpgrades = gameData.permanentUpgrades or {}
     -- Apply paddle upgrades after loading
     if paddle then
@@ -234,14 +238,14 @@ Player.bonusUpgrades = {
 Player.upgradePaddle = {
     paddleSize = function()
         -- This is handled in permanentUpgrades.lua now
-        paddle.width = paddle.width + 15
-        paddle.x = paddle.x - 15  -- Adjust position to keep it centered
+        paddle.width = paddle.width + 25
+        paddle.x = paddle.x - 25  -- Adjust position to keep it centered
         Player.permanentUpgrades.paddleSize = (Player.permanentUpgrades.paddleSize or 0) + 1
     end,
     
     paddleSpeed = function()
         Player.permanentUpgrades.paddleSpeed = (Player.permanentUpgrades.paddleSpeed or 0) + 1
-        paddle.speed = paddle.speed + 40
+        paddle.speed = paddle.speed + 80
     end,
 }
 
@@ -258,7 +262,7 @@ Player.availableCores = {
     },
     {
         name = "Economy Core",
-        description = "Everything costs 50% less. Start with 100 $",
+        description = "Everything costs 50% less. Start with 500 $",
         price = 500,
     },
     {
@@ -273,7 +277,7 @@ Player.availableCores = {
     },
     {
         name = "Farm Core",
-        description = "After every 100 bricks destroyed, give +1 to a random stat for each of your items \n(-1 for cooldown)",
+        description = "When you level up, all your weapons gain +1 to a random stat, but you cannot upgrade ball stats\n(-1 for cooldown)",
         price = 1500,
     },
     {
@@ -289,15 +293,14 @@ Player.availableCores = {
 }
 
 Player.coreDescriptions = {
-    ["Bouncy Core"] = "On bounce, balls gain a deprecating speed boost.",
+    ["Bouncy Core"] = "Balls gain a temporary speed boost every time they bounce.",
     ["Spray and Pray Core"] = "Guns shoot twice as fast but are a lot less accurate.",
-    -- ["Burn Core"] = "Tech items deal burn damage.",
     ["Brickbreaker Core"] = "Damage you deal has a 10% chance of destroying a brick instantly \n(except for boss)",
-    ["Economy Core"] = "Everything costs 50% less. Start with 100$",
+    ["Economy Core"] = "Everything costs 50% less. Start with 500$",
     ["Damage Core"] = "Amount and fireRate are always 1 and damage is multiplied by 5",
     ["Phantom Core"] = "Bullets pass through bricks without losing damage, but deal half damage\n(rounded down, minimum 1).",
-    ["Farm Core"] = "After every 80 bricks destroyed, all your weapons gain +1 to a random stat, but you cannot upgrade ball stats\n(-1 for cooldown)",
-    ["Madness Core"] = "Damage is divided by 4. \nCooldown is halved. \nevery other stat is doubled"
+    ["Farm Core"] = "When you level up, all your weapons gain +1 to a random stat, but you cannot upgrade ball stats\n(-1 for cooldown)",
+    ["Madness Core"] = "Damage and cooldown are reduced by 50%. \nevery other stat is doubled. (can break the game)"
     
 }
 
@@ -430,10 +433,16 @@ function Player.levelUp()
         Player.newStatLevelRequirement = Player.newStatLevelRequirement + 10
     end
     Player.xp = 0
-    Player.upgradePaddle["paddleSpeed"]()
-    Player.upgradePaddle["paddleSize"]()
+    if Player.level % 2 == 0 then
+        Player.upgradePaddle["paddleSize"]()
+    else
+        Player.upgradePaddle["paddleSpeed"]()
+    end
     Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.25)
     lvlUpPopup()
+    if Player.currentCore == "Farm Core" then
+        FarmCoreUpgrade()
+    end
 end
 
 function Player.gain(amount)
@@ -453,18 +462,19 @@ end
 
 newHighScore = false
 function Player.die()
+    inGame = false
     -- Check and update high score
-    Balls.clear()
-    Balls.initialize()
+    print("player die")
+   --  Balls.clear()
     if Player.score > Player.highScore then
         Player.highScore = Player.score
         newHighScore = true
     end
     deathTimerOver = false
     deathTweenValues.speed = getBrickSpeedMult()  -- Store the current speed for the death animation
-    local deathTransitionTween = tween.new(1.35, deathTweenValues, {speed = 50, overlayOpacity = 1}, tween.inQuad)
+    local deathTransitionTween = tween.new(1.15, deathTweenValues, {speed = 60, overlayOpacity = 1}, tween.inQuad)
     addTweenToUpdate(deathTransitionTween)
-    Timer.after(1.35, function()
+    Timer.after(1.15, function()
         toggleFreeze()
         deathTimerOver = true
     end)
@@ -472,34 +482,36 @@ function Player.die()
     local goldEarned = math.floor(math.sqrt(Player.score) <= 300 and (mapRangeClamped(math.sqrt(Player.score), 0, 300, 1.5, 3) * math.sqrt(Player.score)) or (mapRangeClamped(math.sqrt(Player.score), 300, 600, 3, 5) * math.sqrt(Player.score)))
     Player.addGold(goldEarned)
     Player.dead = true
-    saveGameData()  -- Save the new high score
+    saveGameData()  -- Save the new high score]]
 end
 
 local brickSpeedTween
 local canTakeDamage = true
 function Player.hit()
-    Player.lives = Player.lives - 1
-    if Player.lives <= 0 then
-        Player.die()
-    end
-    --[[
-    if canTakeDamage then
-        canTakeDamage = false
-        Timer.after(4, function() canTakeDamage = true end)
+    if not Player.dead then
         Player.lives = Player.lives - 1
-        Player.lastHitTime = love.timer.getTime()
-            brickSpeed.value = -300 / getBrickSpeedByTime()
-            brickSpeedTween = tween.new(2, brickSpeed, { value = 10 }, tween.outExpo)
-            addTweenToUpdate(brickSpeedTween)
+        if Player.lives <= 0 then
+            Player.die()
         end
+        --[[
+        if canTakeDamage then
+            canTakeDamage = false
+            Timer.after(4, function() canTakeDamage = true end)
+            Player.lives = Player.lives - 1
+            Player.lastHitTime = love.timer.getTime()
+                brickSpeed.value = -300 / getBrickSpeedByTime()
+                brickSpeedTween = tween.new(2, brickSpeed, { value = 10 }, tween.outExpo)
+                addTweenToUpdate(brickSpeedTween)
+            end
 
-        print("Player hit! Lives left: " .. Player.lives)
-    end]]
+            print("Player hit! Lives left: " .. Player.lives)
+        end]]
+    end
 end
 
 local function checkForHit()
     for _, brick in ipairs(bricks) do
-        if brick.y + brick.height > screenHeight - brickHeight * 6 + paddle.height/2 then
+        if paddle.y > screenHeight + 3 then
             Player.hit()
             damageScreenVisuals(0.25, 100)
         end

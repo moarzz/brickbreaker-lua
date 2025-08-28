@@ -1,9 +1,10 @@
 UtilityFunction = require("UtilityFunction") -- utility functions
 Player = require("Player") -- player logic
 Balls = require("Balls") -- ball logic
-Timer = require("Libraries.timer") -- timer library
 local upgradesUI = require("upgradesUI") -- upgrade UI logic
+Timer = require("Libraries.timer") -- timer library
 local permanentUpgrades = require("permanentUpgrades") -- permanent upgrades UI
+confetti = require("particleSystems.confetti") -- confetti particle system
 shaders = require("shaders") -- shader logic
 suit = require("Libraries.Suit") -- UI library
 tween = require("Libraries.tween") -- tweening library
@@ -26,6 +27,10 @@ GameState = {
 }
 currentGameState = GameState.MENU
 
+-- Add settings variables
+musicVolume = 0.5
+sfxVolume = 0.5
+
 -- Add this variable to store the player's choice
 local startingChoice = nil
 
@@ -43,12 +48,15 @@ local minSpawnRate = 0.1 -- Minimum time between spawns
 local spawnAcceleration = 0.01 -- How much faster spawning gets per second
 local currentSpawnRate = 1.0 -- Current time between spawns
 local gameStartTime = 0
-local gameTime = 0  -- Tracks actual elapsed gameplay time
+gameTime = 0  -- Tracks actual elapsed gameplay time
 local bossSpawned = false
 local spawnBossNextRow = false
 healThisFrame = 0
 
 function resetGame()
+    -- Stop any confetti effect
+    stopConfetti()
+    
     -- Reset game state
     currentGameState = GameState.MENU
     
@@ -161,7 +169,7 @@ local function loadAssets()
     }
 
     -- load sounds
-    backgroundMusic = love.audio.newSource("assets/SFX/game song.mp3", "static")
+    backgroundMusicSFX = love.audio.newSource("assets/SFX/game song.mp3", "static")
     brickHitSFX = love.audio.newSource("assets/SFX/brickBoop.mp3", "static")
     healSFX = love.audio.newSource("assets/SFX/heal.mp3", "static")
     paddleBoopSFX = love.audio.newSource("assets/SFX/paddleBoop.mp3", "static")
@@ -171,6 +179,7 @@ local function loadAssets()
     gunShootSFX = love.audio.newSource("assets/SFX/gunShoot.mp3", "static") -- Add gun shoot sound if available
     lvlUpSFX = love.audio.newSource("assets/SFX/lvlUp.mp3", "static")
     upgradeSFX = love.audio.newSource("assets/SFX/upgrade.mp3", "static")
+    selectSFX = love.audio.newSource("assets/SFX/select.mp3", "static")
 
     -- load shaders
     backgroundShader = love.graphics.newShader("Shaders/background.glsl")
@@ -208,13 +217,14 @@ local bossHealth = 5000
 local brickId = 1
 local bossBrickSpawnTimer
 local bossSpawnSwitch = true
+local boss = nil
 local function spawnBoss()
     -- Center the boss brick at the top
     print("Spawning boss brick")
     local bossX = screenWidth / 2 - bossWidth / 2
-    local bossY = -bossHeight - (brickHeight + brickSpacing) * 2
+    local bossY = -bossHeight * 2
     local brickColor = getBrickColor(bossHealth, false, true)
-    local boss = {
+    boss = {
         type = "boss",
         id = brickId,
         x = bossX,
@@ -232,8 +242,8 @@ local function spawnBoss()
     }
     table.insert(bricks, boss)
     brickId = brickId + 1
-    bossBrickSpawnTimer = Timer.every(1, function() 
-        if boss.y >= -bossHeight + 300 then
+    bossBrickSpawnTimer = Timer.every(1.25, function() 
+        if boss.y >= -bossHeight + 150 then
             bossSpawnSwitch = not bossSpawnSwitch
             local bossPosY
             for _, brick in ipairs(bricks) do 
@@ -261,7 +271,7 @@ local function spawnBoss()
             brickId = brickId + 1
         end
     end)
-    local bossHealTimer = Timer.every(2.5, function()
+    local bossHealTimer = Timer.every(1.2, function()
         if boss.y >= -bossHeight + 150 then
             local healValue = math.floor(mapRange(boss.health, 1, 5000, 1, 50))
             boss.health = boss.health + healValue
@@ -365,7 +375,10 @@ local function generateRow(brickCount, yPos)
                         brickId = brickId + 1
                         nextRowDebuff = brickHealth + row[xPos+1]
                     end
-                elseif math.random(1, 100) < math.floor(mapRangeClamped(brickCount, 1, 1000, 0, 10)) and brickHealth >= 15 and not bossSpawned then
+                elseif math.random(1, 100) < math.floor(mapRangeClamped(brickCount, 1, 1000, 0, 6)) and brickHealth >= 15 and not bossSpawned 
+                    and not (row.healBrickPositions and (row.healBrickPositions[xPos-1] or row.healBrickPositions[xPos+1])) then
+                    if not row.healBrickPositions then row.healBrickPositions = {} end
+                    row.healBrickPositions[xPos] = true
                     local brickColor = getBrickColor(brickHealth)
                     local healBrick = {
                         type = "heal",
@@ -402,7 +415,7 @@ local function generateRow(brickCount, yPos)
                             Timer.after(1.5, function() healSelf(healBrick) end)
                         end
                     end
-                    Timer.after(1.5 + math.random(1,150)/50, function() healSelf(healBrick) end)
+                    Timer.after(1.75 + math.random(1,150)/50, function() healSelf(healBrick) end)
                 else
                     local brickColor = getBrickColor(brickHealth)
                     table.insert(bricks, {
@@ -437,12 +450,14 @@ local function addMoreBricks()
             print("spawning more bricks")
             for i=1 , 10 do
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
-                currentRowPopulation = currentRowPopulation + 1 + math.floor(currentRow/15)
+                currentRowPopulation = currentRowPopulation + 1 + math.floor(currentRow/17.5)
                 if spawnBossNextRow and not bossSpawned then
                     spawnBoss()
                     bossSpawned = true
                     spawnBossNextRow = false
-                    currentRowPopulation = 500
+                    currentRowPopulation = 750
+                elseif not (bossSpawned or spawnBossNextRow) and Player.level >= 29 then
+                    spawnBossNextRow = true
                 end
             end
             return
@@ -496,12 +511,12 @@ function initializeBricks()
     rows = 10
     cols = 10
     brickSpeed = { value = 10 } -- Speed at which bricks move down (pixels per second)
-    currentRowPopulation = 500 -- Number of bricks in the first row
+    currentRowPopulation = 1 -- Number of bricks in the first row
 
     -- Generate bricks
     for i = 0, rows - 1 do
         generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing)) --generate 100 scaling rows of bricks
-        currentRowPopulation = currentRowPopulation + 1 + math.floor(currentRowPopulation/25)
+        currentRowPopulation = math.min(currentRowPopulation + 1 + math.floor(currentRowPopulation/25), 750)
     end
 
     -- remove the bossSpawnTimer on gameStart if it exists
@@ -530,16 +545,31 @@ function initializeGameState()
     Balls.initialize()
 end
 
+local backgroundMusic
+local confettiSystem = nil -- Variable to store the confetti system
+
+-- Function to start confetti effect
+function startConfetti()
+    confettiSystem = confetti.new()
+end
+
+-- Function to stop confetti effect
+function stopConfetti()
+    confettiSystem = nil
+end
+
 function love.load()
     dress = suit.new()
-
     loadAssets() -- Load assets
 
     KeywordSystem = KeySys.new()
     KeywordSystem:loadKeywordImages()
 
-    -- Load the MP3 file
-    playSoundEffect(backgroundMusic, 0.5, 1, true, false) -- Play the background music
+    -- Load and store the background music globally
+    backgroundMusic = love.audio.newSource("assets/SFX/game song.mp3", "stream")
+    backgroundMusic:setLooping(true)
+    backgroundMusic:setVolume(musicVolume)
+    backgroundMusic:play()
     brickFont = love.graphics.newFont(14)    -- Get screen dimensions
     screenWidth, screenHeight = love.graphics.getDimensions()
 
@@ -590,31 +620,39 @@ function love.load()
     Player.startingMoney = data.startingMoney
 end
 
-function getHighestBrickY()
+function getHighestBrickY(lowestInstead)
+    lowestInstead = lowestInstead or false
     -- Defensive: ensure bricks is always a table
     if type(bricks) ~= "table" then bricks = {} end
     local highestY = -math.huge  -- Start with lowest possible number
     for _, brick in ipairs(bricks) do
-        if not brick.destroyed and brick.y > highestY then
-            highestY = brick.y + brick.height
+        if lowestInstead then
+            if not brick.destroyed and brick.y < highestY then
+                highestY = brick.y
+            end
+        else
+            if not brick.destroyed and brick.y > highestY then
+                highestY = brick.y + brick.height
+            end
         end
     end
     return highestY
 end
 
 function getBrickSpeedByTime()
-    -- Scale speed from 0.5 to 5.0 over 10 minutes
+    -- Scale speed from 0.35 to 3.25 over 20 minutes
     local timeSinceStart = love.timer.getTime() - gameStartTime
-    return mapRangeClamped(timeSinceStart, 0, 420, 0.35, 1.5)
+    return mapRangeClamped(timeSinceStart, 0, 1200, 0.35, 3.25)
 end
 
+currentBrickSpeed = 1
 deathTweenValues = {speed = 1, overlayOpacity = 0}
 function getBrickSpeedMult() 
     -- Get the position-based multiplier
     if Player.dead then
-        return deathTweenValues.speed
-    elseif bossSpawned then
-        return 1.5
+        return deathTweenValues.speed * getBrickSpeedByTime()
+    elseif bossSpawned and boss.y >= -boss.height and getHighestBrickY() <= (screenHeight * 3/4 - 150) then
+        return mapRangeClamped(boss.y, -boss.height, screenHeight/3, 3, 0.8) * getBrickSpeedByTime()
     else
         local posMult = 1
         posMult = mapRangeClamped(getHighestBrickY(), 100, (screenHeight/2), 10, 1)
@@ -628,6 +666,7 @@ function getBrickSpeedMult()
         end
         
         -- Combine with time-based multiplier
+        print(posMult)
         return posMult * getBrickSpeedByTime()
     end
 end
@@ -654,11 +693,12 @@ local function moveBricksDown(dt)
         end
     else
         -- Normal speed calculation
-        local speedMult = getBrickSpeedMult() -- Get the combined speed multiplier
+        currentBrickSpeed = (currentBrickSpeed == getBrickSpeedByTime() and currentBrickSpeed or (getBrickSpeedMult() < currentBrickSpeed and math.max(currentBrickSpeed - dt * 2, getBrickSpeedMult()) or math.min(currentBrickSpeed + dt * 2, getBrickSpeedMult())))
+        local speedMult = currentBrickSpeed -- Get the combined speed multiplier
         for _, brick in ipairs(bricks) do
             if not brick.destroyed then
                 if brick.type == "boss" then
-                    brick.y = brick.y + brickSpeed.value * dt * speedMult * 0.5
+                    brick.y = brick.y + brickSpeed.value * dt * speedMult * mapRangeClamped(brick.y, - boss.height * 1.5, -boss.height, 5, 0.5)
                 else
                     brick.y = brick.y + brickSpeed.value * dt * speedMult * (brick.speedMult or 1)
                 end
@@ -708,13 +748,34 @@ local function garbageCollectDynamicObjects()
     -- Add more as needed for other dynamic object tables
 end
 
+shouldTweenAlpha = false
+levelUpShopAlpha = 0
+function levelUpShopTweenAlpha(dt)
+    local tweenSpeed = mapRangeClamped(levelUpShopAlpha, 0, 1, 3, 0.25)
+    if shouldTweenAlpha then
+        levelUpShopAlpha = math.min(1, levelUpShopAlpha + dt * tweenSpeed)
+        if levelUpShopAlpha >= 1 then
+            shouldTweenAlpha = false
+        end
+    end
+end
+
+
 brickKilledThisFrame = false
 local damageCooldown = 0 -- Cooldown for damage visuals
 local healCooldown = 0
 local function gameFixedUpdate(dt)
-    
+    -- Update mouse positions
+
     dt = 1/60 -- Fixed delta time for consistent updates
     dt = dt * 1.75
+    levelUpShopTweenAlpha(dt)
+    
+    -- Update confetti system
+    if confettiSystem then
+        confettiSystem:update(dt)
+    end
+    
     --send info to background shader
     backgroundShader:send("time", love.timer.getTime())                   
     backgroundShader:send("resolution", {screenWidth, screenHeight})
@@ -743,7 +804,9 @@ local function gameFixedUpdate(dt)
         backgroundShader:send("intensity", backgroundIntensity)
         local sineShaderIntensity = 0.3 -- Default base intensity
 
-
+        dt = dt * playRate -- Adjust the delta time based on the playback rate
+        dt = dt * 0.4 -- ralenti le jeu a la bonne vitesse
+        upgradesUI.update(dt) -- Update the upgrades UI
         -- Don't update game time when level up shop is open
         if Player.levelingUp then
             if lastFreezeTime == 0 then
@@ -760,8 +823,6 @@ local function gameFixedUpdate(dt)
             end
         end
 
-        dt = dt * playRate -- Adjust the delta time based on the playback rate
-        dt = dt * 0.4 -- ralenti le jeu a la bonne vitesse
         if UtilityFunction.freeze then
             dt = 0 -- Freeze the game if UtilityFunction.freeze is true
         end
@@ -880,30 +941,42 @@ function drawMenu()
     -- Play button
     local buttonID = generateNextButtonID()
     if suit.Button("Play", {id=buttonID}, centerX, startY, buttonWidth, buttonHeight).hit then
+        playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.START_SELECT -- Go to selection screen
     end
 
     -- Tutorial button
     buttonID = generateNextButtonID()
     if suit.Button("Tutorial", {id=buttonID}, centerX, startY + buttonHeight + buttonSpacing, buttonWidth, buttonHeight).hit then
+        playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.TUTORIAL
     end
 
     -- Settings button
     buttonID = generateNextButtonID()
     if suit.Button("Settings", {id=buttonID}, centerX, startY + (buttonHeight + buttonSpacing) * 2, buttonWidth, buttonHeight).hit then
-        --currentGameState = GameState.SETTINGS
+        playSoundEffect(selectSFX, 1, 0.8)
+        currentGameState = GameState.SETTINGS
     end
 
     -- Upgrades button
     buttonID = generateNextButtonID()
     if suit.Button("Upgrades", {id=buttonID}, centerX, startY + (buttonHeight + buttonSpacing) * 3, buttonWidth, buttonHeight).hit then
+        playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.UPGRADES
         loadGameData() -- Load game data when entering upgrades screen
     end
 
     -- draw highscore
-    suit.Label("Highscore: " .. formatNumber(Player.highScore), {align = "center"}, 100, 100)
+    suit.Label("Highscore : " .. formatNumber(Player.highScore), {align = "center"}, 100, 100)
+    local fastestTime = Player.fastestTime or 1000000
+    if fastestTime > 10000 then
+        return
+    end
+    local minutes = math.floor(fastestTime / 60)
+    local seconds = math.floor(fastestTime % 60)
+    local fastestTimeString = string.format("%02d:%02d", minutes, seconds)
+    suit.Label(fastestTimeString)
 end
 
 local currentSelectedCoreID = 1
@@ -940,6 +1013,7 @@ local function drawStartSelect()
     local btn = suit.Label(item.label, {id = item.id}, centerX, btnY, buttonWidth, buttonHeight)
     local btnNext = suit.Button("Next", {id = "next_starting_item"}, centerX + buttonWidth + 20, btnY, 125, buttonHeight)
     if btnNext.hit then
+        playSoundEffect(selectSFX, 1, 0.8)
         currentStartingItemID = currentStartingItemID + 1
         if currentStartingItemID > #startingItems then
             currentStartingItemID = 1
@@ -954,6 +1028,7 @@ local function drawStartSelect()
         end
     end
     if btnBefore.hit then
+        playSoundEffect(selectSFX, 1, 0.8)
         currentStartingItemID = currentStartingItemID - 1
         if currentStartingItemID < 1 then
             currentStartingItemID = #startingItems
@@ -1004,6 +1079,7 @@ local function drawStartSelect()
     local btn2Next = suit.Button("Next", {id = "next_core"}, centerX + buttonWidth + 20, btnY, 125, buttonHeight)
 
     if btn2Next.hit then
+        playSoundEffect(selectSFX, 1, 0.8)
         currentSelectedCoreID = currentSelectedCoreID + 1
         if currentSelectedCoreID > #paddleCores then
             currentSelectedCoreID = 1
@@ -1012,6 +1088,7 @@ local function drawStartSelect()
         currentSelectedCore = core
     end
     if btn2Before.hit then
+        playSoundEffect(selectSFX, 1, 0.8)
         currentSelectedCoreID = currentSelectedCoreID - 1
         if currentSelectedCoreID < 1 then
             currentSelectedCoreID = #paddleCores
@@ -1030,6 +1107,7 @@ local function drawStartSelect()
     setFont(40)
     local playBtn = suit.Button("Play", {id = "start_play"}, screenWidth / 2 - buttonWidth / 2, playBtnY, buttonWidth, buttonHeight)
     if playBtn.hit then
+        playSoundEffect(selectSFX, 1, 0.8)
         startingChoice = item.name
         startingItemName = item.name
         Player.currentCore = currentSelectedCore -- Set the selected paddle core
@@ -1140,33 +1218,31 @@ end
 
 local frozenTime = 0
 local lastFreezeTime = 0
-local bossSpawnTime = 420
+local bossSpawnTime = 5
+local useTime = true
 
-local hasSpawnedBoss = false    
 local function drawGameTimer()
-    local countdownTime = bossSpawnTime - gameTime
-    if countdownTime <= 0 and not hasSpawnedBoss then
-        spawnBossNextRow = true
-        hasSpawnedBoss = true
-    end
-    local minutes = math.floor(countdownTime / 60)
-    local seconds = math.floor(countdownTime % 60)
-    local timeString = string.format("%02d:%02d", minutes, seconds)
-    
-    -- Draw timer
-    local font = love.graphics.getFont()
-    local textWidth = font:getWidth(timeString)
-    local x = screenWidth / 2 - 105
-    local y = screenHeight - 175
-    
-    love.graphics.setColor(1, 1, 1, 1)
-    setFont(80)
-    if countdownTime > 0 then
-        love.graphics.print(timeString, x, y)
-    end
-    if playRate ~= 1 then
-        setFont(24)
-        love.graphics.print(string.format(playRate) .. "X", x + textWidth + 10, y + 50)
+    if useTime then
+        local countdownTime = gameTime
+        local minutes = math.floor(gameTime / 60)
+        local seconds = math.floor(gameTime % 60)
+        local timeString = string.format("%02d:%02d", minutes, seconds)
+        
+        -- Draw timer
+        local font = love.graphics.getFont()
+        local textWidth = font:getWidth(timeString)
+        local x = screenWidth / 2 - 105
+        local y = screenHeight - 175
+        
+        love.graphics.setColor(1, 1, 1, 1)
+        setFont(80)
+        if countdownTime >= 0 then
+            love.graphics.print(timeString, x, y)
+        end
+        if playRate ~= 1 then
+            setFont(24)
+            love.graphics.print(string.format(playRate) .. "X", x + textWidth + 10, y + 50)
+        end
     end
 end
 
@@ -1184,16 +1260,22 @@ function drawPauseMenu()
     -- Resume button
     local resumeBtn = suit.Button("Resume", {id="pause_resume"}, centerX, btnY, buttonWidth, buttonHeight)
     if resumeBtn.hit then
+        playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.PLAYING
     end
     btnY = btnY + buttonHeight + 30
     -- Settings button (does nothing for now)
     local settingsBtn = suit.Button("Settings", {id="pause_settings"}, centerX, btnY, buttonWidth, buttonHeight)
+    if settingsBtn.hit then
+        playSoundEffect(selectSFX, 1, 0.8)
+        currentGameState = GameState.SETTINGS
+    end
     btnY = btnY + buttonHeight + 30
     -- Restart button (same as play again)
     local restartBtn = suit.Button("Restart", {id="pause_restart"}, centerX, btnY, buttonWidth, buttonHeight)
     local goldEarned = math.floor(math.sqrt(Player.score) <= 300 and (mapRangeClamped(math.sqrt(Player.score), 0, 300, 1.5, 3) * math.sqrt(Player.score)) or (mapRangeClamped(math.sqrt(Player.score), 300, 600, 3, 5) * math.sqrt(Player.score)))
     if restartBtn.hit then
+        playSoundEffect(selectSFX, 1, 0.8)
         Player.addGold(goldEarned)
         saveGameData()
         resetGame()
@@ -1203,6 +1285,7 @@ function drawPauseMenu()
     -- Main Menu button
     local menuBtn = suit.Button("Main Menu", {id="pause_menu"}, centerX, btnY, buttonWidth, buttonHeight)
     if menuBtn.hit then
+        playSoundEffect(selectSFX, 1, 0.8)
         Player.addGold(goldEarned)
         saveGameData()
         resetGame()
@@ -1212,6 +1295,7 @@ function drawPauseMenu()
     -- Exit Game button
     local exitBtn = suit.Button("Exit Game", {id="pause_exit"}, centerX, btnY, buttonWidth, buttonHeight)
     if exitBtn.hit then
+        playSoundEffect(selectSFX, 1, 0.8)
         Player.addGold(goldEarned)
         saveGameData()
         love.event.quit()
@@ -1247,11 +1331,13 @@ function drawVictoryScreen()
 
     -- Main Menu button
     if suit.Button("Main Menu", {id = "victory_menu"}, startX, y, buttonW, buttonH).hit then
+        playSoundEffect(selectSFX, 1, 0.8)
         resetGame()
         currentGameState = GameState.MENU
     end
     -- Upgrades button
     if suit.Button("Upgrades", {id = "victory_upgrades"}, startX + buttonW + spacing, y, buttonW, buttonH).hit then
+        playSoundEffect(selectSFX, 1, 0.8)
         resetGame()
         currentGameState = GameState.UPGRADES
         loadGameData()
@@ -1269,7 +1355,61 @@ function drawVictoryScreen()
     local startX = (screenWidth - totalWidth) / 2
 end
 
-deathTimerOver = false
+inGame = false
+-- Add a function to draw the settings menu with SUIT sliders
+function drawSettingsMenu()
+    local centerX = screenWidth / 2 - buttonWidth / 2
+    local startY = screenHeight / 2 - (buttonHeight * 2 + buttonSpacing * 2.5) / 2
+    setFont(48)
+    love.graphics.setColor(1, 1, 1, 1)
+    local title = "Settings"
+    local titleWidth = love.graphics.getFont():getWidth(title)
+    love.graphics.print(title, screenWidth/2 - titleWidth/2, startY - 100)
+
+    setFont(36)
+    local sliderWidth = 400
+    local sliderHeight = 40
+    local sliderSpacing = 80
+    local sliderX = screenWidth/2 - sliderWidth/2
+    local sliderY = startY + 60
+
+    -- Music Volume Slider
+    local musicSliderInfo = {value = musicVolume}
+    suit.Label("Music Volume", {align = "left"}, sliderX, sliderY, sliderWidth, 40)
+    local musicSlider = suit.Slider(musicSliderInfo, {id = "music_slider"}, sliderX, sliderY + 40, sliderWidth, sliderHeight)
+    musicVolume = musicSliderInfo.value
+    if backgroundMusic then
+        backgroundMusic:setVolume(musicVolume) -- Adjust the volume of the background music
+    else
+        print("Background music not found")
+    end
+    --print("Music Volume: " .. musicVolume)
+
+    -- SFX Volume Slider
+    local prevSfxValue = sfxVolume
+    local sfxSliderInfo = {value = sfxVolume}
+    suit.Label("SFX Volume", {align = "left"}, sliderX, sliderY + sliderSpacing, sliderWidth, 40)
+    local sfxSlider = suit.Slider(sfxSliderInfo, {id = "sfx_slider"}, sliderX, sliderY + sliderSpacing + 40, sliderWidth, sliderHeight)
+    sfxVolume = sfxSliderInfo.value
+
+    -- Track if mouse button was just released while hovering the slider
+    if prevSfxValue ~= sfxVolume and love.mouse.isDown(1) then
+        playSoundEffect(selectSFX, sfxVolume, 1, false)
+    end
+
+    -- Back button
+    local backBtn = suit.Button("Back", {id="settings_back"}, sliderX, sliderY + sliderSpacing*2 + 60, sliderWidth, buttonHeight)
+    if backBtn.hit then
+        playSoundEffect(selectSFX, 1, 0.8)
+        if inGame then
+            currentGameState = GameState.PAUSED
+        else
+            currentGameState = GameState.MENU
+        end
+    end
+end
+
+-- Add to love.draw()
 local old_love_draw = love.draw
 function love.draw()
     love.graphics.setShader(backgroundShader)
@@ -1320,9 +1460,11 @@ function love.draw()
         drawStartSelect()
         setFont(30)
         if suit.Button("Back", {color = invisButtonColor}, 20, 20, uiLabelImg:getWidth()*0.8, uiLabelImg:getHeight()*0.8).hit then
+            playSoundEffect(selectSFX, 1, 0.8)
             currentGameState = GameState.MENU
         end
         if suit.Button("Upgrades", {color = invisButtonColor}, screenWidth - uiLabelImg:getWidth()*0.8 - 20, 20, uiLabelImg:getWidth()*0.8, uiLabelImg:getHeight()*0.8).hit then
+            playSoundEffect(selectSFX, 1, 0.8)
             currentGameState = GameState.UPGRADES
         end
         suit.draw()
@@ -1349,6 +1491,12 @@ function love.draw()
 
     if currentGameState == GameState.VICTORY then
         drawVictoryScreen()
+        return
+    end
+
+    if currentGameState == GameState.SETTINGS then
+        drawSettingsMenu()
+        suit.draw()
         return
     end
 
@@ -1444,8 +1592,12 @@ function love.draw()
             GameOverDraw()
         end
     end
+    if Player.levelingUp then
+        drawLevelUpShop()
+    end
     dress:draw()    -- Draw tooltip last (on top of everything)
     KeywordSystem:drawTooltip()
+    confetti:draw()
 
     love.graphics.setCanvas(gameCanvas)
     VFX.draw() -- Draw VFX
@@ -1474,14 +1626,22 @@ end
 
 local old_love_keypressed = love.keypressed
 function love.keypressed(key)
+    if key == "o" then
+        startConfetti()
+        return
+    end
+    
     if key == "escape" then
         if currentGameState == GameState.PLAYING then
+            playSoundEffect(selectSFX, 1, 0.8)
             currentGameState = GameState.PAUSED
             return
         elseif currentGameState == GameState.PAUSED then
+            playSoundEffect(selectSFX, 1, 0.8)
             currentGameState = GameState.PLAYING
             return
         elseif currentGameState == GameState.START_SELECT or currentGameState == GameState.UPGRADES then
+            playSoundEffect(selectSFX, 1, 0.8)
             currentGameState = GameState.MENU
             return
         else
@@ -1493,6 +1653,10 @@ function love.keypressed(key)
     -- Reset game when R is pressed
     if key == "r" then
         dmgVFXOn = not dmgVFXOn
+    end
+
+    if key == "o" then
+        startConfetti()
     end
 
     if key == "c" then
@@ -1533,9 +1697,13 @@ function love.keypressed(key)
         VFX.flipDrawDebug()
     end
 
-    --test damage screen visuals 
+    --test victory screen
     if key == "v" then
         currentGameState = GameState.VICTORY
+        local goldEarned = 500 + math.floor(math.sqrt(Player.score) <= 300 and (mapRangeClamped(math.sqrt(Player.score), 0, 300, 1.5, 3) * math.sqrt(Player.score)) or (mapRangeClamped(math.sqrt(Player.score), 300, 600, 3, 5) * math.sqrt(Player.score)))
+        goldEarnedFrl = goldEarned
+        Player.gold = (Player.gold or 0) + goldEarned
+        saveGameData()
     end
     if key == "b" then
         damageThisFrame = boopah
@@ -1580,9 +1748,9 @@ function love.keypressed(key)
         end
     end
 
-    --[[if key == "i" then
+    if key == "i" then
         Player.levelUp()
-    end]]
+    end
 end
 
 function love.mousepressed(x, y, button)

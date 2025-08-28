@@ -95,6 +95,7 @@ local function startingItemsDraw()
             if suit.Button(label, {color = buttonColor, id = buttonID}, x, y, menuWidth, buttonHeight).hit then
                 if affordable then
                     Player.gold = Player.gold - item.price
+                    playSoundEffect(upgradeSFX, 0.6, 1, false)
                     Player.unlockedStartingBalls[item.key] = true
                     -- Add to startingItems in Player and save
                     Player.startingItems = Player.startingItems or {}
@@ -165,6 +166,7 @@ local function paddleCoresDraw()
             if suit.Button(label, {color = buttonColor, id = buttonID}, x, y, colWidth, buttonHeight).hit then
                 if affordable then
                     Player.gold = Player.gold - core.price
+                    playSoundEffect(upgradeSFX, 0.6, 1, false)
                     Player.paddleCores[core.name] = true
                     saveGameData()
                     print("Unlocked paddle core: " .. core.name)
@@ -238,7 +240,7 @@ function permanentUpgrades.draw()
         local x = padding + col * (cellWidth + padding)
         local y = y + row * 200  -- Space for price, value and icon        -- Render price
         local price
-        if Player.permanentUpgrades[upgradeName] < 2 and (not (upgradeName == "cooldown" and Player.permanentUpgrades[upgradeName] <= -2)) then
+        if (Player.permanentUpgrades[upgradeName] or 0) < 2 and (not (upgradeName == "cooldown" and (Player.permanentUpgrades[upgradeName] or 0) <= -2)) then
             setFont(45)
             price = Player.permanentUpgradePrices[upgradeName] or 100  -- Default price if not set
             local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(price))/2
@@ -271,6 +273,7 @@ function permanentUpgrades.draw()
             if Player.gold < price then
                 print("Not enough money to upgrade " .. upgradeName)
             else
+                playSoundEffect(upgradeSFX, 0.6, 1, false)
                 -- Apply the upgrade
                 if Player.permanentUpgrades[upgradeName] then
                     if upgradeName == "cooldown" then
