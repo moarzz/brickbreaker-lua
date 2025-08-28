@@ -570,7 +570,7 @@ local function shoot(gunName, ball)
                     end)
                 end
             elseif gun.name == "Shotgun" then
-                for i = 1, 6 do
+                for i = 1, 7 do
                     local speedXref = spray and (math.random(-1500, 1500) + speedOffset) or (math.random(-250, 250) + speedOffset)
                     table.insert(bullets, {
                         name = "Shotgun",
@@ -1104,14 +1104,14 @@ local function ballListInit()
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
-            speedMult = 1.25,
+            speedMult = 1.5,
             size = 1,
             rarity = "common",
             startingPrice = 5,
             description = "The most basic ball, it has no special abilities.",
             color = {1, 1, 1, 1}, -- White color
             stats = {
-                speed = 250,
+                speed = 150,
                 damage = 1,
             },
             canBuy = function() return false end,
@@ -1147,10 +1147,10 @@ local function ballListInit()
             stats = {
                 speed = 50,
                 damage = 1,
-                range = 1
+                range = 2
             },
         },
-        ["Gold Ball"] = {
+        --[[["Gold Ball"] = {
             name = "Gold Ball",
             type = "ball",
             x = screenWidth / 2,
@@ -1166,7 +1166,7 @@ local function ballListInit()
                 speed = 100,
                 damage = 1,
             },
-        },
+        },]]
         ["Magnetic Ball"] = {
             name = "Magnetic Ball",
             type = "ball",
@@ -1174,29 +1174,29 @@ local function ballListInit()
             y = screenHeight / 2,
             speedMult = 1,
             size = 1,
-            rarity = "uncommon",
-            startingPrice = 50,
+            rarity = "common",
+            startingPrice = 25,
             description = "A ball that's magnetically attracted to the nearest brick",
             color = {0.6, 0.2, 0.8, 1}, -- Purple color
             stats = {
-                speed = 100,
-                damage = 1,
+                speed = 150,
+                damage = 2,
             },
-            attractionStrength = 1150
+            attractionStrength = 1250
         },
         ["Lightning Ball"] = {
             name = "Lightning Ball",
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
-            speedMult = 0.65,
+            speedMult = 0.5,
             size = 1,
             rarity = "rare",
-            startingPrice = 50,
+            startingPrice = 100,
             description = "Creates a damaging current of electricity between bricks on hit.",
             color = {0, 170/255, 1, 1}, -- green color
             stats = {
-                speed = 100,
+                speed = 50,
                 damage = 1,
                 range = 1
             },
@@ -1208,7 +1208,7 @@ local function ballListInit()
             y = screenHeight / 2,
             speedMult = 1.1,
             size = 1,
-            rarity = "common",
+            rarity = "uncommon",
             startingPrice = 50,
             description = "A ball that shoots bullets in a random direction like a gun on bounce.",
             color = {0.8, 0.4, 0.1, 1}, -- Orange color
@@ -1231,7 +1231,7 @@ local function ballListInit()
             rarity = "common",
             startingPrice = 10,
             ammoMult = 4,
-            fireRateMult = 0.75,
+            fireRateMult = 0.65,
             description = "Fires bullets, fast fireRate",
             onBuy = function() 
                 shoot("Pistol")
@@ -1239,7 +1239,7 @@ local function ballListInit()
             noAmount = true,
             currentAmmo = 10 + ((Player.bonuses.ammo or 0) + (Player.permanentUpgrades.ammo or 0)) * 5,
             bulletSpeed = 2000,
-            canBuy = function() return false end,
+            -- canBuy = function() return false end,
 
             stats = {
                 damage = 1,
@@ -1256,8 +1256,8 @@ local function ballListInit()
             size = 1,
             rarity = "common",
             ammoMult = 2,
-            fireRateMult = 2,
-            startingPrice = 20,
+            fireRateMult = 1.9,
+            startingPrice = 25,
             description = "fire bullets that die on impact in bursts",
             onBuy = function() 
                 shoot("Shotgun")
@@ -1280,11 +1280,11 @@ local function ballListInit()
             y = screenHeight / 2,
             size = 1,
             radius = 10,
-            rarity = "rare",
+            rarity = "uncommon",
             speedMult = 1,
             ammoMult = 3,
-            fireRateMult = 3,
-            startingPrice = 100,
+            fireRateMult = 4.25,
+            startingPrice = 50,
             description = "A gun that shoots balls. \nDoesn't need to reload. \nSlow fire rate.",
             onBuy = function() 
                 shoot("Ball Gun")
@@ -1296,7 +1296,7 @@ local function ballListInit()
                 damage = 1,
                 amount = 1,
                 fireRate = 1,
-                speed = 200
+                speed = 150
             },
         },
         Minigun = {
@@ -1330,15 +1330,15 @@ local function ballListInit()
             y = screenHeight / 2,
             size = 1,
             ammoMult = 2,
-            fireRateMult = 1.5,
-            rarity = "uncommon",
-            startingPrice = 50,
+            fireRateMult = 1.35,
+            rarity = "rare",
+            startingPrice = 100,
             description = "Fires golden bullets that pass through all bricks and always deal full damage.",
             onBuy = function()
                 shoot("Golden Pistol")
             end,
             noAmount = true,
-            currentAmmo = 1 + ((Player.bonuses.ammo or 0) + (Player.permanentUpgrades.ammo or 0)) * 2,
+            currentAmmo = 2 + ((Player.bonuses.ammo or 0) + (Player.permanentUpgrades.ammo or 0)) * 2,
             bulletSpeed = 2000,
             stats = {
                 damage = 1,
@@ -1377,14 +1377,14 @@ local function ballListInit()
             size = 1,
             noAmount = true,
             rarity = "common",
-            startingPrice = 10,
+            startingPrice = 25,
             description = "Fire a thin Laser Beam beam in front of the paddle that stops at the first brick hit.",
             color = {1, 0, 0, 1}, -- Red color for Laser Beam
             stats = {
                 damage = 1,
-                fireRate = 1
+                fireRate = 2
             },
-            canBuy = function() return false end
+            -- canBuy = function() return false end
         },
         ["Flamethrower"] = {
             name = "Flamethrower",
@@ -1488,7 +1488,7 @@ local function ballListInit()
             size = 1,
             noAmount = true,
             rarity = "common",
-            startingPrice = 50,
+            startingPrice = 25,
             description = "shoots fireballs that pass through bricks. Very slow fire rate.",
             color = {1, 0.5, 0, 1}, -- Orange color for Fireball
             counter = 0,
@@ -1500,7 +1500,7 @@ local function ballListInit()
             stats = {
                 --amount = 1,
                 damage = 1,
-                range = 1,
+                range = 2,
                 fireRate = 1,
             }
         },
@@ -1518,7 +1518,7 @@ local function ballListInit()
             canBuy = function()
                 local ballCount = 0
                 for _, ballType in pairs(unlockedBallTypes) do
-                    if ballType.type == "ball" then
+                    if ballType.type == "ball" or ballType.name == "Ball Gun" or ballType.name == "Gun Ball Gun" then
                         ballCount = ballCount + 1
                     end
                 end
@@ -1540,7 +1540,7 @@ local function ballListInit()
             size = 1,
             noAmount = true,
             rarity = "uncommon",
-            startingPrice = 25,
+            startingPrice = 50,
             description = "every [cooldown] seconds, pulses of lightning appear at random positions on the screen, dealing damage.",
             color = {0.8, 0.8, 0.2, 1},
             onBuy = function()
@@ -1573,7 +1573,7 @@ local function ballListInit()
             canBuy = function()
                 local gunCount = 0
                 for _, ballType in pairs(unlockedBallTypes) do
-                    if ballType.type == "gun" or ballType.name == "Gun Ball" then
+                    if ballType.type == "gun" or ballType.name == "Gun Ball" or ballType.name == "Turret Generator" then
                         gunCount = gunCount + 1
                     end
                 end
@@ -1681,7 +1681,7 @@ function Balls.initialize()
     Player.newUpgradePrice = Player.currentCore == "Economy Core" and 50 or 100
     Player.newStatLevelRequirement = 10
     Player.newWeaponLevelRequirement = 5
-    --Balls.addBall("Gun Ball Gun")
+    -- Balls.addBall("Saw Blades")
 end
 
 function Balls.clear()
@@ -1928,7 +1928,7 @@ local function brickCollisionCheck(ball)
         for _, brick in ipairs(bricks) do
             if not brick.destroyed then
                 local wasOverlapping = ball.currentlyOverlappingBricks[brick.id] or false
-                local range = (Player.currentCore == "Madness Core" and 2 or 1) * (ball.stats.range + (Player.bonuses.range or 0)) * 0.8
+                local range = (Player.currentCore == "Madness Core" and 2 or 1) * (ball.stats.range + (Player.bonuses.range or 0)) * 0.35
                 
                 -- Check current overlap state
                 local isOverlapping = ball.x + ball.radius * range > brick.x and 
@@ -2033,9 +2033,12 @@ end
 
 local function paddleCollisionCheck(ball, paddle)
     local effectiveRadius = ball.name == "Phantom ball" and (ball.stats.range + (Player.bonuses.range or 0)) * 50 * (Player.currentCore == "Madness Core" and 2 or 1) or ball.radius
-    if ball.x + effectiveRadius > paddle.x and ball.x - effectiveRadius < paddle.x + paddle.width and ball.speedY > 0 and
-       ball.y + effectiveRadius > paddle.y and ball.y - effectiveRadius < paddle.y + paddle.height and ball.speedY >= 0 then
+    if ball.x + effectiveRadius > paddle.x and ball.x - effectiveRadius < paddle.x + paddle.width and
+       ball.y + effectiveRadius > paddle.y and ball.y - effectiveRadius < paddle.y + paddle.height  and 
+       ((ball.y > paddle.y + paddle.height and ball.speedY < 0) or ball.y < paddle.y + paddle.height and ball.speedY > 0) then
         playSoundEffect(paddleBoopSFX, 0.5, 0.8, false, true)   
+
+
         ball.speedY = -ball.speedY
         local hitPosition = (ball.x - (paddle.x - ball.radius)) / (paddle.width + ball.radius * 2)
         local ballSpeed = (ball.stats.speed + ((Player.bonuses.speed or 0) + (Player.permanentUpgrades.speed or 0)) * 50 * (Player.currentCore == "Madness Core" and 2 or 1))
@@ -2044,6 +2047,11 @@ local function paddleCollisionCheck(ball, paddle)
         end
         ball.speedX = (hitPosition - 0.5) * 2 * math.abs(ballSpeed * 0.99)
         ball.speedY = math.sqrt(ballSpeed^2 - ball.speedX^2) * (ball.speedY > 0 and 1 or -1)
+        --[[if ball.speedY > 0 then
+            ball.y = math.max(paddle.y + paddle.height + ball.radius + 5, ball.y)
+        else
+            ball.y = math.min(paddle.y - ball.radius - 5, ball.y)
+        end]]
         if Player.currentCore == "Bouncy Core" then
             ball.speedExtra = math.min((ball.speedExtra or 1) + bouncyCoreSpeedBoost, 12)
         end
@@ -2074,7 +2082,7 @@ end
 
 local function wallCollisionCheck(ball)
     local wallHit = false
-    local effectiveRadius = ball.name == "Phantom ball" and (ball.stats.range + (Player.bonuses.range or 0)) * 40 * (Player.currentCore == "Madness Core" and 2 or 1) or ball.radius
+    local effectiveRadius = ball.name == "Phantom ball" and (ball.stats.range + (Player.bonuses.range or 0)) * 50 * (Player.currentCore == "Madness Core" and 2 or 1) or ball.radius
     if ball.x - effectiveRadius < statsWidth and ball.speedX < 0 then
         ball.speedX = -ball.speedX
         ball.x = statsWidth + effectiveRadius -- Ensure the ball is not stuck in the wall
@@ -2104,7 +2112,7 @@ local function wallCollisionCheck(ball)
         end
         playSoundEffect(wallBoopSFX, 1, 0.5)
         wallHit = true
-    elseif ball.y + effectiveRadius > screenHeight + 350 and ball.speedY > 0 then
+    elseif ball.y + effectiveRadius > screenHeight and ball.speedY > 0 then
         ball.speedY = -ball.speedY
         ball.y = screenHeight - effectiveRadius
         if Player.currentCore == "Bouncy Core" then
@@ -2150,7 +2158,7 @@ local function techUpdate(dt)
             laserBeamTimer = laserBeamTimer + dt
             
             -- Deal damage if we've been on target long enough
-            if laserBeamTimer >= (Player.currentCore == "Madness Core" and 0.5 or 1) * 1.25/((Player.currentCore == "Damage Core" and 1 or (laserBeam.stats.fireRate + (Player.bonuses.fireRate or 0) + (Player.permanentUpgrades.fireRate or 0)))) then
+            if laserBeamTimer >= (Player.currentCore == "Madness Core" and 0.5 or 1) * 1/((Player.currentCore == "Damage Core" and 1 or (laserBeam.stats.fireRate + (Player.bonuses.fireRate or 0) + (Player.permanentUpgrades.fireRate or 0)))) then
                 dealDamage(laserBeam, laserBeamBrick)
                 laserBeamTimer = 0  -- Reset timer after damage
             end
@@ -2202,7 +2210,7 @@ local function techUpdate(dt)
                 anim.y = y
             end
             -- Saw Blades collision with bricks angle
-            for b, brick in ipairs(bricks) do
+            for _, brick in ipairs(bricks) do
                 if not brick.destroyed and brick.health > 0 then
                     -- Check collision (circle-rectangle)
                     local closestX = math.max(brick.x, math.min(x, brick.x + brick.width))
@@ -2210,14 +2218,14 @@ local function techUpdate(dt)
                     local dx = x - closestX
                     local dy = y - closestY
                     local dist = dx*dx + dy*dy
-                    local sawRadius = 40 -- Half of 64px frame, adjust if needed speed
+                    local sawRadius = 50 -- Half of 64px frame, adjust if needed speed
                     if dist <= sawRadius * sawRadius then
                         -- Damage cooldown logic
                         sawBlades.damageCooldowns[i] = sawBlades.damageCooldowns[i] or {}
-                        sawBlades.damageCooldowns[i][b] = sawBlades.damageCooldowns[i][b] or 0
-                        if sawBlades.damageCooldowns[i][b] <= 0 then
+                        sawBlades.damageCooldowns[i][brick.id] = sawBlades.damageCooldowns[i][brick.id] or 0
+                        if sawBlades.damageCooldowns[i][brick.id] <= 0 then
                             dealDamage(unlockedBallTypes["Saw Blades"], brick)
-                            sawBlades.damageCooldowns[i][b] = 0.5 -- 1 second cooldown
+                            sawBlades.damageCooldowns[i][brick.id] = 0.8 -- 1 second cooldown
                             local anim = getAnimation(sawBlades.sawAnimations[i])
                             if anim then
                                 -- Cancel only this saw's previous scale tween
@@ -2233,8 +2241,8 @@ local function techUpdate(dt)
                         end
                     end
                     -- Cooldown tick down
-                    if sawBlades.damageCooldowns[i] and sawBlades.damageCooldowns[i][b] then
-                        sawBlades.damageCooldowns[i][b] = math.max(0, sawBlades.damageCooldowns[i][b] - dt)
+                    if sawBlades.damageCooldowns[i] and sawBlades.damageCooldowns[i][brick.id] then
+                        sawBlades.damageCooldowns[i][brick.id] = math.max(0, sawBlades.damageCooldowns[i][brick.id] - dt)
                     end
                 end
             end
@@ -2618,7 +2626,7 @@ function Balls.update(dt, paddle, bricks)
             end
 
             local multX, multY = normalizeVector(ball.speedX, ball.speedY)
-            local speedExtra = (ball.name == "Magnetic Ball") and 0 or (ball.speedExtra or 0)
+            local speedExtra = ((ball.name == "Magnetic Ball") and 0.5 or 1) * (ball.speedExtra or 0)
             ball.x = ball.x + (ball.speedX + speedExtra * multX * 50) * ball.speedMult * dt * (Player.currentCore == "Madness Core" and 2 or 1)
             ball.y = ball.y + (ball.speedY + speedExtra * multY * 50) * ball.speedMult * dt * (Player.currentCore == "Madness Core" and 2 or 1)
 
@@ -2662,7 +2670,7 @@ function Balls.update(dt, paddle, bricks)
                     local dx = (nearestBrick.x + nearestBrick.width/2) - ball.x
                     local dy = (nearestBrick.y + nearestBrick.height/2) - ball.y
                     local dist = math.sqrt(dx*dx + dy*dy)
-                    local attraction = mapRange((ball.attractionStrength / math.max(dist, 10)) * math.pow(ball.stats.speed + ((Player.bonuses.speed or 0) + (Player.permanentUpgrades.speed or 0))*50 * (Player.currentCore == "Madness Core" and 2 or 1), 1.45), 1, 10, 1, 20) * 0.02
+                    local attraction = mapRange((ball.attractionStrength / math.max(dist, 10)) * math.pow((ball.stats.speed + ((Player.bonuses.speed or 0) + (Player.permanentUpgrades.speed or 0))*50 + (ball.speedExtra or 0) * 15) * (Player.currentCore == "Madness Core" and 2 or 1), 1.45), 1, 10, 1, 20) * 0.02
                     attraction = attraction * mapRangeClamped(ball.stats.speed + ((Player.bonuses.speed or 0) + (Player.permanentUpgrades.speed or 0))*50 * (Player.currentCore == "Madness Core" and 2 or 1) + (ball.speedExtra or 0)*10, 1, 500, 0.5, 2)
                     local angle = math.atan2(dy, dx)
                     ball.speedX = ball.speedX + math.cos(angle) * attraction * dt
@@ -2985,7 +2993,7 @@ local function techDraw()
     if unlockedBallTypes["Laser Beam"] then
         -- Draw the actual Laser Beam
         -- Calculate charge progress
-        local chargeProgress = laserBeamTimer / ((Player.currentCore == "Madness Core" and 0.5 or 1) * (1.5/((Player.currentCore == "Damage Core" and 1 or (unlockedBallTypes["Laser Beam"].stats.fireRate + (Player.bonuses.fireRate or 0) + (Player.permanentUpgrades.fireRate or 0))))))
+        local chargeProgress = laserBeamTimer / ((Player.currentCore == "Madness Core" and 0.5 or 1) * (1/((Player.currentCore == "Damage Core" and 1 or (unlockedBallTypes["Laser Beam"].stats.fireRate + (Player.bonuses.fireRate or 0) + (Player.permanentUpgrades.fireRate or 0))))))
         -- Interpolate color from grey to red based on charge
         local r = 0.35 + (1 - 0.35) * chargeProgress
         local g = 0.35 - 0.35 * chargeProgress

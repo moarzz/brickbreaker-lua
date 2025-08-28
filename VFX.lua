@@ -13,8 +13,8 @@ local function brickHitFX(brick, ball, intensity)
     brick.color = getBrickColor(brick.health, brick.type == "big", brick.type == "boss")
     local colorBeforeHit = brick.color -- Default to white if no color is set
     brick.color = {1,1,1,1}
-    local colorTweenBack = tween.new(0.5, brick, {color = colorBeforeHit}, tween.outSine)
-    addTweenToUpdate(colorTweenBack)
+    --local colorTweenBack = tween.new(0.5, brick, {color = colorBeforeHit}, tween.outSine)
+    --addTweenToUpdate(colorTweenBack)
 
     if ball.speedX and ball.speedY then
         local offsetX, offsetY = normalizeVector(ball.speedX, ball.speedY)
@@ -32,8 +32,6 @@ local function brickHitFX(brick, ball, intensity)
     local scaleOffset = mapRangeClamped(intensity, 1, 15, 1.1, 2)
     brick.drawScale, brick.drawOffsetX, brick.drawOffsetY, brick.drawOffsetRot = scaleOffset, offsetX, offsetY, 0
     table.insert(bricksInHitstun, brick)
-    --local hitTween = tween.new(0.05, brick, {drawScale = scaleOffset, drawOffsetX = offsetX, drawOffsetY = offsetY, drawOffsetRot = 0}, tween.outCubic)
-    --addTweenToUpdate(hitTween)
 end
 
 function VFX.brickHit(brick, ball, damage)
@@ -79,8 +77,16 @@ function VFX.update(dt)
         if brick.drawScale == 1 and brick.drawOffsetX == 0 and brick.drawOffsetY == 0 and brick.drawOffsetRot == 0 then
             table.remove(bricksInHitstun, i)
         end
+        if brick.color ~= getBrickColor(brick.health, brick.type == "big", brick.type == "boss") then
+            local targetColor = getBrickColor(brick.health, brick.type == "big", brick.type == "boss")
+            dtIntensity = dt * mapRange(brick.color[1] - targetColor[1], 0, 1, 1.25, 2.5)
+            brick.color[1] = math.max(brick.color[1] - dtIntensity, targetColor[1])
+            dtIntensity = dt * mapRange(brick.color[2] - targetColor[2], 0, 1, 1.25, 2.5)
+            brick.color[2] = math.max(brick.color[2] - dtIntensity, targetColor[2])
+            dtIntensity = dt * mapRange(brick.color[3] - targetColor[3], 0, 1, 1.25, 2.5)
+            brick.color[3] = math.max(brick.color[3] - dtIntensity, targetColor[3])
+        end
     end
-    --updateBrickParticles(dt)
 end
 
 -- draw

@@ -238,8 +238,8 @@ Player.bonusUpgrades = {
 Player.upgradePaddle = {
     paddleSize = function()
         -- This is handled in permanentUpgrades.lua now
-        paddle.width = paddle.width + 25
-        paddle.x = paddle.x - 25  -- Adjust position to keep it centered
+        paddle.width = paddle.width + 20
+        paddle.x = paddle.x - 20  -- Adjust position to keep it centered
         Player.permanentUpgrades.paddleSize = (Player.permanentUpgrades.paddleSize or 0) + 1
     end,
     

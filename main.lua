@@ -279,7 +279,7 @@ local function spawnBoss()
             healNumber(healValue, boss.x + boss.width/2, math.max(10, boss.y + boss.height/2))
             for _, brick in ipairs(bricks) do
                 if brick.type ~= "boss" then
-                    local healAmount = math.ceil(brick.health/(brick.type == "big" and 100 or 50))
+                    local healAmount = math.ceil(brick.health/(brick.type == "big" and 160 or 80))
                     brick.health = brick.health + healAmount
                     brick.color = getBrickColor(brick.health, brick.type == "big")
                     healNumber(healAmount, brick.x + brick.width/2, brick.y + brick.height/2)
@@ -405,17 +405,17 @@ local function generateRow(brickCount, yPos)
                                 local bricksToHeal = getBricksInCircle(healBrick.x + healBrick.width/2, healBrick.y + healBrick.height/2, healBrick.width* 5/4)
                                 for _, brick in ipairs(bricksToHeal) do
                                     -- local brick = healBrick
-                                    local healAmount = math.ceil(brick.health/(brick.type == "big" and 100 or 50))
+                                    local healAmount = math.ceil(brick.health/(brick.type == "big" and 160 or 80))
                                     brick.health = brick.health + healAmount
                                     brick.color = getBrickColor(brick.health, brick.type == "big")
                                     healNumber(healAmount, brick.x + brick.width/2, brick.y + brick.height/2)
                                     healThisFrame = healThisFrame + healAmount
                                 end
                             end
-                            Timer.after(1.5, function() healSelf(healBrick) end)
+                            Timer.after(1.75, function() healSelf(healBrick) end)
                         end
                     end
-                    Timer.after(1.75 + math.random(1,150)/50, function() healSelf(healBrick) end)
+                    Timer.after(1.75 + math.random(1,175)/100, function() healSelf(healBrick) end)
                 else
                     local brickColor = getBrickColor(brickHealth)
                     table.insert(bricks, {
@@ -450,12 +450,12 @@ local function addMoreBricks()
             print("spawning more bricks")
             for i=1 , 10 do
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
-                currentRowPopulation = currentRowPopulation + 1 + math.floor(currentRow/17.5)
+                currentRowPopulation = currentRowPopulation + math.ceil(Player.level * 0.65)
                 if spawnBossNextRow and not bossSpawned then
                     spawnBoss()
                     bossSpawned = true
                     spawnBossNextRow = false
-                    currentRowPopulation = 750
+                    currentRowPopulation = 800
                 elseif not (bossSpawned or spawnBossNextRow) and Player.level >= 29 then
                     spawnBossNextRow = true
                 end
@@ -516,7 +516,7 @@ function initializeBricks()
     -- Generate bricks
     for i = 0, rows - 1 do
         generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing)) --generate 100 scaling rows of bricks
-        currentRowPopulation = math.min(currentRowPopulation + 1 + math.floor(currentRowPopulation/25), 750)
+        currentRowPopulation = math.min(currentRowPopulation + 1, 750)
     end
 
     -- remove the bossSpawnTimer on gameStart if it exists
@@ -641,8 +641,7 @@ end
 
 function getBrickSpeedByTime()
     -- Scale speed from 0.35 to 3.25 over 20 minutes
-    local timeSinceStart = love.timer.getTime() - gameStartTime
-    return mapRangeClamped(timeSinceStart, 0, 1200, 0.35, 3.25)
+    return mapRangeClamped(gameTime, 0, 1200, 0.35, 3.25)
 end
 
 currentBrickSpeed = 1
@@ -857,7 +856,7 @@ local function gameFixedUpdate(dt)
 
             -- Keep paddle within screen bounds
             paddle.x = math.max(statsWidth - (paddle.width/2) + 65, math.min(screenWidth - statsWidth - paddle.width + (paddle.width/2) - 65, paddle.x))
-            paddle.y = math.max(math.max(getHighestBrickY() + brickHeight*5, screenHeight/2 + 100), math.min(screenHeight - paddle.height - 10, paddle.y))
+            paddle.y = Player.dead and 10000 or math.max(math.max(getHighestBrickY() + brickHeight*5, screenHeight/2 + 100), math.min(screenHeight - paddle.height - 10, paddle.y))
 
             -- Update Balls
             Balls.update(dt, paddle, bricks, Player)
@@ -976,7 +975,7 @@ function drawMenu()
     local minutes = math.floor(fastestTime / 60)
     local seconds = math.floor(fastestTime % 60)
     local fastestTimeString = string.format("%02d:%02d", minutes, seconds)
-    suit.Label(fastestTimeString)
+    suit.Label(fastestTimeString, {align = "center"}, 100, 150, 200, 30) -- Added position and size parameters
 end
 
 local currentSelectedCoreID = 1
