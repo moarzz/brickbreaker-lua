@@ -12,8 +12,17 @@ VFX = require("VFX") -- VFX library
 local KeySys = require("KeywordSystem") -- Keyword system for text parsing
 local Explosion = require("particleSystems.explosion") -- Explosion particle system
 
-goldEarnedFrl = 0
+usingMoneySystem = false
+goldEarnedFrl = 0 -- ignore, mais delete pas
 local startingItemName = nil
+
+-- Cache for brick HP text objects
+local brickTextCache = {
+    objects = {},  -- Cache Text objects
+    widths = {},   -- Cache text widths
+    font = nil     -- Store font reference
+}
+
 -- Game states
 GameState = {
     MENU = "menu",
@@ -29,7 +38,7 @@ currentGameState = GameState.MENU
 
 -- Add settings variables
 musicVolume = 0.5
-sfxVolume = 0.5
+sfxVolume = 1
 
 -- Add this variable to store the player's choice
 local startingChoice = nil
@@ -49,13 +58,21 @@ local spawnAcceleration = 0.01 -- How much faster spawning gets per second
 local currentSpawnRate = 1.0 -- Current time between spawns
 local gameStartTime = 0
 gameTime = 0  -- Tracks actual elapsed gameplay time
-local bossSpawned = false
+bossSpawned = false
 local spawnBossNextRow = false
 healThisFrame = 0
 
 function resetGame()
     -- Stop any confetti effect
     stopConfetti()
+    
+    -- Clear text cache
+    for _, text in pairs(brickTextCache.objects) do
+        text:release()
+    end
+    brickTextCache.objects = {}
+    brickTextCache.widths = {}
+    brickTextCache.font = nil
     
     -- Reset game state
     currentGameState = GameState.MENU
@@ -133,6 +150,7 @@ function resetGame()
     resetAnimations()
 
     brickPieces = {} -- Reset brick pieces
+    resetLvlUpPopups()
 end
 
 local function loadAssets()
@@ -180,6 +198,10 @@ local function loadAssets()
     lvlUpSFX = love.audio.newSource("assets/SFX/lvlUp.mp3", "static")
     upgradeSFX = love.audio.newSource("assets/SFX/upgrade.mp3", "static")
     selectSFX = love.audio.newSource("assets/SFX/select.mp3", "static")
+    laserSFX = love.audio.newSource("assets/SFX/laser.mp3", "static")
+    lightningPulseSFX = love.audio.newSource("assets/SFX/lightningPulse.mp3", "static")
+    lightningSFX = love.audio.newSource("assets/SFX/lightning.mp3", "static")
+
 
     -- load shaders
     backgroundShader = love.graphics.newShader("Shaders/background.glsl")
@@ -212,6 +234,7 @@ local function getMaxBrickHealth()
     return maxHealth
 end
 
+local canHeal = true
 local bossWidth, bossHeight = 500, 300
 local bossHealth = 5000
 local brickId = 1
@@ -238,7 +261,8 @@ local function spawnBoss()
         destroyed = false,
         health = bossHealth,
         color = {brickColor[1], brickColor[2], brickColor[3], 1},
-        hitLastFrame = false
+        hitLastFrame = false,
+        lastHitVfxTime = 0,
     }
     table.insert(bricks, boss)
     brickId = brickId + 1
@@ -260,19 +284,20 @@ local function spawnBoss()
                 drawOffsetY = 0,
                 drawOffsetRot = 0,
                 drawScale = 1,
-                speedMult = 2,
+                speedMult = 1.85,
                 width = brickWidth,
                 height = brickHeight,
                 destroyed = false,
-                health = math.random(30,60),
+                health = math.random(60,125),
                 color = {brickColor[1], brickColor[2], brickColor[3], 1},
-                hitLastFrame = false
+                hitLastFrame = false,
+                lastHitVfxTime = 0,
             })
             brickId = brickId + 1
         end
     end)
-    local bossHealTimer = Timer.every(1.2, function()
-        if boss.y >= -bossHeight + 150 then
+    local bossHealTimer = Timer.every(2, function()
+        if boss.y >= -bossHeight + 150 and canHeal then
             local healValue = math.floor(mapRange(boss.health, 1, 5000, 1, 50))
             boss.health = boss.health + healValue
             healThisFrame = healThisFrame + healValue
@@ -296,20 +321,24 @@ local bossRows = {}
 local currentRow = 1
 local nextRowDebuff = 0
 local function generateRow(brickCount, yPos)
+    local rowXOffset = math.random(-15,15)
+    local startLocation = usingMoneySystem and statsWidth or 30
+    local columnCount = usingMoneySystem and 12 or 22
     brickCount = brickCount - nextRowDebuff
     nextRowDebuff = 0 -- Reset next row debuff for the next row
-    local row = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+    local row = usingMoneySystem and {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} or {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
     local rowOffset = 0--mapRangeClamped(math.random(0,10),0,10, 0, brickWidth)
     
-    if bossSpawned then
-        for i = 4, 9 do
+    if bossSpawned and not bossDead then
+        local num1, num2 = usingMoneySystem and 4 or 9, usingMoneySystem and 9 or 14
+        for i = num1, num2 do
             bossRows[i] = true
         end
     end
     
     -- Pre-calculate available positions
     local availablePositions = {}
-    for i = 1, 12 do
+    for i = 1, columnCount do
         if not (unavailableXpos[i] or bossRows[i]) then
             table.insert(availablePositions, i)
         end
@@ -358,7 +387,7 @@ local function generateRow(brickCount, yPos)
                         table.insert(bricks, {
                             type = "big",
                             id = brickId,
-                            x = statsWidth + (xPos - 1) * (brickWidth + brickSpacing) + 5 + rowOffset,
+                            x = startLocation + (xPos - 1) * (brickWidth + brickSpacing) + 5 + rowOffset + rowXOffset,
                             y = yPos - (brickHeight + brickSpacing/2),
                             drawOffsetX = 0,
                             drawOffsetY = 0,
@@ -370,7 +399,8 @@ local function generateRow(brickCount, yPos)
                             health = bigBrickHealth,
                             colorHealth = bigBrickHealth / 5, -- store the divided value for color
                             color = {brickColor[1], brickColor[2], brickColor[3], 1},
-                            hitLastFrame = false
+                            hitLastFrame = false,
+                            lastHitVfxTime = 0,
                         })
                         brickId = brickId + 1
                         nextRowDebuff = brickHealth + row[xPos+1]
@@ -383,7 +413,7 @@ local function generateRow(brickCount, yPos)
                     local healBrick = {
                         type = "heal",
                         id = brickId,
-                        x = statsWidth + (xPos - 1) * (brickWidth + brickSpacing) + 5 + rowOffset,
+                        x = startLocation + (xPos - 1) * (brickWidth + brickSpacing) + 5 + rowOffset + rowXOffset,
                         y = yPos,
                         drawOffsetX = 0,
                         drawOffsetY = 0,
@@ -394,7 +424,8 @@ local function generateRow(brickCount, yPos)
                         destroyed = false,
                         health = math.ceil(brickHealth/2),
                         color = {brickColor[1], brickColor[2], brickColor[3], 1},
-                        hitLastFrame = false
+                        hitLastFrame = false,
+                        lastHitVfxTime = 0,
                     }
                     table.insert(bricks, healBrick)
                     table.insert(healBricks, healBrick)
@@ -415,13 +446,15 @@ local function generateRow(brickCount, yPos)
                             Timer.after(1.75, function() healSelf(healBrick) end)
                         end
                     end
-                    Timer.after(1.75 + math.random(1,175)/100, function() healSelf(healBrick) end)
+                    if canHeal then
+                        Timer.after(1.75 + math.random(1,175)/100, function() healSelf(healBrick) end)
+                    end
                 else
                     local brickColor = getBrickColor(brickHealth)
                     table.insert(bricks, {
                         type = "small",
                         id = brickId,
-                        x = statsWidth + (xPos - 1) * (brickWidth + brickSpacing) + 5 + rowOffset,
+                        x = startLocation + (xPos - 1) * (brickWidth + brickSpacing) + 5 + rowOffset + rowXOffset,
                         y = yPos,
                         drawOffsetX = 0,
                         drawOffsetY = 0,
@@ -432,7 +465,8 @@ local function generateRow(brickCount, yPos)
                         destroyed = false,
                         health = brickHealth,
                         color = {brickColor[1], brickColor[2], brickColor[3], 1},
-                        hitLastFrame = false
+                        hitLastFrame = false,
+                        lastHitVfxTime = 0,
                     })
                     brickId = brickId + 1
                 end
@@ -450,13 +484,13 @@ local function addMoreBricks()
             print("spawning more bricks")
             for i=1 , 10 do
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
-                currentRowPopulation = currentRowPopulation + math.ceil(Player.level * 0.65)
+                currentRowPopulation = currentRowPopulation + math.ceil(math.pow(Player.level, 0.9) * 0.4)
                 if spawnBossNextRow and not bossSpawned then
                     spawnBoss()
                     bossSpawned = true
                     spawnBossNextRow = false
-                    currentRowPopulation = 800
-                elseif not (bossSpawned or spawnBossNextRow) and Player.level >= 29 then
+                    currentRowPopulation = 700
+                elseif not (bossSpawned or spawnBossNextRow) and gameTime >= 600 then
                     spawnBossNextRow = true
                 end
             end
@@ -640,8 +674,8 @@ function getHighestBrickY(lowestInstead)
 end
 
 function getBrickSpeedByTime()
-    -- Scale speed from 0.35 to 3.25 over 20 minutes
-    return mapRangeClamped(gameTime, 0, 1200, 0.35, 3.25)
+    -- Scale speed from 0.35 to 3.5 over 30 minutes
+    return mapRange(gameTime, 0, 2000, 0.25, 3.5)
 end
 
 currentBrickSpeed = 1
@@ -650,11 +684,11 @@ function getBrickSpeedMult()
     -- Get the position-based multiplier
     if Player.dead then
         return deathTweenValues.speed * getBrickSpeedByTime()
-    elseif bossSpawned and boss.y >= -boss.height and getHighestBrickY() <= (screenHeight * 3/4 - 150) then
-        return mapRangeClamped(boss.y, -boss.height, screenHeight/3, 3, 0.8) * getBrickSpeedByTime()
+    elseif bossSpawned and boss.y >= -boss.height and getHighestBrickY() <= (screenHeight * 3/4 - 250) then
+        return mapRangeClamped(boss.y, -boss.height, screenHeight/3, 2.8, 0.75) * getBrickSpeedByTime()
     else
         local posMult = 1
-        posMult = mapRangeClamped(getHighestBrickY(), 100, (screenHeight/2), 10, 1)
+        posMult = mapRangeClamped(getHighestBrickY(), 100, (screenHeight/2 + 200), 10, 0.75)
         if #bricks == 0 then
             return 1
         end
@@ -665,7 +699,6 @@ function getBrickSpeedMult()
         end
         
         -- Combine with time-based multiplier
-        print(posMult)
         return posMult * getBrickSpeedByTime()
     end
 end
@@ -807,7 +840,7 @@ local function gameFixedUpdate(dt)
         dt = dt * 0.4 -- ralenti le jeu a la bonne vitesse
         upgradesUI.update(dt) -- Update the upgrades UI
         -- Don't update game time when level up shop is open
-        if Player.levelingUp then
+        if Player.choosingUpgrade then
             if lastFreezeTime == 0 then
                 lastFreezeTime = love.timer.getTime()
             end
@@ -822,13 +855,17 @@ local function gameFixedUpdate(dt)
             end
         end
 
+        if not Player.choosingUpgrade and Player.levelingUp then
+            dt = 0
+        end
+
         if UtilityFunction.freeze then
             dt = 0 -- Freeze the game if UtilityFunction.freeze is true
         end
         Timer.update(dt) -- Update the timer
 
         local function updateGameTime(dt)
-            if not UtilityFunction.freeze and not Player.levelingUp then
+            if not UtilityFunction.freeze and not (Player.choosingUpgrade or Player.levelingUp) then
                 gameTime = gameTime + 1/60 * playRate
             end
         end
@@ -836,7 +873,7 @@ local function gameFixedUpdate(dt)
         updateGameTime(dt)
 
         -- checks if game is frozen
-        if not Player.levelingUp and not UtilityFunction.freeze then
+        if not Player.choosingUpgrade and not UtilityFunction.freeze then
             -- Paddle movement
             local moveX, moveY = 0, 0
             if love.keyboard.isDown("left") or love.keyboard.isDown("a") then
@@ -855,8 +892,10 @@ local function gameFixedUpdate(dt)
             paddle.currentSpeedY = moveY * paddle.speed * paddle.speedMult
 
             -- Keep paddle within screen bounds
-            paddle.x = math.max(statsWidth - (paddle.width/2) + 65, math.min(screenWidth - statsWidth - paddle.width + (paddle.width/2) - 65, paddle.x))
-            paddle.y = Player.dead and 10000 or math.max(math.max(getHighestBrickY() + brickHeight*5, screenHeight/2 + 100), math.min(screenHeight - paddle.height - 10, paddle.y))
+            local leftLimit = usingMoneySystem and statsWidth or 0
+            local rightLimit = usingMoneySystem and (screenWidth - statsWidth) or screenWidth
+            paddle.x = math.max(leftLimit - (paddle.width/2) + 65, math.min(rightLimit - paddle.width + (paddle.width/2) - 65, paddle.x))
+            paddle.y = Player.dead and 10000 or math.max(math.max(getHighestBrickY() + brickHeight*5, screenHeight/2 + 200), math.min(screenHeight - paddle.height - 10, paddle.y))
 
             -- Update Balls
             Balls.update(dt, paddle, bricks, Player)
@@ -891,7 +930,7 @@ local function gameFixedUpdate(dt)
                 damageThisFrame = damageThisFrame or 0 -- Reset damage this frame
                 if damageThisFrame > 0 and damageCooldown <= 0 then
                     damageScreenVisuals(mapRangeClamped(damageThisFrame,1,20,0.25, 0.5), damageThisFrame)
-                    playSoundEffect(brickHitSFX, math.sqrt(damageThisFrame) >= 4 and mapRangeClamped(math.sqrt(damageThisFrame), 4, 7, 0.75, 1) or mapRangeClamped(math.sqrt(damageThisFrame), 1,4, 0.35, 0.75), math.sqrt(damageThisFrame) >= 5 and mapRangeClamped(math.sqrt(damageThisFrame), 5, 8, 1, 1.25) or  mapRangeClamped(math.sqrt(damageThisFrame),1,5,0.5,1), false, true)
+                    playSoundEffect(brickHitSFX, math.sqrt(damageThisFrame) >= 4 and mapRangeClamped(math.sqrt(damageThisFrame), 6, 10, 0.6, 1) or mapRangeClamped(math.sqrt(damageThisFrame), 1,6, 0.35, 0.6), math.sqrt(damageThisFrame) >= 5 and mapRangeClamped(math.sqrt(damageThisFrame), 6, 10, 0.75, 1) or  mapRangeClamped(math.sqrt(damageThisFrame),1,6,0.4,0.75), false, true)
                     damageCooldown = 0.05 -- Set cooldown for damage visuals
                     damageThisFrame = 0 -- Reset damage this frame
                 end
@@ -916,8 +955,6 @@ function love.update(dt)
         gameFixedUpdate(fixed_dt) -- Your game logic here, using fixed_dt
         accumulator = accumulator - fixed_dt
     end
-    -- print("Memory:", collectgarbage("count"))
-    -- collectgarbage("step", 1)
 end
 
 -- Menu settings
@@ -984,7 +1021,7 @@ local startingItemOrder = {"Ball", "Pistol", "Laser Beam", "Fireball"}
 -- Add a new function for the starting item selection screen
 local function drawStartSelect()
     local centerX = screenWidth / 2 - buttonWidth / 2
-    local startY = screenHeight / 3
+    local startY = screenHeight / 4
     setFont(36)
     love.graphics.setColor(1, 1, 1, 1)
     suit.Label("Choose your starting item", {align = "center"}, screenWidth / 2 - getTextSize("Choose your starting item") / 2, startY - 100)
@@ -1010,6 +1047,19 @@ local function drawStartSelect()
     local item = startingItems[currentStartingItemID]
     local btnBefore = suit.Button("Back", {id = "back_starting_item"}, centerX - 100 - 20, btnY, 125, buttonHeight)
     local btn = suit.Label(item.label, {id = item.id}, centerX, btnY, buttonWidth, buttonHeight)
+    -- Show the starting item description under the label
+    local itemDescription = "No description available for ".. item.label
+    if item.label == "Ball" then
+        itemDescription = "Basic ball. Very fast."
+    elseif item.label == "Pistol" then
+        itemDescription = "Fires bullets. \nFast fire rate."
+    elseif item.label == "Laser Beam" then
+        itemDescription = "Fire a thin Laser beam in front of the paddle."
+    elseif item.label == "Fireball" then
+        itemDescription = "Shoots fireballs that pass through bricks. \nVery slow fire rate."
+    end
+    setFont(25)
+    suit.Label(itemDescription, {align = "center"}, centerX-100, btnY + buttonHeight + 10, 600, 60)
     local btnNext = suit.Button("Next", {id = "next_starting_item"}, centerX + buttonWidth + 20, btnY, 125, buttonHeight)
     if btnNext.hit then
         playSoundEffect(selectSFX, 1, 0.8)
@@ -1041,24 +1091,9 @@ local function drawStartSelect()
             item = startingItems[currentStartingItemID]
         end
     end
-    --[[for i, item in ipairs(startingItems) do
-        if not (item.label == "1" or item.label == "2" or item.label == "3") then
-            local btn = suit.Button(item.label, {id = item.id}, centerX, btnY, buttonWidth, buttonHeight)
-            if btn.hit then
-                startingChoice = item.name
-                startingItemName = item.name
-                currentGameState = GameState.PLAYING
-                initializeGameState()
-                if item.name ~= "Nothing" then
-                    Balls.addBall(item.name)
-                end
-            end
-            btnY = btnY + buttonHeight + 40
-        end
-    end]]
 
     -- logic for choosing paddle core
-    btnY = btnY + buttonHeight + 150
+    btnY = btnY + buttonHeight + 200
     setFont(36)
     suit.Label("Choose your paddle core", {align = "center"}, screenWidth / 2 - getTextSize("Choose your paddle core") / 2, btnY - 80)
     local paddleCores = {}
@@ -1101,7 +1136,7 @@ local function drawStartSelect()
     -- Draw Play button centered under everything else
     local btnY = btnY + buttonHeight + 80
     local coreDescription = Player.coreDescriptions[core] and Player.coreDescriptions[core] or "No description available"
-    suit.Label(coreDescription, {align = "center"}, screenWidth / 2 - 250, btnY - 50, 500, 100)
+    suit.Label(coreDescription, {align = "center"}, screenWidth / 2 - 300, btnY - 50, 600, 100)
     local playBtnY = btnY + buttonHeight + 100
     setFont(40)
     local playBtn = suit.Button("Play", {id = "start_play"}, screenWidth / 2 - buttonWidth / 2, playBtnY, buttonWidth, buttonHeight)
@@ -1110,8 +1145,9 @@ local function drawStartSelect()
         startingChoice = item.name
         startingItemName = item.name
         Player.currentCore = currentSelectedCore -- Set the selected paddle core
+        resetGame()
         currentGameState = GameState.PLAYING
-        initializeGameState()
+        -- initializeGameState()
         Player.bricksDestroyed = 0 -- Reset bricks destroyed count
         if item.name ~= "Nothing" then
             Balls.addBall(item.name)
@@ -1155,15 +1191,66 @@ function drawBricks()
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(batch)
 
-    -- Draw HP text for batched bricks
+    -- Draw HP text for batched bricks in optimized way
     setFont(15)
     local font = love.graphics.getFont()
-    for index, data in ipairs(batchData) do
-        local hpText = tostring(data.health or 0)
-        love.graphics.setColor(0, 0, 0, 1)
-        love.graphics.print(hpText, data.centerX+2, data.centerY+2, 0, 1.2, 1.2, font:getWidth(hpText)/2, font:getHeight()/2)
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.print(hpText, data.centerX, data.centerY, 0, 1.2, 1.2, font:getWidth(hpText)/2, font:getHeight()/2)
+    local fontHeight = font:getHeight()
+
+    -- Cache text objects and widths
+    local textCache = {}
+    local widthCache = {}
+    
+    -- Group text by same health values
+    local healthGroups = {}
+    for _, data in ipairs(batchData) do
+        local health = data.health or 0
+        healthGroups[health] = healthGroups[health] or {}
+        table.insert(healthGroups[health], data)
+    end
+
+    -- Create/get cached text objects
+    for health, positions in pairs(healthGroups) do
+        if not textCache[health] then
+            local text = tostring(health)
+            textCache[health] = love.graphics.newText(font, text)
+            widthCache[health] = font:getWidth(text)
+        end
+    end
+
+    -- Draw all black outlines in one batch
+    love.graphics.setColor(0, 0, 0, 1)
+    for health, positions in pairs(healthGroups) do
+        local text = textCache[health]
+        local width = widthCache[health]
+        for _, pos in ipairs(positions) do
+            love.graphics.draw(text, 
+                pos.centerX + 2, 
+                pos.centerY + 2, 
+                0, 
+                1.2, 
+                1.2, 
+                width/2, 
+                fontHeight/2
+            )
+        end
+    end
+
+    -- Draw all white text in one batch
+    love.graphics.setColor(1, 1, 1, 1)
+    for health, positions in pairs(healthGroups) do
+        local text = textCache[health]
+        local width = widthCache[health]
+        for _, pos in ipairs(positions) do
+            love.graphics.draw(text, 
+                pos.centerX, 
+                pos.centerY, 
+                0, 
+                1.2, 
+                1.2, 
+                width/2, 
+                fontHeight/2
+            )
+        end
     end
 
     -- draw heal symbol on healBricks
@@ -1320,22 +1407,28 @@ function drawVictoryScreen()
     love.graphics.setColor(1, 1, 1, 1) -- Reset color to white
     love.graphics.printf("Press R to restart or ESC to quit", 0, centerY + 2000, screenWidth, "center")
 
-    -- Draw Main Menu and Upgrades buttons at the bottom using SUIT
+    -- Draw Main Menu, Keep Going, and Upgrades buttons at the bottom using SUIT
     local buttonW, buttonH = 350, 125
-    local spacing = 80
-    local totalWidth = buttonW * 2 + spacing
+    local spacing = 40  -- Reduced spacing to fit three buttons
+    local totalWidth = buttonW * 3 + spacing * 2  -- Width for three buttons
     local startX = (screenWidth - totalWidth) / 2 
     local y = screenHeight * 3/4
     setFont(36)
 
+    -- Keep Going button (new)
+    if suit.Button("Keep Going", {id = "keep_going"}, startX, y, buttonW, buttonH).hit then
+        playSoundEffect(selectSFX, 1, 0.8)
+        currentGameState = GameState.PLAYING  -- Set state back to playing
+    end
+
     -- Main Menu button
-    if suit.Button("Main Menu", {id = "victory_menu"}, startX, y, buttonW, buttonH).hit then
+    if suit.Button("Main Menu", {id = "victory_menu"}, startX + buttonW + spacing, y, buttonW, buttonH).hit then
         playSoundEffect(selectSFX, 1, 0.8)
         resetGame()
         currentGameState = GameState.MENU
     end
     -- Upgrades button
-    if suit.Button("Upgrades", {id = "victory_upgrades"}, startX + buttonW + spacing, y, buttonW, buttonH).hit then
+    if suit.Button("Upgrades", {id = "victory_upgrades"}, startX + (buttonW + spacing) * 2, y, buttonW, buttonH).hit then
         playSoundEffect(selectSFX, 1, 0.8)
         resetGame()
         currentGameState = GameState.UPGRADES
@@ -1352,6 +1445,12 @@ function drawVictoryScreen()
     local spacing = 60
     local totalWidth = buttonW * 2 + spacing
     local startX = (screenWidth - totalWidth) / 2
+end
+
+local function drawLevelUp()
+    setFont(30)
+    local text = Player.currentCore == "Economy Core" and "Press SPACE to finish upgrading and gain +" .. math.min(math.floor(Player.money/5), 10) .. "$\n(+1$ for every 5 unspent $, max 10)" or "Press SPACE to finish upgrading and gain +" .. math.min(5, math.floor(Player.money/5)) .. "$\n(+1$ for every 5 unspent $, max 5)"
+    suit.Label(text, {align = "center"}, screenWidth/2 - 400, 75, 800, screenWidth/2 + 250)
 end
 
 inGame = false
@@ -1422,20 +1521,33 @@ function love.draw()
     if currentGameState == GameState.PLAYING then
         -- Progress bar background
         love.graphics.setColor(0.2, 0.2, 0.2, 0.5)
-        love.graphics.rectangle("fill", statsWidth, screenHeight - 30, screenWidth - statsWidth*2, 30)
-        
+        if usingMoneySystem then
+            love.graphics.rectangle("fill", statsWidth, screenHeight - 30, screenWidth - statsWidth*2, 30)
+        else
+            love.graphics.rectangle("fill", 0, screenHeight - 30, screenWidth, 30)
+        end
+
         -- Progress bar fill
         local progress = Player.xp / Player.xpForNextLevel
         love.graphics.setColor(90/255, 150/255, 0.75, 1)
-        love.graphics.rectangle("fill", statsWidth, screenHeight - 30, 
-            (screenWidth - statsWidth*2) * math.min(1, math.max(0, progress)), 30)
-        
+        if usingMoneySystem then
+            love.graphics.rectangle("fill", statsWidth, screenHeight - 30, 
+                (screenWidth - statsWidth*2) * math.min(1, math.max(0, progress)), 30)
+        else
+            love.graphics.rectangle("fill", 0, screenHeight - 30, 
+                screenWidth * math.min(1, math.max(0, progress)), 30)
+        end
+
         -- Level text
         love.graphics.setColor(1, 1, 1, 1)
         setFont(25)
         local levelText = "Lvl " .. Player.level
         local textWidth = love.graphics.getFont():getWidth(levelText)
-        love.graphics.print(levelText, statsWidth + 15, screenHeight - 28)
+        if usingMoneySystem then
+            love.graphics.print(levelText, statsWidth + 15, screenHeight - 28)
+        else
+            love.graphics.print(levelText, 15, screenHeight - 28)
+        end
     end
     if currentGameState == GameState.PAUSED then
         love.graphics.setColor(0, 0, 0, 0.6)
@@ -1559,7 +1671,7 @@ function love.draw()
 
     love.graphics.setColor(1, 1, 1, 1)
     for i=1, Player.lives do
-        love.graphics.draw(heartImg, -20, 75 + ((heartImg:getHeight()*2 + 5)*(i-1)), 0, 4, 4)
+        --love.graphics.draw(heartImg, -20, 75 + ((heartImg:getHeight()*2 + 5)*(i-1)), 0, 4, 4)
     end
     love.graphics.setCanvas(gameCanvas)
     love.graphics.rectangle("fill", paddle.x, paddle.y, paddle.width * paddle.widthMult, paddle.height)
@@ -1579,6 +1691,15 @@ function love.draw()
     -- Draw the game timer
     drawDamageNumbers()
     drawGameTimer()
+    if Player.levelingUp then
+        love.graphics.setColor(0, 0, 0, 0.5)
+        love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
+        love.graphics.setColor(1, 1, 1, 1)
+    end
+
+    drawAnimations()
+    drawMuzzleFlashes()
+
     upgradesUI.draw()
 
     -- Draw the UI elements using Suit
@@ -1591,7 +1712,10 @@ function love.draw()
             GameOverDraw()
         end
     end
-    if Player.levelingUp then
+    if Player.levelingUp and not Player.choosingUpgrade and not usingMoneySystem then
+        drawLevelUp()
+    end
+    if Player.choosingUpgrade then
         drawLevelUpShop()
     end
     dress:draw()    -- Draw tooltip last (on top of everything)
@@ -1605,10 +1729,6 @@ function love.draw()
     -- Draw the game canvas gameCanvasfirst
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(gameCanvas)
-
-    -- Draw damage numbers and other overlays AFTER drawing the game canvas
-    drawAnimations()
-    drawMuzzleFlashes()
     
     -- Then draw the shader overlay on top with some transparency to blend with the game
     love.graphics.setColor(1, 1, 1, 1.0) -- Adjust alpha for desired effect
@@ -1623,13 +1743,32 @@ function love.draw()
     setFont(20)
 end
 
+damageNumbersOn = true
+healNumbersOn = true
+local testingMode = false
 local old_love_keypressed = love.keypressed
+moneyScale = {scale = 1}
 function love.keypressed(key)
-    if key == "o" then
-        startConfetti()
-        return
+    if key == "space" and Player.levelingUp then
+        if Player.currentCore == "Economy Core" then
+            Player.money = Player.money + math.min(10, math.floor(Player.money/5)) + 5
+        else
+            Player.money = Player.money + math.min(5, math.floor(Player.money/5)) + 5
+        end
+        Player.levelingUp = false
+        local moneyGrowTween = tween.new(0.075, moneyScale, {scale = 2}, tween.outExpo)
+        addTweenToUpdate(moneyGrowTween)
+        Timer.after(0.075, function()
+            local moneyBackTween = tween.new(0.2, moneyScale, {scale = 1}, tween.inExpo)
+            addTweenToUpdate(moneyBackTween)
+        end)
+        playSoundEffect(upgradeSFX, 1, 1)
+        Timer.after(0.3, function()
+            local uiRevealOutTween = tween.new(0.2, uiOffset, {x = statsWidth * 1.5}, tween.outExpo)
+            addTweenToUpdate(uiRevealOutTween)
+        end)
     end
-    
+
     if key == "escape" then
         if currentGameState == GameState.PLAYING then
             playSoundEffect(selectSFX, 1, 0.8)
@@ -1649,106 +1788,177 @@ function love.keypressed(key)
         end
     end
 
-    -- Reset game when R is pressed
-    if key == "r" then
-        dmgVFXOn = not dmgVFXOn
+    if key == "t" then 
+        testingMode = not testingMode
+        print("Testing mode: " .. tostring(testingMode))
     end
 
-    if key == "o" then
-        startConfetti()
-    end
+    if testingMode then
 
-    if key == "c" then
-        Player.die()
-    end
+        -- PERFORMANCE STRESS TESTS
 
-    -- freeze
-    if key == "f" then
-        toggleFreeze()
-    end
-
-    if key == "b" then
-        Player.level = Player.level + 1
-        setLevelUpShop(false, true)
-        Player.levelingUp = true -- This will trigger the upgrade UI
-    end
-
-    --money manipulation
-    if key == "m" then
-        Player.money = Player.money < 10 and 10 or Player.money * 10
-    end
-    if key == "n" then
-        Player.money = 0
-    end
-
-    --time manipulation
-    if key == "l" then
-        playRate = playRate * 2
-    end
-    if key == "k" then 
-        playRate = 1
-    end
-    if key == "j" then 
-        playRate = playRate / 2
-    end
-    -- flip la valeur de draw debug
-    if key == "g" then
-        VFX.flipDrawDebug()
-    end
-
-    --test victory screen
-    if key == "v" then
-        currentGameState = GameState.VICTORY
-        local goldEarned = 500 + math.floor(math.sqrt(Player.score) <= 300 and (mapRangeClamped(math.sqrt(Player.score), 0, 300, 1.5, 3) * math.sqrt(Player.score)) or (mapRangeClamped(math.sqrt(Player.score), 300, 600, 3, 5) * math.sqrt(Player.score)))
-        goldEarnedFrl = goldEarned
-        Player.gold = (Player.gold or 0) + goldEarned
-        saveGameData()
-    end
-    if key == "b" then
-        damageThisFrame = boopah
-    end
-
-    --test ball hit vfx
-    if key == "y" then
-        for _,ball in ipairs(Balls) do
-            ballHitVFX(ball)
+        if key == "q" then
+            for i=1, 100 do
+                local speedRef = 2500
+                local speedXref = math.random(-1000,1000)
+                local bullet = {
+                    name = "Gun Ball",
+                    type = "bullet",
+                    x = math.random(50, screenWidth - 50),
+                    y = screenHeight/2 + math.random(0, screenHeight/2 - 10),
+                    speedX = speedXref,
+                    speedY = -math.sqrt(math.abs(speedRef*speedRef - speedXref - speedXref)),
+                    radius = 5,
+                    stats = {damage = 1},
+                    hasSplit = false,
+                    hasTriggeredOnBulletHit = false,
+                    golden = Player.currentCore == "Phantom Core",
+                }
+                Balls.insertBullet(bullet)
+            end
         end
-    end
+        if key == "x" then
+            for i=1, 500 do
+                local randomBrickIdx = math.random(1, #bricks)
+                local dmgBrick = bricks[randomBrickIdx]
+                if dmgBrick then
+                    if dmgBrick.health > 0 and dmgBrick.destroyed ~= true and dmgBrick.y >= -dmgBrick.height + 10 then
+                        local bricksToDamage = getBricksInCircle(dmgBrick.x + dmgBrick.width/2, dmgBrick.y + dmgBrick.height/2, dmgBrick.width* 5/4)
+                        for _, brick in ipairs(bricksToDamage) do
+                            -- local brick = healBrick
+                            brick.health = brick.health - 1
+                            brick.color = getBrickColor(brick.health, brick.type == "big")
+                            damageNumber(1, brick.x + brick.width/2, brick.y + brick.height/2)
+                            brick.color = getBrickColor(brick.health, brick.type == "big")
+                        end
+                    end
+                end
+            end
+        end
+        if key == "c" then
+            for i=1, 500 do
+                local randomBrickIdx = math.random(1, #bricks)
+                local healBrick = bricks[randomBrickIdx]
+                if healBrick then
+                    if healBrick then
+                        if healBrick.health > 0 and healBrick.destroyed ~= true and healBrick.y >= -healBrick.height + 10 then
+                            local bricksToHeal = getBricksInCircle(healBrick.x + healBrick.width/2, healBrick.y + healBrick.height/2, healBrick.width* 5/4)
+                            for _, brick in ipairs(bricksToHeal) do
+                                -- local brick = healBrick
+                                local healAmount = math.ceil(brick.health/(brick.type == "big" and 160 or 80))
+                                brick.health = brick.health + healAmount
+                                brick.color = getBrickColor(brick.health, brick.type == "big")
+                                healNumber(healAmount, brick.x + brick.width/2, brick.y + brick.height/2)
+                                healThisFrame = healThisFrame + healAmount
+                            end
+                        end
+                    end
+                end
+            end
+        end
 
-    if key == "q" then
-        print("highscore : " .. Player.highScore)
-        print("Player.gold : " .. Player.gold)
-        print("Player.startingMoney : " .. Player.startingMoney)
-        print("#permanentUpgrades : " .. #Player.permanentUpgrades)
-    end
+        -----------------------------------
 
 
-    --print brick speed mult calculation
-    if key == "t" then
-        spawnBoss()
-    end
+        -- PERFORMANCE TEST ON OFF BLOCK
 
-    if key == "=" then
-        if love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift") then
+        if key == "v" then
+            damageNumbersOn = notDamageNumbersOn
+        end
+        if key == "b" then
+            healNumbersOn = not healNumbersOn
+        end
+        if key == "r" then
+            dmgVFXOn = not dmgVFXOn
+        end
+        if key == "w" then
+            canHeal = not canHeal
+        end
+
+        -----------------------------------
+
+        -- level up
+        if key == "e" then
+            Player.levelUp()
+        end
+
+        if key == "p" then
+            currentGameState = GameState.VICTORY
+        end
+
+        -- brickHitVFX
+        if key == "z" then
+            for i=1, 150 do
+                Timer.after(i * 0.025, function()
+                    for _, brick in ipairs(bricks) do
+                        if not brick.destroyed then
+                            brickHitFX(brick, nil, 1)
+                        end
+                    end
+                end)
+            end
+        end
+
+        -- freeze
+        if key == "f" then
+            toggleFreeze()
+        end
+
+        --money manipulation
+        if key == "m" then
+            Player.money = Player.money < 10 and 10 or Player.money * 10
+        end
+        if key == "n" then
+            Player.money = 0
+        end
+
+        --time manipulation
+        if key == "l" then
+            playRate = playRate * 2
+        end
+        if key == "k" then 
+            playRate = 1
+        end
+        if key == "j" then 
+            playRate = playRate / 2
+        end
+        -- flip la valeur de draw debug
+        if key == "g" then
+            VFX.flipDrawDebug()
+        end
+
+        --test ball hit vfx
+        if key == "y" then
+            for _,ball in ipairs(Balls) do
+                ballHitVFX(ball)
+            end
+        end
+
+        if key == "=" then
+            if love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift") then
+                for _, brick in ipairs(bricks) do
+                    if not brick.destroyed then
+                        brick.health = brick.health + 1
+                        brick.color = getBrickColor(brick.health)
+                    end
+                end
+            else end
+        end 
+        if key == "-" then
             for _, brick in ipairs(bricks) do
                 if not brick.destroyed then
-                    brick.health = brick.health + 1
+                    brick.health = brick.health - 1
                     brick.color = getBrickColor(brick.health)
                 end
             end
-        else end
-    end 
-    if key == "-" then
-        for _, brick in ipairs(bricks) do
-            if not brick.destroyed then
-                brick.health = brick.health - 1
-                brick.color = getBrickColor(brick.health)
+        end
+
+        if key == "i" then
+            for i=1, 2000 do
+                local x, y = math.random(screenWidth/5, screenWidth*4/5), math.random(screenHeight/5, screenHeight*4/5)
+                createSpriteAnimation(x, y, 1, explosionVFX, 512, 512, 0.01, 0, false)
             end
         end
-    end
-
-    if key == "i" then
-        Player.levelUp()
     end
 end
 

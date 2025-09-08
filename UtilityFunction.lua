@@ -53,7 +53,7 @@ end
 SFXs = {}
 function playSoundEffect(soundEffect, volume, pitch, loop, clone)
     if soundEffect ~= backgroundMusicSFX then
-        volume = (sfxVolume or 1) * (volume or 1) -- Adjust volume based on global sfxVolume
+        volume = (sfxVolume or 1) * (volume or 1) * 0.5 -- Adjust volume based on global sfxVolume
     end
     if Player.dead and currentGameState == GameState.PLAYING then
         return
@@ -625,7 +625,7 @@ function lvlUpPopup()
     addTweenToUpdate(popupSizeTween)
     local popupSizeTween2 = tween.new(0.1, popup2, {size = 30}, tween.easing.outExpo)
     addTweenToUpdate(popupSizeTween2)
-    Timer.after(1.6, function() 
+    Timer.after(1.1, function() 
         local popupSizeTweenOut = tween.new(0.4, popup, {size = 0}, tween.easing.inExpo)
         addTweenToUpdate(popupSizeTweenOut)
         local popupSizeTweenOut2 = tween.new(0.4, popup2, {size = 0}, tween.easing.inExpo)
@@ -633,13 +633,13 @@ function lvlUpPopup()
     end)
     local xVelocity = math.random(-50, 50) + mapRangeClamped(paddle.x + paddle.width/2, statsWidth, screenWidth - statsWidth, 150, -150)
     local yVelocity = math.random(-275, -150)
-    local totalLengthTween = tween.new(2, popup, {x = popup.x + xVelocity, y = popup.y + yVelocity}, tween.easing.outExpo)
+    local totalLengthTween = tween.new(1.5, popup, {x = popup.x + xVelocity, y = popup.y + yVelocity}, tween.easing.outExpo)
     addTweenToUpdate(totalLengthTween)
-    local totalLengthTween2 = tween.new(2, popup2, {x = popup2.x + xVelocity * 1, y = popup2.y + yVelocity*0.6}, tween.easing.outExpo)
+    local totalLengthTween2 = tween.new(1.5, popup2, {x = popup2.x + xVelocity * 1, y = popup2.y + yVelocity*0.6}, tween.easing.outExpo)
     addTweenToUpdate(totalLengthTween2)
     table.insert(lvlUpTexts, popup)
     table.insert(boostTexts, popup2)
-    Timer.after(2, function()
+    Timer.after(1.5, function()
         -- Remove the popup after the total length tween is complete
         for i = #lvlUpTexts, 1, -1 do
             if lvlUpTexts[i].id == popup.id then
@@ -654,6 +654,12 @@ function lvlUpPopup()
             end
         end
     end)
+end
+
+function resetLvlUpPopups()
+    lvlUpTexts = {}
+    boostTexts = {}
+    currentPopupId = 1
 end
 
 function drawLvlUpPopups()
@@ -704,8 +710,16 @@ function removeAnimation(id)
     return false -- Return false if no animation with the given ID is found
 end
 
+-- Store animations grouped by spritesheet
+local spriteBatches = {}
+
 -- Update function for the animation
 function updateAnimations(dt)
+    -- Clear sprite batches each frame
+    for _, batch in pairs(spriteBatches) do
+        batch:clear()
+    end
+
     for i = #animations, 1, -1 do
         local animation = animations[i]
         if not animation then
@@ -721,29 +735,39 @@ function updateAnimations(dt)
                     animation.currentFrame = 1
                 else
                     table.remove(animations, i) -- Remove the animation if it has finished
+                    goto continue
                 end
             end
         end
+
+        -- Add to sprite batch using the spritesheet object as the key
+        if not spriteBatches[animation.spritesheet] then
+            spriteBatches[animation.spritesheet] = love.graphics.newSpriteBatch(animation.spritesheet, 1000)
+        end
+        
+        -- Add to batch with all the same parameters as before
+        spriteBatches[animation.spritesheet]:add(
+            animation.quads[animation.currentFrame],
+            animation.x,
+            animation.y,
+            math.rad(animation.angle),
+            animation.scale * animation.scaleX,
+            animation.scale * animation.scaleY,
+            animation.frameWidth / 2,
+            animation.frameHeight / 2,
+            0, 0, -- shearing
+            animation.color[1], animation.color[2], animation.color[3], animation.color[4]
+        )
         ::continue::
     end
 end
 
 function drawAnimations()
-    for _, animation in ipairs(animations) do
-        love.graphics.setColor(animation.color) -- Reset color to white before drawing animations
-        love.graphics.draw(
-            animation.spritesheet,
-            animation.quads[animation.currentFrame],
-            animation.x,
-            animation.y,
-            math.rad(animation.angle), -- Rotation (default to 0)
-            animation.scale * animation.scaleX, -- Scale X
-            animation.scale * animation.scaleY, -- Scale Y
-            animation.frameWidth / 2, -- Origin X (half the frame width)
-            animation.frameHeight / 2 -- Origin Y (half the frame height)
-        )
+    -- Draw all sprite batches
+    love.graphics.setColor(1, 1, 1, 1)
+    for _, batch in pairs(spriteBatches) do
+        love.graphics.draw(batch)
     end
-    love.graphics.setColor(1, 1, 1, 1) -- Reset color to white after drawing animations
 end
 
 -- Example: Elastic tween that ends with the same value
@@ -890,86 +914,143 @@ function drawMuzzleFlashes()
     love.graphics.setColor(1, 1, 1, 1)
 end
 
+-- Store damage numbers and batching resources
 local damageNumbers = {} -- Table to store damage numbers
+local damageNumberFont = nil -- Cache the font
+local textObjects = {} -- Cache Text objects by damage value
 
 function resetDamageNumbers()
     damageNumbers = {} -- Reset the damage numbers table
+    -- Clear text object cache
+    for _, text in pairs(textObjects) do
+        text:release()
+    end
+    textObjects = {}
 end
 
+local damageNumberId = 1
 function damageNumber(damage, x, y, color)
-    local damageNumber = {
-        x = x,
-        y = y,
-        damage = damage,
-        color = color or {1, 0, 0, 1}, -- Default to red if no color is provided
-        alpha = 1,
-        fontSize = 0
-    }
-    table.insert(damageNumbers, damageNumber)
+    if damageNumbersOn then
+        local damageNumber = {
+            x = x,
+            y = y,
+            damage = damage,
+            color = color or {1, 0, 0, 1}, -- Default to red if no color is provided
+            alpha = 1,
+            fontSize = 0,
+            id = damageNumberId
+        }
+        damageNumberId = damageNumberId + 1
+        table.insert(damageNumbers, damageNumber)
 
-    local sizeTween = tween.new(0.75, damageNumber, {fontSize = damage < 10 and mapRange(damage, 0, 10, 1, 3) or mapRangeClamped(damage, 10, 50, 3, 5)}, tween.easing.outBack)
-    addTweenToUpdate(sizeTween)
+        local sizeTween = tween.new(0.75, damageNumber, {fontSize = damage < 10 and mapRange(damage, 0, 10, 1, 3) or mapRangeClamped(damage, 10, 50, 3, 5)}, tween.easing.outBack)
+        addTweenToUpdate(sizeTween)
 
-    local xRandom, yRandom = math.random(-15, 15), -15 - math.random(20)
-    local offsetTween = tween.new(0.75, damageNumber, {x = x + xRandom, y = y + yRandom}, tween.easing.outQuad)
-    addTweenToUpdate(offsetTween)
-    Timer.after(0.40, function()
-        local alphaTween = tween.new(0.35, damageNumber, {alpha = 0}, tween.easing.outCirc)
-        addTweenToUpdate(alphaTween)
-    end)
-    Timer.after(0.75, function()
-        for i = #damageNumbers, 1, -1 do
-            if damageNumbers[i] == damageNumber then
-                table.remove(damageNumbers, i) -- Remove the damage number after its duration
-                break
+        local xRandom, yRandom = math.random(-15, 15), -15 - math.random(20)
+        local offsetTween = tween.new(0.75, damageNumber, {x = x + xRandom, y = y + yRandom}, tween.easing.outQuad)
+        addTweenToUpdate(offsetTween)
+        Timer.after(0.40, function()
+            local alphaTween = tween.new(0.35, damageNumber, {alpha = 0}, tween.easing.outCirc)
+            addTweenToUpdate(alphaTween)
+        end)
+        Timer.after(0.75, function()
+            for i = #damageNumbers, 1, -1 do
+                if damageNumbers[i].id == damageNumber.id then
+                    table.remove(damageNumbers, i) -- Remove the damage number after its duration
+                    break
+                end
             end
-        end
-    end)
+        end)
+    end
 end
 
 function healNumber(number, x, y)
-    local healNumber = {
-        x = x,
-        y = y,
-        damage = number,
-        color = {125/255, 1, 0, 1},
-        alpha = 1,
-        fontSize = 0
-    }
-    table.insert(damageNumbers, healNumber)
+    if healNumbersOn then
+        local healNumber = {
+            x = x,
+            y = y,
+            damage = number,
+            color = {125/255, 1, 0, 1},
+            alpha = 1,
+            fontSize = 0,
+            id = damageNumberId
+        }
+        damageNumberId = damageNumberId + 1
+        table.insert(damageNumbers, healNumber)
 
-    local sizeTween = tween.new(0.75, healNumber, {fontSize = number < 10 and mapRange(number, 0, 10, 1, 3) or mapRangeClamped(number, 10, 50, 3, 5)}, tween.easing.outBack)
-    addTweenToUpdate(sizeTween)
+        local sizeTween = tween.new(0.75, healNumber, {fontSize = number < 10 and mapRange(number, 0, 10, 1, 3) or mapRangeClamped(number, 10, 50, 3, 5)}, tween.easing.outBack)
+        addTweenToUpdate(sizeTween)
 
-    local xRandom, yRandom = math.random(-15, 15), -15 - math.random(20)
-    local offsetTween = tween.new(0.75, healNumber, {x = x + xRandom, y = y + yRandom}, tween.easing.outQuad)
-    addTweenToUpdate(offsetTween)
-     Timer.after(0.40, function()
-        local alphaTween = tween.new(0.35, healNumber, {alpha = 0}, tween.easing.outCirc)
-        addTweenToUpdate(alphaTween)
-    end)
-    Timer.after(0.75, function()
-        for i = #damageNumbers, 1, -1 do
-            if damageNumbers[i] == damageNumbers then
-                table.remove(damageNumbers, i) -- Remove the damage number after its duration
-                break
+        local xRandom, yRandom = math.random(-15, 15), -15 - math.random(20)
+        local offsetTween = tween.new(0.75, healNumber, {x = x + xRandom, y = y + yRandom}, tween.easing.outQuad)
+        addTweenToUpdate(offsetTween)
+        Timer.after(0.40, function()
+            local alphaTween = tween.new(0.35, healNumber, {alpha = 0}, tween.easing.outCirc)
+            addTweenToUpdate(alphaTween)
+        end)
+        Timer.after(0.75, function()
+            for i = #damageNumbers, 1, -1 do
+                if damageNumbers[i].id == healNumber.id then
+                    table.remove(damageNumbers, i) -- Remove the heal number after its duration
+                    break
+                end
             end
-        end
-    end)
+        end)
+    end
 end
 
 function drawDamageNumbers()
-    for _, damageNumber in ipairs(damageNumbers) do
-        setFont("assets/Fonts/KenneyBlocks.ttf", 60)
-        love.graphics.push()
-        love.graphics.scale(damageNumber.fontSize/3, damageNumber.fontSize/3) -- Scale the font size
-        damageNumber.color[4] = damageNumber.alpha -- Set the alpha value for the color
-        local color = damageNumber.color
-        love.graphics.setColor(color)
-        drawCenteredText(tostring(damageNumber.damage), damageNumber.x*3/damageNumber.fontSize, damageNumber.y*3/damageNumber.fontSize, love.graphics.getFont(), color) -- Draw the damage number
-        love.graphics.pop()
+    -- Initialize font if not cached
+    if not damageNumberFont then
+        damageNumberFont = love.graphics.newFont("assets/Fonts/KenneyBlocks.ttf", 60)
     end
-    love.graphics.setColor(1,1,1,1)
+    love.graphics.setFont(damageNumberFont)
+
+    -- Group numbers by fontSize (rounded to 0.1) to minimize state changes
+    local fontGroups = {}
+    for _, number in ipairs(damageNumbers) do
+        local fontSize = math.floor(number.fontSize * 10) / 10
+        fontGroups[fontSize] = fontGroups[fontSize] or {}
+        table.insert(fontGroups[fontSize], number)
+    end
+
+    -- Draw numbers grouped by font size
+    for fontSize, group in pairs(fontGroups) do
+        if #group > 0 then
+            love.graphics.push()
+            love.graphics.scale(fontSize/3, fontSize/3)
+
+            -- Further group by damage value within each font size group
+            local valueGroups = {}
+            for _, number in ipairs(group) do
+                local damage = tostring(number.damage)
+                valueGroups[damage] = valueGroups[damage] or {}
+                table.insert(valueGroups[damage], number)
+            end
+
+            -- Draw each damage value group
+            for damage, numbers in pairs(valueGroups) do
+                -- Create or get cached Text object
+                if not textObjects[damage] then
+                    textObjects[damage] = love.graphics.newText(damageNumberFont, damage)
+                end
+                local text = textObjects[damage]
+                local textWidth = text:getWidth()
+                local textHeight = text:getHeight()
+
+                -- Draw all instances of this damage value
+                for _, number in ipairs(numbers) do
+                    love.graphics.setColor(number.color[1], number.color[2], number.color[3], number.color[4] * number.alpha)
+                    local x = (number.x * 3 / fontSize) - textWidth/2
+                    local y = (number.y * 3 / fontSize) - textHeight/2
+                    love.graphics.draw(text, x, y)
+                end
+            end
+            
+            love.graphics.pop()
+        end
+    end
+    love.graphics.setColor(1, 1, 1, 1)
 end
 
 function printMoney(text, centerX, centerY, angle, buyable)

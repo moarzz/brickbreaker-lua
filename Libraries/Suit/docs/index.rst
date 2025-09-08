@@ -100,7 +100,7 @@ The following code will create this UI:
         -- the cell of the input box has the same size as the cell above
         -- if the input cell is submitted, print the text
         if suit.Input(input, suit.layout:row()).submitted then
-            print(input.text)
+            -- print(input.text)
         end
 
         -- put a button below the input box

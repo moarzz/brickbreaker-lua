@@ -269,7 +269,7 @@ function permanentUpgrades.draw()
         local buttonID = generateNextButtonID()
         local upgradeStatButton = dress:Button("", {color = invisButtonColor, id = buttonID}, x+5, y-20, cellWidth, 200)
         
-        if upgradeStatButton.hit and (Player.permanentUpgrades[upgradeName] < 2 and (not (upgradeName == "cooldown" and Player.permanentUpgrades[upgradeName] <= -2))) then
+        if upgradeStatButton.hit and ((Player.permanentUpgrades[upgradeName] or 0) < 2 and (not (upgradeName == "cooldown" and (Player.permanentUpgrades[upgradeName] or 0) <= -2))) then
             if Player.gold < price then
                 print("Not enough money to upgrade " .. upgradeName)
             else

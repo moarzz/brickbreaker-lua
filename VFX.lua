@@ -6,9 +6,15 @@ function VFX.switch()
 end
 
 local bricksInHitstun = {}
-local function brickHitFX(brick, ball, intensity)
+function brickHitFX(brick, ball, intensity)
+    if love.timer.getTime() - (brick.lastHitVfxTime or 0) < 0.15 then
+        return
+    end
     if not dmgVFXOn then
         return
+    end
+    if brick.lastHitVfxTime then
+        brick.lastHitVfxTime = love.timer.getTime()
     end
     brick.color = getBrickColor(brick.health, brick.type == "big", brick.type == "boss")
     local colorBeforeHit = brick.color -- Default to white if no color is set
@@ -16,20 +22,25 @@ local function brickHitFX(brick, ball, intensity)
     --local colorTweenBack = tween.new(0.5, brick, {color = colorBeforeHit}, tween.outSine)
     --addTweenToUpdate(colorTweenBack)
 
-    if ball.speedX and ball.speedY then
-        local offsetX, offsetY = normalizeVector(ball.speedX, ball.speedY)
+    local offsetX, offsetY
+    if ball then
+        if ball.speedX and ball.speedY then
+            offsetX, offsetY = normalizeVector(ball.speedX, ball.speedY)
+        else
+            offsetX, offsetY = 0, -1
+        end
+        if ball.speedX and ball.speedY then
+            offsetX, offsetY = normalizeVector(ball.speedX, ball.speedY)
+        else
+            offsetX, offsetY = 0, -1 -- Default direction if ball speed is not defined
+        end
     else
-        local offsetX, offsetY = 0, -1
-    end
-    if ball.speedX and ball.speedY then
-        offsetX, offsetY = normalizeVector(ball.speedX, ball.speedY)
-    else
-        offsetX, offsetY = 0, -1 -- Default direction if ball speed is not defined
+        offsetX, offsetY = 0, -1
     end
     local offsetRotation = math.atan2(offsetY, offsetX) * 0.1
     offsetX = offsetX * (mapRange(intensity, 1, 10, 10, 30) + 5)
     offsetY = offsetY * (mapRange(intensity, 1, 10, 10, 30) + 5)
-    local scaleOffset = mapRangeClamped(intensity, 1, 15, 1.1, 2)
+    local scaleOffset = mapRangeClamped(intensity, 1, 15, 1.1, 1.75)
     brick.drawScale, brick.drawOffsetX, brick.drawOffsetY, brick.drawOffsetRot = scaleOffset, offsetX, offsetY, 0
     table.insert(bricksInHitstun, brick)
 end
@@ -47,7 +58,7 @@ function VFX.update(dt)
         local dtIntensity = dt
         local brick = bricksInHitstun[i]
         if brick.drawScale and brick.drawScale > 1 then
-            dtIntensity = dt * mapRange(brick.drawScale, 1, 2, 0.15, 1.5)
+            dtIntensity = dt * mapRange(brick.drawScale, 1, 2, 0.25, 2.5)
             brick.drawScale = math.max(brick.drawScale - dt, 1)
         end
         if brick.drawOffsetX ~= 0 then

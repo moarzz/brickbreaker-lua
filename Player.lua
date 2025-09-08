@@ -31,11 +31,14 @@ function loadGameData()
                 data.gold = fileData.gold or 0
                 data.startingMoney = fileData.startingMoney or 0
                 data.permanentUpgrades = fileData.permanentUpgrades or {}
-                data.paddleCores = fileData.paddleCores or {["Bouncy Core"] = true}
+                data.paddleCores = fileData.paddleCores or { ["Bouncy Core"] = true }
                 data.permanentUpgradePrices = fileData.permanentUpgradePrices or data.permanentUpgradePrices
                 data.startingItems = fileData.startingItems or data.startingItems
+                data.fastestTime = fileData.fastestTime or 100000000000
             end
         end
+    else
+        data.fastestTime = 100000000000
     end
     -- Update Player object directly
     Player.highScore = data.highScore
@@ -79,6 +82,7 @@ Player = {
     lives = 1,
     currentCore = "Bouncy Core",
     levelingUp = false,
+    choosingUpgrade = false,
     price = 1,
     newUpgradePrice = 100,
     selectedPaddleCore = "Bouncy Core",
@@ -107,7 +111,7 @@ Player = {
     level = 1,
     newWeaponLevelRequirement = 5,
     newStatLevelRequirement = 10,
-    xpForNextLevel = 25,
+    xpForNextLevel = 50,
     xp = 0,
     levelThreshold = 50, -- XP needed for each level
     paddleCores = {["Bouncy Core"] = true},  -- Stores unlockedpaddle cores
@@ -238,14 +242,16 @@ Player.bonusUpgrades = {
 Player.upgradePaddle = {
     paddleSize = function()
         -- This is handled in permanentUpgrades.lua now
-        paddle.width = paddle.width + 20
-        paddle.x = paddle.x - 20  -- Adjust position to keep it centered
+        local value = usingMoneySystem and 20 or 40
+        paddle.width = paddle.width + value
+        paddle.x = paddle.x - value / 2  -- Adjust position to keep it centered
         Player.permanentUpgrades.paddleSize = (Player.permanentUpgrades.paddleSize or 0) + 1
     end,
     
     paddleSpeed = function()
+        local value = usingMoneySystem and 80 or 120
         Player.permanentUpgrades.paddleSpeed = (Player.permanentUpgrades.paddleSpeed or 0) + 1
-        paddle.speed = paddle.speed + 80
+        paddle.speed = paddle.speed + value
     end,
 }
 
@@ -257,12 +263,12 @@ Player.availableCores = {
     },
     {
         name = "Spray and Pray Core",
-        description = "Guns shoot 50% faster but are a lot less accurate.",
+        description = "FireRate weapons shoot twice as fast but are a lot less accurate.",
         price = 250,
     },
     {
         name = "Economy Core",
-        description = "Everything costs 50% less. Start with 500 $",
+        description = "Interest cap is 10 instead of 5. \nStart with 20$",
         price = 500,
     },
     {
@@ -277,29 +283,24 @@ Player.availableCores = {
     },
     {
         name = "Farm Core",
-        description = "When you level up, all your weapons gain +1 to a random stat, but you cannot upgrade ball stats\n(-1 for cooldown)",
+        description = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown) \nYou can no longer upgrade when leveling up",
         price = 1500,
     },
     {
-        name = "Brickbreaker Core",
-        description = "Damage you deal has a 10% chance of destroying a brick instantly",
-        price = 2500,
-    },
-    {
         name = "Madness Core",
-        description = "Damage is divided by 4. Cooldown is halved. Every other stat is doubled",
+        description = "Damage is divided by 2. Cooldown is halved. Every other stat is doubled.",
         price = 5000,
     },
 }
 
 Player.coreDescriptions = {
     ["Bouncy Core"] = "Balls gain a temporary speed boost every time they bounce.",
-    ["Spray and Pray Core"] = "Guns shoot twice as fast but are a lot less accurate.",
+    ["Spray and Pray Core"] = "FireRate weapons shoot twice as fast but are a lot less accurate.",
     ["Brickbreaker Core"] = "Damage you deal has a 10% chance of destroying a brick instantly \n(except for boss)",
-    ["Economy Core"] = "Everything costs 50% less. Start with 500$",
+    ["Economy Core"] = "Interest cap is 10 instead of 5. \nStart with 20$ instead of 5",
     ["Damage Core"] = "Amount and fireRate are always 1 and damage is multiplied by 5",
     ["Phantom Core"] = "Bullets pass through bricks without losing damage, but deal half damage\n(rounded down, minimum 1).",
-    ["Farm Core"] = "When you level up, all your weapons gain +1 to a random stat, but you cannot upgrade ball stats\n(-1 for cooldown)",
+    ["Farm Core"] = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown) \nYou can no longer upgrade when leveling up",
     ["Madness Core"] = "Damage and cooldown are reduced by 50%. \nevery other stat is doubled. (can break the game)"
     
 }
@@ -375,7 +376,11 @@ Player.perkUpgrades = {
 function Player.addBonus(name)
     Player.bonuses[name] = 0
     table.insert(Player.bonusOrder, name)
-    Player.bonusPrice[name] = Player.currentCore == "Economy Core" and Player.bonusesList[name].startingPrice/2 or Player.bonusesList[name].startingPrice
+    if usingMoneySystem then
+        Player.bonusPrice[name] = Player.currentCore == "Economy Core" and 50 or 100
+    else
+        Player.bonusPrice[name] = 5
+    end
     print("added bonus : ".. name ..  ", #Player.bonuses : " .. tableLength(Player.bonuses))
 end
 
@@ -405,7 +410,7 @@ function Player.reset()
     Player.gold = gameData.gold or 0
     Player.goldEarned = 0
     Player.lives = 1
-    Player.levelingUp = false
+    Player.choosingUpgrade = false
     Player.price = 1
     Player.dead = false
     Player.bonuses = {} -- Clear the bonuses table first
@@ -416,7 +421,7 @@ function Player.reset()
     -- Initialize default bonuses from bonusesList
     Player.bonuses = {}
 
-    Player.levelingUp = false
+    Player.choosingUpgrade = false
     Player.dead = false
     Player.money = Player.startingMoney or 0
 end
@@ -424,11 +429,19 @@ end
 function Player.levelUp()
     Player.level = Player.level + 1
     if Player.level % Player.newWeaponLevelRequirement == 0 then
-        Player.newWeaponLevelRequirement = Player.newWeaponLevelRequirement + 10
+        if usingMoneySystem then
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.2)
+        end
+        if Player.level > 40 then
+            Player.newWeaponLevelRequirement = Player.newWeaponLevelRequirement + 5
+        else
+            Player.newWeaponLevelRequirement = Player.newWeaponLevelRequirement + 10
+        end
         unlockNewWeaponQueued = true
-        Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.15)
-    elseif Player.level % Player.newStatLevelRequirement == 0 then
-        Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.15)
+    elseif Player.level % Player.newStatLevelRequirement == 0 and Player.currentCore ~= "Farm Core"  and Player.level < 45 then
+        if usingMoneySystem then
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.2)
+        end
         unlockNewStatQueued = true
         Player.newStatLevelRequirement = Player.newStatLevelRequirement + 10
     end
@@ -438,15 +451,35 @@ function Player.levelUp()
     else
         Player.upgradePaddle["paddleSpeed"]()
     end
-    Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.25)
+    if usingMoneySystem then
+        Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.25)
+    else
+        if Player.level < 5 then
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.5)  -- Scale to reach ~250 by level 5
+        elseif Player.level < 15 then
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.25)  -- Scale to reach ~5000 by level 15
+        elseif Player.level < 25 then
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.2425)  -- Scale to reach ~50000 by level 25
+        else
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.165)  -- Scale to reach ~150000 by level 30
+        end
+    end
     lvlUpPopup()
     if Player.currentCore == "Farm Core" then
         FarmCoreUpgrade()
     end
+    if (not usingMoneySystem) and Player.currentCore ~= "Farm Core" then
+        Player.levelingUp = true
+        if Player.level % 5 ~= 0 then
+            uiOffset.x = 0
+        end
+    end
 end
 
 function Player.gain(amount)
-    Player.money = Player.money + amount
+    if usingMoneySystem then
+        Player.money = Player.money + amount
+    end
     Player.score = Player.score + amount
     Player.xp = Player.xp + amount -- XP follows score
     if Player.xp >= Player.xpForNextLevel then
@@ -511,7 +544,7 @@ end
 
 local function checkForHit()
     for _, brick in ipairs(bricks) do
-        if paddle.y > screenHeight + 3 then
+        if paddle.y > screenHeight + 30 then
             Player.hit()
             damageScreenVisuals(0.25, 100)
         end

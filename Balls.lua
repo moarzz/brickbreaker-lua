@@ -112,6 +112,7 @@ local function bossDestroyed()
         b.destroyed = true
     end
     victoryAchieved = true
+    bossSpawned = false
     currentGameState = GameState.VICTORY
     -- Award gold and save data (same as game over)
     local goldEarned = 500 + math.floor(math.sqrt(Player.score) <= 300 and (mapRangeClamped(math.sqrt(Player.score), 0, 300, 1.5, 3) * math.sqrt(Player.score)) or (mapRangeClamped(math.sqrt(Player.score), 300, 600, 3, 5) * math.sqrt(Player.score)))
@@ -256,6 +257,9 @@ end
 
 local ballTrailLength = 80   -- Length of the ball trail
 local bullets = {}
+function Balls.insertBullet(bullet)
+    table.insert(bullets, bullet)
+end
 local deadBullets = {}
 local laserBeamBrick
 local laserBeamY = 0
@@ -417,6 +421,7 @@ function dealDamage(ball, brick, burnDamage)
     return kill
 end
 
+local shootSFXCooldown = 0
 -- Update bullet damage in shoot function
 local function shoot(gunName, ball)
     if Player.dead then
@@ -436,7 +441,10 @@ local function shoot(gunName, ball)
             local angle = math.random(0, 360) * math.pi / 180
             local speedXref = math.cos(angle) * bulletSpeed
             local speedYref = math.sin(angle) * bulletSpeed
-            playSoundEffect(gunShootSFX, 0.5, 1, false, true)
+            if shootSFXCooldown <= 0 then
+                playSoundEffect(gunShootSFX, 0.8, 0.8, false, true)
+                shootSFXCooldown = 0.05
+            end
             table.insert(bullets, {
                 name = "Gun Ball",
                 type = "bullet",
@@ -467,7 +475,10 @@ local function shoot(gunName, ball)
                     ballType.onShoot()
                 end
             end
-            playSoundEffect(gunShootSFX, 0.5, 1, false, true)
+            if shootSFXCooldown <= 0 then
+                playSoundEffect(gunShootSFX, 0.8, 0.8, false, true)
+                shootSFXCooldown = 0.05
+            end
             local speedOffset = (paddle.currentSpeedX or 0) * 0.4
             local bulletDamage = (gun.stats.damage + 
                 (Player.bonuses.damage or 0) + 
@@ -512,7 +523,7 @@ local function shoot(gunName, ball)
                     table.insert(Balls, newBall)
                     local ballSpawnTween = tween.new(0.2, newBall, {drawSizeMult = 0.5}, tween.outCubic)
                     addTweenToUpdate(ballSpawnTween)
-                    Timer.after(6, function()
+                    Timer.after(5, function()
                         local ballDeathTween = tween.new(0.5, newBall, {drawSizeMult = 0}, tween.outCubic)
                         addTweenToUpdate(ballDeathTween)
                         Timer.after(0.5, function()
@@ -694,9 +705,9 @@ local function turretShoot(turret)
             return
         end
         local currentTime = love.timer.getTime()
-        if currentTime - lastTurretSoundTime >= 0.05 then
-            playSoundEffect(gunShootSFX, 0.5, 1, false, true)
-            lastTurretSoundTime = currentTime
+        if shootSFXCooldown <= 0 then
+            playSoundEffect(gunShootSFX, 0.8, 0.8, false, true)
+            shootSFXCooldown = 0.05
         end
         local bulletSpeed = turretType.bulletSpeed or 2000
         local speed = {x =math.cos(turret.angle - math.pi/2) * bulletSpeed, y = math.sin(turret.angle - math.pi/2) * bulletSpeed}
@@ -765,6 +776,7 @@ fire = function(techName)
     end
     if techName == "Laser" then
         unlockedBallTypes["Laser"].currentChargeTime = 0
+        playSoundEffect(laserSFX, 0.8, 1)
         laserAlpha.a = 1
         local laserTween = tween.new(0.35, laserAlpha, {a = 0}, tween.inQuad)
         addTweenToUpdate(laserTween)
@@ -779,7 +791,7 @@ fire = function(techName)
     end
     if techName == "Rocket Launcher" then
         if unlockedBallTypes["Rocket Launcher"].currentAmmo > 0 then
-            local angle = 0 + math.random(-7, 7)
+            local angle = Player.currentCore == "Spray and Pray Core" and 0 + math.random(-40, 40) or 0 + math.random(-7, 7)
             local speed = 800
             local rocket = {
                 x = paddle.x + paddle.width / 2,
@@ -804,7 +816,11 @@ fire = function(techName)
                     fire("Rocket Launcher")
                 end)
             else
-                Timer.after((Player.currentCore == "Madness Core" and 0.5 or 1) * 4/(Player.currentCore == "Damage Core" and 1 or(unlockedBallTypes["Rocket Launcher"].stats.fireRate + (Player.bonuses.fireRate or 0) + (Player.permanentUpgrades.fireRate or 0))), function()
+                local timerLength = (Player.currentCore == "Madness Core" and 0.5 or 1) * 4/(Player.currentCore == "Damage Core" and 1 or(unlockedBallTypes["Rocket Launcher"].stats.fireRate + (Player.bonuses.fireRate or 0) + (Player.permanentUpgrades.fireRate or 0)))
+                if Player.currentCore == "Spray and Pray Core" then
+                    timerLength = timerLength * 0.5
+                end
+                Timer.after(timerLength, function()
                     fire("Rocket Launcher")
                 end)
             end
@@ -832,7 +848,7 @@ fire = function(techName)
                     Timer.cancel(ammoDepletionTimer)
                     -- Refill ammo after cooldown
                     local cooldownValue = (Player.currentCore == "Madness Core" and 0.5 or 1) * (flamethrower.stats.cooldown + (Player.bonuses.cooldown or 0) + (Player.permanentUpgrades.cooldown or 0))
-                    Timer.after(cooldownValue * 0.9, function()
+                    Timer.after(cooldownValue * 0.6, function()
                         flamethrower.currentAmmo = (Player.currentCore == "Madness Core" and 2 or 1) * (flamethrower.stats.ammo + (Player.bonuses.ammo or 0) * flamethrower.ammoMult)
                         fire("Flamethrower")
                     end)
@@ -845,7 +861,7 @@ fire = function(techName)
             -- handles the entire logic for spawning, placing and after 10 seconds, destroying a turret. also handles first shot
             local turretType = unlockedBallTypes["Turret Generator"]
             local id = currentTurretId
-            local destination = {x = (math.random(statsWidth + 50, screenWidth - statsWidth - 50)), y = math.random(math.max(paddle.y + 50, screenHeight - 300), screenHeight - 25)}
+            local destination = {x = (math.random(50, screenWidth - 50)), y = math.random(math.max(paddle.y + 50, screenHeight - 300), screenHeight - 25)}
             local startDir = math.random(0,1)
             local turret = {
                 id = currentTurretId,
@@ -886,6 +902,7 @@ local arcaneMissiles = {}
 local fireballs = {}
 local darts = {}
 
+local lightningSFXCooldown = 0
 local function cast(spellName, brick)
     if Player.dead then
         return
@@ -906,7 +923,7 @@ local function cast(spellName, brick)
         end
     end
     if spellName == "Fireball" then
-        local angle = (math.random() * 0.2 + 0.4) * math.pi
+        local angle = Player.currentCore == "Spray and Pray Core" and (math.random() * 0.5 + 0.25) * math.pi or (math.random() * 0.2 + 0.4) * math.pi
         local speed = 350
         local range = (Player.currentCore == "Madness Core" and 2 or 1) * (unlockedBallTypes["Fireball"].stats.range + (Player.bonuses.range or 0) + (Player.permanentUpgrades.range or 0))
         local fireball = {
@@ -926,7 +943,8 @@ local function cast(spellName, brick)
         table.insert(fireballs, fireball)
         local fireballStartTween = tween.new(0.25, fireballs[#fireballs], {radius = 5 * range}, tween.outExpo)
         addTweenToUpdate(fireballStartTween)
-        Timer.after(13/((Player.currentCore == "Damage Core" and 2.5 or ((unlockedBallTypes["Fireball"].stats.fireRate + (Player.bonuses.fireRate or 0) + (Player.permanentUpgrades.fireRate or 0)))) * (Player.currentCore == "Madness Core" and 2 or 1) + 2), function()
+        local cooldownLength = Player.currentCore == "Spray and Pray Core" and 9/((Player.currentCore == "Damage Core" and 2.5 or ((unlockedBallTypes["Fireball"].stats.fireRate + (Player.bonuses.fireRate or 0) + (Player.permanentUpgrades.fireRate or 0)))) * (Player.currentCore == "Madness Core" and 2 or 1) + 2) or 18/((Player.currentCore == "Damage Core" and 2.5 or ((unlockedBallTypes["Fireball"].stats.fireRate + (Player.bonuses.fireRate or 0) + (Player.permanentUpgrades.fireRate or 0)))) * (Player.currentCore == "Madness Core" and 2 or 1) + 2)
+        Timer.after(cooldownLength, function()
             -- Refill Fireball spell after cooldown
             cast("Fireball")
         end)
@@ -1009,13 +1027,14 @@ local function cast(spellName, brick)
                 end
             end
             createSpriteAnimation(randomBrick.x + randomBrick.width/2, randomBrick.y + randomBrick.height/2, 2, lightningVFX, 32, 32, 0.05, 0)
-            Timer.after(0.15, function()
+            Timer.after(0.125, function()
                 dealDamage(unlockedBallTypes["Lightning Pulse"], randomBrick)
             end)
         end
         local cooldownValue = (Player.currentCore == "Madness Core" and 0.5 or 1) * (Player.currentCore == "Cooldown Core" and 2 or unlockedBallTypes["Lightning Pulse"].stats.cooldown + (Player.bonuses.cooldown or 0) + (Player.permanentUpgrades.cooldown or 0))
         local timeUntilNextCast = (2 + math.max(cooldownValue, 0))/4
         print("Next Lightning Pulse in: " .. timeUntilNextCast .. " seconds")
+        playSoundEffect(lightningPulseSFX, 0.5, 0.85)
         Timer.after(timeUntilNextCast, function()
             cast("Lightning Pulse")
         end)
@@ -1063,6 +1082,10 @@ local function cast(spellName, brick)
                         local spawnX = ((currentBrick.x + currentBrick.width / 2) + (targetBrick.x + targetBrick.width / 2)) / 2
                         local spawnY = ((currentBrick.y + currentBrick.height / 2) + (targetBrick.y + targetBrick.height / 2)) / 2
                         local distance = math.sqrt((targetBrick.x - currentBrick.x)^2 + (targetBrick.y - currentBrick.y)^2)
+                        if lightningSFXCooldown <= 0 then
+                            playSoundEffect(lightningSFX, 0.3, 0.75)
+                            lightningSFXCooldown = 0.05
+                        end
                         createSpriteAnimation(spawnX, spawnY, mapRangeClamped(distance, 0, 350, 2.0, 1.0), chainLightningVFX, 256, 128, 0.075, 0, false, scaleX, scaleX*1.5, angle)
                         Timer.after(0.3, function()
                             dealDamage(ballType, targetBrick)
@@ -1104,11 +1127,11 @@ local function ballListInit()
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
-            speedMult = 1.5,
+            speedMult = 2,
             size = 1,
             rarity = "common",
             startingPrice = 5,
-            description = "The most basic ball, it has no special abilities.",
+            description = "Basic ball. Very fast.",
             color = {1, 1, 1, 1}, -- White color
             stats = {
                 speed = 150,
@@ -1124,7 +1147,7 @@ local function ballListInit()
             speedMult = 0.9,
             size = 1,
             rarity = "uncommon",
-            startingPrice = 25,
+            startingPrice = 50,
             description = "A ball that explodes on impact, dealing damage to nearby bricks.",
             color = {1, 0, 0, 1}, -- Red color
             stats = {
@@ -1138,7 +1161,7 @@ local function ballListInit()
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
-            speedMult = 0.65,
+            speedMult = 0.6,
             size = 2,
             rarity = "rare",
             startingPrice = 100,
@@ -1182,21 +1205,21 @@ local function ballListInit()
                 speed = 150,
                 damage = 2,
             },
-            attractionStrength = 1250
+            attractionStrength = 900
         },
         ["Lightning Ball"] = {
             name = "Lightning Ball",
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
-            speedMult = 0.5,
+            speedMult = 1,
             size = 1,
-            rarity = "rare",
-            startingPrice = 100,
+            rarity = "uncommon",
+            startingPrice = 50,
             description = "Creates a damaging current of electricity between bricks on hit.",
             color = {0, 170/255, 1, 1}, -- green color
             stats = {
-                speed = 50,
+                speed = 200,
                 damage = 1,
                 range = 1
             },
@@ -1239,7 +1262,7 @@ local function ballListInit()
             noAmount = true,
             currentAmmo = 10 + ((Player.bonuses.ammo or 0) + (Player.permanentUpgrades.ammo or 0)) * 5,
             bulletSpeed = 2000,
-            -- canBuy = function() return false end,
+            canBuy = function() return false end,
 
             stats = {
                 damage = 1,
@@ -1256,9 +1279,9 @@ local function ballListInit()
             size = 1,
             rarity = "common",
             ammoMult = 2,
-            fireRateMult = 1.9,
+            fireRateMult = 1.5,
             startingPrice = 25,
-            description = "fire bullets that die on impact in bursts",
+            description = "Fire bullets that die on impact in bursts.",
             onBuy = function() 
                 shoot("Shotgun")
             end,
@@ -1267,7 +1290,7 @@ local function ballListInit()
             bulletSpeed = 1500,
 
             stats = {
-                damage = 2,
+                damage = 1,
                 cooldown = 10,
                 ammo = 2,
                 fireRate = 1,
@@ -1280,10 +1303,10 @@ local function ballListInit()
             y = screenHeight / 2,
             size = 1,
             radius = 10,
-            rarity = "uncommon",
+            rarity = "rare",
             speedMult = 1,
             ammoMult = 3,
-            fireRateMult = 4.25,
+            fireRateMult = 5,
             startingPrice = 50,
             description = "A gun that shoots balls. \nDoesn't need to reload. \nSlow fire rate.",
             onBuy = function() 
@@ -1320,7 +1343,7 @@ local function ballListInit()
                 damage = 2,
                 cooldown = 12,
                 ammo = 100,
-                fireRate = 8,
+                fireRate = 6,
             },
         },
         ["Golden Pistol"] = {
@@ -1378,13 +1401,14 @@ local function ballListInit()
             noAmount = true,
             rarity = "common",
             startingPrice = 25,
-            description = "Fire a thin Laser Beam beam in front of the paddle that stops at the first brick hit.",
+            description = "Fire a thin Laser Beam beam in front of the paddle.",
             color = {1, 0, 0, 1}, -- Red color for Laser Beam
             stats = {
                 damage = 1,
-                fireRate = 2
+                fireRate = 2,
             },
-            -- canBuy = function() return false end
+            angle = 0,
+            canBuy = function() return false end
         },
         ["Flamethrower"] = {
             name = "Flamethrower",
@@ -1451,7 +1475,7 @@ local function ballListInit()
             sawPositions = {}, -- Will store current positions of saws
             sawAnimations = {}, -- Will store animation IDs
             currentAngle = 0, -- Current rotation angle
-            orbitRadius = 300,
+            orbitRadius = 250,
             damageCooldowns = {}, -- Add this line to track cooldowns per saw per brick
         },
         ["Turret Generator"] = {
@@ -1547,8 +1571,8 @@ local function ballListInit()
                 cast("Lightning Pulse")
             end,
             stats = {
-                cooldown = 8,
-                damage = 2,
+                cooldown = 9,
+                damage = 1,
                 amount = 1, -- Amount of Lightning Pulses
             },
         },
@@ -1658,8 +1682,20 @@ end
 
 -- calls ballListInit and adds a ball to it
 function Balls.initialize()
+    Player.money = 0
+    if usingMoneySystem then
+        Player.newStatLevelRequirement = 10
+        Player.newWeaponLevelRequirement = 5
+        Player.xpForNextLevel = 25
+        Player.newUpgradePrice = Player.currentCore == "Economy Core" and 50 or 100
+    else
+        Player.upgradePriceMultScaling = 2
+        Player.xpForNextLevel = 35
+    end
     if Player.currentCore == "Economy Core" then
-        Player.money = 500
+        Player.money = 20
+    else
+        Player.money = 5
     end
     inGame = true
     deathTimerOver = false
@@ -1668,7 +1704,6 @@ function Balls.initialize()
     ballCategories = {}
     ballList = {}   
     unlockedBallTypes = {}
-    Player.xpForNextLevel = 25
     Player.xp = 0
     nextBallPrice = 100
     ballListInit()
@@ -1678,10 +1713,10 @@ function Balls.initialize()
     bullets = {}
     arcaneMissiles = {}
     darts = {}
-    Player.newUpgradePrice = Player.currentCore == "Economy Core" and 50 or 100
     Player.newStatLevelRequirement = 10
     Player.newWeaponLevelRequirement = 5
-    -- Balls.addBall("Saw Blades")
+    uiOffset.x = usingMoneySystem and 0 or statsWidth * 1.5
+    -- Balls.addBall("Phantom Ball")
 end
 
 function Balls.clear()
@@ -1718,6 +1753,22 @@ function Balls.addBall(ballName, singleBall)
     local ballTemplate = ballList[ballName]
     if ballTemplate then -- makes sure there is a ball with ballName in ballList
         print("isNewBall: " .. tostring(isNewBall))
+        local upgradePrice
+        if usingMoneySystem then
+            upgradePrice = Player.currentCore == "Economy Core" and ballTemplate.startingPrice*0.5 or ballTemplate.startingPrice
+        else
+            if ballTemplate.rarity == "common" then
+                upgradePrice = 1
+            elseif ballTemplate.rarity == "uncommon" then
+                upgradePrice = 3
+            elseif ballTemplate.rarity == "rare" then
+                upgradePrice = 5
+            elseif ballTemplate.rarity == "legendary" then
+                upgradePrice = 7
+            else
+                upgradePrice = 1
+            end
+        end
         if isNewBall then
             local newBallType = {
                 name = ballName, -- Set the name of the ball
@@ -1731,7 +1782,7 @@ function Balls.addBall(ballName, singleBall)
                 fireRateMult = ballTemplate.fireRateMult or 1,
                 rarity = ballTemplate.rarity or "common",
                 color = ballTemplate.color or {1, 1, 1, 1}, -- Set the color of the ball
-                price = Player.currentCore == "Economy Core" and ballTemplate.startingPrice*0.5 or ballTemplate.startingPrice, -- Set the initial price of ball upgrades
+                price = upgradePrice, -- Set the initial price of ball upgrades
                 currentAmmo = (ballTemplate.currentAmmo or 0), -- Copy specific values from the template
                 bulletSpeed = ballTemplate.bulletSpeed or 1000, -- Set the bullet speed if it exists
                 attractionStrength = ballTemplate.attractionStrength or nil, -- Set the attraction strength if it exists
@@ -1751,6 +1802,7 @@ function Balls.addBall(ballName, singleBall)
                 canBuy = ballTemplate.canBuy or true, -- Function to check if the ball can be bought
                 damageDealt = 0,
                 queuedUpgrades = {},
+                angle = ballTemplate.angle or nil,
                 stats = {} -- Set the initial cooldown
             }
             for statName, statValue in pairs(ballTemplate.stats) do
@@ -1783,8 +1835,8 @@ function Balls.addBall(ballName, singleBall)
                 local newBall = {
                     type = "ball",
                     name = ballTemplate.name,
-                    x = ballTemplate.x,
-                    y = math.max(getHighestBrickY() + ballTemplate.radius + 10, screenHeight/4),
+                    x = screenWidth / 2 + math.random(-20, 20),
+                    y = math.max(getHighestBrickY() + ballTemplate.radius + 10, screenHeight/4) + math.random(-20, 20),
                     speedMult = ballTemplate.speedMult or 1,
                     radius = ballTemplate.radius * 1.5,
                     drawSizeBoost = ballTemplate.drawSizeBoost or 1,
@@ -1880,7 +1932,7 @@ local function brickCollisionEffects(ball, brick)
         --Explosion.spawn(ball.x, ball.y, scale)
         
         -- Play explosion sound
-        playSoundEffect(explosionSFX, 0.1 + scale * 0.4, math.max(1 - scale * 0.1, 0.1), false, true)
+        playSoundEffect(explosionSFX, 0.5, 1, false, true)
         
         dealDamage(ball, brick)
         local bricksTouchingCircle = getBricksInCircle(ball.x, ball.y, (ball.stats.range + (Player.bonuses.range or 0)) * 24 * (Player.currentCore == "Madness Core" and 2 or 1))
@@ -1906,10 +1958,12 @@ local function brickCollisionEffects(ball, brick)
     end
     -- Check if ball type exists and has onBrickBounce function
     for _, ballType in pairs(unlockedBallTypes) do
-        if ballType.onBrickBounce then
-            ballType.onBrickBounce() -- Call the onBrickBounce function if it exists
-        elseif ballType.name == "Lightning Ball" then
-            cast("Lightning Ball", brick)
+        if ballType.name == ball.name then
+            if ballType.onBrickBounce then
+                ballType.onBrickBounce() -- Call the onBrickBounce function if it exists
+            elseif ballType.name == "Lightning Ball" then
+                cast("Lightning Ball", brick)
+            end
         end
     end
     if ball.onBounce then
@@ -2032,11 +2086,11 @@ local function brickCollisionCheck(ball)
 end
 
 local function paddleCollisionCheck(ball, paddle)
-    local effectiveRadius = ball.name == "Phantom ball" and (ball.stats.range + (Player.bonuses.range or 0)) * 50 * (Player.currentCore == "Madness Core" and 2 or 1) or ball.radius
+    local effectiveRadius = ball.name == "Phantom Ball" and (ball.stats.range + (Player.bonuses.range or 0)) * 10 * (Player.currentCore == "Madness Core" and 2 or 1) or ball.radius
     if ball.x + effectiveRadius > paddle.x and ball.x - effectiveRadius < paddle.x + paddle.width and
        ball.y + effectiveRadius > paddle.y and ball.y - effectiveRadius < paddle.y + paddle.height  and 
        ((ball.y > paddle.y + paddle.height and ball.speedY < 0) or ball.y < paddle.y + paddle.height and ball.speedY > 0) then
-        playSoundEffect(paddleBoopSFX, 0.5, 0.8, false, true)   
+        playSoundEffect(paddleBoopSFX, 0.4, 0.8, false, true)   
 
 
         ball.speedY = -ball.speedY
@@ -2046,7 +2100,8 @@ local function paddleCollisionCheck(ball, paddle)
             ballSpeed = 500
         end
         ball.speedX = (hitPosition - 0.5) * 2 * math.abs(ballSpeed * 0.99)
-        ball.speedY = math.sqrt(ballSpeed^2 - ball.speedX^2) * (ball.speedY > 0 and 1 or -1)
+    local speedYSquared = math.max(0, ballSpeed^2 - ball.speedX^2)
+    ball.speedY = math.sqrt(speedYSquared) * (ball.speedY > 0 and 1 or -1)
         --[[if ball.speedY > 0 then
             ball.y = math.max(paddle.y + paddle.height + ball.radius + 5, ball.y)
         else
@@ -2081,11 +2136,13 @@ local function paddleCollisionCheck(ball, paddle)
 end
 
 local function wallCollisionCheck(ball)
+    local leftWallPosition = usingMoneySystem and statsWidth or 0
+    local rightWallPosition = screenWidth - (usingMoneySystem and statsWidth or 0)
     local wallHit = false
-    local effectiveRadius = ball.name == "Phantom ball" and (ball.stats.range + (Player.bonuses.range or 0)) * 50 * (Player.currentCore == "Madness Core" and 2 or 1) or ball.radius
-    if ball.x - effectiveRadius < statsWidth and ball.speedX < 0 then
+    local effectiveRadius = ball.name == "Phantom Ball" and (ball.stats.range + (Player.bonuses.range or 0)) * 10 * (Player.currentCore == "Madness Core" and 2 or 1) or ball.radius
+    if ball.x - effectiveRadius < leftWallPosition and ball.speedX < 0 then
         ball.speedX = -ball.speedX
-        ball.x = statsWidth + effectiveRadius -- Ensure the ball is not stuck in the wall
+        ball.x = leftWallPosition + effectiveRadius -- Ensure the ball is not stuck in the wall
         if Player.currentCore == "Bouncy Core" then
             ball.speedExtra = math.min((ball.speedExtra or 1) + bouncyCoreSpeedBoost, 12)
         end
@@ -2093,14 +2150,14 @@ local function wallCollisionCheck(ball)
             playSoundEffect(wallBoopSFX, 0.5, 0.6)
         end
         wallHit = true
-    elseif ball.x + effectiveRadius > screenWidth - statsWidth and ball.speedX > 0 then
+    elseif ball.x + effectiveRadius > rightWallPosition and ball.speedX > 0 then
         ball.speedX = -ball.speedX
-        ball.x = screenWidth - statsWidth - effectiveRadius -- Ensure the ball is not stuck in the wall
+        ball.x = rightWallPosition - effectiveRadius -- Ensure the ball is not stuck in the 
         if Player.currentCore == "Bouncy Core" then
             ball.speedExtra = math.min((ball.speedExtra or 1) + bouncyCoreSpeedBoost, 12)
         end
         if ball.y < screenWidth then
-            playSoundEffect(wallBoopSFX, 1, 0.5)
+            playSoundEffect(wallBoopSFX, 0.5, 0.6)
         end
         wallHit = true
     end
@@ -2110,7 +2167,7 @@ local function wallCollisionCheck(ball)
         if Player.currentCore == "Bouncy Core" then
             ball.speedExtra = math.min((ball.speedExtra or 1) + bouncyCoreSpeedBoost, 12)
         end
-        playSoundEffect(wallBoopSFX, 1, 0.5)
+        playSoundEffect(wallBoopSFX, 0.5, 0.6)
         wallHit = true
     elseif ball.y + effectiveRadius > screenHeight and ball.speedY > 0 then
         ball.speedY = -ball.speedY
@@ -2118,7 +2175,7 @@ local function wallCollisionCheck(ball)
         if Player.currentCore == "Bouncy Core" then
             ball.speedExtra = math.min((ball.speedExtra or 1) + bouncyCoreSpeedBoost, 12)
         end
-        playSoundEffect(wallBoopSFX, 1, 0.5)
+        playSoundEffect(wallBoopSFX, 0.5, 0.6)
         if ball.name == "Ping-Pong ball" and ball.speedY < 0 then
             ball.speedY = ball.speedY - 25 -- Increase speedY for Ping-Pong ball
         end
@@ -2158,9 +2215,18 @@ local function techUpdate(dt)
             laserBeamTimer = laserBeamTimer + dt
             
             -- Deal damage if we've been on target long enough
-            if laserBeamTimer >= (Player.currentCore == "Madness Core" and 0.5 or 1) * 1/((Player.currentCore == "Damage Core" and 1 or (laserBeam.stats.fireRate + (Player.bonuses.fireRate or 0) + (Player.permanentUpgrades.fireRate or 0)))) then
+            local cooldownLength = (Player.currentCore == "Madness Core" and 0.5 or 1) * 1/((Player.currentCore == "Damage Core" and 1 or (laserBeam.stats.fireRate + (Player.bonuses.fireRate or 0) + (Player.permanentUpgrades.fireRate or 0))))
+            if Player.currentCore == "Spray and Pray Core" then
+                cooldownLength = cooldownLength * 0.5
+            end
+            if laserBeamTimer >= cooldownLength and laserBeamBrick.y > -laserBeamBrick.height then
                 dealDamage(laserBeam, laserBeamBrick)
                 laserBeamTimer = 0  -- Reset timer after damage
+                if Player.currentCore == "Spray and Pray Core" then
+                    laserBeam.angle = math.random(-100, 100)/10
+                else
+                    laserBeam.angle = math.random(-15, 15)/10
+                end
             end
         else
             -- New target or no target, reset timer
@@ -2168,18 +2234,52 @@ local function techUpdate(dt)
             laserBeamTimer = math.max(laserBeamTimer + dt, 0) -- Decrease timer if not on target
         end
         laserBeamBrick = nil
-        local highestY = -math.huge
+        local closestDist = math.huge
         local highestBrick
+        local angle = -math.rad(laserBeam.angle)
+        local startX = paddle.x + paddle.width/2
+        local startY = paddle.y
+        -- Calculate end point of laser using direction vector from angle
+        local dirX = math.sin(angle)  -- X component of direction
+        local dirY = -math.cos(angle) -- Y component of direction (negative because we're going up)
+        local endX = startX + dirX * screenHeight
+        local endY = startY + dirY * screenHeight
+        
         for _, brick in ipairs(bricks) do
-            if brick.health > 0 and not brick.destroyed and -- Add these checks
-               brick.y + brick.height > 0 and brick.y > highestY and 
-               (paddle.x + paddle.width/2 - 1 >= brick.x and paddle.x + paddle.width/2 + 1 <= brick.x + brick.width) then
-                highestY = brick.y + brick.height
-                highestBrick = brick
+            if brick.health > 0 and not brick.destroyed then
+                -- Check all four sides of the brick for intersection
+                local sides = {
+                    {brick.x, brick.y + brick.height, brick.x + brick.width, brick.y + brick.height}, -- bottom
+                    {brick.x, brick.y, brick.x + brick.width, brick.y}, -- top
+                    {brick.x, brick.y, brick.x, brick.y + brick.height}, -- left
+                    {brick.x + brick.width, brick.y, brick.x + brick.width, brick.y + brick.height} -- right
+                }
+                
+                for _, side in ipairs(sides) do
+                    -- Line intersection check
+                    local x1, y1, x2, y2 = side[1], side[2], side[3], side[4]
+                    local denominator = (endY - startY) * (x2 - x1) - (endX - startX) * (y2 - y1)
+                    
+                    if denominator ~= 0 then
+                        local ua = ((endX - startX) * (y1 - startY) - (endY - startY) * (x1 - startX)) / denominator
+                        local ub = ((x2 - x1) * (y1 - startY) - (y2 - y1) * (x1 - startX)) / denominator
+                        
+                        if ua >= 0 and ua <= 1 and ub >= 0 and ub <= 1 then
+                            local intersectX = x1 + ua * (x2 - x1)
+                            local intersectY = y1 + ua * (y2 - y1)
+                            local dist = math.sqrt((intersectX - startX)^2 + (intersectY - startY)^2)
+                            
+                            if dist < closestDist then
+                                closestDist = dist
+                                highestBrick = brick
+                                laserBeamY = intersectY
+                            end
+                        end
+                    end
+                end
             end
         end
         laserBeamBrick = highestBrick
-        laserBeamY = highestY
     end
 
     -- Saw Blades damage logic and animation update
@@ -2354,12 +2454,12 @@ local function updateFireball(fireball, dt)
 
 
     -- Check wall collisions: bounce on side walls, die on top/bottom
-    if fireball.x - fireball.radius < statsWidth and fireball.speedX < 0 then
+    if fireball.x - fireball.radius < (usingMoneySystem and statsWidth or 0) and fireball.speedX < 0 then
         fireball.speedX = -fireball.speedX
-        fireball.x = statsWidth + fireball.radius
-    elseif fireball.x + fireball.radius > screenWidth - statsWidth and fireball.speedX > 0 then
+        fireball.x = (usingMoneySystem and statsWidth or 0) + fireball.radius
+    elseif fireball.x + fireball.radius > screenWidth - (usingMoneySystem and statsWidth or 0) and fireball.speedX > 0 then
         fireball.speedX = -fireball.speedX
-        fireball.x = screenWidth - statsWidth - fireball.radius
+        fireball.x = screenWidth - (usingMoneySystem and statsWidth or 0) - fireball.radius
     end
     if fireball.y < 0 or fireball.y > screenHeight then
         fireball.dead = true
@@ -2378,7 +2478,6 @@ end
 local function updateBurningBricks(dt)
     for brickID, cooldown in pairs(burningBricksCooldown) do
         burningBricksCooldown[brickID] = cooldown - dt
-        print("Burning brick " .. brickID .. " cooldown: " .. burningBricksCooldown[brickID])
         if burningBricksCooldown[brickID] <= 0 then
             burnBricksEnd(brickID)
             print("Burning brick " .. brickID .. " ended")
@@ -2546,6 +2645,9 @@ end
 
 -- Modify the Balls.update function to include fireball updates
 function Balls.update(dt, paddle, bricks)
+    local leftWallPosition = usingMoneySystem and statsWidth or 0
+    local rightWallPosition = screenWidth - (usingMoneySystem and statsWidth or 0)
+
     -- Reset hitLastFrame for all bricks at the start of each frame
     -- Compute visible bricks ONCE per frame for all logic
     local screenTop = 0
@@ -2560,6 +2662,7 @@ function Balls.update(dt, paddle, bricks)
 
     brickDeathSFXCd = math.max(0, brickDeathSFXCd - dt) -- Decrease cooldown for brick death SFX
 
+    lightningSFXCooldown = math.max(0, lightningSFXCooldown - dt) -- Decrease cooldown for lightning SFX
     -- Store paddle reference for Ballspawn
     local paddleReference = paddle
     updateDeadBullets(dt)
@@ -2572,7 +2675,9 @@ function Balls.update(dt, paddle, bricks)
     Explosion.update(dt)
     ArcaneMissile.update(dt)
     FlameBurst.update(dt)
-    
+
+    shootSFXCooldown = math.max(shootSFXCooldown - dt, 0)
+
     -- Update rockets
     for i = #rockets, 1, -1 do
         local rocket = rockets[i]
@@ -2590,6 +2695,7 @@ function Balls.update(dt, paddle, bricks)
             if not brick.destroyed and not brick.isPermanent then
                 if rocketDrawX > brick.x - rocket.radius and rocketDrawX < brick.x + brick.width + rocket.radius and
                    rocketDrawY > brick.y - rocket.radius and rocketDrawY < brick.y + brick.height + rocket.radius then
+                    playSoundEffect(explosionSFX, 0.5, 1, false, true)
                     -- Explosion damage
                     local scale = (unlockedBallTypes["Rocket Launcher"].stats.range + (Player.bonuses.range or 0) + (Player.permanentUpgrades.range or 0)) * (Player.currentCore == "Madness Core" and 2 or 1)
                     local touchingBricks = getBricksInCircle((brick.x + rocket.x)/2, (brick.y + rocket.y)/2, scale*24)
@@ -2600,19 +2706,45 @@ function Balls.update(dt, paddle, bricks)
                         end
                     end
                     createSpriteAnimation((brick.x + rocket.x)/2, (brick.y + rocket.y)/2, scale/3, explosionVFX, 512, 512, 0.01, 0, false)
-
                     hitBrick = true
-                    rockets[i] = nil -- garbage collection
+                    table.remove(rockets, i) -- Remove rocket immediately when it hits a brick
                     break
                 end
             end
         end
 
-        -- Remove rocket if it hit something or went off screen
-        if hitBrick or rocket.y < - rocket.radius * 2 or rocket.y > love.graphics.getHeight() or
-           rocket.x < 0 or rocket.x > love.graphics.getWidth() then
+        -- Don't continue updating if the rocket was removed
+        if not rockets[i] then goto continue end
+
+        -- Make rockets bounce off walls
+        local leftWallPosition = usingMoneySystem and statsWidth or 0
+        local rightWallPosition = screenWidth - (usingMoneySystem and statsWidth or 0)
+
+        -- Bounce off side walls
+        if rocket.x - rocket.radius < leftWallPosition and rocket.speedX < 0 then
+            rocket.speedX = -rocket.speedX
+            rocket.x = leftWallPosition + rocket.radius
+            rocket.angle = -rocket.angle -- Reflect the angle
+            rocket.speedY = rocket.speedY - 50 -- Reduce vertical speed slightly
+        elseif rocket.x + rocket.radius > rightWallPosition and rocket.speedX > 0 then
+            rocket.speedX = -rocket.speedX
+            rocket.x = rightWallPosition - rocket.radius
+            rocket.angle = -rocket.angle -- Reflect the angle
+            rocket.speedY = rocket.speedY - 50 -- Reduce vertical speed slightly
+        end
+
+        -- Bounce off bottom
+        if rocket.y + rocket.radius > screenHeight and rocket.speedY > 0 then
+            rocket.speedY = -rocket.speedY -- Bounce off bottom
+            rocket.y = screenHeight - rocket.radius
+            rocket.angle = 180 - rocket.angle -- Reflect the angle
+        end
+
+        -- Remove if it goes off the top
+        if rocket.y < -rocket.radius * 2 then
             table.remove(rockets, i)
         end
+        ::continue::
     end
 
     -- update balls
@@ -2626,7 +2758,7 @@ function Balls.update(dt, paddle, bricks)
             end
 
             local multX, multY = normalizeVector(ball.speedX, ball.speedY)
-            local speedExtra = ((ball.name == "Magnetic Ball") and 0.5 or 1) * (ball.speedExtra or 0)
+            local speedExtra = ((ball.name == "Magnetic Ball") and 0.1 or 1) * (ball.speedExtra or 0)
             ball.x = ball.x + (ball.speedX + speedExtra * multX * 50) * ball.speedMult * dt * (Player.currentCore == "Madness Core" and 2 or 1)
             ball.y = ball.y + (ball.speedY + speedExtra * multY * 50) * ball.speedMult * dt * (Player.currentCore == "Madness Core" and 2 or 1)
 
@@ -2818,13 +2950,13 @@ function Balls.update(dt, paddle, bricks)
         end
 
         -- Make bullets bounce off side walls and bottom
-        if bullet.x - bullet.radius < statsWidth and bullet.speedX < 0 then
+        if bullet.x - bullet.radius < leftWallPosition and bullet.speedX < 0 then
             bullet.speedX = -bullet.speedX
-            bullet.x = statsWidth + bullet.radius -- Ensure the bullet is not stuck in the wall
+            bullet.x = leftWallPosition + bullet.radius -- Ensure the bullet is not stuck in the wall
             bullet.speedY = bullet.speedY - 50
-        elseif bullet.x + bullet.radius > screenWidth - statsWidth and bullet.speedX > 0 then
+        elseif bullet.x + bullet.radius > rightWallPosition and bullet.speedX > 0 then
             bullet.speedX = -bullet.speedX
-            bullet.x = screenWidth - statsWidth - bullet.radius -- Ensure the bullet is not stuck in the wall
+            bullet.x = rightWallPosition - bullet.radius -- Ensure the bullet is not stuck in the wall
             bullet.speedY = bullet.speedY - 50
         end
         if bullet.y + bullet.radius > screenHeight then
@@ -2985,7 +3117,7 @@ local function techDraw()
             love.graphics.rectangle("fill", paddle.x + paddle.width/2 + paddle.width/2 * chargeProgress, 0, 1, paddle.y)
         end
         -- Draw laser beam
-        love.graphics.setColor(1, 25/255, 0, laserAlpha.a)
+        love.graphics.setColor(0, 1, 25/255, laserAlpha.a)
         love.graphics.rectangle("fill", paddle.x, 0, paddle.width, paddle.y)
     end
 
@@ -2994,17 +3126,31 @@ local function techDraw()
         -- Draw the actual Laser Beam
         -- Calculate charge progress
         local chargeProgress = laserBeamTimer / ((Player.currentCore == "Madness Core" and 0.5 or 1) * (1/((Player.currentCore == "Damage Core" and 1 or (unlockedBallTypes["Laser Beam"].stats.fireRate + (Player.bonuses.fireRate or 0) + (Player.permanentUpgrades.fireRate or 0))))))
+        if Player.currentCore == "Spray and Pray Core" then
+            chargeProgress = math.min(1, chargeProgress * 2)
+        end
         -- Interpolate color from grey to red based on charge
         local r = 0.35 + (1 - 0.35) * chargeProgress
         local g = 0.35 - 0.35 * chargeProgress
         local b = 0.35 - 0.35 * chargeProgress
         local a = 0.25 + 0.75 * chargeProgress
         love.graphics.setColor(r, g, b, a)
+        local angle = -math.rad(unlockedBallTypes["Laser Beam"].angle)
+        local startX = paddle.x + paddle.width/2
+        local startY = paddle.y
+        local beamLength
+        
         if laserBeamBrick then
-            love.graphics.rectangle("fill", paddle.x + paddle.width/2 - 1, laserBeamBrick.y + laserBeamBrick.height - 1, 2, paddle.y - (laserBeamBrick.y+laserBeamBrick.height))
+            beamLength = math.sqrt((laserBeamY - startY)^2 + ((startX + math.sin(angle) * (startY - laserBeamY)) - startX)^2)
         else
-            love.graphics.rectangle("fill", paddle.x + paddle.width/2 - 1, 0, 2, paddle.y)
+            beamLength = startY  -- Full length to top of screen
         end
+        
+        love.graphics.push()
+        love.graphics.translate(startX, startY)
+        love.graphics.rotate(angle)  -- Removed extra negative to match collision detection
+        love.graphics.rectangle("fill", -1, -beamLength, 2, beamLength)
+        love.graphics.pop()
     end    
 
     if unlockedBallTypes["Turret Generator"] then
