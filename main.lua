@@ -103,7 +103,7 @@ function resetGame()
         width = 200 + (Player.permanentUpgrades.paddleSize or 0), -- Base width + size upgrade
         widthMult = 1,
         height = 20,
-        speed = 400 + (Player.permanentUpgrades.paddleSpeed or 0),
+        speed = 700 + (Player.permanentUpgrades.paddleSpeed or 0),
         currrentSpeedX = 0,
         speedMult = 1
     }
@@ -170,7 +170,10 @@ local function loadAssets()
     uiSmallWindowImg = love.graphics.newImage("assets/sprites/UI/newBallBackground.png")
     uiWindowImg = love.graphics.newImage("assets/sprites/UI/ballBackground.png")
     uiBigWindowImg = love.graphics.newImage("assets/sprites/UI/ballBackground_20.png")
-        --Icons
+    uiBigWindowImgUncommon = love.graphics.newImage("assets/sprites/UI/ballBackground_20_Uncommon.png")
+    uiBigWindowImgRare = love.graphics.newImage("assets/sprites/UI/ballBackground_20_Rare.png")
+    uiBigWindowImgLegendary = love.graphics.newImage("assets/sprites/UI/ballBackground_20_Legendary.png")
+    --Icons
     iconsImg = {
         amount = love.graphics.newImage("assets/sprites/UI/icons/amount.png"),
         ammo = love.graphics.newImage("assets/sprites/UI/icons/ammo.png"),
@@ -642,7 +645,7 @@ function love.load()
         width = 200 + (Player.permanentUpgrades.paddleSize or 0), -- Base width + size upgrade
         widthMult = 1,
         height = 20,    
-        speed = 400 + (Player.permanentUpgrades.paddleSpeed or 0), -- Base speed + speed upgrade
+        speed = 700 + (Player.permanentUpgrades.paddleSpeed or 0), -- Base speed + speed upgrade
         currrentSpeedX = 0,
         speedMult = 1
     }

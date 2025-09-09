@@ -89,6 +89,7 @@ Player = {
     upgradePriceMultScaling = 10,
     dead = false,
     lastHitTime = 0,
+    items = {},
     queuedUpgrades = {},    
     permanentUpgrades = {}, -- Store permanent upgrades
     permanentUpgradePrices = {
@@ -242,16 +243,10 @@ Player.bonusUpgrades = {
 Player.upgradePaddle = {
     paddleSize = function()
         -- This is handled in permanentUpgrades.lua now
-        local value = usingMoneySystem and 20 or 40
+        local value = 20
         paddle.width = paddle.width + value
         paddle.x = paddle.x - value / 2  -- Adjust position to keep it centered
         Player.permanentUpgrades.paddleSize = (Player.permanentUpgrades.paddleSize or 0) + 1
-    end,
-    
-    paddleSpeed = function()
-        local value = usingMoneySystem and 80 or 120
-        Player.permanentUpgrades.paddleSpeed = (Player.permanentUpgrades.paddleSpeed or 0) + 1
-        paddle.speed = paddle.speed + value
     end,
 }
 
@@ -448,8 +443,6 @@ function Player.levelUp()
     Player.xp = 0
     if Player.level % 2 == 0 then
         Player.upgradePaddle["paddleSize"]()
-    else
-        Player.upgradePaddle["paddleSpeed"]()
     end
     if usingMoneySystem then
         Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.25)

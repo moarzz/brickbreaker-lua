@@ -24,6 +24,12 @@ local items = {
         stats = {speed = 2},
         description = "+2 speed",
     },
+    ["Balls To The Wall"] = {
+        rarity = "common",
+        stats = {speed = 1, amount = 1, damage = 1},
+        description = "balls gain +1 speed, amount and damage",
+        statCondition = function() end
+    },
     ["Kitchen Knife"] = {
         rarity = "common",
         stats = {damage = 2},
@@ -54,6 +60,57 @@ local items = {
         description = "+2 fireRate",
         rarity = "common"
     },
+    ["Financial Plan"] = {
+        stats = {},
+        description = "+2$ per level",
+        rarity = "common"
+    },
+    ["Ol' reliable"] = {
+        stats = {},
+        description = "+1 to every stat of your starting item",
+        rarity = "common"
+    },
+    ["Ballbuster"] = {
+        stats = {damage = 1, speed = 1, amount = 1},
+        description = "Ball weapons gain +1 damage, speed and amount",
+        rarity = "common"
+    },
+    ["Sharpshooter"] = {
+        stats = {damage = 1, fireRate = 1, ammo = 1},
+        description = "Increases damage, fire rate and ammo of gun weapons by 1",
+        rarity = "common"
+    },
+    ["Handy Wrench"] = {
+        stats = {},
+        description = "When you buy this, all your weapons get an upgrade to a random one of their stats",
+        rarity = "uncommon",
+        onBuy = function() end
+    },
+    ["Satanic Necklace"] = {
+        stats = {damage = 5, amount = -1, fireRate = -1},
+        description = "+5 damage, -1 amount, -1 fireRate",
+        rarity = "uncommon"
+    },
+    ["Ballin'"] = {
+        stats = {damage = 2, speed = 2, amount = 2},
+        description = "Ball weapons gain +2 damage, speed and amount",
+        rarity = "uncommon"
+    },
+    ["Spray and pray"] = {
+        stats = {fireRate = 2, ammo = 2, damage = 2},
+        description = "Increases fire rate and ammo of all weapons by 2",
+        rarity = "uncommon"
+    },
+    ["Degenerate Gambling"] = {
+        stats = {},
+        description = "-1$ per level, 20% chance to gain 20$ on level up",
+        rarity = "uncommon"
+    },
+    ["Nerdy Glasses"] = {
+        stats = {damage = -1, speed = -1, cooldown = 1, size = -1, amount = -1, range = -1, fireRate = -1, ammo = -1},
+        description = "+5$ per Level, -1 to every stat (+1 to cooldown)",
+        rarity = "uncommon",
+    },
     ["Bouncy walls"] = {
         stats = {},
         description = "Balls gain a temporary boost of speed after bouncing off walls",
@@ -69,21 +126,81 @@ local items = {
         description = "Increases all stats of your weapons by 1",
         rarity = "uncommon"
     },
+    ["Homing Bullets"] = {
+        stats = {fireRate = 1, ammo = 1, cooldown = -1},
+        description = "Bullets will home in on the nearest brick",
+        rarity = "uncommon"
+    },
+    ["Paddle Defense System"] = {
+        stats = {},
+        description = "When balls bounce on the paddle, shoot a bullet that deals damage equal to that ball's damage",
+        rarity = "uncommon"
+    },
     ["Trinity Force"] = {
         stats = {speed = 3, damage = 3, amount = 3},
         description = "Increases the speed, amount and damage of ball weapons by 3",
         rarity = "rare"
+    },
+    ["Gunslinger"] = {
+        stats = {damage = 3, fireRate = 3, ammo = 3},
+        description = "Increases damage, fire rate and ammo of gun weapons by 3",
+        rarity = "rare"
+    },
+    ["Electromagnetic alignment"] = {
+        stats = {},
+        description = "balls gain a magnetic attraction towards bricks. (doesn't affect Magnetic Ball)",
+        rarity = "rare"
+    },
+    ["Sudden Mitosis"] = {
+        stats = {},
+        description = "50% chance for balls to spawn a small copy of themselves that lasts for 6 seconds on paddleBounce",
+        rarity = "rare"
+    },
+    ["Jack Of All Trades"] = {
+        stats = {speed = 2, cooldown = -2, size = 2, amount = 2, range = 2, fireRate = 2, ammo = 2},
+        description = "Increases all stats of your weapons by 2 (except damage), but decreases cooldown by 2",
+        rarity = "rare"
+    },
+    ["Split Shooter"] = {
+        stats = {},
+        description = "Bullets have a 50% chance to split into 2 after being shot",
+        rarity = "rare"
+    },
+    ["Blind Violence"] = {
+        stats = {damage = 10, speed = -2, amount = -2, cooldown = 2, range = -2, fireRate = -2, ammo = -2},
+        description = "Damage + 10, but all other stats -2 (cooldown + 2)",
+        rarity = "rare"
+    },
+    ["Omnipotence"] = {
+        stats = {speed = 3, damage = 3, cooldown = -3, size = 3, amount = 3, range = 3, fireRate = 3, ammo = 3},
+        description = "Increases all stats of your weapons by 3",
+        rarity = "legendary"
     },
     ["Crazy Fingers"] = {
         stats = {},
         description = "fireRate items shoot Twice as fast but are a lot less accurate",
         rarity = "legendary"
     },
+    ["Bouncing Castle"] = {
+        stats = {},
+        description = "Whenever a ball bounces it gains a temporary speed boost",
+        rarity = "legendary"
+    }
 
 }
 
 function getItem(itemName) 
     return items[itemName]
+end
+
+function getStatItemsBonus(statName)
+    local totalBonus = 0
+    for itemName, item in pairs(items) do
+        if Player:hasItem(itemName) and item.stats[statName] then
+            totalBonus = totalBonus + item.stats[statName]
+        end
+    end
+    return totalBonus
 end
 -----------------------------------
 
