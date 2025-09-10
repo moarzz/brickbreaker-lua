@@ -422,23 +422,20 @@ function Player.reset()
 end
 
 function Player.levelUp()
+    resetRerollPrice()
     Player.level = Player.level + 1
     if Player.level % Player.newWeaponLevelRequirement == 0 then
         if usingMoneySystem then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.2)
         end
-        if Player.level > 40 then
-            Player.newWeaponLevelRequirement = Player.newWeaponLevelRequirement + 5
-        else
-            Player.newWeaponLevelRequirement = Player.newWeaponLevelRequirement + 10
-        end
+        Player.newWeaponLevelRequirement = Player.newWeaponLevelRequirement + 5
         unlockNewWeaponQueued = true
-    elseif Player.level % Player.newStatLevelRequirement == 0 and Player.currentCore ~= "Farm Core"  and Player.level < 45 then
+    --[[elseif Player.level % Player.newStatLevelRequirement == 0 and Player.currentCore ~= "Farm Core"  and Player.level < 45 then
         if usingMoneySystem then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.2)
         end
         unlockNewStatQueued = true
-        Player.newStatLevelRequirement = Player.newStatLevelRequirement + 10
+        Player.newStatLevelRequirement = Player.newStatLevelRequirement + 10]]
     end
     Player.xp = 0
     if Player.level % 2 == 0 then
@@ -450,11 +447,11 @@ function Player.levelUp()
         if Player.level < 5 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.5)  -- Scale to reach ~250 by level 5
         elseif Player.level < 15 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.25)  -- Scale to reach ~5000 by level 15
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.4)  -- Scale to reach ~5000 by level 15
         elseif Player.level < 25 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.2425)  -- Scale to reach ~50000 by level 25
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.3)  -- Scale to reach ~50000 by level 25
         else
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.165)  -- Scale to reach ~150000 by level 30
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.25)  -- Scale to reach ~150000 by level 30
         end
     end
     lvlUpPopup()
@@ -467,6 +464,7 @@ function Player.levelUp()
             uiOffset.x = 0
         end
     end
+    setItemShop()
 end
 
 function Player.gain(amount)

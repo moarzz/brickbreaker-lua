@@ -103,7 +103,7 @@ function resetGame()
         width = 200 + (Player.permanentUpgrades.paddleSize or 0), -- Base width + size upgrade
         widthMult = 1,
         height = 20,
-        speed = 700 + (Player.permanentUpgrades.paddleSpeed or 0),
+        speed = 600 + (Player.permanentUpgrades.paddleSpeed or 0),
         currrentSpeedX = 0,
         speedMult = 1
     }
@@ -487,7 +487,7 @@ local function addMoreBricks()
             print("spawning more bricks")
             for i=1 , 10 do
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
-                currentRowPopulation = currentRowPopulation + math.ceil(math.pow(Player.level, 0.9) * 0.4)
+                currentRowPopulation = currentRowPopulation + math.ceil(math.pow(Player.level, 0.9) * 0.6)
                 if spawnBossNextRow and not bossSpawned then
                     spawnBoss()
                     bossSpawned = true
@@ -645,7 +645,7 @@ function love.load()
         width = 200 + (Player.permanentUpgrades.paddleSize or 0), -- Base width + size upgrade
         widthMult = 1,
         height = 20,    
-        speed = 700 + (Player.permanentUpgrades.paddleSpeed or 0), -- Base speed + speed upgrade
+        speed = 600 + (Player.permanentUpgrades.paddleSpeed or 0), -- Base speed + speed upgrade
         currrentSpeedX = 0,
         speedMult = 1
     }
@@ -1453,7 +1453,7 @@ end
 local function drawLevelUp()
     setFont(30)
     local text = Player.currentCore == "Economy Core" and "Press SPACE to finish upgrading and gain +" .. math.min(math.floor(Player.money/5), 10) .. "$\n(+1$ for every 5 unspent $, max 10)" or "Press SPACE to finish upgrading and gain +" .. math.min(5, math.floor(Player.money/5)) .. "$\n(+1$ for every 5 unspent $, max 5)"
-    suit.Label(text, {align = "center"}, screenWidth/2 - 400, 75, 800, screenWidth/2 + 250)
+    -- suit.Label(text, {align = "center"}, screenWidth/2 - 400, 75, 800, screenWidth/2 + 250)
 end
 
 inGame = false

@@ -1682,6 +1682,8 @@ end
 
 -- calls ballListInit and adds a ball to it
 function Balls.initialize()
+    initializeRarityItemLists()
+    Player.items = {}
     Player.money = 0
     if usingMoneySystem then
         Player.newStatLevelRequirement = 10

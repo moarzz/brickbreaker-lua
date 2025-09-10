@@ -964,6 +964,33 @@ function damageNumber(damage, x, y, color)
     end
 end
 
+function getRandomFromKey(tbl)
+  local len = 0;
+  
+  -- loop over to find the amount of unique items in the table
+  -- (this gets both the keys and the indexed items
+  -- for only getting keys check the type of 'k' to not be a number in both for loops before doing anything)
+  for _, v in pairs(tbl) do
+    len = len + 1;
+  end
+
+  local randIndex = love.math.random(len); -- [1-len]
+
+  local ind = 0;
+
+  -- loop through the table again to find the item located at the random point
+  for k, v in pairs(tbl) do
+    ind = ind + 1;
+    
+    if ind == randIndex then
+      return k, v;
+    end
+  end
+
+  -- shouldnt be possible to get here
+  error("milo is an idiot that cant write a random function apparently");
+end
+
 function healNumber(number, x, y)
     if healNumbersOn then
         local healNumber = {
@@ -996,6 +1023,56 @@ function healNumber(number, x, y)
                 end
             end
         end)
+    end
+end
+
+function drawTextCenteredWithScale(text, x, y, scale, maxWidth)
+    local font = love.graphics.getFont(); -- the font being used
+    local drawY = y; -- the y position of th text being draw currently
+    local toPrint = text; -- text remaining to print
+
+    while toPrint ~= "" do -- keep looping until 'toPrint' is an empty string
+        if font:getWidth(toPrint) * scale > maxWidth then
+            local lastWorkingStr = "";
+
+            for str in string.gmatch(toPrint, "[^%s]*%s") do
+                if font:getWidth(lastWorkingStr .. str) * scale < maxWidth then
+                    lastWorkingStr = lastWorkingStr .. str;
+                else
+                    break; -- exit the for loop (no use in moving forward since the width can only increase more)
+                end
+            end
+
+            -- make sure string isnt empty, if it is then fill it with the most letters possible
+            if lastWorkingStr == "" then
+                for char in string.gmatch(toPrint, ".") do
+                    if font:getWidth(lastWorkingStr .. char) * scale < maxWidth then
+                        lastWorkingStr = lastWorkingStr .. char;
+                    else
+                        break;
+                    end
+                end
+            end
+
+            -- clean up the rendered text a bit before drawing it
+            local cleanedStr = lastWorkingStr;
+
+            if string.match(cleanedStr, "%s$") then -- if the text ends in a space then exclude it from the draw
+                cleanedStr = string.sub(cleanedStr, 1, -2);
+            end
+
+            local drawX = x - font:getWidth(cleanedStr) * scale / 2 + maxWidth / 2;
+            love.graphics.print(cleanedStr, drawX, drawY, 0, scale, scale);
+
+            toPrint = string.sub(toPrint, string.len(lastWorkingStr) + 1, -1);
+
+            drawY = drawY + font:getHeight("|") * scale;
+        else
+            local drawX = x - font:getWidth(toPrint) * scale / 2 + maxWidth / 2;
+
+            love.graphics.print(toPrint, drawX, drawY, 0, scale, scale);
+            toPrint = "";
+        end
     end
 end
 
@@ -1053,12 +1130,13 @@ function drawDamageNumbers()
     love.graphics.setColor(1, 1, 1, 1)
 end
 
-function printMoney(text, centerX, centerY, angle, buyable)
+function printMoney(text, centerX, centerY, angle, buyable, fontSize)
     if buyable == nil then
         buyable = true
     end
     angle = angle or math.rad(1.5) -- Default angle if not provided
-    setFont(35)
+    local fontSize = fontSize or 35
+    setFont(fontSize)
     local moneyOffsetX = -math.cos(math.rad(5)) * getTextSize(formatNumber(text))/2
     
     -- Draw shadow text

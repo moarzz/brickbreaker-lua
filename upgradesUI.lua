@@ -20,184 +20,246 @@ local upgradesUI = {}
 
 local items = {
     ["Running Shoes"] = {
+        name = "Running Shoes",
         rarity = "common",
         stats = {speed = 2},
         description = "+2 speed",
     },
     ["Balls To The Wall"] = {
+        name = "Balls To The Wall",
         rarity = "common",
         stats = {speed = 1, amount = 1, damage = 1},
         description = "balls gain +1 speed, amount and damage",
-        statCondition = function() end
+        statsCondition = function(weapon) return weapon.type == "ball" end
     },
     ["Kitchen Knife"] = {
+        name = "Kitchen Knife",
         rarity = "common",
         stats = {damage = 2},
         description = "+2 damage",
     },
     ["Duct Tape"] = {
+        name = "Duct Tape",
         rarity = "common",
         stats = {cooldown = -2},
         description = "-2 cooldown",
     },
     ["2 for 1 meal ticket"] = {
+        name = "2 for 1 meal ticket",
         rarity = "common",
         stats = {amount = 2},
         description = "+2 amount",
     },
     ["Fake pregnancy belly"] = {
+        name = "Fake pregnancy belly",
         stats = {range = 2},
         description = "+2 range",
         rarity = "common"
     },
     ["Extended Magazine"] = {
+        name = "Extended Magazine",
         stats = {ammo = 2},
         description = "+2 ammo",
         rarity = "common"
     },
     ["Fast Hand"] = {
+        name = "Fast Hand",
         stats = {fireRate = 2},
         description = "+2 fireRate",
         rarity = "common"
     },
     ["Financial Plan"] = {
+        name = "Financial Plan",
         stats = {},
         description = "+2$ per level",
         rarity = "common"
     },
     ["Ol' reliable"] = {
+        name = "Ol' reliable",
         stats = {},
         description = "+1 to every stat of your starting item",
         rarity = "common"
     },
-    ["Ballbuster"] = {
-        stats = {damage = 1, speed = 1, amount = 1},
-        description = "Ball weapons gain +1 damage, speed and amount",
-        rarity = "common"
-    },
     ["Sharpshooter"] = {
+        name = "Sharpshooter",
         stats = {damage = 1, fireRate = 1, ammo = 1},
         description = "Increases damage, fire rate and ammo of gun weapons by 1",
-        rarity = "common"
+        rarity = "common",
+        statsCondition = function(weapon) return weapon.type == "gun" end
     },
     ["Handy Wrench"] = {
+        name = "Handy Wrench",
         stats = {},
         description = "When you buy this, all your weapons get an upgrade to a random one of their stats",
         rarity = "uncommon",
         onBuy = function() end
     },
     ["Satanic Necklace"] = {
+        name = "Satanic Necklace",
         stats = {damage = 5, amount = -1, fireRate = -1},
         description = "+5 damage, -1 amount, -1 fireRate",
         rarity = "uncommon"
     },
-    ["Ballin'"] = {
+    ["Ballbuster"] = {
+        name = "Ballbuster",
         stats = {damage = 2, speed = 2, amount = 2},
         description = "Ball weapons gain +2 damage, speed and amount",
-        rarity = "uncommon"
+        rarity = "uncommon",
+        statsCondition = function(weapon) return weapon.type == "ball" end
     },
-    ["Spray and pray"] = {
+    ["Spray and Pray"] = {
+        name = "Spray and Pray",
         stats = {fireRate = 2, ammo = 2, damage = 2},
         description = "Increases fire rate and ammo of all weapons by 2",
-        rarity = "uncommon"
+        rarity = "uncommon",
+        statsCondition = function(weapon) return weapon.type == "gun" end
     },
     ["Degenerate Gambling"] = {
+        name = "Degenerate Gambling",
         stats = {},
         description = "-1$ per level, 20% chance to gain 20$ on level up",
         rarity = "uncommon"
     },
     ["Nerdy Glasses"] = {
+        name = "Nerdy Glasses",
         stats = {damage = -1, speed = -1, cooldown = 1, size = -1, amount = -1, range = -1, fireRate = -1, ammo = -1},
         description = "+5$ per Level, -1 to every stat (+1 to cooldown)",
         rarity = "uncommon",
     },
     ["Bouncy walls"] = {
+        name = "Bouncy walls",
         stats = {},
         description = "Balls gain a temporary boost of speed after bouncing off walls",
         rarity = "uncommon"
     },
     ["Four Leafed Clover"] = {
+        name = "Four Leafed Clover",
         stats = {},
         description = "+1$ per level, you are twice as likely to find uncommon or rare weapons or items in the shop",
         rarity = "uncommon"
     },
     ["Swiss Army Knife"] = {
+        name = "Swiss Army Knife",
         stats = {damage = 1, fireRate = 1, speed = 1, cooldown = 1, size = 1, amount = 1, range = 1, ammo = 1},
         description = "Increases all stats of your weapons by 1",
         rarity = "uncommon"
     },
     ["Homing Bullets"] = {
+        name = "Homing Bullets",
         stats = {fireRate = 1, ammo = 1, cooldown = -1},
         description = "Bullets will home in on the nearest brick",
         rarity = "uncommon"
     },
     ["Paddle Defense System"] = {
+        name = "Paddle Defense System",
         stats = {},
         description = "When balls bounce on the paddle, shoot a bullet that deals damage equal to that ball's damage",
         rarity = "uncommon"
     },
     ["Trinity Force"] = {
+        name = "Trinity Force",
         stats = {speed = 3, damage = 3, amount = 3},
         description = "Increases the speed, amount and damage of ball weapons by 3",
-        rarity = "rare"
+        rarity = "rare",
+        statsCondition = function(weapon) return weapon.type == "ball" end
     },
     ["Gunslinger"] = {
+        name = "Gunslinger",
         stats = {damage = 3, fireRate = 3, ammo = 3},
         description = "Increases damage, fire rate and ammo of gun weapons by 3",
-        rarity = "rare"
+        rarity = "rare",
+        statsCondition = function(weapon) return weapon.type == "gun" end
     },
     ["Electromagnetic alignment"] = {
+        name = "Electromagnetic alignment",
         stats = {},
         description = "balls gain a magnetic attraction towards bricks. (doesn't affect Magnetic Ball)",
         rarity = "rare"
     },
     ["Sudden Mitosis"] = {
+        name = "Sudden Mitosis",
         stats = {},
         description = "50% chance for balls to spawn a small copy of themselves that lasts for 6 seconds on paddleBounce",
         rarity = "rare"
     },
     ["Jack Of All Trades"] = {
+        name = "Jack Of All Trades",
         stats = {speed = 2, cooldown = -2, size = 2, amount = 2, range = 2, fireRate = 2, ammo = 2},
         description = "Increases all stats of your weapons by 2 (except damage), but decreases cooldown by 2",
         rarity = "rare"
     },
     ["Split Shooter"] = {
+        name = "Split Shooter",
         stats = {},
         description = "Bullets have a 50% chance to split into 2 after being shot",
         rarity = "rare"
     },
     ["Blind Violence"] = {
+        name = "Blind Violence",
         stats = {damage = 10, speed = -2, amount = -2, cooldown = 2, range = -2, fireRate = -2, ammo = -2},
         description = "Damage + 10, but all other stats -2 (cooldown + 2)",
         rarity = "rare"
     },
     ["Omnipotence"] = {
+        name = "Omnipotence",
         stats = {speed = 3, damage = 3, cooldown = -3, size = 3, amount = 3, range = 3, fireRate = 3, ammo = 3},
         description = "Increases all stats of your weapons by 3",
         rarity = "legendary"
     },
     ["Crazy Fingers"] = {
+        name = "Crazy Fingers",
         stats = {},
         description = "fireRate items shoot Twice as fast but are a lot less accurate",
         rarity = "legendary"
     },
     ["Bouncing Castle"] = {
+        name = "Bouncing Castle",
         stats = {},
         description = "Whenever a ball bounces it gains a temporary speed boost",
         rarity = "legendary"
     }
-
 }
+
+local commonItems = {}
+local uncommonItems = {}
+local rareItems = {}
+local legendaryItems = {}
+
+function initializeRarityItemLists()
+    commonItems = {}
+    uncommonItems = {}
+    rareItems = {}
+    legendaryItems = {}
+    for itemName, itemData in pairs(items) do
+        if itemData.rarity == "common" then
+            table.insert(commonItems, itemName)
+        elseif itemData.rarity == "uncommon" then
+            table.insert(uncommonItems, itemName)
+        elseif itemData.rarity == "rare" then
+            table.insert(rareItems, itemName)
+        elseif itemData.rarity == "legendary" then
+            table.insert(legendaryItems, itemName)
+        else
+            print("Warning: Item '" .. tostring(itemName) .. "' has unknown rarity '" .. tostring(itemData.rarity) .. "'")
+        end
+    end
+end
 
 function getItem(itemName) 
     return items[itemName]
 end
 
-function getStatItemsBonus(statName)
+function getStatItemsBonus(statName, weapon)
     local totalBonus = 0
-    for itemName, item in pairs(items) do
-        if Player:hasItem(itemName) and item.stats[statName] then
-            totalBonus = totalBonus + item.stats[statName]
+    for itemName, item in pairs(Player.items) do
+        if item.stats[statName] then
+            if item.statsCondition then
+                if item.statsCondition(weapon) then
+                    totalBonus = totalBonus + item.stats[statName]
+                end
+            else
+                totalBonus = totalBonus + item.stats[statName]
+            end
         end
     end
     return totalBonus
@@ -436,6 +498,7 @@ function setLevelUpShop(isForBall, isForPerks)
             table.insert(displayedUpgrades, {
                 name = thisBallType.name,
                 description = thisBallType.description,
+                rarity = thisBallType.rarity or "common",
                 effect = function()
                     print("will add ball: " .. thisBallType.name)
                     Balls.addBall(thisBallType.name)
@@ -461,6 +524,7 @@ function setLevelUpShop(isForBall, isForPerks)
                 table.insert(displayedUpgrades, {
                     name = currentPerk.name,
                     description = currentPerk.description,
+                    rarity = currentPerk.rarity or "common",
                     effect = function()
                         Player.addPerk(currentPerk.name) -- Add the new perk to the player
                         if Player.perkUpgrades[currentPerk.name] then
@@ -574,6 +638,7 @@ function setLevelUpShop(isForBall, isForPerks)
                     table.insert(displayedUpgrades, {
                         name = Player.bonusesList[currentBonus].name,
                         description = Player.bonusesList[currentBonus].description,
+                        rarity = "common",
                         effect = function()
                             print("Adding bonus: " .. currentBonus)
                             Player.addBonus(currentBonus) -- Add the new bonus to the player
@@ -786,57 +851,75 @@ local function drawPlayerUpgrades()
 end
 
 unlockNewWeaponQueued = false
-local function drawBallStats() 
-    local xOffset = uiOffset.x
+local function drawBallStats()
+    if not (Player.levelingUp and not Player.choosingUpgrade) then
+        return
+    end 
+    -----------------------------------
+    -- Initialize position and layout --
+    -----------------------------------
     local x, y = suit.layout:nextRow() -- Get the next row position
-    local x, y = screenWidth - statsWidth + 10 + xOffset, 10 -- Starting position for the ball stats
+    local x, y = 10, 10 -- Starting position for the ball stats (horizontal from left)
     local w, h
+    local padding = 100
     -- Initialize the layout with the starting position and padding
     suit.layout:reset(x, y, 10, 10) -- Set padding (10px horizontal and vertical)
 
-    --draw Title
-    setFont(28) -- Set font for the title
-    love.graphics.draw(uiLabelImg, screenWidth-statsWidth/2-140 * 1.1 + xOffset, -12,0,1.1,1.1)
-    suit.Label("Ball Types", {align = "center"}, screenWidth-statsWidth/2-140*1.1 + xOffset, 5, 280 * 1.1, 30)
-    suit.layout:row(statsWidth, 60)
+    ----------------
+    -- Draw Title --
+    ----------------
+    setFont(28)
+    suit.layout:row(screenWidth - 20, 60)
     local x,y = suit.layout:nextRow()
 
-
-    -- Iterate through all balls and display their stats
+    ----------------------------
+    -- Prepare Ball List Data --
+    ----------------------------
     local i = 0
     local BallsToShow = {}
     for ballName, ballType in pairs(Balls.getUnlockedBallTypes()) do
         BallsToShow[ballName] = ballType
     end
+
+    -----------------------
+    -- Draw Ball Entries --
+    -----------------------
+    local startX = 460 -- Starting X position
+    local currentX = startX -- Current X position for drawing
+    
     for ballName, ballType in pairs(BallsToShow) do
         i = i + 1
-
-        suit.layout:reset(x + xOffset, y, 10, 10)
+        -- Reset X position at the start of each row (every 3 balls)
+        if (i-1) % 3 == 0 then
+            currentX = startX
+        end
+        y = 475 + math.floor((i-1)/3) * 300 -- Move to next row every 3 balls
+        suit.layout:reset(currentX, y, padding, padding)
 
         -- draw window
-        love.graphics.draw(uiWindowImg, x-25,y)    
+        love.graphics.draw(uiWindowImg, currentX-25,y)    
 
         -- draw title label and title
         setFont(26)
-        love.graphics.draw(uiLabelImg, x + statsWidth/2-uiLabelImg:getWidth()/2-10, y-25)
+        love.graphics.draw(uiLabelImg, currentX + statsWidth/2-uiLabelImg:getWidth()/2-10, y-25)
         setFont(getMaxFittingFontSize(ballType.name or "Unk", 30, uiLabelImg:getWidth()-30))
-        suit.Label(ballType.name or "Unk", {align = "center"}, x + statsWidth/2-uiLabelImg:getWidth()/2-7, y-25, uiLabelImg:getWidth(), uiLabelImg:getHeight())
+        suit.Label(ballType.name or "Unk", {align = "center"}, currentX + statsWidth/2-uiLabelImg:getWidth()/2-7, y-25, uiLabelImg:getWidth(), uiLabelImg:getHeight())
 
         -- type label
         setFont(20)
         local typeColor = {normal = {fg = {0.6,0.6,0.6,1}}}
-        y = y + uiLabelImg:getHeight()/2
-        --suit.Label(ballType.type or "Unk type", {color = typeColor, align = "center"}, x + statsWidth/2-50-7, y, 100, 50)
+        local labelY = y + uiLabelImg:getHeight()/2
+        --suit.Label(ballType.type or "Unk type", {color = typeColor, align = "center"}, currentX + statsWidth/2-50-7, labelY, 100, 50)
 
         -- price label
         if Player.currentCore ~= "Farm Core" then
             setFont(50)
             local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(math.ceil(ballType.price)))/2
             love.graphics.setColor(0,0,0,1)
-            love.graphics.print(formatNumber(math.ceil(ballType.price)) .. "$",x + statsWidth/2 + 104 +moneyOffsetX, y+4, math.rad(5))
+            love.graphics.print(formatNumber(math.ceil(ballType.price)) .. "$",currentX + statsWidth/2 + 104 +moneyOffsetX, labelY+4, math.rad(5))
             local moneyColor = Player.money >= math.ceil(ballType.price) and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
             love.graphics.setColor(moneyColor)
-            love.graphics.print(formatNumber(math.ceil(ballType.price)) .. "$",x + statsWidth/2 + 100 +moneyOffsetX, y, math.rad(5))
+            love.graphics.print(formatNumber(math.ceil(ballType.price)) .. "$",currentX + statsWidth/2 + 100 +moneyOffsetX, labelY, math.rad(5))
             love.graphics.setColor(1,1,1,1)
         end
 
@@ -848,8 +931,8 @@ local function drawBallStats()
         local dmgTextWidth = love.graphics.getFont():getWidth(dmgText)
 
         -- Place at top right of the window, mirroring price
-        local dmgX = screenWidth - statsWidth*3/4 + xOffset
-        local dmgY = y + 13
+        local dmgX = currentX + statsWidth*1/4
+        local dmgY = labelY + 13
         love.graphics.setColor(0,0,0,1)
         love.graphics.print(dmgText, dmgX + 4 + dmgOffsetX, dmgY + 4,math.rad(-2.5))
         love.graphics.setColor(1,0.25,0.25,1)
@@ -857,13 +940,13 @@ local function drawBallStats()
         love.graphics.setColor(1,1,1,1)
         
 
-        y = y + 20
-        x = x + 10
+        labelY = labelY + 20
+        local statsX = currentX + 10
         if #Balls.getUnlockedBallTypes() > 1 then
         end
         local myLayout = {
             min_width = 410, -- Minimum width for the layout
-            pos = {x, y + 40}, -- Starting position (x, y)
+            pos = {statsX, labelY + 40}, -- Starting position (x, y)
             padding = {5, 5}, -- Padding between cells
         }
         -- Calculate the number of rows needed for the stats
@@ -875,8 +958,8 @@ local function drawBallStats()
             table.insert(myLayout, {"fill", 30}) -- for stats
         end
         local definition = suit.layout:cols(myLayout)
-        x, y, w, h = definition.cell(1)
-        suit.layout:reset(10, y, 10, 10) -- Set padding (10px horizontal and vertical)
+        statsX, labelY, w, h = definition.cell(1)
+        suit.layout:reset(10, labelY, padding, padding) -- Set padding (10px horizontal and vertical)
         suit.layout:row(w, h)
 
         -- Draw upgrade buttons for each stat
@@ -906,8 +989,8 @@ local function drawBallStats()
             end
             if statValue then -- Only process if the stat exists
                 local buttonResult = nil
-                x, y, w, h = definition.cell(intIndex)
-                suit.layout:reset(x, y, 10, 10) -- Set padding (10px horizontal and vertical)
+                statsX, labelY, w, h = definition.cell(intIndex)
+                suit.layout:reset(statsX, labelY, padding, padding) -- Set padding (10px horizontal and vertical)
                 setFont(20)
 
                 local cellWidth = (430-10*rowCount)/rowCount
@@ -949,19 +1032,19 @@ local function drawBallStats()
                     end
                 end
                 if (Player.currentCore == "Phantom Core" and ballType.type == "gun" and statName == "damage") or (Player.currentCore == "Madness Core" and (statName == "damage" or statName == "cooldown")) then
-                    suit.Label(tostring(string.format("%.1f", value)), {align = "center"}, x, y-25, cellWidth, 100)
+                    suit.Label(tostring(string.format("%.1f", value)), {align = "center"}, statsX, labelY-25, cellWidth, 100)
                 else
-                    suit.Label(tostring(value), {align = "center"}, x, y-25, cellWidth, 100)
+                    suit.Label(tostring(value), {align = "center"}, statsX, labelY-25, cellWidth, 100)
                 end
 
                 -- draw stat icon
-                local iconX = x + cellWidth/2 - iconsImg[statName]:getWidth()*1.75/2
-                love.graphics.draw(iconsImg[statName], iconX, y + 75,0,1.75,1.75)
+                local iconX = statsX + cellWidth/2 - iconsImg[statName]:getWidth()*1.75/2
+                love.graphics.draw(iconsImg[statName], iconX, labelY + 75,0,1.75,1.75)
 
                 -- draw seperator
                 if intIndex < rowCount then
                     love.graphics.setColor(0.4,0.4,0.4,1)
-                    love.graphics.rectangle("fill", x + cellWidth, y, 1, 125)
+                    love.graphics.rectangle("fill", statsX + cellWidth, labelY, 1, 125)
                     love.graphics.setColor(1,1,1,1)
                 end
 
@@ -973,7 +1056,7 @@ local function drawBallStats()
                 }
                 local buttonID
                 buttonID = generateNextButtonID() -- Generate a unique ID for the button
-                local upgradeStatButton = dress:Button("", {color = invisButtonColor, id = buttonID}, x, y-10, cellWidth, 150)
+                local upgradeStatButton = dress:Button("", {color = invisButtonColor, id = buttonID}, statsX, labelY-10, cellWidth, 150)
                 -- Right-click to remove all queued upgrades of this stat
                 local canUpgrade = true
                 -- Core-specific restrictions
@@ -1063,25 +1146,30 @@ local function drawBallStats()
                 setFont(30)
                 if upgradeCount > 0 then
                     love.graphics.setColor(161/255, 231/255, 1, 1)
-                    love.graphics.print((statName == "cooldown" and "-" or "+") .. upgradeCount, x + cellWidth/3*2 - 5, y - 5) -- Display queued upgrade count\
+                    love.graphics.print((statName == "cooldown" and "-" or "+") .. upgradeCount, statsX + cellWidth/3*2 - 5, labelY - 5) -- Display queued upgrade count\
                 end
                 intIndex = intIndex + 1
                 love.graphics.setColor(1,1,1,1)
             end
         end
         suit.layout:row(statsWidth, 20) -- Add spacing for the separator
-        x, y = suit.layout:nextRow()
-        --if it isnt the last ballType, add a seperator
-        y = y + 150 -- Add padding to the y position for the next row
-    x = screenWidth - statsWidth + 10 + xOffset -- Reset x position for the next ball type, including xOffset
+        
+        -- Move to next horizontal position
+        currentX = currentX + statsWidth + 50 -- Move right for next ball (20px spacing)
     end
-    if not (tableLength(Balls.getUnlockedBallTypes()) >= 5) then
-        x = x + 15 + xOffset
-        suit.layout:reset(x, y, 10, 10)
-        love.graphics.draw(uiSmallWindowImg, x-25,y) -- Draw the background window image
-        x = x - 10
-        y = y
-        suit.layout:reset(x, y, 10, 10)
+    
+    if not (tableLength(Balls.getUnlockedBallTypes()) >= 6) then
+        local numBalls = tableLength(Balls.getUnlockedBallTypes())
+        local column = numBalls % 3 -- Get the current column (0, 1, or 2)
+        
+        -- If we're at the start of a new row, reset X position
+        if column == 0 then
+            currentX = startX
+            y = y + 300 -- Move to next row
+        end
+        
+        suit.layout:reset(currentX, y, padding, padding)
+        love.graphics.draw(uiSmallWindowImg, currentX-25, y) -- Draw the background window image
         -- Button to unlock a new ball type
         setFont(30)
         local angle = angle or math.rad(1.5) -- Default angle if not provided
@@ -1111,6 +1199,20 @@ local function drawPerks()
     love.graphics.draw(uiBigWindowImg, 0, y +25) -- Draw the background window image
     love.graphics.draw(uiLabelImg, x+15, y,0,1.5,1) -- Draw the title background image
     suit.Label("Player Upgrades", {align = "center", valign = "center"}, suit.layout:row(statsWidth - 20, 60)) -- Title row
+end
+
+local function getRarityWindow(rarity)
+    if rarity == "common" then
+        return uiBigWindowImg
+    elseif rarity == "uncommon" then
+        return uiBigWindowImgUncommon
+    elseif rarity == "rare" then
+        return uiBigWindowImgRare
+    elseif rarity == "legendary" then
+        return uiBigWindowImgLegendary
+    else
+        return uiBigWindowImg -- default to common if unknown rarity
+    end
 end
 
 function drawLevelUpShop()
@@ -1150,7 +1252,7 @@ function drawLevelUpShop()
             love.graphics.setColor(0.5, 0.5, 0.5, opacity) -- Brighter background
         end
         --love.graphics.rectangle("fill", buttonX, buttonY, buttonWidth, buttonHeight)
-        love.graphics.draw(uiBigWindowImg, buttonX - 10 * buttonWidth/uiBigWindowImg:getWidth(), buttonY, 0, buttonWidth/uiBigWindowImg:getWidth(), buttonHeight/uiBigWindowImg:getHeight()) -- Draw the background window image
+        love.graphics.draw( getRarityWindow(currentUpgrade.rarity), buttonX - 10 * buttonWidth/getRarityWindow(currentUpgrade.rarity):getWidth(), buttonY, 0, buttonWidth/ getRarityWindow(currentUpgrade.rarity):getWidth(), buttonHeight/ getRarityWindow(currentUpgrade.rarity):getHeight()) -- Draw the background window image
         -- Draw labels with opacity
         love.graphics.setColor(1,1,1,opacity)
         
@@ -1221,14 +1323,169 @@ function drawLevelUpShop()
 
 end
 
+local function getRarityDistributionByLevel()
+    local level = Player.level
+    if level < 5 then
+        return {common = 0.9, uncommon = 0.1, rare = 0.0, legendary = 0.0}
+    elseif level < 10 then
+        return {common = 0.8, uncommon = 0.15, rare = 0.05, legendary = 0.0}
+    elseif level < 15 then
+        return {common = 0.7, uncommon = 0.2, rare  = 0.1, legendary = 0.0}
+    elseif level < 20 then
+        return {common = 0.6, uncommon = 0.25, rare = 0.125, legendary = 0.025}
+    elseif level < 25 then
+        return {common = 0.5, uncommon = 0.3, rare = 0.15, legendary = 0.05}
+    else
+        return {common = 0.4, uncommon = 0.3, rare = 0.2, legendary = 0.1}
+    end
+end
+
+local function getRandomItemOfRarity(rarity)
+    local rarityList = {}
+    if rarity == "common" then
+        rarityList = commonItems
+    elseif rarity == "uncommon" then
+        rarityList = uncommonItems
+    elseif rarity == "rare" then
+        rarityList = rareItems
+    elseif rarity == "legendary" then
+        rarityList = legendaryItems
+    end
+
+    return items[rarityList[math.random(1, #rarityList)]]
+end
+
+local displayedItems = {}
+function setItemShop()
+    displayedItems = {}
+    for i=1, 3 do
+        -- calculate wanted rarity and choose an available item of that rarity
+        local rarityDistribution = getRarityDistributionByLevel()
+        local commonChance, uncommonChance, rareChance, legendaryChance = rarityDistribution.common, rarityDistribution.uncommon, rarityDistribution.rare, rarityDistribution.legendary
+        local randomChance = math.random(1,100)/100
+
+        local doAgain = true
+        local itemToDisplay = nil
+        while doAgain do
+            doAgain = false
+            if randomChance <= commonChance then
+                itemToDisplay = getRandomItemOfRarity("common")
+            elseif randomChance <= commonChance + uncommonChance then
+                itemToDisplay = getRandomItemOfRarity("uncommon")
+            elseif randomChance <= commonChance + uncommonChance + rareChance then
+                itemToDisplay = getRandomItemOfRarity("rare")
+            elseif randomChance <= commonChance + uncommonChance + rareChance + legendaryChance then
+                itemToDisplay = getRandomItemOfRarity("legendary")
+            else
+                itemToDisplay = getRandomItemOfRarity("common")
+            end
+            for _, displayedItem in pairs(displayedItems) do
+                if displayedItem.name == itemToDisplay.name then
+                    doAgain = true
+                    break
+                end
+            end
+            for _, playerItem in ipairs(Player.items) do
+                if playerItem.name == itemToDisplay.name then
+                    doAgain = true
+                    break
+                end
+            end
+        end
+        if itemToDisplay then
+            displayedItems[i] = itemToDisplay
+        else
+            print("Error: No item found in setItemShop()")
+        end
+    end
+end
+
+local maxItems = 3
+local rerollPrice = 3
+function resetRerollPrice()
+    rerollPrice = 3
+end
+
+local function drawItemShop()
+    if Player.levelingUp and not Player.choosingUpgrade then
+        setFont(60)
+        local i = 0
+        for index, item in ipairs(displayedItems) do
+            local itemX = 450 + (i) * (uiBigWindowImg:getWidth()*0.75 + 50)
+            local itemY = 50
+            love.graphics.draw(getRarityWindow(item.rarity or "common"), itemX, itemY, 0, 0.75, 0.65) -- Draw the background window image
+            setFont(28)
+            drawTextCenteredWithScale(item.name or "Unknown", itemX + 10, itemY + 25, 1, uiBigWindowImg:getWidth() * 0.75 - 20)
+
+            setFont(20)
+            suit.Label(item.description or "No description", {align = "center"}, itemX + 25, itemY + 125, uiBigWindowImg:getWidth() * 0.75 - 50, 100)
+            if dress:Button("", {id = "bruhdmsavklsam" .. i, color = invisButtonColor}, itemX, itemY, uiBigWindowImg:getWidth() * 0.75, uiBigWindowImg:getHeight() * 0.65).hit then
+                print("button working")
+                if #Player.items < maxItems then
+                    if item.onBuy then
+                        item.onBuy()
+                    else
+                        table.insert(Player.items, item)
+                        table.remove(displayedItems, index)
+                        break
+                    end
+                end
+            end
+            local upgradePrice = item.rarity == "common" and 10 or item.rarity == "uncommon" and 15 or item.rarity == "rare" and 20 or item.rarity == "legendary" and 25 or 1
+            printMoney(upgradePrice, itemX + uiBigWindowImg:getWidth() * 0.75 - 40 - getTextSize(upgradePrice .. "$")/2, itemY + uiBigWindowImg:getHeight() * 0.65/2 - 80, math.rad(4), Player.money >= upgradePrice, 50)
+
+            i = i + 1
+        end
+        love.graphics.draw(uiLabelImg, screenWidth - 275, 50 + uiBigWindowImg:getHeight() * 0.65/2 - 60) -- Draw the title background image
+        setFont(30)
+        if suit.Button("Reroll", {id = "reroll_items", color = invisButtonColor}, screenWidth - 260, 50 + uiBigWindowImg:getHeight() * 0.65/2 - 57, uiLabelImg:getWidth() - 30, uiLabelImg:getHeight() - 6).hit then
+            if Player.money >= rerollPrice then
+                Player.pay(rerollPrice)
+                playSoundEffect(upgradeSFX, 0.5, 0.95)
+                setItemShop()
+                rerollPrice = rerollPrice + 1
+            end
+        end
+        printMoney(rerollPrice, screenWidth - 40 - getTextSize(rerollPrice .. "$")/2, 30 + uiBigWindowImg:getHeight() * 0.65/2 - 60, math.rad(4), Player.money >= rerollPrice, 40)
+
+        love.graphics.setColor(0.6, 0.6, 0.6, 0.6) -- Light gray
+        love.graphics.rectangle("fill", 403, 50 + uiBigWindowImg:getHeight() * 0.65 + 50, screenWidth, 3) -- Separator line
+    end
+end
+
+
+local function drawPlayerItems()
+    if Player.levelingUp and not Player.choosingUpgrade then
+
+        love.graphics.setColor(0.6, 0.6, 0.6, 0.6) -- Light gray
+        love.graphics.rectangle("fill", 400, 0, 3, screenHeight)
+        love.graphics.setColor(1,1,1,1)
+        setFont(40)
+        love.graphics.print("Items", 200 - getTextSize("Items")/2, 400)
+        local i = 0
+        for _, item in ipairs(Player.items) do
+            local itemX = 200 - uiBigWindowImg:getWidth() * 0.35/2
+            local itemY = 30 + uiBigWindowImg:getHeight() * 0.65 + 50 + 53 + i * (uiBigWindowImg:getHeight() * 0.35 + 25)
+            love.graphics.draw(getRarityWindow(item.rarity or "common"), itemX, itemY, 0, 0.4, 0.35) -- Draw the background window image
+            setFont(16)
+            drawTextCenteredWithScale(item.name, itemX + 10, itemY + uiBigWindowImg:getHeight() * 0.35/2 - 40, 1, uiBigWindowImg:getWidth() * 0.4 - 20)
+            --love.graphics.print(item.name or "Unknown", itemX + uiBigWindowImg:getWidth() * 0.4/2 - getTextSize(item.name)/2, itemY + 10)
+            
+            i = i + 1
+        end
+    end
+end
+
 function upgradesUI.draw()
 
+    
     drawPlayerStats() -- Draw the player stats table
+    --[[
     drawPlayerUpgrades() -- Draw the player upgrades table
+    ]]
     drawBallStats() -- Draw the ball stats table
-    drawInterestUpgrade()
-    --drawPerkUpgrade() -- Draw the player perks table
-    --drawPaddleUpgrades()
+    drawItemShop()
+    drawPlayerItems()
 
     -- Draw separator lines
     if usingMoneySystem then
