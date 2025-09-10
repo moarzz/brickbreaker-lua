@@ -200,6 +200,12 @@ local items = {
         description = "Damage + 10, but all other stats -2 (cooldown + 2)",
         rarity = "rare"
     },
+    ["Total Anihilation"] = {
+        name = "Total Anihilaiton",
+        stats = {damage = 1, range = 1},
+        description = "Explosions cause 4 smaller explosions to happen nearby",
+        rarity = "rare"
+    },
     ["Omnipotence"] = {
         name = "Omnipotence",
         stats = {speed = 3, damage = 3, cooldown = -3, size = 3, amount = 3, range = 3, fireRate = 3, ammo = 3},
@@ -1000,7 +1006,7 @@ local function drawBallStats()
                 suit.layout:padding(0, 0)
                 -- Add permanent upgrades to the display value
                 local permanentUpgradeValue = Player.permanentUpgrades[statName] or 0
-                local bonusValue = Player.bonuses[statName] or 0
+                local bonusValue = getStatItemsBonus(statName, ballType) or 0
                 local value = (Player.currentCore == "Cooldown Core" and statName == "cooldown") and 2 or statValue + bonusValue + permanentUpgradeValue
                 if statName == "ammo" then
                     value = value - permanentUpgradeValue - bonusValue + bonusValue * ballType.ammoMult -- Adjust ammo value based on ammoMult
@@ -1019,7 +1025,7 @@ local function drawBallStats()
                     end
                 end
                 if statName == "amount" and ballType.noAmount == false then
-                    value = value - (Player.bonuses.amount or 0)
+                    value = value - getStatItemsBonus("amount", ballType)
                 end
                 if statName == "cooldown" then
                     value = math.max(0, value)
@@ -1067,7 +1073,7 @@ local function drawBallStats()
                     canUpgrade = false -- Cannot upgrade fireRate or amount if using Damage Core
                 end
                 -- Ammo restrictions
-                if statName == "ammo" and (((ballType.stats.cooldown or 1000) + (Player.bonuses["cooldown"] or 0) + (Player.permanentUpgrades["cooldown"] or 0)) <= 0 and ballType.name ~= "Turret Generator") then
+                if statName == "ammo" and (((ballType.stats.cooldown or 1000) + getStatItemsBonus("cooldown", ballType) + (Player.permanentUpgrades["cooldown"] or 0)) <= 0 and ballType.name ~= "Turret Generator") then
                     canUpgrade = false -- Cannot upgrade ammo if cooldown is already at 0
                 end
                 local upgradeQueued = false
@@ -1413,6 +1419,8 @@ local function drawItemShop()
         for index, item in ipairs(displayedItems) do
             local itemX = 450 + (i) * (uiBigWindowImg:getWidth()*0.75 + 50)
             local itemY = 50
+            local upgradePrice = item.rarity == "common" and 10 or item.rarity == "uncommon" and 15 or item.rarity == "rare" and 20 or item.rarity == "legendary" and 25 or 1
+
             love.graphics.draw(getRarityWindow(item.rarity or "common"), itemX, itemY, 0, 0.75, 0.65) -- Draw the background window image
             setFont(28)
             drawTextCenteredWithScale(item.name or "Unknown", itemX + 10, itemY + 25, 1, uiBigWindowImg:getWidth() * 0.75 - 20)
@@ -1421,17 +1429,33 @@ local function drawItemShop()
             suit.Label(item.description or "No description", {align = "center"}, itemX + 25, itemY + 125, uiBigWindowImg:getWidth() * 0.75 - 50, 100)
             if dress:Button("", {id = "bruhdmsavklsam" .. i, color = invisButtonColor}, itemX, itemY, uiBigWindowImg:getWidth() * 0.75, uiBigWindowImg:getHeight() * 0.65).hit then
                 print("button working")
-                if #Player.items < maxItems then
+                if #Player.items < maxItems and Player.money >= upgradePrice then
+                    Player.pay(upgradePrice)
+                    playSoundEffect(upgradeSFX, 0.5, 0.95)
                     if item.onBuy then
                         item.onBuy()
-                    else
-                        table.insert(Player.items, item)
-                        table.remove(displayedItems, index)
-                        break
+                    end
+                    table.insert(Player.items, item)
+                    table.remove(displayedItems, index)
+                    if item.stats.amount then
+                        for _, weaponType in pairs(Balls.getUnlockedBallTypes()) do
+                            if weaponType.type == "ball" then
+                                if item.stats.amount > 0 then
+                                    Balls.amountIncrease(item.stats.amount)
+                                    print("Increased ".. weaponType.name .." amount by " .. item.stats.amount)
+                                elseif item.stats.amount < 0 then
+                                    Balls.amountDecrease(math.abs(item.stats.amount))
+                                end
+                            end
+                        end
+                    end
+                    for _, weaponType in pairs(Balls.getUnlockedBallTypes()) do
+                        if weaponType.type == "ball" then
+                            Balls.adjustSpeed(weaponType.name) -- Adjust the speed of the ball
+                        end
                     end
                 end
             end
-            local upgradePrice = item.rarity == "common" and 10 or item.rarity == "uncommon" and 15 or item.rarity == "rare" and 20 or item.rarity == "legendary" and 25 or 1
             printMoney(upgradePrice, itemX + uiBigWindowImg:getWidth() * 0.75 - 40 - getTextSize(upgradePrice .. "$")/2, itemY + uiBigWindowImg:getHeight() * 0.65/2 - 80, math.rad(4), Player.money >= upgradePrice, 50)
 
             i = i + 1
@@ -1456,22 +1480,37 @@ end
 
 local function drawPlayerItems()
     if Player.levelingUp and not Player.choosingUpgrade then
-
         love.graphics.setColor(0.6, 0.6, 0.6, 0.6) -- Light gray
         love.graphics.rectangle("fill", 400, 0, 3, screenHeight)
         love.graphics.setColor(1,1,1,1)
         setFont(40)
         love.graphics.print("Items", 200 - getTextSize("Items")/2, 400)
         local i = 0
-        for _, item in ipairs(Player.items) do
-            local itemX = 200 - uiBigWindowImg:getWidth() * 0.35/2
+        for index, item in ipairs(Player.items) do
+            local sellPrice = item.rarity == "common" and 10 or item.rarity == "uncommon" and 15 or item.rarity == "rare" and 20 or item.rarity == "legendary" and 25 or 1
+            sellPrice = math.ceil(sellPrice / 2)
+            local itemX = 50
             local itemY = 30 + uiBigWindowImg:getHeight() * 0.65 + 50 + 53 + i * (uiBigWindowImg:getHeight() * 0.35 + 25)
             love.graphics.draw(getRarityWindow(item.rarity or "common"), itemX, itemY, 0, 0.4, 0.35) -- Draw the background window image
             setFont(16)
             drawTextCenteredWithScale(item.name, itemX + 10, itemY + uiBigWindowImg:getHeight() * 0.35/2 - 40, 1, uiBigWindowImg:getWidth() * 0.4 - 20)
-            --love.graphics.print(item.name or "Unknown", itemX + uiBigWindowImg:getWidth() * 0.4/2 - getTextSize(item.name)/2, itemY + 10)
             
             i = i + 1
+            local sellButtonID = "sell_item_" .. i
+            setFont(20)
+            if suit.Button("Sell", {id = sellButtonID, color = invisButtonColor}, itemX + uiBigWindowImg:getWidth() * 0.4 + 30, itemY + uiBigWindowImg:getHeight() * 0.35/2 - 50, 120, 100 ).hit then
+                Player.money = Player.money + sellPrice
+                playSoundEffect(upgradeSFX, 0.5, 0.95)
+                if item.stats.amount then
+                    if item.stats.amount > 0 then
+                        Balls.amountDecrease(item.stats.amount)
+                    elseif item.stats.amount < 0 then
+                        Balls.amountIncrease(math.abs(item.stats.amount))
+                    end
+                end
+                table.remove(Player.items, index)
+            end
+            printMoney(sellPrice, itemX + uiBigWindowImg:getWidth() * 0.4 + 125, itemY + 40, math.rad(4), true, 30)
         end
     end
 end

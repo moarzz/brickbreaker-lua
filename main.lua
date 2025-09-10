@@ -1770,6 +1770,11 @@ function love.keypressed(key)
             local uiRevealOutTween = tween.new(0.2, uiOffset, {x = statsWidth * 1.5}, tween.outExpo)
             addTweenToUpdate(uiRevealOutTween)
         end)
+        for _, ballType in pairs(Balls.getUnlockedBallTypes()) do
+            if ballType.type == "ball" then
+                Balls.adjustSpeed(ballType.name)
+            end
+        end
     end
 
     if key == "escape" then
