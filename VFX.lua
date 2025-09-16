@@ -46,7 +46,7 @@ function brickHitFX(brick, ball, intensity)
 end
 
 function VFX.brickHit(brick, ball, damage)
-    if brick.health >= 1 then
+    if brick.health >= 1 and damage > 0 then
         -- makes the brick knockback
         brickHitFX(brick, ball, damage)
     end

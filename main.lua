@@ -103,7 +103,7 @@ function resetGame()
         width = 200 + (Player.permanentUpgrades.paddleSize or 0), -- Base width + size upgrade
         widthMult = 1,
         height = 20,
-        speed = 600 + (Player.permanentUpgrades.paddleSpeed or 0),
+        speed = 700 + (Player.permanentUpgrades.paddleSpeed or 0),
         currrentSpeedX = 0,
         speedMult = 1
     }
@@ -120,6 +120,7 @@ function resetGame()
     end
     Balls.clearUnlockedBallTypes()
     Balls.initialize()
+    Player.initialize()
 
     -- Reset timers
     Timer.clear()
@@ -172,7 +173,7 @@ local function loadAssets()
     uiBigWindowImg = love.graphics.newImage("assets/sprites/UI/ballBackground_20.png")
     uiBigWindowImgUncommon = love.graphics.newImage("assets/sprites/UI/ballBackground_20_Uncommon.png")
     uiBigWindowImgRare = love.graphics.newImage("assets/sprites/UI/ballBackground_20_Rare.png")
-    uiBigWindowImgLegendary = love.graphics.newImage("assets/sprites/UI/ballBackground_20_Legendary.png")
+    uiBigWindowImglegendary = love.graphics.newImage("assets/sprites/UI/ballBackground_20_Legendary.png")
     --Icons
     iconsImg = {
         amount = love.graphics.newImage("assets/sprites/UI/icons/amount.png"),
@@ -301,7 +302,7 @@ local function spawnBoss()
     end)
     local bossHealTimer = Timer.every(2, function()
         if boss.y >= -bossHeight + 150 and canHeal then
-            local healValue = math.floor(mapRange(boss.health, 1, 5000, 1, 50))
+            local healValue = math.floor(mapRange(boss.health, 1, 5000, 1, 35))
             boss.health = boss.health + healValue
             healThisFrame = healThisFrame + healValue
             healNumber(healValue, boss.x + boss.width/2, math.max(10, boss.y + boss.height/2))
@@ -487,7 +488,7 @@ local function addMoreBricks()
             print("spawning more bricks")
             for i=1 , 10 do
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
-                currentRowPopulation = currentRowPopulation + math.ceil(math.pow(Player.level, 0.9) * 0.6)
+                currentRowPopulation = currentRowPopulation + math.ceil(Player.level * 0.8)
                 if spawnBossNextRow and not bossSpawned then
                     spawnBoss()
                     bossSpawned = true
@@ -580,6 +581,7 @@ function initializeGameState()
     
     -- Then initialize Balls
     Balls.initialize()
+    Player.initialize()
 end
 
 local backgroundMusic
@@ -645,7 +647,7 @@ function love.load()
         width = 200 + (Player.permanentUpgrades.paddleSize or 0), -- Base width + size upgrade
         widthMult = 1,
         height = 20,    
-        speed = 600 + (Player.permanentUpgrades.paddleSpeed or 0), -- Base speed + speed upgrade
+        speed = 700 + (Player.permanentUpgrades.paddleSpeed or 0), -- Base speed + speed upgrade
         currrentSpeedX = 0,
         speedMult = 1
     }
@@ -678,7 +680,7 @@ end
 
 function getBrickSpeedByTime()
     -- Scale speed from 0.35 to 3.5 over 30 minutes
-    return mapRange(gameTime, 0, 2000, 0.25, 3.5)
+    return mapRange(gameTime, 0, 2000, 0.4, 3.5)
 end
 
 currentBrickSpeed = 1
@@ -799,13 +801,18 @@ end
 brickKilledThisFrame = false
 local damageCooldown = 0 -- Cooldown for damage visuals
 local healCooldown = 0
+local printDrawCalls = false
 local function gameFixedUpdate(dt)
     -- Update mouse positions
 
     dt = 1/60 -- Fixed delta time for consistent updates
     dt = dt * 1.75
     levelUpShopTweenAlpha(dt)
-    
+    local stats = love.graphics.getStats()
+    if printDrawCalls then
+        print("Draw calls: " .. stats.drawcallsbatched, 10, 10)
+    end
+
     -- Update confetti system
     if confettiSystem then
         confettiSystem:update(dt)
@@ -939,8 +946,8 @@ local function gameFixedUpdate(dt)
                 end
                 brickKilledThisFrame = false -- Reset brick hit state for the next frame
                 if healThisFrame > 0 and healCooldown <= 0 then
-                    playSoundEffect(healSFX, math.sqrt(healThisFrame) >= 5 and mapRangeClamped(math.sqrt(healThisFrame), 5, 8, 0.4, 0.8) or mapRangeClamped(math.sqrt(healThisFrame), 1, 5, 0.1, 0.4), mapRangeClamped(math.sqrt(healThisFrame), 2, 7, 0.5, 0.8), false, true)
-                    healCooldown = 0.05 -- Set cooldown for heal visuals
+                    playSoundEffect(healSFX, math.sqrt(healThisFrame) >= 5 and mapRangeClamped(math.sqrt(healThisFrame), 5, 8, 0.25, 0.65) or mapRangeClamped(math.sqrt(healThisFrame), 1, 5, 0.1, 0.4), mapRangeClamped(math.sqrt(healThisFrame), 2, 7, 0.5, 0.8), false, true)
+                    healCooldown = 0.1 -- Set cooldown for heal visuals
                     healThisFrame = 0 -- Reset heal this frame
                 end
             end
@@ -1015,7 +1022,7 @@ function drawMenu()
     local minutes = math.floor(fastestTime / 60)
     local seconds = math.floor(fastestTime % 60)
     local fastestTimeString = string.format("%02d:%02d", minutes, seconds)
-    suit.Label(fastestTimeString, {align = "center"}, 100, 150, 200, 30) -- Added position and size parameters
+    -- suit.Label(fastestTimeString, {align = "center"}, 100, 150, 200, 30) -- Added position and size parameters
 end
 
 local currentSelectedCoreID = 1
@@ -1032,6 +1039,15 @@ local function drawStartSelect()
     -- Dynamically build the list of unlocked starting items
     local startingItems = {}
 
+    -- build the list of starting paddle cores
+    local paddleCores = {}
+    for _, core in ipairs(Player.availableCores) do
+        local coreName = core.name -- Use core name if available, otherwise use the core itself
+        if Player.paddleCores[coreName] then
+            table.insert(paddleCores, coreName)
+        end
+    end
+
     -- Always include Ball
     table.insert(startingItems, {name = "Ball", id = "start_Ball", label = "Ball"})
     if Player.unlockedStartingBalls then
@@ -1045,11 +1061,11 @@ local function drawStartSelect()
     -- Always include Nothing
     --table.insert(startingItems, {name = "Nothing", id = "start_Nothing", label = "Nothing"})
 
-    -- Draw buttons for each starting item
     local btnY = startY
     local item = startingItems[currentStartingItemID]
-    local btnBefore = suit.Button("Back", {id = "back_starting_item"}, centerX - 100 - 20, btnY, 125, buttonHeight)
-    local btn = suit.Label(item.label, {id = item.id}, centerX, btnY, buttonWidth, buttonHeight)
+    if paddleCores[currentSelectedCoreID] == "IncrediCore" then
+        item = {name = "Incrediball", label = "Incrediball"}
+    end
     -- Show the starting item description under the label
     local itemDescription = "No description available for ".. item.label
     if item.label == "Ball" then
@@ -1060,9 +1076,14 @@ local function drawStartSelect()
         itemDescription = "Fire a thin Laser beam in front of the paddle."
     elseif item.label == "Fireball" then
         itemDescription = "Shoots fireballs that pass through bricks. \nVery slow fire rate."
+    elseif item.label == "Incrediball" then
+        itemDescription = "Has the effects of every other ball (except phantom ball)."
     end
+    setFont(36)
+    local btn = suit.Label(item.label, {id = item.id}, centerX, btnY, buttonWidth, buttonHeight)
     setFont(25)
     suit.Label(itemDescription, {align = "center"}, centerX-100, btnY + buttonHeight + 10, 600, 60)
+    local btnBefore = suit.Button("Back", {id = "back_starting_item"}, centerX - 100 - 20, btnY, 125, buttonHeight)
     local btnNext = suit.Button("Next", {id = "next_starting_item"}, centerX + buttonWidth + 20, btnY, 125, buttonHeight)
     if btnNext.hit then
         playSoundEffect(selectSFX, 1, 0.8)
@@ -1099,20 +1120,14 @@ local function drawStartSelect()
     btnY = btnY + buttonHeight + 200
     setFont(36)
     suit.Label("Choose your paddle core", {align = "center"}, screenWidth / 2 - getTextSize("Choose your paddle core") / 2, btnY - 80)
-    local paddleCores = {}
-    for _, core in ipairs(Player.availableCores) do
-        local coreName = core.name -- Use core name if available, otherwise use the core itself
-        if Player.paddleCores[coreName] then
-            table.insert(paddleCores, coreName)
-        end
-    end
     local currentSelectedCore = paddleCores[currentSelectedCoreID]
     if not currentSelectedCoreID then currentSelectedCoreID = 1 end
     if not currentSelectedCore then currentSelectedCore = (paddleCores[currentSelectedCoreID] and paddleCores[currentSelectedCoreID].name or "Bouncy Core") end
-
+    local btn2 = suit.Label(currentSelectedCore, centerX, btnY, buttonWidth, buttonHeight)
+    
+    setFont(25)
     local core = paddleCores[currentSelectedCoreID]
     local btn2Before = suit.Button("Back", {id = "back_core"}, centerX - 100 - 20, btnY, 125, buttonHeight)
-    local btn2 = suit.Label(currentSelectedCore, centerX, btnY, buttonWidth, buttonHeight)
     local btn2Next = suit.Button("Next", {id = "next_core"}, centerX + buttonWidth + 20, btnY, 125, buttonHeight)
 
     if btn2Next.hit then
@@ -1753,11 +1768,14 @@ local old_love_keypressed = love.keypressed
 moneyScale = {scale = 1}
 function love.keypressed(key)
     if key == "space" and Player.levelingUp then
+        local moneyBefore = Player.money
         if Player.currentCore == "Economy Core" then
-            Player.money = Player.money + math.min(10, math.floor(Player.money/5)) + 5
+            Player.money = Player.money + math.min(10, math.floor(Player.money/5)) + 5 + getItemsIncomeBonus()
         else
-            Player.money = Player.money + math.min(5, math.floor(Player.money/5)) + 5
+            Player.money = Player.money + math.min(5, math.floor(Player.money/5)) + 5 + getItemsIncomeBonus()
         end
+        richGetRicherUpdate(moneyBefore, Player.money)
+        itemsOnLevelUpEnd()
         Player.levelingUp = false
         local moneyGrowTween = tween.new(0.075, moneyScale, {scale = 2}, tween.outExpo)
         addTweenToUpdate(moneyGrowTween)
@@ -1820,7 +1838,7 @@ function love.keypressed(key)
                     stats = {damage = 1},
                     hasSplit = false,
                     hasTriggeredOnBulletHit = false,
-                    golden = Player.currentCore == "Phantom Core",
+                    golden = (Player.currentCore == "Phantom Core" or hasItem("Phantom Bullets")),
                 }
                 Balls.insertBullet(bullet)
             end
@@ -1863,6 +1881,10 @@ function love.keypressed(key)
                     end
                 end
             end
+        end
+
+        if key == "7" then
+            Balls.addBall("Laser")
         end
 
         -----------------------------------
@@ -1914,10 +1936,14 @@ function love.keypressed(key)
 
         --money manipulation
         if key == "m" then
+            local moneyBefore = Player.money
             Player.money = Player.money < 10 and 10 or Player.money * 10
+            richGetRicherUpdate(moneyBefore, Player.money)
         end
         if key == "n" then
+            local moneyBefore = Player.money
             Player.money = 0
+            richGetRicherUpdate(moneyBefore, Player.money)
         end
 
         --time manipulation

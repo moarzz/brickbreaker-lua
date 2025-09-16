@@ -143,8 +143,8 @@ local function paddleCoresDraw()
         i = i + 1
         local colWidth = menuWidth + 20
         local rowHeight = buttonHeight + buttonSpacing
-        local col = math.floor((i-1) / 4)
-        local row = (i-1) % 4
+        local col = (i-1) % 2
+        local row = math.floor((i-1) / 2)
         local x = menuX + col * colWidth
         local y = menuY + row * rowHeight
         

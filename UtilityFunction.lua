@@ -930,6 +930,11 @@ end
 
 local damageNumberId = 1
 function damageNumber(damage, x, y, color)
+    if damage == 0 then return end
+    if damage < 0 then 
+        healNumber(math.abs(damage),x,y) 
+        return
+    end
     if damageNumbersOn then
         local damageNumber = {
             x = x,
@@ -1026,7 +1031,9 @@ function healNumber(number, x, y)
     end
 end
 
-function drawTextCenteredWithScale(text, x, y, scale, maxWidth)
+function drawTextCenteredWithScale(text, x, y, scale, maxWidth, color)
+    color = color or {1, 1, 1, 1}
+    love.graphics.setColor(color)
     local font = love.graphics.getFont(); -- the font being used
     local drawY = y; -- the y position of th text being draw currently
     local toPrint = text; -- text remaining to print
@@ -1152,25 +1159,17 @@ function printMoney(text, centerX, centerY, angle, buyable, fontSize)
     love.graphics.setColor(1, 1, 1, 1)
 end
 
-function makePalette(c1, c2, c3, c4, c5, c6, c7)
-    local colors = {c1, c2, c3, c4, c5, c6, c7}
-    return function(t)
-        t = math.max(0, math.min(1, t))
-        local seg = 6
-        local pos = t * seg
-        local idx = math.floor(pos) + 1
-        local frac = pos - math.floor(pos)
-        if idx >= seg + 1 then
-            idx = seg
-            frac = 1
-        end
-        local a, b = colors[idx], colors[idx + 1]
-        return {
-            a[1] + (b[1] - a[1]) * frac,
-            a[2] + (b[2] - a[2]) * frac,
-            a[3] + (b[3] - a[3]) * frac
-        }
-    end
+function lerp(a, b, t)
+    return a + (b - a) * t
+end
+
+function lerpColor(color1, color2, t)
+    return {
+        lerp(color1[1], color2[1], t),
+        lerp(color1[2], color2[2], t),
+        lerp(color1[3], color2[3], t),
+        lerp(color1[4] or 1, color2[4] or 1, t)
+    }
 end
 
 function getBricksInRectangle(x, y, width, height)
