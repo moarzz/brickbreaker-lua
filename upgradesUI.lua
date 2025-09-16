@@ -22,8 +22,8 @@ local rerollPrice = 5
 longTermInvestmentSellValueBuff = 0
 firstRerollOfLevelDone = false
 local items = {
-    ["Running Shoes"] = {
-        name = "Running Shoes",
+    ["+2 buff"] = {
+        name = "+2 buff",
         rarity = "common",
         stats = {},
         description = "+2 speed",
@@ -34,7 +34,7 @@ local items = {
             local randomStatName = statNames[randomIndex]
             self.name = itemNames[randomIndex]
             self.stats[randomStatName] = 2
-            self.description = "+2 " .. randomStatName
+            self.description = (randomStatName == "cooldown" and "-" or "+") .. "2 " .. randomStatName
         end
     },
     ["Double Trouble"] = {
@@ -137,6 +137,21 @@ local items = {
         end,
         consumable = true
     },
+    ["+4 buff"] = {
+        name = "+4 buff",
+        rarity = "uncommon",
+        stats = {},
+        description = "+4 speed",
+        onInShop = function(self) 
+            local statNames = {"damage", "speed", "amount", "ammo", "fireRate", "cooldown", "range"}
+            local itemNames = {"Kitchen Knife +", "Running Shoes +", "2 for 1 Meal Ticket +", "Extended Magazine +", "Fast Hands +", "Duct Tape +", "Fake Pregnancy Belly +"}
+            local randomIndex = math.random(1,7)
+            local randomStatName = statNames[randomIndex]
+            self.name = itemNames[randomIndex]
+            self.stats[randomStatName] = 4
+            self.description = (randomStatName == "cooldown" and "-" or "+") .. "4 " .. randomStatName
+        end
+    },
     ["Loaded Dices"] = {
         name = "Loaded Dices",
         stats = {},
@@ -220,6 +235,21 @@ local items = {
         stats = {},
         description = "While you own this item, 'Incrediball' is added to the pool of weapons you can unlcock.",
         rarity = "uncommon"
+    },
+    ["+6 buff"] = {
+        name = "+6 buff",
+        rarity = "rare",
+        stats = {},
+        description = "+6 speed",
+        onInShop = function(self) 
+            local statNames = {"damage", "speed", "amount", "ammo", "fireRate", "cooldown", "range"}
+            local itemNames = {"Kitchen Knife ++", "Running Shoes ++", "2 for 1 Meal Ticket ++", "Extended Magazine ++", "Fast Hands ++", "Duct Tape ++", "Fake Pregnancy Belly ++"}
+            local randomIndex = math.random(1,7)
+            local randomStatName = statNames[randomIndex]
+            self.name = itemNames[randomIndex]
+            self.stats[randomStatName] = 6
+            self.description = (randomStatName == "cooldown" and "-" or "+") .. "6 " .. randomStatName
+        end
     },
     ["Rich Get Richer"] = {
         name = "Rich Get Richer",
@@ -319,7 +349,7 @@ local items = {
         name = "Buy the Dip",
         stats = {},
         description = "When you buy this, set the upgrade price of a random weapon to 0",
-        rarity = "test",
+        rarity = "rare",
         onBuy = function() 
             randomWeaponIndex = math.random(1, tableLength(Balls.getUnlockedBallTypes()))
             local i = 1
@@ -1314,11 +1344,11 @@ function drawLevelUpShop()
         suit.layout:row(buttonWidth-20,15)
         -- type specific logic
         setFont(35)
-        dress:Label(currentUpgrade.name, {align = "center", color = {normal = {fg = {1,1,1,opacity}}}}, suit.layout:row(buttonWidth - 30, 50))
+        dress:Label(currentUpgrade.name, {align = "center", color = {normal = {fg = {1,1,1,opacity}}}}, suit.layout:row(buttonWidth - 30, 55))
         setFont(30)
-        dress:Label(currentUpgrade.type, {align = "center", color = {normal = {fg = {0.7,0.7,0.7,opacity}}}}, suit.layout:row(buttonWidth - 30, 40))
+        dress:Label(currentUpgrade.type, {align = "center", color = {normal = {fg = {0.7,0.7,0.7,opacity}}}}, suit.layout:row(buttonWidth - 30, 45))
         setFont(24)
-        dress:Label(currentUpgrade.description, {align = "center", color = {normal = {fg = {1,1,1,opacity}}}}, suit.layout:row(buttonWidth - 30, 200))
+        dress:Label(currentUpgrade.description, {align = "center", color = {normal = {fg = {1,1,1,opacity}}}}, suit.layout:row(buttonWidth - 30, 150))
         suit.layout:row(buttonWidth - 20, 15)
         for statName, statValue in pairs(Balls.getBallList()[currentUpgrade.name].stats) do
             love.graphics.setColor(1,1,1,opacity)
@@ -1460,8 +1490,17 @@ local function drawItemShop()
         setFont(60)
         local i = 0
         for index, item in ipairs(displayedItems) do
+            local scale = item.consumable and 0.75 or 1
+            local windowW = uiBigWindowImg:getWidth() * 0.75 * scale
+            local windowH = uiBigWindowImg:getHeight() * 0.65 * scale
             local itemX = 450 + (i) * (uiBigWindowImg:getWidth()*0.75 + 50)
             local itemY = 50
+            -- Center the window at the same position as a normal item
+            local centerX = itemX + uiBigWindowImg:getWidth()*0.75/2
+            local centerY = itemY + uiBigWindowImg:getHeight()*0.65/2
+            itemX = centerX - windowW/2
+            itemY = centerY - windowH/2
+
             local upgradePrice = item.rarity == "common" and 10 or item.rarity == "uncommon" and 20 or item.rarity == "rare" and 30 or item.rarity == "legendary" and 40 or 10
             if item.consumable then
                 upgradePrice = upgradePrice * 3 / 5
@@ -1469,15 +1508,15 @@ local function drawItemShop()
 
             local color = (tableLength(Player.items) >= maxItems and not item.consumable) and {0.4, 0.4, 0.4, 0.6} or {1, 1, 1, 1}
             love.graphics.setColor(color)
-            love.graphics.draw(getRarityWindow(item.rarity or "common"), itemX, itemY, 0, 0.75, 0.65) -- Draw the background window image
-            setFont(28)
-            drawTextCenteredWithScale(item.name or "Unknown", itemX + 10, itemY + 25, 1, uiBigWindowImg:getWidth() * 0.75 - 20, color)
+            love.graphics.draw(getRarityWindow(item.rarity or "common"), itemX, itemY, 0, 0.75 * scale, 0.65 * scale)
+            setFont(math.floor(28 * scale))
+            drawTextCenteredWithScale(item.name or "Unknown", itemX + 10 * scale, itemY + 35 * scale, scale, windowW - 20 * scale, color)
 
-            setFont(20)
-            suit.Label(item.description or "No description", {align = "center"}, itemX + 25, itemY + 125, uiBigWindowImg:getWidth() * 0.75 - 50, 100)
-            if dress:Button("", {id = "bruhdmsavklsam" .. i, color = invisButtonColor}, itemX, itemY, uiBigWindowImg:getWidth() * 0.75, uiBigWindowImg:getHeight() * 0.65).hit then
+            setFont(math.floor(20 * scale))
+            suit.Label(item.description or "No description", {align = "center"}, itemX + 25 * scale, itemY + 100 * scale, windowW - 50 * scale, 100 * scale)
+            if dress:Button("", {id = "bruhdmsavklsam" .. i, color = invisButtonColor}, itemX, itemY, windowW, windowH).hit then
                 print("button working")
-                if #Player.items < maxItems and Player.money >= upgradePrice then
+                if (#Player.items < maxItems or item.consumable) and Player.money >= upgradePrice then
                     Player.pay(upgradePrice)
                     playSoundEffect(upgradeSFX, 0.5, 0.95)
                     if item.onBuy then
@@ -1498,7 +1537,9 @@ local function drawItemShop()
                     
                 end
             end
-            printMoney(upgradePrice, itemX + uiBigWindowImg:getWidth() * 0.75 - 40 - getTextSize(upgradePrice .. "$")/2, itemY + uiBigWindowImg:getHeight() * 0.65/2 - 80, math.rad(4), Player.money >= upgradePrice, 50)
+            local moneyXoffset = item.consumable and -65 or 0
+            local moneyYoffset = item.consumable and -25 or 0
+            printMoney(upgradePrice, itemX + uiBigWindowImg:getWidth() * 0.75 - 40 - getTextSize(upgradePrice .. "$")/2 + moneyXoffset, itemY + uiBigWindowImg:getHeight() * 0.65/2 - 80 + moneyYoffset, math.rad(4), Player.money >= upgradePrice, 50)
 
             i = i + 1
         end

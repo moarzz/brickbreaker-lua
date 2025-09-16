@@ -1027,8 +1027,8 @@ local function cast(spellName, brick)
         table.insert(fireballs, fireball)
         local fireballStartTween = tween.new(0.25, fireballs[#fireballs], {radius = 5 * range}, tween.outExpo)
         addTweenToUpdate(fireballStartTween)
-        local sprayCooldown = hasItem("Four Leafed Clover") and 9 or 12
-        local cooldownLength = (Player.currentCore == "Spray and Pray Core" or hasItem("Spray and Pray")) and sprayCooldown/((Player.currentCore == "Damage Core" and 2.5 or ((unlockedBallTypes["Fireball"].stats.fireRate + getStatItemsBonus("fireRate", unlockedBallTypes["Fireball"]) + (Player.permanentUpgrades.fireRate or 0)))) * (Player.currentCore == "Madness Core" and 2 or 1) + 2) or 18/((Player.currentCore == "Damage Core" and 2.5 or ((unlockedBallTypes["Fireball"].stats.fireRate + getStatItemsBonus("fireRate", unlockedBallTypes["Fireball"]) + (Player.permanentUpgrades.fireRate or 0)))) * (Player.currentCore == "Madness Core" and 2 or 1) + 2)
+        local sprayCooldown = hasItem("Four Leafed Clover") and 10 or 13.34
+        local cooldownLength = (Player.currentCore == "Spray and Pray Core" or hasItem("Spray and Pray")) and sprayCooldown/((Player.currentCore == "Damage Core" and 2.5 or ((unlockedBallTypes["Fireball"].stats.fireRate + getStatItemsBonus("fireRate", unlockedBallTypes["Fireball"]) + (Player.permanentUpgrades.fireRate or 0)))) * (Player.currentCore == "Madness Core" and 2 or 1) + 2) or 20/((Player.currentCore == "Damage Core" and 2.5 or ((unlockedBallTypes["Fireball"].stats.fireRate + getStatItemsBonus("fireRate", unlockedBallTypes["Fireball"]) + (Player.permanentUpgrades.fireRate or 0)))) * (Player.currentCore == "Madness Core" and 2 or 1) + 2)
         Timer.after(cooldownLength, function()
             -- Refill Fireball spell after cooldown
             cast("Fireball")
@@ -1267,7 +1267,7 @@ local function ballListInit()
             ballAmount = 1,
             x = screenWidth / 2,
             y = screenHeight / 2,
-            speedMult = 1,
+            speedMult = 1.25,
             size = 1,
             rarity = "common",
             startingPrice = 25,
@@ -1277,7 +1277,7 @@ local function ballListInit()
                 speed = 150,
                 damage = 1,
             },
-            attractionStrength = 1200
+            attractionStrength = 1250
         },
         ["Lightning Ball"] = {
             name = "Lightning Ball",
