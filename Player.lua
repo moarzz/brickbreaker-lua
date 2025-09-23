@@ -269,16 +269,16 @@ Player.availableCores = {
         price = 500,
     },
     {
-        name = "Buyer's Core",
-        description = "You can have up to 4 items instead of 3.\n -1 to every stat",
+        name = "Collector's Core",
+        description = "You can have up to 5 items instead of 4.\n -1 to every stat",
         price = 1000
     },
     {
-        name = "IncrediCore",
-        description = "your starting item is 'incrediball'",
+        name = "Picky Core",
+        description = "Rerolling items always costs 2$.\nYou can reroll once every time when you unlock a new weapon ",
         price = 1500
     },
-    {   
+    --[[{   
         name = "Damage Core",
         description = "amount and fireRate are always 1 and damage is multiplied by 5",
         price = 2000,
@@ -287,16 +287,16 @@ Player.availableCores = {
         name = "Madness Core",
         description = "Damage is divided by 2. Cooldown is halved. Every other stat is doubled.",
         price = 5000,
-    },
+    },]]
 }
 
 Player.coreDescriptions = {
     ["Economy Core"] = "Interest cap is 10 instead of 5. \nStart with 20$ instead of 5",
-    ["Buyer's Core"] = "You can have up to 4 items instead of 3.\n There are only 2 items in the itemShop",
-    ["Damage Core"] = "Amount and fireRate are always 1 and damage is multiplied by 5",
-    ["IncrediCore"] = "your starting item is 'incrediball'",
-    ["Farm Core"] = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown) \nYou can no longer buy upgrades to your weapons",
-    ["Madness Core"] = "Damage and cooldown are reduced by 50%. \nevery other stat is doubled. (can break the game)"
+    ["Collector's Core"] = "You can have up to 5 items instead of 4.\n There are only 2 items in the itemShop",
+    ["Farm Core"] = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown) \nYou can no longer buy items",
+    ["Picky Core"] = "Rerolling items always costs 2$\nConsumable cost half",
+    --[[["Damage Core"] = "Amount and fireRate are always 1 and damage is multiplied by 5",
+    ["Madness Core"] = "Damage and cooldown are reduced by 50%. \nevery other stat is doubled. (can break the game)"]]
     
 }
 
@@ -423,7 +423,6 @@ end
 
 function Player.levelUp()
     resetRerollPrice()
-    firstRerollOfLevelDone = false
     Player.level = Player.level + 1
     if Player.level % Player.newWeaponLevelRequirement == 0 then
         if usingMoneySystem then
@@ -444,7 +443,7 @@ function Player.levelUp()
         elseif Player.level < 15 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.4)
         elseif Player.level < 25 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.3)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.265)
         else
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.2) 
         end
@@ -452,6 +451,9 @@ function Player.levelUp()
     lvlUpPopup()
     if Player.currentCore == "Farm Core" then
         FarmCoreUpgrade()
+    elseif Player.currentCore == "Picky Core" then
+        -- Every reroll costs 2$ instead of 1$
+        Player.rerolls = 1
     end
     if (not usingMoneySystem) then
         Player.levelingUp = true
@@ -459,7 +461,16 @@ function Player.levelUp()
             uiOffset.x = 0
         end
     end
-    setItemShop()
+    for _, item in pairs(Player.items) do
+        if item.onLevelUp then
+            item.onLevelUp()
+        end
+    end
+    if hasItem("Investment Guru") then
+        setItemShop({getItem("Long Term Investment")})
+    else
+        setItemShop()
+    end
 end
 
 function Player.gain(amount)

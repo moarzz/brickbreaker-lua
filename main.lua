@@ -4,6 +4,7 @@ Balls = require("Balls") -- ball logic
 local upgradesUI = require("upgradesUI") -- upgrade UI logic
 Timer = require("Libraries.timer") -- timer library
 local permanentUpgrades = require("permanentUpgrades") -- permanent upgrades UI
+local damageRipples = require("DamageRipples") -- damage ripple shader
 confetti = require("particleSystems.confetti") -- confetti particle system
 shaders = require("shaders") -- shader logic
 suit = require("Libraries.Suit") -- UI library
@@ -62,6 +63,22 @@ bossSpawned = false
 local spawnBossNextRow = false
 healThisFrame = 0
 
+local mt = {
+    __index = function(t, k)
+        print("wtf")
+        local value = rawget(t, k)
+        print("caca")
+        if k == "width" then
+            print("woohooooo")
+        end
+        if hasItem("Huge Paddle") and k == "width" then
+            return value * 2
+        else
+            return value
+        end
+    end
+}
+
 function resetGame()
     -- Stop any confetti effect
     stopConfetti()
@@ -100,13 +117,35 @@ function resetGame()
     paddle = {
         x = screenWidth / 2 - 100,
         y = screenHeight - 400,
-        width = 200 + (Player.permanentUpgrades.paddleSize or 0), -- Base width + size upgrade
+        _width = 200 + (Player.permanentUpgrades.paddleSize or 0), -- Base width + size upgrade
         widthMult = 1,
         height = 20,
         speed = 700 + (Player.permanentUpgrades.paddleSpeed or 0),
         currrentSpeedX = 0,
         speedMult = 1
     }
+    setmetatable(paddle, {
+        __index = function(t, k)
+            if k == "width" then
+                local value = rawget(t, "_width")
+                if hasItem("Huge Paddle") then
+                    return value * 1.75
+                else
+                    return value
+                end
+            else
+                return rawget(t, k)
+            end
+        end,
+        __newindex = function(t, k, v)
+            if k == "width" then
+                v = hasItem("Huge Paddle") and v / 1.75 or v
+                rawset(t, "_width", v)
+            else
+                rawset(t, k, v)
+            end
+        end
+    })
     
     -- Clear any existing bricks
     bricks = {}
@@ -227,6 +266,7 @@ local function loadAssets()
     flamethrowerEndVFX = love.graphics.newImage("assets/sprites/VFX/flamethrowerEnd.png")
 
     Player.loadJsonValues()
+    damageRipples.load()
 end
 
 dmgVFXOn = true
@@ -302,7 +342,7 @@ local function spawnBoss()
     end)
     local bossHealTimer = Timer.every(2, function()
         if boss.y >= -bossHeight + 150 and canHeal then
-            local healValue = math.floor(mapRange(boss.health, 1, 5000, 1, 35))
+            local healValue = math.floor(mapRange(boss.health, 1, 5000, 1, 50))
             boss.health = boss.health + healValue
             healThisFrame = healThisFrame + healValue
             healNumber(healValue, boss.x + boss.width/2, math.max(10, boss.y + boss.height/2))
@@ -488,12 +528,12 @@ local function addMoreBricks()
             print("spawning more bricks")
             for i=1 , 10 do
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
-                currentRowPopulation = currentRowPopulation + math.ceil(Player.level * 0.8)
+                currentRowPopulation = currentRowPopulation + math.floor(math.pow(math.ceil(Player.level * 0.8), 1.2))
                 if spawnBossNextRow and not bossSpawned then
                     spawnBoss()
                     bossSpawned = true
                     spawnBossNextRow = false
-                    currentRowPopulation = 700
+                    currentRowPopulation = 1000
                 elseif not (bossSpawned or spawnBossNextRow) and gameTime >= 600 then
                     spawnBossNextRow = true
                 end
@@ -644,13 +684,28 @@ function love.load()
     paddle = {
         x = screenWidth / 2 - 50,
         y = screenHeight/2,
-        width = 200 + (Player.permanentUpgrades.paddleSize or 0), -- Base width + size upgrade
+        _width = 200 + (Player.permanentUpgrades.paddleSize or 0), -- Base width + size upgrade
         widthMult = 1,
         height = 20,    
         speed = 700 + (Player.permanentUpgrades.paddleSpeed or 0), -- Base speed + speed upgrade
         currrentSpeedX = 0,
         speedMult = 1
     }
+    setmetatable(paddle, {
+        __index = function(t, k)
+            if k == "width" then
+                print("Accessing paddle.width, hasItem:", hasItem("Huge Paddle"))
+                local value = rawget(t, "_width")
+                if hasItem("Huge Paddle") then
+                    return value * 2
+                else
+                    return value
+                end
+            else
+                return rawget(t, k)
+            end
+        end
+    })
 
     local data = loadGameData()
     Player.permanentUpgrades = data.permanentUpgrades
@@ -805,7 +860,6 @@ local printDrawCalls = false
 local function gameFixedUpdate(dt)
     -- Update mouse positions
 
-    dt = 1/60 -- Fixed delta time for consistent updates
     dt = dt * 1.75
     levelUpShopTweenAlpha(dt)
     local stats = love.graphics.getStats()
@@ -882,7 +936,7 @@ local function gameFixedUpdate(dt)
         
         updateGameTime(dt)
 
-        -- checks if game is frozen
+        -- Standard Play logic
         if not Player.choosingUpgrade and not UtilityFunction.freeze then
             -- Paddle movement
             local moveX, moveY = 0, 0
@@ -910,6 +964,9 @@ local function gameFixedUpdate(dt)
             -- Update Balls
             Balls.update(dt, paddle, bricks, Player)
 
+            -- update damage ripples
+            damageRipples.update(dt)
+
             -- Update explosions
             Explosion.update(dt)
             
@@ -934,7 +991,7 @@ local function gameFixedUpdate(dt)
             
             if brickKilledThisFrame and damageCooldown <= 0 then
                 -- Play brick hit sound effect
-                playSoundEffect(brickDeathSFX, 0.25, 1, false, true)
+                playSoundEffect(brickDeathSFX, 0.15, 1, false, true)
             end
             if not Player.dead then
                 damageThisFrame = damageThisFrame or 0 -- Reset damage this frame
@@ -958,7 +1015,7 @@ local function gameFixedUpdate(dt)
 end
 
 local accumulator = 0
-local fixed_dt = 1/60
+local fixed_dt = 1/120
 function love.update(dt)
     accumulator = accumulator + dt
     while accumulator >= fixed_dt do
@@ -1567,6 +1624,7 @@ function love.draw()
             love.graphics.print(levelText, 15, screenHeight - 28)
         end
     end
+
     if currentGameState == GameState.PAUSED then
         love.graphics.setColor(0, 0, 0, 0.6)
         love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
@@ -1687,6 +1745,8 @@ function love.draw()
     Balls.draw(Balls)
     drawLvlUpPopups()
 
+    -- damageRipples.draw()
+
     love.graphics.setColor(1, 1, 1, 1)
     for i=1, Player.lives do
         --love.graphics.draw(heartImg, -20, 75 + ((heartImg:getHeight()*2 + 5)*(i-1)), 0, 4, 4)
@@ -1763,6 +1823,7 @@ end
 
 damageNumbersOn = true
 healNumbersOn = true
+ballTrailsOn = true
 local testingMode = false
 local old_love_keypressed = love.keypressed
 moneyScale = {scale = 1}
@@ -1893,7 +1954,7 @@ function love.keypressed(key)
         -- PERFORMANCE TEST ON OFF BLOCK
 
         if key == "v" then
-            damageNumbersOn = notDamageNumbersOn
+            damageNumbersOn = not DamageNumbersOn
         end
         if key == "b" then
             healNumbersOn = not healNumbersOn
@@ -1998,9 +2059,10 @@ end
 
 function love.mousepressed(x, y, button)
     if button == 2 then
+        addRipplePoint()
         -- Handle UI upgrade click
-        if currentlyHoveredButton then
+        --[[if currentlyHoveredButton then
             upgradesUI.queueUpgrade(currentlyHoveredButton)
-        end
+        end]]
     end
 end

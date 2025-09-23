@@ -171,6 +171,7 @@ function FarmCoreUpgrade()
                 item.stats[randomStat] = (item.stats[randomStat] or 0) + (item.ammoMult or 1)
             elseif randomStat == "amount" and item.type == "ball" then
                 Balls.addBall(item.name, true)
+                item.ballAmount = (item.ballAmount or 0) + 1
             else
                 print("random stat = ".. randomStat)
                 item.stats[randomStat] = (item.stats[randomStat] or 0) + 1 -- Increase other stats
@@ -233,7 +234,7 @@ end
 brickPieces = {}
 local function brickDestroyed(brick)
     Player.bricksDestroyed = (Player.bricksDestroyed or 0) + 1
-    local chance = hasItem("Four Leafed Clover") and 50 or 25
+    local chance = hasItem("Four Leafed Clover") and 70 or 35
     if hasItem("Sudden Mitosis") and math.random(1,100) <= chance then
         local totalSpeed = 500
         local speedX = math.random(-totalSpeed*0.6, totalSpeed*0.6)
@@ -336,7 +337,7 @@ function Balls.reduceAllCooldowns()
     end]]
 end
 
-local ballTrailLength = 80   -- Length of the ball trail
+local ballTrailLength = 30   -- Length of the ball trail
 local bullets = {}
 function Balls.insertBullet(bullet)
     table.insert(bullets, bullet)
@@ -970,7 +971,7 @@ fire = function(techName)
             Timer.after(1, function()
                 turretShoot(turret)
             end)
-            Timer.after(1.75 + (Player.currentCore == "Madness Core" and 0.5 or 1) * ((turretType.stats.cooldown + getStatItemsBonus("cooldown", turretType) + (Player.permanentUpgrades.cooldown or 0)) * 0.5), function()
+            Timer.after(1.5 + (Player.currentCore == "Madness Core" and 0.5 or 1) * ((turretType.stats.cooldown + getStatItemsBonus("cooldown", turretType) + (Player.permanentUpgrades.cooldown or 0)) * 0.45), function()
                 -- Refill ammo after cooldown
                 turret.currentAmmo = (Player.currentCore == "Madness Core" and 2 or 1) * (turretType.stats.ammo + getStatItemsBonus("ammo", turretType) * (turretType.ammoMult or 1))
                 fire("Gun Turrets")
@@ -1233,7 +1234,7 @@ local function ballListInit()
             ballAmount = 1,
             speedMult = 1,
             size = 1,
-            rarity = "rare",
+            rarity = "uncommon",
             startingPrice = 50,
             description = "A ball that explodes on impact, dealing damage to nearby bricks.",
             color = {1, 0, 0, 1}, -- Red color
@@ -1249,7 +1250,7 @@ local function ballListInit()
             x = screenWidth / 2,
             y = screenHeight / 2,
             ballAmount = 1,
-            speedMult = 0.5,
+            speedMult = 0.4,
             size = 2,
             rarity = "rare",
             startingPrice = 100,
@@ -1277,14 +1278,14 @@ local function ballListInit()
                 speed = 150,
                 damage = 1,
             },
-            attractionStrength = 1250
+            attractionStrength = 2000
         },
         ["Lightning Ball"] = {
             name = "Lightning Ball",
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
-            speedMult = 1.25,
+            speedMult = 1,
             size = 1,
             ballAmount = 1,
             rarity = "uncommon",
@@ -1292,7 +1293,7 @@ local function ballListInit()
             description = "Creates a damaging current of electricity between bricks on hit.",
             color = {0, 170/255, 1, 1}, -- green color
             stats = {
-                speed = 200,
+                speed = 150,
                 damage = 1,
                 range = 1
             },
@@ -1304,7 +1305,7 @@ local function ballListInit()
             y = screenHeight / 2,
             speedMult = 1.35,
             size = 1,
-            rarity = "uncommon",
+            rarity = "common",
             startingPrice = 50,
             ballAmount = 1,
             description = "A ball that shoots bullets in a random direction like a gun on bounce.",
@@ -1379,7 +1380,7 @@ local function ballListInit()
             size = 1,
             rarity = "common",
             ammoMult = 2,
-            fireRateMult = 1.5,
+            fireRateMult = 2,
             startingPrice = 25,
             description = "Fire bullets that die on impact in bursts.",
             onBuy = function() 
@@ -1403,10 +1404,10 @@ local function ballListInit()
             y = screenHeight / 2,
             size = 1,
             radius = 10,
-            rarity = "rare",
+            rarity = "uncommon",
             speedMult = 2,
             ammoMult = 3,
-            fireRateMult = 7,
+            fireRateMult = 6,
             startingPrice = 50,
             description = "A gun that shoots balls. \nDoesn't need to reload. \nSlow fire rate.",
             onBuy = function() 
@@ -1431,7 +1432,7 @@ local function ballListInit()
             rarity = "uncommon",
             startingPrice = 50,
             ammoMult = 20,
-            fireRateMult = 1,
+            fireRateMult = 1.2,
             description = "Fires bullets at an accelerating rate of fire. very long cooldown",
             onBuy = function() 
                 shoot("Minigun")
@@ -1574,7 +1575,7 @@ local function ballListInit()
             sawPositions = {}, -- Will store current positions of saws
             sawAnimations = {}, -- Will store animation IDs
             currentAngle = 0, -- Current rotation angle
-            orbitRadius = 250,
+            orbitRadius = 260,
             damageCooldowns = {}, -- Add this line to track cooldowns per saw per brick
         },
         ["Gun Turrets"] = {
@@ -1783,10 +1784,10 @@ end
 function Balls.initialize()
     initializeRarityItemLists()
     longTermInvestmentSellValueBuff = 0
-    if Player.currentCore == "Buyer's Core" then
-        setMaxItems(4)
+    if Player.currentCore == "Collector's Core" then
+        setMaxItems(5)
     else
-        setMaxItems(3)
+        setMaxItems(4)
     end
     Player.items = {}
     Player.money = 0
@@ -1799,7 +1800,7 @@ function Balls.initialize()
         Player.newUpgradePrice = Player.currentCore == "Economy Core" and 50 or 100
     else
         Player.upgradePriceMultScaling = 2
-        Player.xpForNextLevel = 10
+        Player.xpForNextLevel = 15
     end
     if Player.currentCore == "Economy Core" then
         Player.money = 20
@@ -1825,7 +1826,7 @@ function Balls.initialize()
     Player.newStatLevelRequirement = 10
     Player.newWeaponLevelRequirement = 5
     uiOffset.x = usingMoneySystem and 0 or statsWidth * 1.5
-    -- Balls.addBall("Ba;;")
+    -- Balls.addBall("Laser")
 end
 
 function Balls.amountDecrease(decreaseValue)
@@ -2188,7 +2189,7 @@ local function brickCollisionCheck(ball)
                 local fromBottom = ball.prevY - ball.radius >= brick.y + brick.height
                 
                 -- Apply your existing effects
-                if Player.currentCore == "Bouncy Core" or hasItem("Bouncing Castle") then
+                if Player.currentCore == "Bouncy Core" then
                     ball.speedExtra = math.min((ball.speedExtra or 1) + bouncyCoreSpeedBoost, 12)
                 end
                 
@@ -2227,7 +2228,7 @@ local function brickCollisionCheck(ball)
                     local normalizedSpeedX, normalizedSpeedY = normalizeVector(ball.x - (brick.x + brick.width/2), ball.y - (brick.y + brick.height/2))
                     local speed = math.sqrt(ball.speedX^2 + ball.speedY^2)
                     local knockback = math.max(1.25 * (Player.currentCore == "Madness Core" and 2 or 1) * math.pow((ball.stats.speed + getStatItemsBonus("speed", ballList[ball.name]) * 50 + (Player.perks.speed or 0) * 50 + 250), 0.6), 250)
-                    knockback = math.max(math.min(knockback, 1500 - currentBallSpeed),0)
+                    knockback = math.max(math.min(knockback, 1150 - currentBallSpeed), 0)
                     ball.speedX = ball.speedX + normalizedSpeedX * knockback
                     ball.speedY = ball.speedY + normalizedSpeedY * knockback
                 end
@@ -2277,9 +2278,9 @@ local function paddleCollisionCheck(ball, paddle)
         ball.speedX = (hitPosition - 0.5) * 2 * math.abs(ballSpeed * 0.99)
         local speedYSquared = math.max(0, ballSpeed^2 - ball.speedX^2)
         ball.speedY = math.sqrt(speedYSquared) * (ball.speedY > 0 and 1 or -1)
-        if Player.currentCore == "Bouncy Core" or hasItem("Bouncing Castle") then
-            ball.speedExtra = math.min((ball.speedExtra or 1) + bouncyCoreSpeedBoost, 12)
-        end
+        
+        ball.speedExtra = math.min((ball.speedExtra or 1) + 5, 12)
+        
         for _, ballType in pairs(unlockedBallTypes) do
             if ballType.onPaddleBounce then
                 ballType.onPaddleBounce() -- Call the onPaddleBounce function if it exists
@@ -2307,7 +2308,7 @@ local function wallCollisionCheck(ball)
     if ball.x - effectiveRadius < leftWallPosition and ball.speedX < 0 then
         ball.speedX = -ball.speedX
         ball.x = leftWallPosition + effectiveRadius -- Ensure the ball is not stuck in the wall
-        if Player.currentCore == "Bouncy Core" or hasItem("Bouncy Walls") or hasItem("Bouncing Castle") then
+        if Player.currentCore == "Bouncy Core" or hasItem("Bouncy Walls") then
             ball.speedExtra = math.min((ball.speedExtra or 1) + bouncyCoreSpeedBoost, 12)
         end
         if ball.y < screenWidth then
@@ -2317,7 +2318,7 @@ local function wallCollisionCheck(ball)
     elseif ball.x + effectiveRadius > rightWallPosition and ball.speedX > 0 then
         ball.speedX = -ball.speedX
         ball.x = rightWallPosition - effectiveRadius -- Ensure the ball is not stuck in the 
-        if Player.currentCore == "Bouncy Core" or hasItem("Bouncy Walls") or hasItem("Bouncing Castle") then
+        if Player.currentCore == "Bouncy Core" or hasItem("Bouncy Walls") then
             ball.speedExtra = math.min((ball.speedExtra or 1) + bouncyCoreSpeedBoost, 12)
         end
         if ball.y < screenWidth then
@@ -2328,15 +2329,15 @@ local function wallCollisionCheck(ball)
     if ball.y - effectiveRadius < 0 and ball.speedY < 0 then
         ball.speedY = -ball.speedY
         ball.y = effectiveRadius -- Ensure the ball is not stuck in the wall
-        if Player.currentCore == "Bouncy Core" or hasItem("Bouncy Walls") or hasItem("Bouncing Castle") then
+        if Player.currentCore == "Bouncy Core" or hasItem("Bouncy Walls") then
             ball.speedExtra = math.min((ball.speedExtra or 1) + bouncyCoreSpeedBoost, 12)
         end
         playSoundEffect(wallBoopSFX, 0.5, 0.6)
         wallHit = true
-    elseif ball.y + effectiveRadius > math.max(screenHeight, paddle.y + paddle.height + ball.radius*6) and ball.speedY > 0 then
+    elseif ball.y + effectiveRadius > screenHeight + 500 and ball.speedY > 0 then
         ball.speedY = -ball.speedY
         ball.y = screenHeight - effectiveRadius
-        if Player.currentCore == "Bouncy Core" or hasItem("Bouncy Walls") or hasItem("Bouncing Castle") then
+        if Player.currentCore == "Bouncy Core" or hasItem("Bouncy Walls") then
             ball.speedExtra = math.min((ball.speedExtra or 1) + bouncyCoreSpeedBoost, 12)
         end
         playSoundEffect(wallBoopSFX, 0.5, 0.6)
@@ -2690,44 +2691,40 @@ local function updateDeadBullets(dt)
         bullet.y = bullet.y + bullet.speedY * dt
         
         -- Remove bullets that go off screen
-        if bullet.y < 0 or bullet.y > love.graphics.getHeight() or
-           bullet.x < 0 or bullet.x > love.graphics.getWidth() then
-            table.insert(deadBullets, bullet)
-            table.remove(bullets, i)
+          if bullet.y < 0 or bullet.y > love.graphics.getHeight() or
+              bullet.x < 0 or bullet.x > love.graphics.getWidth() then
+                bullet.trailFade = 1
+                bullet.deathTime = love.timer.getTime()
+                table.insert(deadBullets, bullet)
+                table.remove(bullets, i)
         end
     end
 
     -- Then update dead bullets
     for i = #deadBullets, 1, -1 do
         local bullet = deadBullets[i]
-        -- Initialize deathTime if not set
         if not bullet.deathTime then
             bullet.deathTime = love.timer.getTime()
         end
         local elapsed = love.timer.getTime() - bullet.deathTime
         local fade = 1 - math.min(elapsed, 1)
         bullet.trailFade = fade
-        -- Move all trail points forward (toward the next point)
         if bullet.trail and #bullet.trail > 1 then
-            local moveFrac = dt / 0.5 -- Progress fraction for this frame
+            local moveFrac = dt / 0.5
             for j = 1, #bullet.trail - 1 do
                 local p = bullet.trail[j]
                 local nextP = bullet.trail[j+1]
                 p.x = p.x + (nextP.x - p.x) * moveFrac
                 p.y = p.y + (nextP.y - p.y) * moveFrac
             end
-            -- Remove the last 2 (oldest) point to create the fade effect
+            -- Remove only one point per frame for smoother fade
             table.remove(bullet.trail, 1)
-            if #bullet.trail > 1 then
-                table.remove(bullet.trail, 1)
-            end
         end
-        -- Remove the bullet when the trail is gone or after 0.5s
+        -- Remove the bullet when the trail is gone or after 1s
         if fade <= 0 or not bullet.trail or #bullet.trail < 2 then
             table.remove(deadBullets, i)
         else
-            -- Update position (maintain momentum while fading)
-            bullet.x = bullet.x + bullet.speedX * dt * 0.5 -- Slow down while fading
+            bullet.x = bullet.x + bullet.speedX * dt * 0.5
             bullet.y = bullet.y + bullet.speedY * dt * 0.5
         end
     end
@@ -2971,8 +2968,9 @@ function Balls.update(dt, paddle, bricks)
 
             local multX, multY = normalizeVector(ball.speedX, ball.speedY)
             local speedExtra = ((ball.name == "Magnetic Ball" or ball.name == "Incrediball") and 0.1 or 1) * (ball.speedExtra or 0)
-            ball.x = ball.x + (ball.speedX + speedExtra * multX * 50) * ball.speedMult * dt * (Player.currentCore == "Madness Core" and 2 or 1)
-            ball.y = ball.y + (ball.speedY + speedExtra * multY * 50) * ball.speedMult * dt * (Player.currentCore == "Madness Core" and 2 or 1)
+            local speedMult = 1.25
+            ball.x = ball.x + (ball.speedX + speedExtra * multX * 50) * ball.speedMult * dt * (Player.currentCore == "Madness Core" and 2 or 1) * speedMult
+            ball.y = ball.y + (ball.speedY + speedExtra * multY * 50) * ball.speedMult * dt * (Player.currentCore == "Madness Core" and 2 or 1) * speedMult
 
             if ball.type == "ball" then
                 -- Distance-based trail updating
@@ -3037,6 +3035,7 @@ function Balls.update(dt, paddle, bricks)
                     local dist = math.sqrt(dx*dx + dy*dy)
                     local attraction = mapRange((attractionStrength / math.max(dist, 10)) * math.pow((ball.stats.speed + getStatItemsBonus("speed", ball) * 50 + (ball.speedExtra or 0) * 15) * (Player.currentCore == "Madness Core" and 2 or 1), 1.45), 1, 10, 1, 20) * 0.0175
                     attraction = attraction * mapRangeClamped(ball.stats.speed + getStatItemsBonus("speed", ball) * 50 + (ball.speedExtra or 0)*10, 1, 500, 0.5, 2)
+                    attraction = math.pow(attraction, 0.9)
                     local angle = math.atan2(dy, dx)
                     ball.speedX = ball.speedX + math.cos(angle) * attraction * dt
                     ball.speedY = ball.speedY + math.sin(angle) * attraction * dt
@@ -3079,7 +3078,7 @@ function Balls.update(dt, paddle, bricks)
                     local dy = (brick.y + brick.height/2) - bullet.y
                     local dist = dx * dx + dy * dy -- Square distance is fine, no need for square root
                     
-                    if dist < minDist then
+                    if dist < minDist and dist > brick.width * 1.25 then
                         minDist = dist
                         nearestBrick = brick
                     end
@@ -3097,20 +3096,25 @@ function Balls.update(dt, paddle, bricks)
                 dy = dy / dist
                 
                 -- Calculate homing strength (adjust this value to change how aggressive the homing is)
-                local homingStrength = 2000 -- pixels per second
+                local homingStrength = 2500 -- pixels per second
                 
                 -- Adjust velocity (with smooth turning)
                 local turnSpeed = 10 -- Lower = more gradual turning, Higher = sharper turning
                 bullet.speedX = bullet.speedX + (dx * homingStrength - bullet.speedX) * dt * turnSpeed
-                bullet.speedY = bullet.speedY + (dy * homingStrength - bullet.speedY) * dt * turnSpeed
+                bullet.speedY = -math.abs(bullet.speedY + (dy * homingStrength - bullet.speedY) * dt * turnSpeed)
+                local currentSpeed =  math.sqrt(bullet.speedX^2 + bullet.speedY^2)
+                if currentSpeed < 1000 then
+                    bullet.speedX = bullet.speedX * (1000 / currentSpeed)
+                    bullet.speedY = bullet.speedY * (1000 / currentSpeed)
+                end
             end
         end
         
         -- Store last position for raycast
         local lastX, lastY = bullet.x, bullet.y
         -- Update position
-        bullet.x = bullet.x + bullet.speedX * dt
-        bullet.y = bullet.y + bullet.speedY * dt
+        bullet.x = bullet.x + bullet.speedX * dt * 0.6
+        bullet.y = bullet.y + bullet.speedY * dt * 0.6
         -- Calculate movement vector
         local moveX = bullet.x - lastX
         local moveY = bullet.y - lastY
@@ -3382,13 +3386,14 @@ end
 local function techDraw()
     if unlockedBallTypes["Laser"] then
         love.graphics.setColor(1, 1, 1, 0.6)
-        love.graphics.rectangle("fill", paddle.x, 0, 1, paddle.y)
-        love.graphics.rectangle("fill", paddle.x + paddle.width, 0, 1, paddle.y)
 
         -- draw charging bars
         if unlockedBallTypes["Laser"].charging then
             local chargeProgress = unlockedBallTypes["Laser"].currentChargeTime / (((Player.currentCore == "Cooldown Core" and 2 or math.max((unlockedBallTypes["Laser"].stats.cooldown + getStatItemsBonus("cooldown", unlockedBallTypes["Laser"]) + (Player.permanentUpgrades.cooldown or 0)) + 2, 1))) * (Player.currentCore == "Madness Core" and 0.5 or 1))
-            love.graphics.setColor(0.5, 0.5, 0.5, 0.5)
+            local opacityMult = mapRangeClamped(chargeProgress, 0.7, 1.15, 0, 1)
+            love.graphics.setColor(0.35 + opacityMult/2, 0.35 + opacityMult/2, 0.35 + opacityMult/2, opacityMult)
+            love.graphics.rectangle("fill", paddle.x, 0, 1, paddle.y)
+            love.graphics.rectangle("fill", paddle.x + paddle.width, 0, 1, paddle.y)
             -- Draw charge bars from edges, clamped to paddle width
             local barWidth = math.min(paddle.width/2, paddle.width/2 * chargeProgress)
             love.graphics.rectangle("fill", paddle.x + paddle.width/2 - barWidth, 0, 1, paddle.y)
