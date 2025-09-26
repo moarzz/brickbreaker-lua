@@ -260,8 +260,8 @@ function permanentUpgrades.draw()
         setFont(35)
         suit.Label("+ " .. tostring(Player.permanentUpgrades[upgradeName] or 0), {align = "center"}, x, y + 50, cellWidth, 100)        -- Draw icon
         if iconsImg[upgradeName] then
-            local iconX = x + cellWidth/2 - iconsImg[upgradeName]:getWidth()*1.75/2
-            love.graphics.draw(iconsImg[upgradeName], iconX, y + 125, 0, 1.75, 1.75)
+            local iconX = x + cellWidth/2 - iconsImg[upgradeName]:getWidth()*1.75/2 * 32/500
+            love.graphics.draw(iconsImg[upgradeName], iconX, y + 125, 0, 1.75 * 32/500, 1.75 * 32/500)
         end
 
         -- Add invisible button for upgrading (now using dress)

@@ -157,7 +157,7 @@ function GameOverDraw()
 end
 
 -- Convert HSLA to RGBA
-function HslaToRgba(h, s, l, a)
+function hslaToRgba(h, s, l, a)
     if s == 0 then
         -- Achromatic (gray)
         return l, l, l, a
@@ -245,6 +245,23 @@ function setFont(...)
     end
     love.graphics.setFont(font) -- Set the font in Love2D
 end -- Missing 'end' added here
+
+
+
+
+
+
+
+
+-- fancyTexts lol completely lost
+fancyTexts = {}
+
+
+
+
+
+
+
 
 function drawImageCentered(image, x, y, targetWidth, targetHeight, angle)
     -- Get the original dimensions of the image
@@ -1147,6 +1164,7 @@ function printMoney(text, centerX, centerY, angle, buyable, fontSize)
     local moneyOffsetX = -math.cos(math.rad(5)) * getTextSize(formatNumber(text))/2
     
     -- Draw shadow text
+
     love.graphics.setColor(0, 0, 0, 1)
     love.graphics.print(formatNumber(text) .. "$", centerX + 4 + moneyOffsetX, centerY + 4, angle)
     

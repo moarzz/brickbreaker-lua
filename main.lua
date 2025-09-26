@@ -1,6 +1,7 @@
 UtilityFunction = require("UtilityFunction") -- utility functions
 Player = require("Player") -- player logic
 Balls = require("Balls") -- ball logic
+FancyText = require("Libraries.fancyText") -- fancy text rendering
 local upgradesUI = require("upgradesUI") -- upgrade UI logic
 Timer = require("Libraries.timer") -- timer library
 local permanentUpgrades = require("permanentUpgrades") -- permanent upgrades UI
@@ -72,7 +73,11 @@ local mt = {
             print("woohooooo")
         end
         if hasItem("Huge Paddle") and k == "width" then
-            return value * 2
+            if hasItem("Four Leafed Clover") then
+                return value * 2.5
+            else
+                return value * 1.75
+            end
         else
             return value
         end
@@ -195,6 +200,7 @@ end
 
 local function loadAssets()
     --load images
+    paddleImg = love.graphics.newImage("assets/sprites/paddle.png")
     auraImg = love.graphics.newImage("assets/sprites/aura.png")
     healImg = love.graphics.newImage("assets/sprites/heal.png")
     brickImg = love.graphics.newImage("assets/sprites/brick.png")
@@ -206,22 +212,20 @@ local function loadAssets()
     brickPiece2Img = love.graphics.newImage("assets/sprites/brickPiece2.png")
     brickPiece3Img = love.graphics.newImage("assets/sprites/brickPiece3.png")
         -- UI
-    uiLabelImg = love.graphics.newImage("assets/sprites/UI/ballUI backgroundTop.png")
-    uiSmallWindowImg = love.graphics.newImage("assets/sprites/UI/newBallBackground.png")
-    uiWindowImg = love.graphics.newImage("assets/sprites/UI/ballBackground.png")
-    uiBigWindowImg = love.graphics.newImage("assets/sprites/UI/ballBackground_20.png")
-    uiBigWindowImgUncommon = love.graphics.newImage("assets/sprites/UI/ballBackground_20_Uncommon.png")
-    uiBigWindowImgRare = love.graphics.newImage("assets/sprites/UI/ballBackground_20_Rare.png")
-    uiBigWindowImglegendary = love.graphics.newImage("assets/sprites/UI/ballBackground_20_Legendary.png")
+    uiLabelImg = love.graphics.newImage("assets/sprites/UI/label.png")
+    uiSmallWindowImg = love.graphics.newImage("assets/sprites/UI/windowSmall.png")
+    uiWindowImg = love.graphics.newImage("assets/sprites/UI/window.png")
+    uiBigWindowImg = love.graphics.newImage("assets/sprites/UI/windowTall.png")
+
     --Icons
     iconsImg = {
-        amount = love.graphics.newImage("assets/sprites/UI/icons/amount.png"),
-        ammo = love.graphics.newImage("assets/sprites/UI/icons/ammo.png"),
-        damage = love.graphics.newImage("assets/sprites/UI/icons/damage.png"),
-        cooldown = love.graphics.newImage("assets/sprites/UI/icons/cooldown.png"),
-        fireRate = love.graphics.newImage("assets/sprites/UI/icons/fireRate.png"),
-        speed = love.graphics.newImage("assets/sprites/UI/icons/speed.png"),
-        range = love.graphics.newImage("assets/sprites/UI/icons/range.png"),
+        amount = love.graphics.newImage("assets/sprites/UI/icons/New/amount.png"),
+        ammo = love.graphics.newImage("assets/sprites/UI/icons/New/ammo.png"),
+        damage = love.graphics.newImage("assets/sprites/UI/icons/New/damage.png"),
+        cooldown = love.graphics.newImage("assets/sprites/UI/icons/New/cooldown.png"),
+        fireRate = love.graphics.newImage("assets/sprites/UI/icons/New/fireRate.png"),
+        speed = love.graphics.newImage("assets/sprites/UI/icons/New/speed.png"),
+        range = love.graphics.newImage("assets/sprites/UI/icons/New/range.png"),
         ballDamage = love.graphics.newImage("assets/sprites/UI/icons/ballDamage.png"),
         paddleSize = love.graphics.newImage("assets/sprites/UI/icons/paddleSize.png"),
         bulletDamage = love.graphics.newImage("assets/sprites/UI/icons/bulletDamage.png"),
@@ -251,7 +255,6 @@ local function loadAssets()
     glowShader = love.graphics.newShader("Shaders/glow.glsl")
 
     -- load spriteSheets
-    loadingVFX = love.graphics.newImage("assets/sprites/UI/loading.png")
     impactVFX = love.graphics.newImage("assets/sprites/VFX/Impact.png")
     smokeVFX = love.graphics.newImage("assets/sprites/VFX/smoke.png")
     sparkVFX = love.graphics.newImage("assets/sprites/VFX/spark.png")
@@ -261,9 +264,6 @@ local function loadAssets()
     fireballVFX = love.graphics.newImage("assets/sprites/VFX/fireball.png")
     sawBladesVFX = love.graphics.newImage("assets/sprites/VFX/sawBlades.png")
     fireVFX = love.graphics.newImage("assets/sprites/VFX/fire.png")
-    flamethrowerStartVFX = love.graphics.newImage("assets/sprites/VFX/flamethrowerStart.png")
-    flamethrowerLoopVFX = love.graphics.newImage("assets/sprites/VFX/flamethrowerLoop.png")
-    flamethrowerEndVFX = love.graphics.newImage("assets/sprites/VFX/flamethrowerEnd.png")
 
     Player.loadJsonValues()
     damageRipples.load()
@@ -575,7 +575,7 @@ function getBrickColor(health, bigBrick, boss, colorHealth)
     local saturation = math.max(0, 1 - math.sqrt((colorValue - 1) / 100))
     local lightness = 0.5
     local alpha = 1
-    return {HslaToRgba(hue, saturation, lightness, alpha)}
+    return {hslaToRgba(hue, saturation, lightness, alpha)}
 end
 
 function initializeBricks()
@@ -638,6 +638,7 @@ function stopConfetti()
 end
 
 function love.load()
+    math.randomseed(os.time())
     dress = suit.new()
     loadAssets() -- Load assets
 
@@ -1010,8 +1011,7 @@ local function gameFixedUpdate(dt)
             end
             VFX.update(dt) -- Update VFX
         end
-    end
-    
+    end    
 end
 
 local accumulator = 0
@@ -1084,7 +1084,8 @@ end
 
 local currentSelectedCoreID = 1
 local currentStartingItemID = 1
-local startingItemOrder = {"Ball", "Pistol", "Laser Beam", "Fireball"}
+local startingItemOrder = {"Ball", "Pistol", "Laser Beam", "Shadow Ball"}
+local isSpeedCore = false
 -- Add a new function for the starting item selection screen
 local function drawStartSelect()
     local centerX = screenWidth / 2 - buttonWidth / 2
@@ -1131,8 +1132,8 @@ local function drawStartSelect()
         itemDescription = "Fires bullets. \nFast fire rate."
     elseif item.label == "Laser Beam" then
         itemDescription = "Fire a thin Laser beam in front of the paddle."
-    elseif item.label == "Fireball" then
-        itemDescription = "Shoots fireballs that pass through bricks. \nVery slow fire rate."
+    elseif item.label == "Shadow Ball" then
+        itemDescription = "Shoots shadowBalls that pass through bricks. \nVery slow fire rate."
     elseif item.label == "Incrediball" then
         itemDescription = "Has the effects of every other ball (except phantom ball)."
     end
@@ -1224,7 +1225,7 @@ local function drawStartSelect()
         currentGameState = GameState.PLAYING
         -- initializeGameState()
         Player.bricksDestroyed = 0 -- Reset bricks destroyed count
-        if item.name ~= "Nothing" then
+        if item.name ~= "Nothing" and Player.currentCore ~= "Speed Core" then
             Balls.addBall(item.name)
         end
     end
@@ -1524,7 +1525,7 @@ end
 
 local function drawLevelUp()
     setFont(30)
-    local text = Player.currentCore == "Economy Core" and "Press SPACE to finish upgrading and gain +" .. math.min(math.floor(Player.money/5), 10) .. "$\n(+1$ for every 5 unspent $, max 10)" or "Press SPACE to finish upgrading and gain +" .. math.min(5, math.floor(Player.money/5)) .. "$\n(+1$ for every 5 unspent $, max 5)"
+    local text = Player.currentCore == "Economy Core" and "Press SPACE to finish upgrading and gain +" .. 12 .. "$\n(+1$ for every 5 unspent $, max 10)" or "Press SPACE to finish upgrading and gain +" .. 8 .. "$\n(+1$ for every 5 unspent $, max 5)"
     -- suit.Label(text, {align = "center"}, screenWidth/2 - 400, 75, 800, screenWidth/2 + 250)
 end
 
@@ -1707,7 +1708,8 @@ function love.draw()
     love.graphics.setCanvas(glowCanvas.bright)
     love.graphics.clear()
     -- Draw the paddle
-    love.graphics.rectangle("fill", paddle.x, paddle.y, paddle.width * paddle.widthMult, paddle.height)
+    love.graphics.draw(paddleImg, paddle.x, paddle.y - 2, 0,  paddle.width/250, 1)
+    -- love.graphics.rectangle("fill", paddle.x, paddle.y, paddle.width * paddle.widthMult, paddle.height)
     
     love.graphics.pop()
 
@@ -1740,7 +1742,8 @@ function love.draw()
     
     -- Now draw the paddle and other objects solid
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.rectangle("fill", paddle.x, paddle.y, paddle.width * paddle.widthMult, paddle.height)
+    love.graphics.draw(paddleImg, paddle.x, paddle.y - 2, 0,  paddle.width/250, 1)
+    -- love.graphics.rectangle("fill", paddle.x, paddle.y, paddle.width * paddle.widthMult, paddle.height)
     drawBricks()
     Balls.draw(Balls)
     drawLvlUpPopups()
@@ -1752,7 +1755,7 @@ function love.draw()
         --love.graphics.draw(heartImg, -20, 75 + ((heartImg:getHeight()*2 + 5)*(i-1)), 0, 4, 4)
     end
     love.graphics.setCanvas(gameCanvas)
-    love.graphics.rectangle("fill", paddle.x, paddle.y, paddle.width * paddle.widthMult, paddle.height)
+    -- love.graphics.rectangle("fill", paddle.x, paddle.y, paddle.width * paddle.widthMult, paddle.height)
     --love.graphics.draw(glowCanvas.bright)
 
     -- Draw explosions
@@ -1830,10 +1833,10 @@ moneyScale = {scale = 1}
 function love.keypressed(key)
     if key == "space" and Player.levelingUp then
         local moneyBefore = Player.money
-        if Player.currentCore == "Economy Core" then
-            Player.money = Player.money + math.min(10, math.floor(Player.money/5)) + 5 + getItemsIncomeBonus()
+        if hasItem("Abandon Greed") then
+            -- gain no money
         else
-            Player.money = Player.money + math.min(5, math.floor(Player.money/5)) + 5 + getItemsIncomeBonus()
+            Player.money = Player.money + 5 + math.floor(math.min(Player.money, Player.currentCore == "Economy Core" and 50 or 25)/5)
         end
         richGetRicherUpdate(moneyBefore, Player.money)
         itemsOnLevelUpEnd()

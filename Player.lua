@@ -13,7 +13,7 @@ function loadGameData()
         gold = 0,
         startingMoney = 0,
         permanentUpgrades = {},
-        paddleCores = {["Economy Core"] = true},  -- Initialize paddleCores
+        paddleCores = {["Collector's Core"] = true},  -- Initialize paddleCores
         permanentUpgradePrices = {
             amount = 100,
             speed = 100,
@@ -31,7 +31,7 @@ function loadGameData()
                 data.gold = fileData.gold or 0
                 data.startingMoney = fileData.startingMoney or 0
                 data.permanentUpgrades = fileData.permanentUpgrades or {}
-                data.paddleCores = fileData.paddleCores or { ["Economy Core"] = true }
+                data.paddleCores = fileData.paddleCores or { ["Collector's Core"] = true }
                 data.permanentUpgradePrices = fileData.permanentUpgradePrices or data.permanentUpgradePrices
                 data.startingItems = fileData.startingItems or data.startingItems
                 data.fastestTime = fileData.fastestTime or 100000000000
@@ -81,12 +81,12 @@ Player = {
     fastestTime = 1000000, -- in seconds
     bricksDestroyed = 0,
     lives = 1,
-    currentCore = "Economy Core",
+    currentCore = "Collector's Core",
     levelingUp = false,
     choosingUpgrade = false,
     price = 1,
     newUpgradePrice = 100,
-    selectedPaddleCore = "Economy Core",
+    selectedPaddleCore = "Collector's Core",
     upgradePriceMultScaling = 10,
     dead = false,
     lastHitTime = 0,
@@ -116,7 +116,7 @@ Player = {
     xpForNextLevel = 25,
     xp = 0,
     levelThreshold = 50, -- XP needed for each level
-    paddleCores = {["Economy Core"] = true},  -- Stores unlockedpaddle cores
+    paddleCores = {["Collector's Core"] = true},  -- Stores unlockedpaddle cores
 }
 
 function Player.initialize() 
@@ -130,14 +130,14 @@ function saveGameData()
     local hasBasicCore = false
     if Player.paddleCores then
         for core, _ in pairs(Player.paddleCores) do
-            if core == "Economy Core" then
+            if core == "Collector's Core" then
                 hasBasicCore = true
                 break
             end
         end
     end
     if not hasBasicCore then
-        Player.paddleCores["Economy Core"] = true  -- Ensure Basic Core is always present
+        Player.paddleCores["Collector's Core"] = true  -- Ensure Basic Core is always present
     end
     local data = {
         highScore = Player.highScore,
@@ -157,7 +157,7 @@ function saveGameData()
             amount = Player.permanentUpgrades.amount or 0,
             health = Player.permanentUpgrades.health or 0,
         },
-        paddleCores = Player.paddleCores or {["Economy Core"] = true},  -- Change this line
+        paddleCores = Player.paddleCores or {["Collector's Core"] = true},  -- Change this line
         permanentUpgradePrices = Player.permanentUpgradePrices,
         startingItems = Player.startingItems or {"Ball"},
     }
@@ -259,24 +259,29 @@ Player.upgradePaddle = {
 
 Player.availableCores = {
     {
-        name = "Economy Core",
-        description = "Interest cap is 10 instead of 5. \nStart with 20$",
-        price = 0,
+        name = "Collector's Core",
+        description = "You can have up to 5 items instead of 4.\n -1 to every stat",
+        price = 0
+    },
+    {
+        name = "Speed Core",
+        description = "Start at lvl 5 with 20$, 1 random common weapon and 1 random uncommon weapon",
+        price = 500
     },
     {
         name = "Farm Core",
         description = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown) \nYou can no longer upgrade when leveling up",
-        price = 500,
+        price = 1000,
     },
     {
-        name = "Collector's Core",
-        description = "You can have up to 5 items instead of 4.\n -1 to every stat",
-        price = 1000
+        name = "Economy Core",
+        description = "Interest cap is at 50$ instead of 25$. \nStart with 20$",
+        price = 1500,
     },
     {
         name = "Picky Core",
         description = "Rerolling items always costs 2$.\nYou can reroll once every time when you unlock a new weapon ",
-        price = 1500
+        price = 2000
     },
     --[[{   
         name = "Damage Core",
@@ -291,7 +296,8 @@ Player.availableCores = {
 }
 
 Player.coreDescriptions = {
-    ["Economy Core"] = "Interest cap is 10 instead of 5. \nStart with 20$ instead of 5",
+    ["Speed Core"] = "Start at lvl 5 with 20$, 1 random common weapon and 1 random uncommon weapon",
+    ["Economy Core"] = "Interest cap is at 50$ instead of 25$. \nStart with 20$",
     ["Collector's Core"] = "You can have up to 5 items instead of 4.\n There are only 2 items in the itemShop",
     ["Farm Core"] = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown) \nYou can no longer buy items",
     ["Picky Core"] = "Rerolling items always costs 2$\nConsumable cost half",
@@ -424,12 +430,13 @@ end
 function Player.levelUp()
     resetRerollPrice()
     Player.level = Player.level + 1
-    if Player.level % Player.newWeaponLevelRequirement == 0 then
+    if Player.level % 5 == 0 then
         if usingMoneySystem then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.2)
         end
         Player.newWeaponLevelRequirement = Player.newWeaponLevelRequirement + 5
-        unlockNewWeaponQueued = true
+        setLevelUpShop(true) -- Set the level up shop with ball unlockedBallTypes
+        Player.choosingUpgrade = true -- Set the flag to indicate leveling up
     end
     Player.xp = 0
     if Player.level % 2 == 0 then
@@ -441,11 +448,15 @@ function Player.levelUp()
         if Player.level < 5 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 2)
         elseif Player.level < 15 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.4)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.35)
         elseif Player.level < 25 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.265)
-        else
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.25)
+        elseif Player.level < 30 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.2) 
+        elseif Player.level < 50 then
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.15)
+        else
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 2)
         end
     end
     lvlUpPopup()
@@ -463,22 +474,30 @@ function Player.levelUp()
     end
     for _, item in pairs(Player.items) do
         if item.onLevelUp then
-            item.onLevelUp()
+            item.onLevelUp(item)
+            if hasItem("Birthday Hat") then
+                item.onLevelUp(item) -- Trigger a second time if the player has the Birthday Hat
+            end 
         end
     end
     if hasItem("Investment Guru") then
-        setItemShop({getItem("Long Term Investment")})
+        if hasItem("Birthday Hat") then
+            setItemShop({getItem("Long Term Investment"), getItem("Long Term Investment")})
+        else
+            setItemShop({getItem("Long Term Investment")})
+        end
+    elseif hasItem("Archeologist Hat") then
+        if hasItem("Birthday Hat") then
+            setItemShop({getRandomItemOfRarity("legendary", math.random(1,100) <= 25), getRandomItemOfRarity("rare", math.random(1,100) <= 25)})
+        else
+            setItemShop({getRandomItemOfRarity("legendary", math.random(1,100) <= 25)})
+        end
     else
         setItemShop()
     end
 end
 
 function Player.gain(amount)
-    if usingMoneySystem then
-        local moneyBefore = Player.money
-        Player.money = Player.money + amount
-        richGetRicherUpdate(moneyBefore, Player.money)
-    end
     Player.score = Player.score + amount
     Player.xp = Player.xp + amount -- XP follows score
     if Player.xp >= Player.xpForNextLevel then

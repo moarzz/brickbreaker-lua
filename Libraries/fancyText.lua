@@ -1,12 +1,24 @@
 local FancyText = {};
 FancyText.__index = FancyText;
 
-FancyText.font = PIXEL_FONT_128;--love.graphics.newFont("SpaceMono.ttf", 128);
-FancyText.fontHeight = FancyText.font:getHeight();
-
-FancyText.defaultFont = PIXEL_FONT_128;
+FancyText.font = PIXEL_FONT_128 or love.graphics.getFont()
+FancyText.fontHeight = FancyText.font:getHeight()
+FancyText.defaultFont = FancyText.font
 
 FancyText.DEFAULT_COLOURS = {
+    ["money"] = {14/255, 202/255, 92/255, 1};
+    ["negMoney"] = {164/255, 14/255, 14/255,1};
+    ["damage"] = {1,0,0};
+    ["cooldown"] = {1, 218/255, 0};
+    ["ammo"] = {72/255, 1, 0};
+    ["fireRate"] = {0, 1, 149/255};
+    ["amount"] = {0, 144/255, 1};
+    ["range"] = {95/255, 00.1, 1};
+    ["speed"] = {1, 0, 218/255};
+    ["rainbow"] = {1,0,0}; -- special case that is handled in the draw function
+    ["rainbow_slow"] = {1,0,0}; -- special case that is handled in the draw function
+    ["rainbow_fast"] = {1,0,0}; -- special case that is handled in the draw function
+    ["rainbow_insane"] = {1,0,0}; -- special case that is handled in the draw function
     ["red"] = {1,0,0};
     ["green"] = {0,1,0};
     ["blue"] = {0,0,1};
@@ -34,12 +46,12 @@ function FancyText.new(text, x, y, width, textHeight, alignment, font, dataRefer
     instance.x = x;
     instance.y = y;
 
-    instance.textHeight = textHeight or 20;
+    instance.textHeight = (type(textHeight) == "number" and textHeight > 0) and textHeight or 20;
 
     instance.width = width;
     instance.alignment = alignment or "left";
 
-    instance.text = text;
+    instance.text = text or "";
     instance.lines = nil; -- gets redefined in FancyText:alignText()
 
     instance.pointer = dataReference or {};
@@ -83,14 +95,20 @@ function FancyText:update()
 end
 
 function FancyText:alignText()
-    local realText = self.text;
+    local realText = self.text or "";
     realText = string.gsub(realText, "%b<>",
         function(strToReplace)
             -- check if it is changing a graphical component
             if string.find(strToReplace, "=") then
                 return nil; -- dont alter the string (yet)
             else -- otherwise its a key to the pointer table
-                return tostring(self.pointer[string.sub(strToReplace,2,-2)]);
+                local key = string.sub(strToReplace,2,-2)
+                local val = self.pointer[key]
+                if type(val) == "function" then
+                    return tostring(val())
+                else
+                    return tostring(val)
+                end
             end
         end
     );
@@ -253,7 +271,7 @@ function FancyText:getWidth()
 end
 
 function FancyText:draw()
-    local colour = self.DEFAULT_COLOURS.black;
+    local colour = self.DEFAULT_COLOURS.white;
     local highlight = self.DEFAULT_COLOURS.clear;
 
     local scale = self.textHeight / self.fontHeight;
