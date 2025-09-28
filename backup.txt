@@ -1,0 +1,11 @@
+-- Backup of original code in case of issues
+if spellName == "Chain Lightning" or spellName == "Lightning Ball" or spellName == "Incrediball" then
+    local ballType = unlockedBallTypes[spellName]
+    print("Casting Chain Lightning")
+    -- Per-brick cooldown table for Chain Lightning
+    local chainLength = 1
+    if spellName == "Chain Lightning" then
+        chainLength = 3
+    else
+        chainLength = (Player.currentCore == "Madness Core" and 2 or 1) * (ballType.stats.range + getStatItemsBonus("range", ballType) + (Player.permanentUpgrades.range or 0))
+    end

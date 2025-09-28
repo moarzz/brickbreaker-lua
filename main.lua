@@ -528,13 +528,13 @@ local function addMoreBricks()
             print("spawning more bricks")
             for i=1 , 10 do
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
-                currentRowPopulation = currentRowPopulation + math.floor(math.pow(math.ceil(Player.level * 0.8), 1.2))
+                currentRowPopulation = currentRowPopulation + math.floor(math.pow(math.ceil(Player.level), 1))
                 if spawnBossNextRow and not bossSpawned then
                     spawnBoss()
                     bossSpawned = true
                     spawnBossNextRow = false
                     currentRowPopulation = 1000
-                elseif not (bossSpawned or spawnBossNextRow) and gameTime >= 600 then
+                elseif not (bossSpawned or spawnBossNextRow) and Player.level >= 25 then
                     spawnBossNextRow = true
                 end
             end
@@ -589,7 +589,7 @@ function initializeBricks()
     rows = 10
     cols = 10
     brickSpeed = { value = 10 } -- Speed at which bricks move down (pixels per second)
-    currentRowPopulation = 1 -- Number of bricks in the first row
+    currentRowPopulation = Player.currentCore == "Speed Core" and 100 or 1 -- Number of bricks in the first row
 
     -- Generate bricks
     for i = 0, rows - 1 do
@@ -1831,7 +1831,7 @@ local testingMode = false
 local old_love_keypressed = love.keypressed
 moneyScale = {scale = 1}
 function love.keypressed(key)
-    if key == "space" and Player.levelingUp then
+    if key == "space" and Player.levelingUp and (not Player.choosingUpgrade) then
         local moneyBefore = Player.money
         if hasItem("Abandon Greed") then
             -- gain no money
@@ -1974,6 +1974,10 @@ function love.keypressed(key)
         -- level up
         if key == "e" then
             Player.levelUp()
+        end
+
+        if key == "u" then
+            createSpriteAnimation(500, 500, 1.25, fireballVFX, 64, 64, 0.075, 0, false, 1, 1, 0, nil, nil, nil, 8)
         end
 
         if key == "p" then

@@ -35,6 +35,7 @@ local burningBricksCooldown = {}
 local damageTimers = {}
 local fireAnims = {}
 local fireTimers = {}
+local lightningCooldowns = {} -- Table to track per-brick cooldowns for lightning spells
 
 local function burnBricksEnd(brickID)
     if not brickID then return end
@@ -987,12 +988,44 @@ end
 
 -- Table to hold active arcane missiles
 local arcaneMissiles = {}
+
+local function castArcaneMissile(ball)
+    -- Per-ball cooldown: only allow cast once per 2 seconds per ball
+    -- unlockedBallTypes["Arcane Missiles"].lastCast = love.timer.getTime()
+    local redo = true
+    local targetBrick = nil
+    while redo do
+        local brick = bricks[math.random(1, #bricks)]
+        if (not brick.destroyed) and brick.health > 0 and brick.y > -brick.height then
+            targetBrick = brick
+            redo = false
+        end
+    end
+    local angle = (math.random() * 0.5 - 0.75) * math.pi
+    local missileSpeed = 2000
+    local startX = paddle.x + paddle.width/2
+    local startY = paddle.y
+    local vx = math.cos(angle) * missileSpeed
+    local vy = math.sin(angle) * missileSpeed
+    table.insert(arcaneMissiles, {
+        name = "Arcane Missiles",
+        x = startX,
+        y = startY,
+        vx = vx,
+        vy = vy,
+        radius = 8,
+        damage = (ball.stats.damage or 1) + getStatItemsBonus("damage", ball) + (Player.permanentUpgrades.damage or 0),
+        alive = true,
+        target = targetBrick
+    })
+end
+
 local shadowBalls = {}
-local darts = {}
 local fireballs = {}
 
+local lastFireballsCastTime = 0
 local lightningSFXCooldown = 0
-local function cast(spellName, brick)
+local function cast(spellName, brick, forcedDamage)
     if Player.dead then
         return
     end   
@@ -1024,46 +1057,41 @@ local function cast(spellName, brick)
             cast("Shadow Ball")
         end)
     end
-    if spellName == "Arcane Missiles" then
+    --[[if spellName == "Arcane Missiles" then
         -- Per-ball cooldown: only allow cast once per 2 seconds per ball
-        if not unlockedBallTypes["Arcane Missiles"].lastCast or love.timer.getTime() - (unlockedBallTypes["Arcane Missiles"].lastCast or 0) >= 0.1 then
-            unlockedBallTypes["Arcane Missiles"].lastCast = love.timer.getTime()
-            for i = 1, (Player.currentCore == "Madness Core" and 2 or 1) * (unlockedBallTypes["Arcane Missiles"].stats.amount + getStatItemsBonus("amount", unlockedBallTypes["Arcane Missiles"]) + (Player.permanentUpgrades.amount or 0)) do
-                Timer.after((i-1) * 0.135, function()
-                    -- Pick a random valid brick at cast time
-                    local validBricks = {}
-                    for _, brick in ipairs(bricks) do
-                        if not brick.destroyed and brick.health > 0 and brick.y > -brick.height then
-                            table.insert(validBricks, brick)
-                        end
-                    end
-                    local targetBrick = nil
-                    if #validBricks > 0 then
-                        targetBrick = validBricks[math.random(1, #validBricks)]
-                    end
-                    local angle = (math.random() * 0.5 - 0.75) * math.pi
-                    local missileSpeed = 2000
-                    local startX = paddle.x + paddle.width/2
-                    local startY = paddle.y
-                    local vx = math.cos(angle) * missileSpeed
-                    local vy = math.sin(angle) * missileSpeed
-                    table.insert(arcaneMissiles, {
-                        name = "Arcane Missiles",
-                        x = startX,
-                        y = startY,
-                        vx = vx,
-                        vy = vy,
-                        radius = 8,
-                        damage = (unlockedBallTypes["Arcane Missiles"].stats.damage or 1) + getStatItemsBonus("damage", unlockedBallTypes["Arcane Missiles"]) + (Player.permanentUpgrades.damage or 0),
-                        alive = true,
-                        target = targetBrick
-                    })
-                end)
+        unlockedBallTypes["Arcane Missiles"].lastCast = love.timer.getTime()
+        -- Pick a random valid brick at cast time
+        local validBricks = {}
+        for _, brick in ipairs(bricks) do
+            if not brick.destroyed and brick.health > 0 and brick.y > -brick.height then
+                table.insert(validBricks, brick)
             end
         end
-    end
+        local targetBrick = nil
+        if #validBricks > 0 then
+            targetBrick = validBricks[math.random(1, #validBricks)]
+        end
+        local angle = (math.random() * 0.5 - 0.75) * math.pi
+        local missileSpeed = 2000
+        local startX = paddle.x + paddle.width/2
+        local startY = paddle.y
+        local vx = math.cos(angle) * missileSpeed
+        local vy = math.sin(angle) * missileSpeed
+        table.insert(arcaneMissiles, {
+            name = "Arcane Missiles",
+            x = startX,
+            y = startY,
+            vx = vx,
+            vy = vy,
+            radius = 8,
+            damage = (unlockedBallTypes["Arcane Missiles"].stats.damage or 1) + getStatItemsBonus("damage", unlockedBallTypes["Arcane Missiles"]) + (Player.permanentUpgrades.damage or 0),
+            alive = true,
+            target = targetBrick
+        })
+    end]]
     if spellName == "Fireballs" then
         print("Casting Fireballs")
+        lastFireballsCastTime = gameTime
         for i=1, (Player.currentCore == "Madness Core" and 2 or 1) * (unlockedBallTypes["Fireballs"].stats.amount + getStatItemsBonus("amount", unlockedBallTypes["Fireballs"]) + (Player.permanentUpgrades.amount or 0)) do
             local angle = (math.random() * 0.5 + 0.25) * math.pi
             local speed = 600
@@ -1078,7 +1106,6 @@ local function cast(spellName, brick)
                 damage = unlockedBallTypes["Fireballs"].stats.damage + getStatItemsBonus("damage", unlockedBallTypes["Fireballs"]) + (Player.permanentUpgrades.damage or 0),
                 trail = {},
                 dead = false,
-                animation = createSpriteAnimation(xTo, paddle.y, 1, fireballVFX, 512, 512, 0.01, 0, false, 1, 1, 0) 
             }
             table.insert(fireballs, fireball)
             local fireballStartTween = tween.new(0.25, fireballs[#fireballs], {radius = 10}, tween.outExpo)
@@ -1086,25 +1113,6 @@ local function cast(spellName, brick)
         end
         local cooldownValue = ((Player.currentCore == "Madness Core" and 0.5 or 1) * 8 + 4) / (unlockedBallTypes["Fireballs"].stats.fireRate + getStatItemsBonus("fireRate", unlockedBallTypes["Fireballs"]) + (Player.permanentUpgrades.fireRate or 0))
         local timeUntilNextCast = (3 + math.max(cooldownValue, 0))/4
-        print("Next Fireball in: " .. timeUntilNextCast .. " seconds")
-        Timer.after(timeUntilNextCast, function()
-            cast("Fireballs")
-        end)
-    end
-    if spellName == "Poison Dart" then
-        print("Poison Dart")
-        local speed = 500
-        local angle = math.rad((math.random() * 0.04 + 0.48) * 180)
-        local dart = {
-            x = paddle.x + paddle.width / 2,
-            y = paddle.y,
-            speedX = speed * math.cos(angle),
-            speedY = -speed * math.sin(angle),
-            radius = 10,
-            trail = {},
-            dead = false
-        }
-        table.insert(darts, dart)
     end
     if spellName == "Lightning Pulse" then
         print("Casting Lightning Pulse")
@@ -1145,57 +1153,78 @@ local function cast(spellName, brick)
     end
     if spellName == "Chain Lightning" or spellName == "Lightning Ball" or spellName == "Incrediball" then
         local ballType = unlockedBallTypes[spellName]
-        print("Casting Chain Lightning")
-        -- Per-brick cooldown table for Chain Lightning
-        if not ballType.chainCooldowns then
-            ballType.chainCooldowns = {}
+        print("Casting Lightning spell: " .. spellName)
+        
+        -- Skip if brick is on cooldown
+        if brick and lightningCooldowns[brick.id] and (love.timer.getTime() - lightningCooldowns[brick.id]) < 0.2 then
+            print("Brick still on cooldown for lightning spell")
+            return
         end
-        local chainCooldowns = ballType.chainCooldowns
-        local chainLength = (Player.currentCore == "Madness Core" and 2 or 1) * (ballType.stats.range + getStatItemsBonus("range", ballType) + (Player.permanentUpgrades.range or 0))
+        
+        -- Set cooldown for this brick
+        if brick then
+            lightningCooldowns[brick.id] = love.timer.getTime()
+        end
+        
+        local chainLength = 1
+        if spellName == "Chain Lightning" then
+            chainLength = 3
+        else
+            chainLength = (Player.currentCore == "Madness Core" and 2 or 1) * (ballType.stats.range + getStatItemsBonus("range", ballType) + (Player.permanentUpgrades.range or 0))
+        end
         local function chainStep(currentBrick, step)
             if step > chainLength or not currentBrick then return end
-            local now = love.timer.getTime()
-            -- Only allow if cooldown expired
-            if not chainCooldowns[currentBrick] or now - chainCooldowns[currentBrick] >= 0.2 then
-                chainCooldowns[currentBrick] = now
-                local currentX, currentY = currentBrick.x, currentBrick.y
-                local touchingBricks = getBricksInCircle(currentX, currentY, 100)
-                -- Filter out valid targets
-                local validTargets = {}
-                for _, b in ipairs(touchingBricks) do
-                    if b ~= currentBrick and not b.destroyed and b.health > 0 and b.y > -brick.height then
-                        table.insert(validTargets, b)
+            
+            -- Skip bricks on cooldown
+            if lightningCooldowns[currentBrick] and (love.timer.getTime() - lightningCooldowns[currentBrick]) < 0.2 then
+                print("Chain target brick on cooldown, skipping")
+                return
+            end
+            
+            -- Set cooldown for chain target
+            lightningCooldowns[currentBrick] = love.timer.getTime()
+            
+            local currentX, currentY = currentBrick.x, currentBrick.y
+            local touchingBricks = getBricksInCircle(currentX, currentY, 100)
+            -- Filter out valid targets
+            local validTargets = {}
+            for _, b in ipairs(touchingBricks) do
+                if b ~= currentBrick and not b.destroyed and b.health > 0 and b.y > -brick.height then
+                    table.insert(validTargets, b)
+                end
+            end
+            if #validTargets > 0 then
+                -- Find the nearest brick in validTargets
+                local minDist = math.huge
+                local targetBrick = nil
+                for _, b in ipairs(validTargets) do
+                    local dx = b.x - currentBrick.x
+                    local dy = b.y - currentBrick.y
+                    local dist = dx*dx + dy*dy
+                    if dist < minDist then
+                        minDist = dist
+                        targetBrick = b
                     end
                 end
-                if #validTargets > 0 then
-                    -- Find the nearest brick in validTargets
-                    local minDist = math.huge
-                    local targetBrick = nil
-                    for _, b in ipairs(validTargets) do
-                        local dx = b.x - currentBrick.x
-                        local dy = b.y - currentBrick.y
-                        local dist = dx*dx + dy*dy
-                        if dist < minDist then
-                            minDist = dist
-                            targetBrick = b
-                        end
+                if targetBrick then
+                    local scaleX = math.sqrt((targetBrick.x - currentBrick.x)^2 + (targetBrick.y - currentBrick.y)^2)/256
+                    local angle = math.atan2(targetBrick.y - currentBrick.y, targetBrick.x - currentBrick.x) * 180 / math.pi
+                    local spawnX = ((currentBrick.x + currentBrick.width / 2) + (targetBrick.x + targetBrick.width / 2)) / 2
+                    local spawnY = ((currentBrick.y + currentBrick.height / 2) + (targetBrick.y + targetBrick.height / 2)) / 2
+                    local distance = math.sqrt((targetBrick.x - currentBrick.x)^2 + (targetBrick.y - currentBrick.y)^2)
+                    if lightningSFXCooldown <= 0 then
+                        playSoundEffect(lightningSFX, 0.3, 0.75)
+                        lightningSFXCooldown = 0.05
                     end
-                    if targetBrick then
-                        local scaleX = math.sqrt((targetBrick.x - currentBrick.x)^2 + (targetBrick.y - currentBrick.y)^2)/256
-                        local angle = math.atan2(targetBrick.y - currentBrick.y, targetBrick.x - currentBrick.x) * 180 / math.pi
-                        local spawnX = ((currentBrick.x + currentBrick.width / 2) + (targetBrick.x + targetBrick.width / 2)) / 2
-                        local spawnY = ((currentBrick.y + currentBrick.height / 2) + (targetBrick.y + targetBrick.height / 2)) / 2
-                        local distance = math.sqrt((targetBrick.x - currentBrick.x)^2 + (targetBrick.y - currentBrick.y)^2)
-                        if lightningSFXCooldown <= 0 then
-                            playSoundEffect(lightningSFX, 0.3, 0.75)
-                            lightningSFXCooldown = 0.05
-                        end
-                        createSpriteAnimation(spawnX, spawnY, mapRangeClamped(distance, 0, 350, 2.0, 1.0), chainLightningVFX, 256, 128, 0.075, 0, false, scaleX, scaleX*1.5, angle)
-                        Timer.after(0.3, function()
+                    createSpriteAnimation(spawnX, spawnY, mapRangeClamped(distance, 0, 350, 2.0, 1.0), chainLightningVFX, 256, 128, 0.075, 0, false, scaleX, scaleX*1.5, angle)
+                    Timer.after(0.3, function()
+                        if forcedDamage then
+                            dealDamage({stats = {damage = forcedDamage}}, targetBrick)
+                        else
                             dealDamage(ballType, targetBrick)
-                            chainStep(targetBrick, step + 1)
-                        end)
-                    end
+                        end
+                        chainStep(targetBrick, step + 1)
+                    end)
                 end
             else
                 print("Chain Lightning on brick is on cooldown.")
@@ -1296,7 +1325,7 @@ local function ballListInit()
                 speed = 150,
                 damage = 1,
             },
-            attractionStrength = 2000
+            attractionStrength = 2500
         },
         ["Lightning Ball"] = {
             name = "Lightning Ball",
@@ -1646,7 +1675,7 @@ local function ballListInit()
                 fireRate = 1,
             }
         },
-        --[[["Fireballs"] = {
+        ["Fireballs"] = {
             name = "Fireballs",
             type = "spell",
             x = screenWidth / 2,
@@ -1655,7 +1684,7 @@ local function ballListInit()
             noAmount = true,
             rarity = "rare",
             startingPrice = 100,
-            description = "on paddle bounce, shoot a fireball that explodes on impact, dealing area damage.",
+            description = "shoot fireballs that explodes on impact, dealing area damage.",
             color = {1, 0.3, 0, 1}, -- Orange color for Fireball
             onBuy = function()
                 cast("Fireballs")
@@ -1664,36 +1693,8 @@ local function ballListInit()
             stats = {
                 amount = 1,
                 damage = 1,
-                fireRate = 2,
-                range = 3
-            },
-        },]]
-        ["Arcane Missiles"] = {
-            name = "Arcane Missiles",
-            type = "spell",
-            x = screenWidth / 2,
-            y = screenHeight / 2,
-            size = 1,
-            noAmount = true,
-            rarity = "legendary",
-            startingPrice = 500,
-            description = "on paddle bounce, shoot missiles at the nearest brick",
-            color = {0.5, 0, 0.5, 1}, -- Purple color for Arcane Missile
-            canBuy = function()
-                local ballCount = 0
-                for _, ballType in pairs(unlockedBallTypes) do
-                    if ballType.type == "ball" or ballType.name == "Ball Gun" or ballType.name == "Gun Ball Gun" then
-                        ballCount = ballCount + 1
-                    end
-                end
-                return ballCount >= 4
-            end,
-            onPaddleBounce = function()
-                cast("Arcane Missiles")
-            end,
-            stats = {
-                amount = 1,
-                damage = 1,
+                fireRate = 1,
+                range = 2
             },
         },
         ["Lightning Pulse"] = {
@@ -1715,34 +1716,6 @@ local function ballListInit()
                 damage = 1,
                 amount = 1, -- Amount of Lightning Pulses
             },
-        },
-        ["Chain Lightning"] = {
-            name = "Chain Lightning",
-            type = "spell",
-            x = screenWidth / 2,
-            y = screenHeight / 2,
-            size = 1,
-            noAmount = true,
-            rarity = "legendary",
-            startingPrice = 500,
-            description = "on bullet first hit, start a lightning chain that bounces between nearby bricks.",
-            color = {0.5, 0.5, 1, 1},
-            onBulletHit = function(brick)
-                cast("Chain Lightning", brick)
-            end,
-            stats = {
-                damage = 1,
-                range = 1
-            },
-            canBuy = function()
-                local gunCount = 0
-                for _, ballType in pairs(unlockedBallTypes) do
-                    if ballType.type == "gun" or ballType.name == "Gun Ball" or ballType.name == "Gun Turrets" or ballType.name == "Incrediball" then
-                        gunCount = gunCount + 1
-                    end
-                end
-                return gunCount >= 4
-            end,
         },
         ["Gun Ball Gun"] = {
             name = "Gun Ball Gun",
@@ -1847,7 +1820,8 @@ local function speedCoreInitialize()
             ::continue2::
         end
     end
-
+    currentRowPopulation = 100
+    Player.xpForNextLevel = 162
     addBallsQueued = true
 end
 
@@ -2201,6 +2175,9 @@ local function brickCollisionEffects(ball, brick)
             end
         end
     end
+    if hasItem("Arcane Missiles") then
+        castArcaneMissile(ball)
+    end
     if ball.onBounce then
         ball.onBounce(ball)
     end
@@ -2321,7 +2298,7 @@ local function brickCollisionCheck(ball)
 end
 
 local function paddleCollisionCheck(ball, paddle)
-    local effectiveRadius = ball.name == "Phantom Ball" and (ball.stats.range + getStatItemsBonus("range", ballList["Phantom Ball"])) * 7 * (Player.currentCore == "Madness Core" and 2 or 1) or ball.radius
+    local effectiveRadius = ball.name == "Phantom Ball" and (ball.stats.range + getStatItemsBonus("range", ballList["Phantom Ball"])) * 15 * (Player.currentCore == "Madness Core" and 2 or 1) or ball.radius
     if ball.x + effectiveRadius > paddle.x and ball.x - effectiveRadius < paddle.x + paddle.width and
        ball.y + effectiveRadius > paddle.y and ball.y - effectiveRadius < paddle.y + paddle.height  and 
        ((ball.y > paddle.y + paddle.height and ball.speedY < 0) or ball.y < paddle.y + paddle.height and ball.speedY > 0) then
@@ -2330,6 +2307,7 @@ local function paddleCollisionCheck(ball, paddle)
             local bulletSpeed = 1500
             local speedX = math.random(-500,500)
             local speed = {x = speedX, y = -math.sqrt(bulletSpeed*bulletSpeed - speedX*speedX)}
+            local critChance = hasItem("Four Leafed Clover") and 60 or 30
             local bullet = {
                 x = paddle.x + paddle.width/2,
                 y = paddle.y - 5,
@@ -2378,7 +2356,7 @@ local function wallCollisionCheck(ball)
     local leftWallPosition = usingMoneySystem and statsWidth or 0
     local rightWallPosition = screenWidth - (usingMoneySystem and statsWidth or 0)
     local wallHit = false
-    local effectiveRadius = ball.name == "Phantom Ball" and (ball.stats.range + getStatItemsBonus("range", ballList["Phantom Ball"])) * 7 * (Player.currentCore == "Madness Core" and 2 or 1) or ball.radius
+    local effectiveRadius = ball.name == "Phantom Ball" and (ball.stats.range + getStatItemsBonus("range", ballList["Phantom Ball"])) * 15 * (Player.currentCore == "Madness Core" and 2 or 1) or ball.radius
     if ball.x - effectiveRadius < leftWallPosition and ball.speedX < 0 then
         ball.speedX = -ball.speedX
         ball.x = leftWallPosition + effectiveRadius -- Ensure the ball is not stuck in the wall
@@ -2426,6 +2404,7 @@ local function wallCollisionCheck(ball)
                 ballType.onWallBounce() -- Call the onWallBounce function if it exists
             end
         end
+
         if ball.onBounce then 
             ball.onBounce(ball)
         end
@@ -2867,14 +2846,14 @@ local function spellsUpdate(dt)
                 if not brick.destroyed and brick.health > 0 then
                     if missile.x + missile.radius > brick.x and missile.x - missile.radius < brick.x + brick.width and
                        missile.y + missile.radius > brick.y and missile.y - missile.radius < brick.y + brick.height then
-                        dealDamage({stats={damage=missile.damage}, name = "Arcane Missiles", type = "spell"}, brick)
+                        dealDamage({stats={damage=missile.damage}}, brick)
                         missile.alive = false
                         break
                     end
                 end
             end
             -- Remove if off screen
-            if missile.x < statsWidth or missile.x > screenWidth - statsWidth or missile.y < 0 or missile.y > screenHeight then
+            if missile.y < 0 or missile.y > screenHeight then
                 missile.alive = false
             end
         else
@@ -2893,6 +2872,65 @@ local function spellsUpdate(dt)
                     if dist <= burst.radius then
                         dealDamage({stats={damage=burst.damage}}, brick)
                         burst.hitBricks[brick] = true
+                    end
+                end
+            end
+        end
+    end
+
+    if unlockedBallTypes["Fireballs"] then
+        local fireballsCooldown = 20/(unlockedBallTypes["Fireballs"].stats.fireRate + getStatItemsBonus("fireRate", unlockedBallTypes["Fireballs"]) + (Player.permanentUpgrades.fireRate or 0))
+        if gameTime - lastFireballsCastTime >= fireballsCooldown then
+            cast("Fireballs")
+        end
+        for i = #fireballs, 1, -1 do
+            local fireball = fireballs[i]
+            fireball.x = fireball.x + fireball.speedX * dt
+            fireball.y = fireball.y + fireball.speedY * dt
+            if fireball.animation == nil then
+                local angle = math.atan2(fireball.speedY, fireball.speedX)* 360 / (2 * math.pi)
+                print("angle: " .. angle)
+                local animID = createSpriteAnimation(fireball.x, fireball.y, 1, fireballVFX, 64, 64, 0.05, 0, true, 1, 1, angle, {1,1,1,1}, false, nil, 8)                                        
+                fireball.animation = getAnimation(animID)
+            else
+                fireball.animation.x = fireball.x
+                fireball.animation.y = fireball.y
+            end
+            if fireball.x < 0 and fireball.speedX < 0 then
+                fireball.speedX = -fireball.speedX
+                -- Update animation angle after bounce
+                local angle = math.atan2(fireball.speedY, fireball.speedX) * 180 / math.pi
+                if fireball.animation then
+                    fireball.animation.angle = angle
+                end
+            elseif fireball.x > screenWidth and fireball.speedX > 0 then
+                fireball.speedX = -fireball.speedX
+                local angle = math.atan2(fireball.speedY, fireball.speedX) * 180 / math.pi
+                if fireball.animation then
+                    fireball.animation.angle = angle
+                end
+            end
+            -- Fireball collision with bricks
+            for _, brick in ipairs(bricks) do
+                if not brick.destroyed and brick.health > 0 then
+                    if fireball.x + fireball.radius > brick.x and fireball.x - fireball.radius < brick.x + brick.width and
+                       fireball.y + fireball.radius > brick.y and fireball.y - fireball.radius < brick.y + brick.height then
+                        -- Deal damage and create explosion effect
+                        dealDamage(fireball, brick)
+                        local scale = (fireball.stats.range or 1) * 0.5 * (Player.currentCore == "Madness Core" and 2 or 1)
+                        createSpriteAnimation(fireball.x, fireball.y, scale, explosionVFX, 512, 512, 0.01, 5)
+                        playSoundEffect(explosionSFX, 0.5, 1, false, true)
+                        -- Area damage to nearby bricks
+                        local area = (fireball.stats.range or 1) * 24 * (Player.currentCore == "Madness Core" and 2 or 1)
+                        local bricksTouchingCircle = getBricksInCircle(fireball.x, fireball.y, area)
+                        for _, touchingBrick in ipairs(bricksTouchingCircle) do
+                            if touchingBrick and touchingBrick ~= brick and touchingBrick.health > 0 then
+                                dealDamage(fireball, touchingBrick)
+                            end
+                        end
+                        removeAnimation(fireball.animation.id)
+                        table.remove(fireballs, i)
+                        break
                     end
                 end
             end
@@ -2927,6 +2965,13 @@ end
 
 -- Modify the Balls.update function to include shadowBall updates
 function Balls.update(dt, paddle, bricks)
+    -- Clean up expired lightning cooldowns
+    for brick, lastCastTime in pairs(lightningCooldowns) do
+        if love.timer.getTime() - lastCastTime > 0.2 then
+            lightningCooldowns[brick] = nil
+        end
+    end
+    
     if addBallsQueued then
         Balls.addBall(commonWeapons[math.random(1, #commonWeapons)])
         Balls.addBall(uncommonWeapons[math.random(1, #uncommonWeapons)])
@@ -3110,7 +3155,7 @@ function Balls.update(dt, paddle, bricks)
                 end
                 -- Apply magnetic attraction to nearest brick
                 if nearestBrick then
-                    local attractionStrength = ball.attractionStrength or 425
+                    local attractionStrength = ball.attractionStrength or 800
                     local dx = (nearestBrick.x + nearestBrick.width/2) - ball.x
                     local dy = (nearestBrick.y + nearestBrick.height/2) - ball.y
                     local dist = math.sqrt(dx*dx + dy*dy)
@@ -3280,10 +3325,8 @@ function Balls.update(dt, paddle, bricks)
                             end
                         end
                         if not bullet.hasTriggeredOnBulletHit then
-                            for _, ballType in pairs(unlockedBallTypes) do
-                                if ballType.type == "spell" and ballType.onBulletHit then
-                                    ballType.onBulletHit(brick)
-                                end
+                            if hasItem("Tesla Bullets") then
+                                cast("Chain Lightning", brick, bullet.stats.damage)
                             end
                             bullet.hasTriggeredOnBulletHit = true
                         end
@@ -3292,7 +3335,7 @@ function Balls.update(dt, paddle, bricks)
                         local kill = dealDamage(bullet, brick)
 
                         if hasItem("Phantom Bullets") then
-                            bullet.stats.damage = bullet.stats.damage - 1
+                            bullet.stats.damage = bullet.stats.damage - 2
                         end
                         if (not kill and (not bullet.golden)) or (hasItem("Phantom Bullets") and bullet.stats.damage <= 0) then
                             bullet.trailFade = 1
@@ -3359,7 +3402,7 @@ function Balls.update(dt, paddle, bricks)
         if Player.levelingUp and not Player.choosingUpgrade then
             flamethrower.vfx:stop()
             -- Optionally clear particles to avoid leftover lag
-            flamethrower.vfx:clear()
+            --flamethrower.vfx:clear()
         else
             flamethrower.vfx:setPosition(paddle.x + paddle.width / 2, paddle.y)
             flamethrower.vfx:update(dt)
@@ -3579,11 +3622,21 @@ local function techDraw()
     end
 end
 
+local function spellDraw()
+    if unlockedBallTypes["Fireballs"] then
+        for _, fireball in ipairs(fireballs) do
+            
+        end
+    end
+end
+
 local function drawSpells()
-    ArcaneMissile.draw()
-    FlameBurst.draw()
-    for _, shadowBall in ipairs(shadowBalls) do
-        drawShadowBall(shadowBall)
+    if not Player.levelingUp or Player.choosingUpgrade then
+        ArcaneMissile.draw()
+        FlameBurst.draw()
+        for _, shadowBall in ipairs(shadowBalls) do
+            drawShadowBall(shadowBall)
+        end
     end
 end
 
@@ -3644,7 +3697,7 @@ function Balls:draw()
             end
 
             if ball.name == "Phantom Ball" then
-                local auraSize = (ball.stats.range + getStatItemsBonus("range", ball) + (Player.permanentUpgrades.range or 0)) * 20 * (Player.currentCore == "Madness Core" and 2 or 1)
+                local auraSize = (ball.stats.range + getStatItemsBonus("range", ball) + (Player.permanentUpgrades.range or 0)) * 15 * (Player.currentCore == "Madness Core" and 2 or 1)
                 -- Draw aura
                 love.graphics.setColor(0, 0, 1, 1)
                 drawImageCentered(auraImg, ball.x, ball.y, auraSize, auraSize)

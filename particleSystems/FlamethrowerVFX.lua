@@ -15,29 +15,30 @@ function FlamethrowerVFX:new(x, y, direction)
     -- Particle system properties
     self.particles = {}
     self.maxParticles = 600 -- Increased from 150
-    self.spawnRate = 4 -- particles per frame when active
+    self.spawnRate = 3 -- particles per frame when active
     self.particleIdCounter = 0 -- For unique particle IDs
     self.time = 0 -- For turbulence calculations
     
     -- Flame properties
     self.baseSpeed = 550
     self.speedVariation = 80
-    self.spread = math.pi / 6 -- 30 degrees spread
+    self.spread = math.pi / 5 -- 30 degrees spread
     self.range = 500
     self.gravity = 35
     
     -- Turbulence properties
-    self.turbulenceStrength = 40
+    self.turbulenceStrength = 150
     self.turbulenceFrequency = 3
     
     -- Visual properties optimized for additive blending
     self.colors = {
-        {1.0, 1.0, 0.8, 0.5}, -- Hot white core
-        {1.0, 0.8, 0.2, 0.3}, -- Bright yellow
+        {1.0, 0.9, 0.7, 0.5}, -- Hot white core
+        {1.0, 0.6, 0.15, 0.25}, -- Yellow-orange
         {1.0, 0.4, 0.1, 0.2}, -- Orange
-        {0.8, 0.2, 0.1, 0.1}, -- Red
-        {0.3, 0.1, 0.1, 0.075}, -- Dark red/smoke
-        {0.1, 0.1, 0.1, 0.05}  -- Smoke
+        {0.9, 0.3, 0.1, 0.175}, -- Reddish orange
+        {0.8, 0.2, 0.1, 0.15}, -- Red
+        {0.55, 0.1, 0.1, 0.125}, -- Dark red
+        {0.1, 0.1, 0.1, 0.025}  -- Smoke
     }
     
     -- Performance optimization: pre-calculate values
@@ -54,7 +55,7 @@ function FlamethrowerVFX:createParticle()
     
     self.particleIdCounter = self.particleIdCounter + 1
     
-    local maxLife = 1.2 + math.random() * 0.6
+    local maxLife = (1.2 + math.random() * 0.6) * 0.7
     return {
         x = self.x,
         y = self.y,
@@ -125,38 +126,50 @@ function FlamethrowerVFX:update(dt)
 end
 
 function FlamethrowerVFX:getParticleColor(life)
-    local colorIndex = math.floor((1 - life) * (#self.colors - 1)) + 1 + (life > 0.95 and 0 or 1)
-    colorIndex = math.min(colorIndex, #self.colors)
-    
-    local color = self.colors[colorIndex]
-    local alpha = color[4] * life -- Fade out over time
-    
-    return color[1], color[2], color[3], alpha
+        -- Lerp between all palette colors for a smooth gradient
+        local palette = self.colors
+        local t = 1 - life -- 0 = birth, 1 = death
+        local idx = t * (#palette - 1) + 1
+        local i1 = math.floor(idx)
+        local i2 = math.min(i1 + 1, #palette)
+        local frac = idx - i1
+        local c1, c2 = palette[i1], palette[i2]
+        local r = c1[1] * (1 - frac) + c2[1] * frac
+        local g = c1[2] * (1 - frac) + c2[2] * frac
+        local b = c1[3] * (1 - frac) + c2[3] * frac
+        local a = (c1[4] * (1 - frac) + c2[4] * frac) * life
+        return r, g, b, a
 end
 
 function FlamethrowerVFX:render()
-    -- Sort particles by life (render older particles first for better blending)
-    table.sort(self.particles, function(a, b) return a.life < b.life end)
-    
-    for _, p in ipairs(self.particles) do
-        local r, g, b, a = self:getParticleColor(p.life)
-        
-        -- Set color and alpha
-        love.graphics.setColor(r, g, b, a)
-        
-        -- Draw particle as a rotated rectangle or circle
-        love.graphics.push()
-        love.graphics.translate(p.x, p.y)
-        love.graphics.rotate(p.rotation)
-        
-        -- Draw as stretched oval for flame-like appearance
-        love.graphics.ellipse("fill", 0, 0, p.size, p.size * 1.5)
-        
-        love.graphics.pop()
-    end
-    
-    -- Reset color
-    love.graphics.setColor(1, 1, 1, 1)
+        -- Draw a dark background rectangle so additive particles are visible
+        love.graphics.setColor(0.08, 0.08, 0.08, 0.2)
+        --love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+
+        love.graphics.setBlendMode("add", "premultiplied")
+        -- Sort particles by life (render older particles first for better blending)
+        table.sort(self.particles, function(a, b) return a.life < b.life end)
+
+        local boost = 0.8 -- Adjust for desired opacity
+        for _, p in ipairs(self.particles) do
+            local r, g, b, a = self:getParticleColor(p.life)
+            -- Premultiplied alpha and boost
+            love.graphics.setColor(r * a * boost, g * a * boost, b * a * boost, a * boost)
+
+            love.graphics.push()
+            love.graphics.translate(p.x, p.y)
+            love.graphics.rotate(p.rotation)
+            love.graphics.setBlendMode("alpha")
+            love.graphics.setColor(r, g, b, a)
+            love.graphics.ellipse("fill", 0, 0, p.size, p.size * 1.5)
+            love.graphics.setBlendMode("add", "premultiplied")
+            love.graphics.setColor(r * a * boost, g * a * boost, b * a * boost, a * boost)
+            love.graphics.ellipse("fill", 0, 0, p.size, p.size * 1.5)
+            love.graphics.pop()
+        end
+
+        love.graphics.setBlendMode("alpha")
+        love.graphics.setColor(1, 1, 1, 1)
 end
 
 function FlamethrowerVFX:start()

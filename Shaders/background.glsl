@@ -11,8 +11,8 @@ vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
 {
     // set adjustable parameters
     float scaleMult = 0.35 + intensity * 0.4; // Adjust the scale multiplier based on intensity
-    float brightnessMultBoost = brightness * 1.5 + intensity * 1.0;
-    float brightnessOffsetBoost = -2.5;
+    float brightnessMultBoost = brightness * 1.5 + intensity * 1.0 + 0.5;
+    float brightnessOffsetBoost = -1;
 
     // Create our output color variable
     vec4 fragColor = vec4(0.0, 0.0, 0.0, 1.0);  // Initialize with alpha = 1.0

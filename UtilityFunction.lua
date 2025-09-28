@@ -556,7 +556,8 @@ function resetAnimations()
     animationID = 1 -- Reset the animation ID counter
 end
 
-function createSpriteAnimation(x, y, scale, spritesheet, frameWidth, frameHeight, frameTime, skipFrames, looping, scaleX, scaleY, angle, color, isFire, brickId)
+function createSpriteAnimation(x, y, scale, spritesheet, frameWidth, frameHeight, frameTime, skipFrames, looping, scaleX, scaleY, angle, color, isFire, brickId, lastFrame)
+    
     looping = looping or false
     local animation = {}
     animation.id = animationID
@@ -577,6 +578,7 @@ function createSpriteAnimation(x, y, scale, spritesheet, frameWidth, frameHeight
     animation.color = color or {1,1,1,1} -- Default alpha value for the animation
     animation.isFire = isFire or false -- Flag to indicate if this is a fire animation
     animation.brickId = brickId or nil -- Store the brick ID if applicable
+    animation.lastFrame = lastFrame or nil
 
     animationID = animationID + 1 -- Increment the animation ID for the next animation
 
@@ -588,6 +590,9 @@ function createSpriteAnimation(x, y, scale, spritesheet, frameWidth, frameHeight
         for x = 0, sheetWidth - frameWidth, frameWidth do
             table.insert(animation.quads, love.graphics.newQuad(x, y, frameWidth, frameHeight, sheetWidth, sheetHeight))
         end
+    end
+    if animation.lastFrame == nil then
+        animation.lastFrame = #animation.quads
     end
     table.insert(animations, animation) -- Store the animation in the animations table
     return animation.id
@@ -746,14 +751,15 @@ function updateAnimations(dt)
         animation.elapsedTime = animation.elapsedTime + dt
         if animation.elapsedTime >= animation.frameTime then
             animation.elapsedTime = animation.elapsedTime - animation.frameTime
-            animation.currentFrame = animation.currentFrame + 1
-            if animation.currentFrame > #animation.quads then
+            if animation.currentFrame >= animation.lastFrame then
                 if animation.looping then
                     animation.currentFrame = 1
                 else
                     table.remove(animations, i) -- Remove the animation if it has finished
                     goto continue
                 end
+            else
+                animation.currentFrame = animation.currentFrame + 1
             end
         end
 
