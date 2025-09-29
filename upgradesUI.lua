@@ -71,15 +71,35 @@ local items = {
     ["Financial Plan"] = {
         name = "Financial Plan",
         stats = {},
-        description = "<font=bold>on level up</font=bold><font=default>\ngain </font=default><font=big><color=money>4$",
+        description = "<font=bold>on level up</font=bold><font=default>\ngain </font=default><font=big><color=money>5$",
         onLevelUp = function() 
             local moneyBefore = Player.money
             if not hasItem("Abandon Greed") then
-                Player.money = Player.money + 4
+                Player.money = Player.money + 5
                 richGetRicherUpdate(moneyBefore, Player.money)
             end
         end,
         rarity = "common"
+    },
+    ["Coupon Collector"] = {
+        name = "Coupon Collector",
+        stats = {},
+        description = "<font=bold>On Level Up</font=bold><font=default>\ngain <color=money>2$</color=money><color=white> and reduce the upgrade price of a weapon by </color=white><color=money>1$</color=money><color=white>\n\n</font=default><font=big>Consumable Items</font=big><font=default> cost </color=white><color=money>1$</color=money><color=white> less",
+        rarity = "test",
+        onLevelUp = function()
+            if not hasItem("Abandon Greed") then
+                Player.money = Player.money + 2
+            end
+            local randomWeaponId = math.random(1, tableLength(Balls.getUnlockedBallTypes()))
+            local i = 1 
+            for weaponId, weapon in pairs(Balls.getUnlockedBallTypes()) do
+                if i == randomWeaponId then
+                    weapon.price = math.max(weapon.price - 1, 0)
+                    break
+                end
+                i = i + 1
+            end
+        end
     },
     ["Livin' on a Prayer"] = {
         name = "Livin' on a Prayer",
@@ -100,7 +120,7 @@ local items = {
                     end
                 end
             else
-                self.randomnessMult = self.randomnessMult + 0.25
+                self.randomnessMult = self.randomnessMult + 0.2
             end
         end,
     },
@@ -125,6 +145,12 @@ local items = {
         end,
         consumable = true
     },
+    ["Huge Paddle"] = {
+        name = "Huge Paddle",
+        stats = {amount = 1},
+        description = "paddle width is increased by <font=bold>50%</font=bold><font=default>",
+        rarity = "common"
+    },
     ["Loaded Dices"] = {
         name = "Loaded Dices",
         stats = {},
@@ -134,10 +160,55 @@ local items = {
             rerollPrice = 0
         end
     },
+    ["Mechanic"] = {
+        name = "Mechanic",
+        stats = {},
+        description = "<font=bold>on level up</font=bold><font=default>\nupgrade a random stat from a random weapon",
+        rarity = "common",
+        onLevelUp = function()
+            local unlockedWeapons = Balls.getUnlockedBallTypes()
+            if tableLength(unlockedWeapons) == 0 then return end
+            
+            -- Select a random weapon
+            local randomWeaponIndex = math.random(1, tableLength(unlockedWeapons))
+            local selectedWeapon
+            local i = 1
+            for _, weapon in pairs(unlockedWeapons) do
+                if i == randomWeaponIndex then
+                    selectedWeapon = weapon
+                    break
+                end
+                i = i + 1
+            end
+            
+            if not selectedWeapon then return end
+                     
+            local statList = {}
+            for statName, _ in pairs(selectedWeapon.stats) do
+                table.insert(statList, statName)
+            end
+            local statToUpgrade = statList[math.random(1, #statList)]
+
+            if statToUpgrade == "cooldown" then
+                selectedWeapon.stats.cooldown = math.max(1, (selectedWeapon.stats.cooldown or 1) - 1)
+            elseif statToUpgrade == "speed" then
+                selectedWeapon.stats.speed = (selectedWeapon.stats.speed or 0) + 50
+            elseif statToUpgrade == "amount" and selectedWeapon.type == "ball" then
+                selectedWeapon.ballAmount = (selectedWeapon.ballAmount or 1) + 1
+                Balls.addBall(selectedWeapon.name, true)
+            elseif statToUpgrade == "ammo" then
+                selectedWeapon.ammo = (selectedWeapon.ammo or 0) + selectedWeapon.ammoMult
+            else
+                selectedWeapon.stats[statToUpgrade] = (selectedWeapon.stats[statToUpgrade] or 0) + 1
+            end
+            
+            print("Upgraded " .. selectedWeapon.name .. "'s " .. statToUpgrade .. " by 1!")
+        end
+    },
     ["Handy Wrench"] = {
         name = "Handy Wrench",
         stats = {},
-        description = "When you buy this, reduce the upgrade price of a random weapon by 2 (min 0)",
+        description = "When you buy this, reduce the upgrade price of a random weapon by 3 (min 0)",
         priceDiff = -1,
         rarity = "common",
         onBuy = function() 
@@ -145,7 +216,7 @@ local items = {
             local i = 1
             for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
                 if i == randomWeaponId then
-                    weapon.price = math.max(weapon.price - 2, 0)
+                    weapon.price = math.max(weapon.price - 3, 0)
                     break
                 end
                 i = i + 1
@@ -215,62 +286,18 @@ local items = {
     ["Degenerate Gambling"] = {
         name = "Degenerate Gambling",
         stats = {},
-        description = "<font=bold>on level up\n35%</font=bold><font=default> chance to gain <font=big><color=money>20$</color=money>",
+        description = "<font=bold>on level up\n40%</font=bold><font=default> chance to gain <font=big><color=money>25$</color=money>",
         rarity = "uncommon",
+        randomnessMult = 0.8,
         onLevelUp = function() 
-            if math.random(1,100) <= (hasItem("Four Leafed Clover") and 35 or 70) and not hasItem("Abandon Greed") then
+            if math.random(1,100) <= (hasItem("Four Leafed Clover") and 80 or 40) and not hasItem("Abandon Greed") then
                 local moneyBefore = Player.money
-                Player.money = Player.money + 20
+                Player.money = Player.money + 25
                 richGetRicherUpdate(moneyBefore, Player.money)
             end
         end
     },
-    ["Mechanic"] = {
-        name = "Mechanic",
-        stats = {},
-        description = "<font=bold>on level up</font=bold><font=default>\nupgrade a random stat from a random weapon",
-        rarity = "uncommon",
-        onLevelUp = function()
-            local unlockedWeapons = Balls.getUnlockedBallTypes()
-            if tableLength(unlockedWeapons) == 0 then return end
-            
-            -- Select a random weapon
-            local randomWeaponIndex = math.random(1, tableLength(unlockedWeapons))
-            local selectedWeapon
-            local i = 1
-            for _, weapon in pairs(unlockedWeapons) do
-                if i == randomWeaponIndex then
-                    selectedWeapon = weapon
-                    break
-                end
-                i = i + 1
-            end
-            
-            if not selectedWeapon then return end
-                     
-            local statList = {}
-            for statName, _ in pairs(selectedWeapon.stats) do
-                table.insert(statList, statName)
-            end
-            local statToUpgrade = statList[math.random(1, #statList)]
-
-            if statToUpgrade == "cooldown" then
-                selectedWeapon.stats.cooldown = math.max(1, (selectedWeapon.stats.cooldown or 1) - 1)
-            elseif statToUpgrade == "speed" then
-                selectedWeapon.stats.speed = (selectedWeapon.stats.speed or 0) + 50
-            elseif statToUpgrade == "amount" and selectedWeapon.type == "ball" then
-                selectedWeapon.ballAmount = (selectedWeapon.ballAmount or 1) + 1
-                Balls.addBall(selectedWeapon.name, true)
-            elseif statToUpgrade == "ammo" then
-                selectedWeapon.ammo = (selectedWeapon.ammo or 0) + selectedWeapon.ammoMult
-            else
-                selectedWeapon.stats[statToUpgrade] = (selectedWeapon.stats[statToUpgrade] or 0) + 1
-            end
-            
-            print("Upgraded " .. selectedWeapon.name .. "'s " .. statToUpgrade .. " by 1!")
-        end
-    },
-    ["Nerdy Glasses"] = {
+    --[[["Nerdy Glasses"] = {
         name = "Nerdy Glasses",
         stats = {damage = -1, speed = -1, cooldown = 1, size = -1, amount = -1, range = -1, fireRate = -1, ammo = -1},
         onLevelUp = function()
@@ -281,13 +308,7 @@ local items = {
         description = "<font=bold>on level up</font=bold><font=default>\ngain </font=default><font=big><color=money>10$</font=big><font=default></color=money><color=white>\n-1 to every stat (+1 to cooldown)",
         descriptionOverwrite = true,
         rarity = "uncommon",
-    },
-    ["Bouncy Walls"] = {
-        name = "Bouncy Walls",
-        stats = {amount = 1, speed = 1},
-        description = "Balls gain a temporary boost of speed after bouncing off walls",
-        rarity = "uncommon"
-    },
+    },]]
     ["Swiss Army Knife"] = {
         name = "Swiss Army Knife",
         stats = {damage = 1, fireRate = 1, speed = 1, cooldown = -1, size = 1, amount = 1, range = 1, ammo = 1},
@@ -313,12 +334,6 @@ local items = {
         description = "While you own this item, 'Incrediball' is added to the pool of weapons you can unlcock.",
         rarity = "uncommon"
     },
-    ["Huge Paddle"] = {
-        name = "Huge Paddle",
-        stats = {amount = 2},
-        description = "paddle width is increased by <font=bold>75%</font=bold><font=default>",
-        rarity = "uncommon"
-    },
     ["Four Leafed Clover"] = {
         name = "Four Leafed Clover",
         stats = {},
@@ -328,10 +343,10 @@ local items = {
     ["Flash Sale"] = {
         name = "Flash Sale",
         stats = {},
-        description = "Reduce the upgrade price of all of your items by 2 (min 0)",
+        description = "Reduce the upgrade price of all of your items by 3 (min 0)",
         onBuy = function() 
             for _, weaponType in pairs(Balls.getUnlockedBallTypes()) do
-                weaponType.price = math.max(weaponType.price - 2, 0)
+                weaponType.price = math.max(weaponType.price - 3, 0)
             end
         end,
         rarity = "uncommon",
@@ -352,10 +367,15 @@ local items = {
     ["Rich Get Richer"] = {
         name = "Rich Get Richer",
         stats = {amount = 0, fireRate = 0},
-        description = "+1 for every <color=money><font=big>25$</color=money></font=big><color=white><font=default> you have",
+        description = "+1 for every <color=money><font=big>20$</color=money></font=big><color=white><font=default> you have",
         rarity = "uncommon",
         onBuy = function(self)
-            local bonus = math.floor(Player.money / 25)
+            local bonus = math.floor(Player.money / 20)
+            self.stats.amount = bonus
+            self.stats.fireRate = bonus
+        end,
+        onInShop = function(self)
+            local bonus = math.floor(Player.money / 20)
             self.stats.amount = bonus
             self.stats.fireRate = bonus
         end
@@ -393,6 +413,32 @@ local items = {
         end,
         rarity = "uncommon"
     },
+    ["Assassin's Cloak"] = {
+        name = "Assassin's Cloak",
+        stats = {damage = 2},
+        description = "Damage has a <font=bold>25%</font=bold><font=default> chance to be doubled",
+        rarity = "uncommon",
+    },
+    ["Tesla Bullets"] = {
+        name = "Tesla Bullets",
+        stats = {fireRate = 2},
+        description = "<font=bold>On Bullet Hit\n50%</font=bold><font=default> chance to start an electric current that jumps to 3 nearby bricks. Dealing the bullet's <color=damage>damage</color>",
+        rarity = "uncommon"
+    },
+    ["Overclock"] = {
+        name = "Overclock",
+        stats = {},
+        description = "When you buy this, all your weapons get a permanent upgrade to a random one of their stats",
+        rarity = "uncommon",
+        onBuy = function() FarmCoreUpgrade() end,
+        consumable = true
+    },
+    ["Split Shooter"] = {
+        name = "Split Shooter",
+        stats = {ammo = 2},
+        description = "Bullets have a <font=bold>25%</font=bold><font=default> chance to split into 2 after being shot",
+        rarity = "uncommon"
+    },
     ["+9 buff"] = {
         name = "+9 buff",
         rarity = "rare",
@@ -407,10 +453,16 @@ local items = {
             self.stats[randomStatName] = 9 * (randomStatName == "cooldown" and -1 or 1)
         end
     },
-    ["Tesla Bullets"] = {
-        name = "Tesla Bullets",
-        stats = {fireRate = 2},
-        description = "<font=bold>On Bullet Hit</font=bold>\n<font=default> start an electric current that jumps to 3 nearby bricks. Dealing the bullet's <color=damage>damage</color>",
+    ["Bouncy Walls"] = {
+        name = "Bouncy Walls",
+        stats = {amount = 2, speed = 2},
+        description = "Balls gain a temporary boost of speed after bouncing off walls",
+        rarity = "rare"
+    },
+    ["Sommelier"] = {
+        name = "Sommelier",
+        stats = {},
+        description = "<font=big>Consumable Items</font=big><font=default> trigger twice",
         rarity = "rare"
     },
     ["Arcane Missiles"] = {
@@ -424,12 +476,6 @@ local items = {
         stats = {},
         description = "<font=bold>On level up</font=bold><font=default>\nadd a </font=default><font=bold>Long Term Investment</font=bold><font=default> in the shop",
         rarity = "rare"
-    },
-    ["Assassin's Cloak"] = {
-        name = "Assassin's Cloak",
-        stats = {damage = 2},
-        description = "Damage has a <font=bold>30%</font=bold><font=default> chance to be doubled",
-        rarity = "rare",
     },
     ["Birthday Hat"] = {
         name = "Birthday Hat",
@@ -468,18 +514,10 @@ local items = {
             self.stats[thirdRandomStatName] = 3 * (thirdRandomStatName == "cooldown" and -1 or 1)
         end
     },
-    ["Overclock"] = {
-        name = "Overclock",
+    ["Glorious Evolution"] = {
+        name = "Glorious Evolution",
         stats = {},
-        description = "When you buy this, all your weapons get a permanent upgrade to a random one of their stats",
-        rarity = "rare",
-        onBuy = function() FarmCoreUpgrade() end,
-        consumable = true
-    },
-    ["Abandon Greed"] = {
-        name = "Abandon Greed",
-        stats = {},
-        description = "<font=bold>On level up</font=bold><font=default>\nupgrade all stats of a random weapon by 1\nYou can no longer gain money",
+        description = "<font=bold>On level up</font=bold><font=default>\nupgrade all stats of a random weapon by 1",
         rarity = "rare",
         onLevelUp = function()
             local randomWeaponId = math.random(1, tableLength(Balls.getUnlockedBallTypes()))
@@ -507,18 +545,19 @@ local items = {
     },
     ["Recession"] = {
         name = "Recession",
-        stats = {},
-        description = "<font=bold>On Level Up</font=bold><font=default>\nreduce the upgrade price of all your items by 1 (min 0)",
+        stats = {damage = -2, speed = -2, amount = -2, range = -2, fireRate = -2, ammo = -2, cooldown = 2},
+        description = "<font=bold>On Level Up</font=bold><font=default>\nreduce the upgrade price of all your items by 2 (min 0)\n-2 to every stat (cooldown +2)",
+        descriptionOverwrite = true,
         rarity = "rare",
         onLevelUp = function() 
             for _, weaponType in pairs(Balls.getUnlockedBallTypes()) do
-                weaponType.price = math.max(weaponType.price - 1, 0)
+                weaponType.price = math.max(weaponType.price - 2, 0)
             end
         end
     },
     ["Phantom Bullets"] = {
         name = "Phantom Bullets",
-        stats = {damage = -2},
+        stats = {},
         description = "Bullets only lose 2 dmg when they pass through bricks",
         rarity = "rare"
     },
@@ -527,12 +566,6 @@ local items = {
         stats = {speed = 2, cooldown = -2, size = 2, amount = 2, range = 2, fireRate = 2, ammo = 2},
         description = "Increases all stats of your weapons by 2 (except damage), but decreases cooldown by 2",
         descriptionOverwrite = true,
-        rarity = "rare"
-    },
-    ["Split Shooter"] = {
-        name = "Split Shooter",
-        stats = {},
-        description = "Bullets have a <font=bold>50%</font=bold><font=default> chance to split into 2 after being shot",
         rarity = "rare"
     },
     ["Blind Violence"] = {
@@ -558,26 +591,25 @@ local items = {
         end,
         rarity = "rare"
     },
-    --[[["Buy the Dip"] = {
+    ["Buy the Dip"] = {
         name = "Buy the Dip",
         stats = {},
-        description = "When you buy this, set the upgrade price of the weapon with the highest price to 0",
+        description = "When you buy this, set the upgrade price of a random weapon with the highest price to 0",
         rarity = "rare",
         consumable = true,
         onBuy = function() 
             local highestPrice = 0
             local highestWeapon = nil
+            local randomId = math.random(1, tableLength(Balls.getUnlockedBallTypes()))
+            local i = 1
             for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
-                if weapon.price > highestPrice then
-                    highestPrice = weapon.price
-                    highestWeapon = weapon
+                if i == randomId then
+                    weapon.price = 0
                 end
-            end
-            if highestWeapon then
-                highestWeapon.price = 0
+                i = i + 1
             end
         end
-    },]]
+    },
     ["Total Anihilation"] = {
         name = "Total Anihilation",
         stats = {damage = 2, range = 2},
@@ -1491,7 +1523,7 @@ local function drawBallStats()
                 }
                 local buttonID
                 buttonID = generateNextButtonID() -- Generate a unique ID for the button
-                local upgradeStatButton = dress:Button("", {color = invisButtonColor, id = buttonID}, statsX, labelY-10, cellWidth, 150)
+                --local upgradeStatButton = dress:Button("", {color = invisButtonColor, id = buttonID}, statsX, labelY-10, cellWidth, 150)
                 -- Right-click to remove all queued upgrades of this stat
                 local canUpgrade = true
                 -- Core-specific restrictions
@@ -1511,7 +1543,7 @@ local function drawBallStats()
                         upgradeQueued = true
                     end
                 end
-                if ((upgradeStatButton.hit or (upgradeQueued and Player.money >= math.ceil(ballType.price))) and canUpgrade) and (usingMoneySystem or Player.levelingUp) then
+                --[[if ((upgradeStatButton.hit or (upgradeQueued and Player.money >= math.ceil(ballType.price))) and canUpgrade) and (usingMoneySystem or Player.levelingUp) then
                     if Player.money < math.ceil(ballType.price) then
                         -- does nothing
                     elseif statName == "cooldown" and getStat(ballName, "cooldown") <= 0 then
@@ -1557,7 +1589,7 @@ local function drawBallStats()
                     hoveredStatName = statName
                 elseif upgradeStatButton.left then
                     hoveredStatName = nil
-                end
+                end]]
                 
                 local upgradeCount = 0
                 for _, queuedUpgrade in ipairs(ballType.queuedUpgrades) do
@@ -1575,6 +1607,59 @@ local function drawBallStats()
             end
         end
         suit.layout:row(statsWidth, 20) -- Add spacing for the separator
+        
+        -- upgrade button
+        local buttonId = ballType.name .. "_upgradeButton"
+        local upgradeStatButton = dress:Button("", {color = invisButtonColor, id = buttonId}, currentX + 10, y + 15, getRarityWindow("common"):getWidth() - 30, getRarityWindow("common"):getHeight()/2 - 30)
+        if upgradeStatButton.hit then
+            if Player.money < math.ceil(ballType.price) then
+                -- does nothing
+            else
+                playSoundEffect(upgradeSFX, 0.5, 0.95, false)
+                Player.pay(math.ceil(ballType.price)) -- Deduct the cost from the player's money
+                local totalStats = {}
+                for statName, statValue in pairs(ballType.stats) do
+                    totalStats[statName] = statValue
+                end
+                if ballType.type == "ball" then
+                    totalStats["amount"] = ballType.ballAmount
+                end
+                ballType.price = ballType.price + tableLength(totalStats)
+                for statName, statValue in pairs(totalStats) do
+                    if statName == "cooldown" and getStat(ballName, "cooldown") <= 0 then
+                        print("cannot upgrade cooldown any further")       
+                    else
+                        if upgradeQueued then
+                            for i, queuedUpgrade in ipairs(ballType.queuedUpgrades) do
+                                if queuedUpgrade == statName then
+                                    table.remove(ballType.queuedUpgrades, i)
+                                    break
+                                end
+                            end
+                        end
+                        setFont(16)
+                        print("Upgrading " .. ballType.name .. "'s " .. statName)
+                        local stat = ballType.stats[statName] or 0-- Get the current stat value
+                        if statName == "speed" then
+                            ballType.stats.speed = ballType.stats.speed + 50 -- Example action
+                            Balls.adjustSpeed(ballType.name) -- Adjust the speed of the ball
+                        elseif statName == "amount" and ballType.type == "ball" then
+                            Balls.addBall(ballType.name, true) -- Add a new ball of the same type
+                            ballType.ballAmount = ballType.ballAmount + 1
+                        elseif statName == "cooldown" then
+                            ballType.stats.cooldown = ballType.stats.cooldown - 1
+                        elseif statName == "ammo" then
+                            print(ballType.name .. " ammo increased by " .. ballType.ammoMult)
+                            ballType.currentAmmo = ballType.currentAmmo + ballType.ammoMult -- Increase ammo by ammoMult
+                            ballType.stats.ammo = ballType.stats.ammo + ballType.ammoMult -- Example action
+                        else
+                            ballType.stats[statName] = ballType.stats[statName] + 1 -- Example action
+                            print( "stat ".. statName .. " increased to " .. ballType.stats[statName])
+                        end
+                    end
+                end
+            end
+        end
         
         -- Move to next horizontal position
         currentX = currentX + statsWidth + 50 -- Move right for next ball (20px spacing)
@@ -1601,7 +1686,7 @@ local function drawBallStats()
     love.graphics.setColor(1, 1, 1, 1)
     setFont(35)
     local levelRequirement = Player.newWeaponLevelRequirement or 5
-    suit.Button("unlock new weapon at lvl " .. levelRequirement, {align = "center", color = invisButtonColor}, suit.layout:row(uiSmallWindowImg:getWidth() - 35, uiSmallWindowImg:getHeight() - 35))
+    suit.Label("unlock new weapon at lvl " .. levelRequirement, {align = "center", color = invisButtonColor}, suit.layout:row(uiSmallWindowImg:getWidth() - 35, uiSmallWindowImg:getHeight() - 35))
     if unlockNewWeaponQueued then
         --[[ Balls.NextBallPriceIncrease()
         setLevelUpShop(true) -- Set the level up shop with ball unlockedBallTypes
@@ -1930,6 +2015,9 @@ local function drawItemShop()
                 if Player.currentCore == "Picky Core" then
                     upgradePrice = math.ceil(upgradePrice * 0.5)
                 end
+                if hasItem("Coupon Collector") then
+                    upgradePrice = upgradePrice - 1
+                end
             end
 
             local color = (tableLength(Player.items) >= maxItems and not item.consumable) and {0.6, 0.6, 0.6, 1} or {1, 1, 1, 1}
@@ -1971,6 +2059,9 @@ local function drawItemShop()
                     table.remove(displayedItems, index)
                     if item.onBuy then
                         item.onBuy(item)
+                        if item.consumable and hasItem("Sommelier") then
+                            item.onBuy(item)
+                        end
                     end
                     if not item.consumable then
                         table.insert(Player.items, item)
@@ -2016,7 +2107,7 @@ local function drawPlayerItems()
         
         -- Determine scale factor based on item count
         local itemCount = #Player.items
-        local scaleFactor = maxItems <= 4  and 0.75 or 0.6 -- Scale down when more than 3 items
+        local scaleFactor = maxItems <= 4  and 0.86 or 0.69 -- Scale down when more than 3 items (increased by 15%)
         
         -- Scale fonts and sizes
         local titleFontSize = math.floor(40 * scaleFactor)
@@ -2025,8 +2116,8 @@ local function drawPlayerItems()
         local moneyFontSize = math.floor(30 * scaleFactor)
         
         -- Scale image dimensions
-        local imgScaleX = 0.9 * scaleFactor
-        local imgScaleY = 0.7 * scaleFactor
+        local imgScaleX = 1.035 * scaleFactor -- 0.9 * 1.15
+        local imgScaleY = 0.805 * scaleFactor -- 0.7 * 1.15
         
         -- Scale spacing and positioning
         local baseSpacing = 10 * scaleFactor

@@ -74,9 +74,9 @@ local mt = {
         end
         if hasItem("Huge Paddle") and k == "width" then
             if hasItem("Four Leafed Clover") then
-                return value * 2.5
+                return value * 2.25
             else
-                return value * 1.75
+                return value * 1.5
             end
         else
             return value
@@ -208,6 +208,8 @@ local function loadAssets()
     muzzleFlashImg = love.graphics.newImage("assets/sprites/muzzleFlash.png")
     rocketImg = love.graphics.newImage("assets/sprites/rocket.png")
     turretImg = love.graphics.newImage("assets/sprites/turret.png")
+    turretBaseImg = love.graphics.newImage("assets/sprites/turretBase.png")
+    turretGunImg = love.graphics.newImage("assets/sprites/turretGun.png")
     brickPiece1Img = love.graphics.newImage("assets/sprites/brickPiece1.png")
     brickPiece2Img = love.graphics.newImage("assets/sprites/brickPiece2.png")
     brickPiece3Img = love.graphics.newImage("assets/sprites/brickPiece3.png")
@@ -931,7 +933,7 @@ local function gameFixedUpdate(dt)
 
         local function updateGameTime(dt)
             if not UtilityFunction.freeze and not (Player.choosingUpgrade or Player.levelingUp) then
-                gameTime = gameTime + 1/60 * playRate
+                gameTime = gameTime + dt / 0.4 / 1.75
             end
         end
         
@@ -1948,7 +1950,7 @@ function love.keypressed(key)
         end
 
         if key == "7" then
-            Balls.addBall("Laser")
+            Balls.addBall("Gun Turrets")
         end
 
         -----------------------------------

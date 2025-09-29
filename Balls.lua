@@ -437,7 +437,7 @@ function dealDamage(ball, brick, burnDamage)
         damage = math.ceil(damage / 2)
     end
 
-    local critChance = hasItem("Four Leafed Clover") and 60 or 30
+    local critChance = hasItem("Four Leafed Clover") and 50 or 25
     if hasItem("Assassin's Cloak") and math.random(1,100) <= critChance and ball.type ~= "bullet" then
         damage = damage * 2
     end
@@ -526,7 +526,7 @@ local function shoot(gunName, ball)
                 playSoundEffect(gunShootSFX, 0.8, 0.8, false, true)
                 shootSFXCooldown = 0.05
             end
-            local critChance = hasItem("Four Leafed Clover") and 60 or 30
+            local critChance = hasItem("Four Leafed Clover") and 50 or 25
             table.insert(bullets, {
                 name = "Gun Ball",
                 type = "bullet",
@@ -666,7 +666,7 @@ local function shoot(gunName, ball)
             elseif gun.name == "Shotgun" then
                 for i = 1, 7 do
                     local speedXref = spray and (math.random(-gun.bulletSpeed * 0.8, gun.bulletSpeed * 0.8) + speedOffset) or (math.random(-250, 250) + speedOffset)
-                    local critChance = hasItem("Four Leafed Clover") and 60 or 30
+                    local critChance = hasItem("Four Leafed Clover") and 50 or 25
                     table.insert(bullets, {
                         name = "Shotgun",
                         type = "bullet",
@@ -698,7 +698,7 @@ local function shoot(gunName, ball)
                     speedXref = 0
                     speedYref = -bulletSpeed -- Default to straight up if no target found
                 end
-                local critChance = hasItem("Four Leafed Clover") and 60 or 30
+                local critChance = hasItem("Four Leafed Clover") and 50 or 25
                 table.insert(bullets, {
                     name = gun.name,
                     type = "bullet",
@@ -716,7 +716,7 @@ local function shoot(gunName, ball)
             else -- default shooting behavior
                 local speedXref = spray and (math.random(-gun.bulletSpeed * 0.8, gun.bulletSpeed * 0.8) + speedOffset) or (math.random(-150, 150) + speedOffset)
                 local xBruh = paddle.x + paddle.width / 2 + ((speedXref - speedOffset)/(spray and gun.bulletSpeed * 0.8 or 200))*50
-                local critChance = hasItem("Four Leafed Clover") and 60 or 30
+                local critChance = hasItem("Four Leafed Clover") and 50 or 25
                 table.insert(bullets, {
                     name = gun.name,
                     type = "bullet",
@@ -797,14 +797,14 @@ local function turretShoot(turret)
             shootSFXCooldown = 0.05
         end
         local bulletSpeed = turretType.bulletSpeed or 2000
-        local speed = {x =math.cos(turret.angle - math.pi/2) * bulletSpeed, y = math.sin(turret.angle - math.pi/2) * bulletSpeed}
+        local speed = {x =math.cos((turret.angle + turret.angleOffset) - math.pi/2) * bulletSpeed, y = math.sin((turret.angle + turret.angleOffset) - math.pi/2) * bulletSpeed}
         local normalizedSpeedX, normalizedSpeedY = normalizeVector(speed.x, speed.y)
         local bulletDamage = ((turretType.stats.damage) + getStatItemsBonus("damage", unlockedBallTypes["Gun Turrets"]) + (Player.permanentUpgrades.damage or 0)) * (Player.currentCore == "Madness Core" and 0.5 or (Player.currentCore == "Damage Core" and 5 or 1))
         if Player.currentCore == "Phantom Core" then bulletDamage = math.max(math.floor(bulletDamage /2),1) end
-        local critChance = hasItem("Four Leafed Clover") and 60 or 30
+        local critChance = hasItem("Four Leafed Clover") and 50 or 25
         local bullet = {
-            x = turret.x + normalizedSpeedX * turret.radius/2,
-            y = turret.y + normalizedSpeedY * turret.radius/2,
+            x = turret.x + normalizedSpeedX * turret.radius,
+            y = turret.y + normalizedSpeedY * turret.radius * 0.8,
             speedX = speed.x,
             speedY = speed.y,
             radius = 5,
@@ -959,6 +959,7 @@ fire = function(techName)
                 radius = 0,
                 currentAmmo = (Player.currentCore == "Madness Core" and 2 or 1) * (turretType.stats.ammo + getStatItemsBonus("ammo", turretType)),
                 angle = (startDir == 1 and math.pi*0.25 or -math.pi*0.25),
+                angleOffset = math.random(-100, 100)/100 * math.pi * 0.2,
                 stats = turretType.stats,
                 alive = true,
             }
@@ -1101,14 +1102,14 @@ local function cast(spellName, brick, forcedDamage)
                 y = paddle.y,
                 speedX = speed * math.cos(angle),
                 speedY = -speed * math.sin(angle),
-                radius = 10,
+                radius = 0,
                 stats = unlockedBallTypes["Fireballs"].stats,
                 damage = unlockedBallTypes["Fireballs"].stats.damage + getStatItemsBonus("damage", unlockedBallTypes["Fireballs"]) + (Player.permanentUpgrades.damage or 0),
                 trail = {},
                 dead = false,
             }
             table.insert(fireballs, fireball)
-            local fireballStartTween = tween.new(0.25, fireballs[#fireballs], {radius = 10}, tween.outExpo)
+            local fireballStartTween = tween.new(0.25, fireballs[#fireballs], {radius = 15}, tween.outExpo)
             addTweenToUpdate(fireballStartTween)
         end
         local cooldownValue = ((Player.currentCore == "Madness Core" and 0.5 or 1) * 8 + 4) / (unlockedBallTypes["Fireballs"].stats.fireRate + getStatItemsBonus("fireRate", unlockedBallTypes["Fireballs"]) + (Player.permanentUpgrades.fireRate or 0))
@@ -1828,7 +1829,7 @@ end
 -- calls ballListInit and adds a ball to it
 function Balls.initialize()
     initializeRarityItemLists()
-    longTermInvestment.value = 0
+    longTermInvestment.value = 1
     if Player.currentCore == "Collector's Core" then
         setMaxItems(5)
     else
@@ -1874,7 +1875,6 @@ function Balls.initialize()
     Player.newStatLevelRequirement = 10
     Player.newWeaponLevelRequirement = 5
     uiOffset.x = usingMoneySystem and 0 or statsWidth * 1.5
-    -- Balls.addBall("Fireballs")
 end
 
 function Balls.amountDecrease(decreaseValue)
@@ -1961,13 +1961,13 @@ function Balls.addBall(ballName, singleBall)
             upgradePrice = Player.currentCore == "Economy Core" and ballTemplate.startingPrice*0.5 or ballTemplate.startingPrice
         else
             if ballTemplate.rarity == "common" then
-                upgradePrice = 1
-            elseif ballTemplate.rarity == "uncommon" then
                 upgradePrice = 2
+            elseif ballTemplate.rarity == "uncommon" then
+                upgradePrice = 4
             elseif ballTemplate.rarity == "rare" then
-                upgradePrice = 3
+                upgradePrice = 6
             elseif ballTemplate.rarity == "legendary" then
-                upgradePrice = 5
+                upgradePrice = 8
             else
                 upgradePrice = 1
             end
@@ -2307,7 +2307,7 @@ local function paddleCollisionCheck(ball, paddle)
             local bulletSpeed = 1500
             local speedX = math.random(-500,500)
             local speed = {x = speedX, y = -math.sqrt(bulletSpeed*bulletSpeed - speedX*speedX)}
-            local critChance = hasItem("Four Leafed Clover") and 60 or 30
+            local critChance = hasItem("Four Leafed Clover") and 50 or 25
             local bullet = {
                 x = paddle.x + paddle.width/2,
                 y = paddle.y - 5,
@@ -3265,7 +3265,8 @@ function Balls.update(dt, paddle, bricks)
             bullet.distanceTraveled = bullet.distanceTraveled + math.sqrt(bullet.speedX^2 + bullet.speedY^2) * dt
             if not bullet.hasSplit and bullet.distanceTraveled > 50 then
                 bullet.hasSplit = true
-                if math.random(1,100) <= 50 or hasItem("Four Leafed Clover") then
+                local chance = hasItem("Split Shooter") and 50 or 25
+                if math.random(1,100) <= chance then
                     local angle = math.atan2(bullet.speedY, bullet.speedX)
                     local speed = math.sqrt(bullet.speedX^2 + bullet.speedY^2)
                     local spread = math.rad(8)
@@ -3325,7 +3326,8 @@ function Balls.update(dt, paddle, bricks)
                             end
                         end
                         if not bullet.hasTriggeredOnBulletHit then
-                            if hasItem("Tesla Bullets") then
+                            local chance = hasItem("Four Leafed Clover") and 50 or 100
+                            if hasItem("Tesla Bullets") and math.random(1,100) <= chance then
                                 cast("Chain Lightning", brick, bullet.stats.damage)
                             end
                             bullet.hasTriggeredOnBulletHit = true
@@ -3570,7 +3572,9 @@ local function techDraw()
     if unlockedBallTypes["Gun Turrets"] then
         love.graphics.setColor(1,1,1,1)
         for _, turret in ipairs(turrets) do
-            drawImageCentered(turretImg, turret.x, turret.y, turret.radius, turret.radius, turret.angle)
+            local angle = math.atan2(-turret.y, screenWidth/2 - turret.x)
+            drawImageCentered(turretBaseImg, turret.x, turret.y, turret.radius * 0.75, turret.radius * 0.75, turret.angleOffset)
+            drawImageCentered(turretGunImg, turret.x, turret.y, turret.radius * 145/280, turret.radius * 145/144, turret.angle + turret.angleOffset, 0, turret.radius * 145/144 * 1/4)
         end
     end
 

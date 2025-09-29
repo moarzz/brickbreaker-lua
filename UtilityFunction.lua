@@ -263,7 +263,9 @@ fancyTexts = {}
 
 
 
-function drawImageCentered(image, x, y, targetWidth, targetHeight, angle)
+function drawImageCentered(image, x, y, targetWidth, targetHeight, angle, xOffset, yOffset)
+    xOffset = xOffset or 0
+    yOffset = yOffset or 0
     -- Get the original dimensions of the image
     local imageWidth = image:getWidth()
     local imageHeight = image:getHeight()
@@ -276,8 +278,12 @@ function drawImageCentered(image, x, y, targetWidth, targetHeight, angle)
     local offsetX = imageWidth / 2
     local offsetY = imageHeight / 2
 
-    -- Draw the image with center rotation
-    -- The offset parameters shift the pivot point to the center of the original image
+    -- Apply the additional pivot offset
+    offsetX = offsetX + (xOffset / scaleX)  -- Convert offset to image space
+    offsetY = offsetY + (yOffset / scaleY)  -- Convert offset to image space
+
+    -- Draw the image with adjusted pivot point
+    -- The offset parameters now include both centering and custom pivot offset
     love.graphics.draw(image, x, y, angle or 0, scaleX, scaleY, offsetX, offsetY)
 end
 
