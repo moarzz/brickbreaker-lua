@@ -1952,7 +1952,7 @@ function love.keypressed(key)
         end
 
         if key == "7" then
-            Balls.addBall("Lightning Ball")
+            Balls.addBall("Magnetic Ball")
         end
 
         -----------------------------------

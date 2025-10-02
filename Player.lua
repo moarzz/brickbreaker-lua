@@ -300,7 +300,7 @@ Player.coreDescriptions = {
     ["Economy Core"] = "Interest cap is at 50$ instead of 25$. \nStart with 20$",
     ["Collector's Core"] = "You can have up to 5 items instead of 4.\n There are only 2 items in the itemShop",
     ["Farm Core"] = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown) \nYou can no longer buy items",
-    ["Picky Core"] = "Rerolling items always costs 1$",
+    ["Picky Core"] = "Rerolling items always costs 1$.\n uncommon, rare and legendary items are twice as rare",
     --["Damage Core"] = "Amount and fireRate are always 1 and damage is multiplied by 5",
     ["Madness Core"] = "Damage and cooldown are reduced by 50%.\nevery other stat is doubled. bricks go twice as fast\n(can break the game)."
     
@@ -448,11 +448,11 @@ function Player.levelUp()
         if Player.level < 5 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 2)
         elseif Player.level < 15 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.4)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.5)
         elseif Player.level < 25 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.3)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.4)
         elseif Player.level < 30 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.25) 
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.3) 
         elseif Player.level < 50 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.2)
         else

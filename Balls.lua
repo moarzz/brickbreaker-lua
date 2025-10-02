@@ -1063,12 +1063,12 @@ fire = function(techName)
             -- Reset ammo and set cooldown
             if unlockedBallTypes["Rocket Launcher"].currentAmmo <= 0 then
                 local cooldownValue = (Player.currentCore == "Cooldown Core" and 2 or unlockedBallTypes["Rocket Launcher"].stats.cooldown + getStatItemsBonus("cooldown", unlockedBallTypes["Rocket Launcher"]) + (Player.permanentUpgrades.cooldown or 0)) * 0.75 * (Player.currentCore == "Madness Core" and 0.5 or 1)
-                Timer.after(math.max(cooldownValue, (Player.currentCore == "Madness Core" and 0.5 or 1) * 3.5/(Player.currentCore == "Damage Core" and 1 or (unlockedBallTypes["Rocket Launcher"].stats.fireRate + getStatItemsBonus("fireRate", unlockedBallTypes["Rocket Launcher"]) + (Player.permanentUpgrades.fireRate or 0)))), function()
+                Timer.after(math.max(cooldownValue, (Player.currentCore == "Madness Core" and 0.5 or 1) * 5/(Player.currentCore == "Damage Core" and 1 or (unlockedBallTypes["Rocket Launcher"].stats.fireRate + getStatItemsBonus("fireRate", unlockedBallTypes["Rocket Launcher"]) + (Player.permanentUpgrades.fireRate or 0)))), function()
                     unlockedBallTypes["Rocket Launcher"].currentAmmo = (Player.currentCore == "Madness Core" and 2 or 1) * unlockedBallTypes["Rocket Launcher"].stats.ammo + (getStatItemsBonus("ammo", unlockedBallTypes["Rocket Launcher"]) * (unlockedBallTypes["Rocket Launcher"].ammoMult or 1))
                     fire("Rocket Launcher")
                 end)
             else
-                local timerLength = (Player.currentCore == "Madness Core" and 0.5 or 1) * 5/(Player.currentCore == "Damage Core" and 1 or(unlockedBallTypes["Rocket Launcher"].stats.fireRate + getStatItemsBonus("fireRate", unlockedBallTypes["Rocket Launcher"]) + (Player.permanentUpgrades.fireRate or 0)))
+                local timerLength = (Player.currentCore == "Madness Core" and 0.5 or 1) * 4/(Player.currentCore == "Damage Core" and 1 or(unlockedBallTypes["Rocket Launcher"].stats.fireRate + getStatItemsBonus("fireRate", unlockedBallTypes["Rocket Launcher"]) + (Player.permanentUpgrades.fireRate or 0)))
                 if (Player.currentCore == "Spray and Pray Core" or hasItem("Spray and Pray")) then
                     local timerMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
                     timerLength = timerLength * timerMult
@@ -1497,7 +1497,7 @@ local function ballListInit()
                 speed = 150,
                 damage = 1,
             },
-            attractionStrength = 2500
+            attractionStrength = 1000
         },
         ["Lightning Ball"] = {
             name = "Lightning Ball",
@@ -1737,7 +1737,7 @@ local function ballListInit()
             size = 1,
             noAmount = true,
             ammoMult = 3,
-            rarity = "common",
+            rarity = "uncommon",
             startingPrice = 25,
             description = "A flamethrower that shoots fire at a fast rate. Can burn bricks dealing damage over time.",
             color = {1, 0.5, 0, 1}, -- Orange color for Flamethrower
@@ -2006,7 +2006,7 @@ end
 -- calls ballListInit and adds a ball to it
 function Balls.initialize()
     initializeRarityItemLists()
-    longTermInvestment.value = 0
+    longTermInvestment.value = 2
     if Player.currentCore == "Collector's Core" then
         setMaxItems(5)
     else
@@ -3382,7 +3382,7 @@ function Balls.update(dt, paddle, bricks)
                 end
                 -- Apply magnetic attraction to nearest brick
                 if nearestBrick then
-                    local attractionStrength = ball.attractionStrength or 450
+                    local attractionStrength = ball.attractionStrength or 350
                     local dx = (nearestBrick.x + nearestBrick.width/2) - ball.x
                     local dy = (nearestBrick.y + nearestBrick.height/2) - ball.y
                     local dist = math.sqrt(dx*dx + dy*dy)
@@ -3408,6 +3408,12 @@ function Balls.update(dt, paddle, bricks)
                         end
                     end
                 end
+                local totalSpeed = math.sqrt(ball.speedX * ball.speedX + ball.speedY * ball.speedY)
+                local targetMaxSpeed = 1 * ((unlockedBallTypes[ball.name] and unlockedBallTypes[ball.name].stats.speed or 200) + getStatItemsBonus("speed") + Player.permanentUpgrades.speed)
+                --if totalSpeed > targetMaxSpeed then
+                    ball.speedX = ball.speedX * targetMaxSpeed / totalSpeed
+                    ball.speedY = ball.speedY * targetMaxSpeed / totalSpeed
+                --end
             end
         end
     end
@@ -3757,11 +3763,12 @@ local function techDraw()
         -- draw charging bars
         if unlockedBallTypes["Laser"].charging then
             local chargeProgress = unlockedBallTypes["Laser"].currentChargeTime / (((Player.currentCore == "Cooldown Core" and 2 or math.max((unlockedBallTypes["Laser"].stats.cooldown + getStatItemsBonus("cooldown", unlockedBallTypes["Laser"]) + (Player.permanentUpgrades.cooldown or 0)) + 2, 1))) * (Player.currentCore == "Madness Core" and 0.5 or 1))
-            local opacityMult = mapRangeClamped(chargeProgress, 0.6, 0.9, 0, 0.75)
-            love.graphics.setColor(0.35 + opacityMult/2, 0.35 + opacityMult/2, 0.35 + opacityMult/2, opacityMult)
+            local opacityMult = mapRangeClamped(chargeProgress, 0.6, 1, 0, 0.75)
+            love.graphics.setColor(0.4, 0.4, 0.4, opacityMult * 0.75)
             love.graphics.rectangle("fill", paddle.x, 0, 1, paddle.y)
             love.graphics.rectangle("fill", paddle.x + paddle.width, 0, 1, paddle.y)
             -- Draw charge bars from edges, clamped to paddle width
+            love.graphics.setColor(0.85, 0.85, 0.85, opacityMult)
             local barWidth = math.min(paddle.width/2, paddle.width/2 * chargeProgress)
             love.graphics.rectangle("fill", paddle.x + paddle.width/2 - barWidth, 0, 1, paddle.y)
             love.graphics.rectangle("fill", paddle.x + paddle.width/2 + barWidth, 0, 1, paddle.y)

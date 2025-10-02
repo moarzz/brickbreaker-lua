@@ -71,7 +71,7 @@ local items = {
     ["Financial Plan"] = {
         name = "Financial Plan",
         stats = {},
-        description = "<font=bold>on level up</font=bold><font=default>\ngain </font=default><font=big><color=money>5$",
+        description = "<font=bold>on level up</font=bold><font=default>\ngain </font=default><font=big><color=money>4$",
         onLevelUp = function() 
             local moneyBefore = Player.money
             if not hasItem("Abandon Greed") then
@@ -84,7 +84,7 @@ local items = {
     ["Coupon Collector"] = {
         name = "Coupon Collector",
         stats = {},
-        description = "<font=bold>On Level Up</font=bold><font=default>\nreduce the upgrade price of a weapon by </color=white><color=money>2$",
+        description = "<font=bold>On Level Up</font=bold><font=default>\nreduce the upgrade price of a weapon by </color=white><color=money>2$\n\n</color=money><color=white>Items cost </color=white><color=money>1$</color=money><color=white> less",
         rarity = "common",
         onLevelUp = function()
             if not hasItem("Abandon Greed") then
@@ -127,7 +127,7 @@ local items = {
     },
     ["Homing Bullets"] = {
         name = "Homing Bullets",
-        stats = {ammo = 1, cooldown = -1},
+        stats = {fireRate = 1, ammo = 1, cooldown = -1},
         description = "Bullets will home in on the nearest brick",
         rarity = "common"
     },
@@ -139,10 +139,10 @@ local items = {
         descriptionOverwrite = true,
         onBuy = function(self)
             if not hasItem("Abandon Greed") then
-                Player.money = Player.money + math.min((longTermInvestment.value) + 1, 20)
-                richGetRicherUpdate(Player.money - math.min((longTermInvestment.value) + 1, 20), Player.money)
+                Player.money = Player.money + math.min((longTermInvestment.value), 20)
+                richGetRicherUpdate(Player.money - math.min((longTermInvestment.value), 20), Player.money)
             end
-            longTermInvestment.value = math.min(19, longTermInvestment.value + 1)
+            longTermInvestment.value = math.min(20, longTermInvestment.value + 1)
             print("Long Term Investment value increased to " .. longTermInvestment.value)
         end,
         consumable = true
@@ -304,8 +304,8 @@ local items = {
     },
     ["Swiss Army Knife"] = {
         name = "Swiss Army Knife",
-        stats = {damage = 1, fireRate = 1, speed = 1, cooldown = -1, size = 1, amount = 1, range = 1, ammo = 1},
-        description = "Increases all stats of your weapons by 1",
+        stats = {fireRate = 1, speed = 1, cooldown = -1, size = 1, amount = 1, range = 1, ammo = 1},
+        description = "Increases all stats of your weapons by 1 (except damage)",
         descriptionOverwrite = true,
         rarity = "uncommon"
     },
@@ -565,15 +565,8 @@ local items = {
     },
     ["Jack Of All Trades"] = {
         name = "Jack Of All Trades",
-        stats = {speed = 2, cooldown = -2, size = 2, amount = 2, range = 2, fireRate = 2, ammo = 2},
+        stats = {speed = 2, cooldown = -2, amount = 2, range = 2, fireRate = 2, ammo = 2},
         description = "Increases all stats of your weapons by 2 (except damage), but decreases cooldown by 2",
-        descriptionOverwrite = true,
-        rarity = "rare"
-    },
-    ["Blind Violence"] = {
-        name = "Blind Violence",
-        stats = {damage = 10, speed = -2, amount = -2, cooldown = 2, range = -2, fireRate = -2, ammo = -2},
-        description = "<color=damage><font=big>+10 damage</font=big></color><color=white>\nall other stats -2 (cooldown + 2)",
         descriptionOverwrite = true,
         rarity = "rare"
     },
@@ -1060,11 +1053,6 @@ function setLevelUpShop()
     print("Unlocked Count: " .. unlockedCount)
     
     for name, ballType in pairs(Balls.getBallList()) do
-
-
-
-
-
         if (not unlockedBallNames[name]) then
             local weight = 0
             local ballList = Balls.getBallList()
@@ -2000,6 +1988,10 @@ function setItemShop(forcedItems)
         -- calculate wanted rarity and choose an available item of that rarity
         local rarityDistribution = getRarityDistributionByLevel()
         local commonChance, uncommonChance, rareChance, legendaryChance = rarityDistribution.common, rarityDistribution.uncommon, rarityDistribution.rare, rarityDistribution.legendary
+        if Player.currentCore == "Picky Core" then
+            commonChance = commonChance + (1 - commonChance)/2
+            uncommonChance, rareChance, legendaryChance = uncommonChance/2, rareChance/2, legendaryChance/2
+        end
 
         local doAgain = true
         local iterations = 0
@@ -2096,9 +2088,9 @@ local function drawItemShop()
                     -- upgradePrice = math.ceil(upgradePrice * 0.5)
                 end
             end
-            --[[if hasItem("Coupon Collector") then
+            if hasItem("Coupon Collector") then
                 upgradePrice = upgradePrice - 1
-            end]]
+            end
 
             local color = (tableLength(Player.items) >= maxItems and not item.consumable) and {0.6, 0.6, 0.6, 1} or {1, 1, 1, 1}
             love.graphics.setColor(color)
@@ -2106,7 +2098,7 @@ local function drawItemShop()
             setFont(27)
             drawTextCenteredWithScale(item.name or "Unknown", itemX + 10 * scale, itemY + 30 * scale, scale, windowW - 20 * scale, color)
 
-            local getValue = function() return longTermInvestment.value + 1 end
+            local getValue = function() return longTermInvestment.value end
             local pointers = {
                 default = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 18),
                 big = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 23),
