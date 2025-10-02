@@ -118,7 +118,7 @@ function GameOverDraw()
     -- Draw gold Earned (top right)
     love.graphics.setColor(1, 1, 1, 1) -- Reset color to white
     setFont(48)
-    local goldEarned = math.floor(math.sqrt(Player.score) <= 300 and (mapRangeClamped(math.sqrt(Player.score), 0, 300, 1.5, 3) * math.sqrt(Player.score)) or (mapRangeClamped(math.sqrt(Player.score), 300, 600, 3, 5) * math.sqrt(Player.score)))
+    local goldEarned = Player.level * math.ceil(Player.level / 5) * 5 
     local goldText = "gold earned: ".. formatNumber(goldEarned) .. "$"
     currentFont = love.graphics.getFont()
     local moneyWidth = currentFont:getWidth(goldText)
@@ -536,6 +536,26 @@ function getBricksInCircle(circleX, circleY, radius)
         end
     end
     return bricksTouchingCircle
+end
+
+function bricksInEllipse(centerX, centerY, radiusX, radiusY)
+    for _, brick in ipairs(bricks) do
+        if not brick.destroyed then
+            -- Calculate the closest point on the brick to the ellipse's center
+            local closestX = math.max(brick.x, math.min(centerX, brick.x + brick.width))
+            local closestY = math.max(brick.y, math.min(centerY, brick.y + brick.height))
+
+            -- Scale the coordinates to transform the ellipse into a circle
+            local dx = (centerX - closestX) / radiusX
+            local dy = (centerY - closestY) / radiusY
+            
+            -- Check if the distance is less than or equal to 1 (normalized radius)
+            if (dx * dx + dy * dy) <= 1 then
+                return true
+            end
+        end
+    end
+    return false
 end
 
 function drawExplosions()

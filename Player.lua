@@ -265,7 +265,7 @@ Player.availableCores = {
     },
     {
         name = "Speed Core",
-        description = "Start at lvl 5 with 20$, 1 random common weapon and 1 random uncommon weapon",
+        description = "Start at lvl 5 with 25$, 1 random common weapon and 1 random uncommon weapon",
         price = 500
     },
     {
@@ -275,23 +275,23 @@ Player.availableCores = {
     },
     {
         name = "Economy Core",
-        description = "Interest cap is at 50$ instead of 25$. \nStart with 20$",
+        description = "Interest cap is at 50$ instead of 25$. \nStart with 25$",
         price = 1500,
     },
     {
         name = "Picky Core",
-        description = "Rerolling items always costs 2$.\nYou can reroll once every time when you unlock a new weapon ",
+        description = "Rerolling items always costs 1$.",
         price = 2000
-    },
-    --[[{   
-        name = "Damage Core",
-        description = "amount and fireRate are always 1 and damage is multiplied by 5",
-        price = 2000,
     },
     {
         name = "Madness Core",
         description = "Damage is divided by 2. Cooldown is halved. Every other stat is doubled.",
         price = 5000,
+    },
+    --[[{   
+        name = "Damage Core",
+        description = "amount and fireRate are always 1 and damage is multiplied by 5",
+        price = 2000,
     },]]
 }
 
@@ -300,9 +300,9 @@ Player.coreDescriptions = {
     ["Economy Core"] = "Interest cap is at 50$ instead of 25$. \nStart with 20$",
     ["Collector's Core"] = "You can have up to 5 items instead of 4.\n There are only 2 items in the itemShop",
     ["Farm Core"] = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown) \nYou can no longer buy items",
-    ["Picky Core"] = "Rerolling items always costs 2$\nConsumable cost half",
-    --[[["Damage Core"] = "Amount and fireRate are always 1 and damage is multiplied by 5",
-    ["Madness Core"] = "Damage and cooldown are reduced by 50%. \nevery other stat is doubled. (can break the game)"]]
+    ["Picky Core"] = "Rerolling items always costs 1$",
+    --["Damage Core"] = "Amount and fireRate are always 1 and damage is multiplied by 5",
+    ["Madness Core"] = "Damage and cooldown are reduced by 50%.\nevery other stat is doubled. bricks go twice as fast\n(can break the game)."
     
 }
 
@@ -448,13 +448,13 @@ function Player.levelUp()
         if Player.level < 5 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 2)
         elseif Player.level < 15 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.3)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.4)
         elseif Player.level < 25 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.25)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.3)
         elseif Player.level < 30 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.2) 
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.25) 
         elseif Player.level < 50 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.15)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.2)
         else
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 2)
         end
@@ -464,7 +464,7 @@ function Player.levelUp()
         FarmCoreUpgrade()
     elseif Player.currentCore == "Picky Core" then
         -- Every reroll costs 2$ instead of 1$
-        Player.rerolls = 1
+        Player.rerolls = 0
     end
     if (not usingMoneySystem) then
         Player.levelingUp = true
@@ -530,7 +530,7 @@ function Player.die()
         deathTimerOver = true
     end)
     -- Calculate gold earned based on score
-    local goldEarned = math.floor(math.sqrt(Player.score) <= 300 and (mapRangeClamped(math.sqrt(Player.score), 0, 300, 1.5, 3) * math.sqrt(Player.score)) or (mapRangeClamped(math.sqrt(Player.score), 300, 600, 3, 5) * math.sqrt(Player.score)))
+    local goldEarned = Player.level * math.ceil(Player.level / 5) * 5 
     Player.addGold(goldEarned)
     Player.dead = true
     saveGameData()  -- Save the new high score]]

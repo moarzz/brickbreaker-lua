@@ -218,6 +218,7 @@ local function loadAssets()
     uiSmallWindowImg = love.graphics.newImage("assets/sprites/UI/windowSmall.png")
     uiWindowImg = love.graphics.newImage("assets/sprites/UI/window.png")
     uiBigWindowImg = love.graphics.newImage("assets/sprites/UI/windowTall.png")
+    lightBeamImg = love.graphics.newImage("assets/sprites/lightBeam.png")
 
     --Icons
     iconsImg = {
@@ -265,6 +266,7 @@ local function loadAssets()
     explosionVFX = love.graphics.newImage("assets/sprites/VFX/explosion.png")
     fireballVFX = love.graphics.newImage("assets/sprites/VFX/fireball.png")
     sawBladesVFX = love.graphics.newImage("assets/sprites/VFX/sawBlades.png")
+    rocketVFX = love.graphics.newImage("assets/sprites/VFX/rocket.png")
     fireVFX = love.graphics.newImage("assets/sprites/VFX/fire.png")
 
     Player.loadJsonValues()
@@ -282,7 +284,7 @@ end
 
 local canHeal = true
 local bossWidth, bossHeight = 500, 300
-local bossHealth = 5000
+local bossHealth = 10000
 local brickId = 1
 local bossBrickSpawnTimer
 local bossSpawnSwitch = true
@@ -738,7 +740,7 @@ end
 
 function getBrickSpeedByTime()
     -- Scale speed from 0.35 to 3.5 over 30 minutes
-    return mapRange(gameTime, 0, 2000, 0.4, 3.5)
+    return mapRange(gameTime, 0, 2000, 0.35, 5) * (Player.currentCore == "Madness Core" and 2 or 1)
 end
 
 currentBrickSpeed = 1
@@ -751,7 +753,7 @@ function getBrickSpeedMult()
         return mapRangeClamped(boss.y, -boss.height, screenHeight/3, 2.8, 0.75) * getBrickSpeedByTime()
     else
         local posMult = 1
-        posMult = mapRangeClamped(getHighestBrickY(), 100, (screenHeight/2 + 200), 10, 0.75)
+        posMult = mapRangeClamped(getHighestBrickY(), 100, (screenHeight/2 + 200), 10, 1)
         if #bricks == 0 then
             return 1
         end
@@ -1437,7 +1439,7 @@ function drawPauseMenu()
     btnY = btnY + buttonHeight + 30
     -- Restart button (same as play again)
     local restartBtn = suit.Button("Restart", {id="pause_restart"}, centerX, btnY, buttonWidth, buttonHeight)
-    local goldEarned = math.floor(math.sqrt(Player.score) <= 300 and (mapRangeClamped(math.sqrt(Player.score), 0, 300, 1.5, 3) * math.sqrt(Player.score)) or (mapRangeClamped(math.sqrt(Player.score), 300, 600, 3, 5) * math.sqrt(Player.score)))
+    local goldEarned = Player.level * math.ceil(Player.level / 5) * 5 
     if restartBtn.hit then
         playSoundEffect(selectSFX, 1, 0.8)
         Player.addGold(goldEarned)
@@ -1950,7 +1952,7 @@ function love.keypressed(key)
         end
 
         if key == "7" then
-            Balls.addBall("Gun Turrets")
+            Balls.addBall("Lightning Ball")
         end
 
         -----------------------------------
