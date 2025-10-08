@@ -270,7 +270,7 @@ Player.availableCores = {
     },
     {
         name = "Speed Core",
-        description = "Start at lvl 5 with 50$, 1 random common weapon and 1 random uncommon weapon",
+        description = "Start at lvl 4 with 50$, 1 random common weapon and 1 random uncommon weapon",
         price = 2000
     },
     {
