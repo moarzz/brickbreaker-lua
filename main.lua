@@ -254,8 +254,8 @@ local function loadAssets()
 
 
     -- load shaders
-    backgroundShader = love.graphics.newShader("Shaders/background.glsl")
-    glowShader = love.graphics.newShader("Shaders/glow.glsl")
+    backgroundShader = love.graphics.newShader("background", "Shaders/background.glsl")
+    glowShader = love.graphics.newShader("glow", "Shaders/glow.glsl")
 
     -- load spriteSheets
     impactVFX = love.graphics.newImage("assets/sprites/VFX/Impact.png")
