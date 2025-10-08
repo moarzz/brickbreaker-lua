@@ -14,7 +14,7 @@ local returnStrings = false;
 
 local path = (...);
 
-local ShaderLocater = returnStrings or require(path .. ".shaderLocater");
+local ShaderLocater = returnStrings or require(path .. ".shaderLocator");
 
 local SimpleShader = {}; -- not a class
 local self = SimpleShader; -- for readability
@@ -153,6 +153,9 @@ function SimpleShader.init()
                 pixelCode = pixelCode .. "\n" .. self.getDefaultPixelCode();
             end
         end
+
+        print(pixelCode);
+        print(vertexCode);
 
         local normalShader = self.newShader(unmodifiedPixelCode, unmodifiedVertexCode);
         local modifiedShader = self.newShader(pixelCode, vertexCode);

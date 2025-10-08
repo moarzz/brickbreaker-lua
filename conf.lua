@@ -2,6 +2,8 @@ function love.conf(t)
     t.identity = 'brickbreaker-lua'           -- The name of the save directory
     t.version = "11.4"                        -- The LÖVE version this game was made for
 
+    t.console = true;
+
     -- Window settings
     t.window.title = "Brick Breaker"          -- The window title
     t.window.width = 1920                     -- The window width

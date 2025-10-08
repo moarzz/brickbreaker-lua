@@ -1,3 +1,7 @@
+LoveAffix = require("Libraries.loveAffix").init();
+SimpleShader = require("Libraries.simpleShader").init();
+WindowCorrector = require("Libraries.windowCorrector");
+
 UtilityFunction = require("UtilityFunction") -- utility functions
 Player = require("Player") -- player logic
 Balls = require("Balls") -- ball logic
@@ -643,6 +647,9 @@ end
 
 function love.load()
     math.randomseed(os.time())
+
+    WindowCorrector.init();
+
     dress = suit.new()
     loadAssets() -- Load assets
 

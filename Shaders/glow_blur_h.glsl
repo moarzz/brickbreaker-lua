@@ -1,5 +1,3 @@
-#pragma language glsl3
-
 uniform vec2 resolution;
 uniform float intensity;
 uniform float radius; // e.g. 6.0

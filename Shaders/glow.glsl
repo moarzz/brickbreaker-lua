@@ -1,5 +1,3 @@
-#pragma language glsl3
-
 // Input uniforms
 uniform vec2 resolution;    // Screen resolution
 uniform float intensity;    // Glow intensity
