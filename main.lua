@@ -39,7 +39,7 @@ GameState = {
 currentGameState = GameState.MENU
 
 -- Add settings variables
-musicVolume = 0.5
+musicVolume = 1
 sfxVolume = 1
 
 -- Add this variable to store the player's choice
@@ -532,7 +532,7 @@ local function addMoreBricks()
             print("spawning more bricks")
             for i=1 , 10 do
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
-                currentRowPopulation = currentRowPopulation + math.floor(math.pow(math.ceil(Player.level), 1))
+                currentRowPopulation = currentRowPopulation + math.floor(math.pow(math.ceil(Player.level), (Player.currentCore == "Farm Core" and 1 or 0.6)))
                 if spawnBossNextRow and not bossSpawned then
                     spawnBoss()
                     bossSpawned = true
@@ -652,7 +652,7 @@ function love.load()
     -- Load and store the background music globally
     backgroundMusic = love.audio.newSource("assets/SFX/game song.mp3", "stream")
     backgroundMusic:setLooping(true)
-    backgroundMusic:setVolume(musicVolume)
+    backgroundMusic:setVolume(musicVolume/3)
     backgroundMusic:play()
     brickFont = love.graphics.newFont(14)    -- Get screen dimensions
     screenWidth, screenHeight = love.graphics.getDimensions()
@@ -739,8 +739,8 @@ function getHighestBrickY(lowestInstead)
 end
 
 function getBrickSpeedByTime()
-    -- Scale speed from 0.35 to 3.5 over 30 minutes
-    return mapRange(gameTime, 0, 2000, 0.35, 5) * (Player.currentCore == "Madness Core" and 2 or 1)
+    -- Scale speed from 0.4 to 3 over 30 minutes
+    return mapRange(gameTime, 0, 2000, 0.4, 3) * (Player.currentCore == "Madness Core" and 2 or 1)
 end
 
 currentBrickSpeed = 1
@@ -814,13 +814,15 @@ end
 screenOffset = {x=0,y=0}
 
 local function brickPiecesUpdate(dt)
-    for _, brickpiece in ipairs(brickPieces) do
-        if not brickpiece.destroyed then
-            brickpiece.y = brickpiece.y + brickpiece.speedY * dt
-            brickpiece.x = brickpiece.x + brickpiece.speedX * dt
-            brickpiece.speedY = brickpiece.speedY + 500 * dt -- Apply gravity
-            if brickpiece.y > screenHeight + 50 then
-                brickpiece.destroyed = true -- Remove piece if it goes off screen
+    if not Player.levelingUp then
+        for _, brickpiece in ipairs(brickPieces) do
+            if not brickpiece.destroyed then
+                brickpiece.y = brickpiece.y + brickpiece.speedY * dt
+                brickpiece.x = brickpiece.x + brickpiece.speedX * dt
+                brickpiece.speedY = brickpiece.speedY + 500 * dt -- Apply gravity
+                if brickpiece.y > screenHeight + 50 then
+                    brickpiece.destroyed = true -- Remove piece if it goes off screen
+                end
             end
         end
     end
@@ -1003,13 +1005,13 @@ local function gameFixedUpdate(dt)
                 if damageThisFrame > 0 and damageCooldown <= 0 then
                     damageScreenVisuals(mapRangeClamped(damageThisFrame,1,20,0.25, 0.5), damageThisFrame)
                     playSoundEffect(brickHitSFX, math.sqrt(damageThisFrame) >= 4 and mapRangeClamped(math.sqrt(damageThisFrame), 6, 10, 0.6, 1) or mapRangeClamped(math.sqrt(damageThisFrame), 1,6, 0.35, 0.6), math.sqrt(damageThisFrame) >= 5 and mapRangeClamped(math.sqrt(damageThisFrame), 6, 10, 0.75, 1) or  mapRangeClamped(math.sqrt(damageThisFrame),1,6,0.4,0.75), false, true)
-                    damageCooldown = 0.05 -- Set cooldown for damage visuals
+                    damageCooldown = 0.03 -- Set cooldown for damage visuals
                     damageThisFrame = 0 -- Reset damage this frame
                 end
                 brickKilledThisFrame = false -- Reset brick hit state for the next frame
                 if healThisFrame > 0 and healCooldown <= 0 then
                     playSoundEffect(healSFX, math.sqrt(healThisFrame) >= 5 and mapRangeClamped(math.sqrt(healThisFrame), 5, 8, 0.25, 0.65) or mapRangeClamped(math.sqrt(healThisFrame), 1, 5, 0.1, 0.4), mapRangeClamped(math.sqrt(healThisFrame), 2, 7, 0.5, 0.8), false, true)
-                    healCooldown = 0.1 -- Set cooldown for heal visuals
+                    healCooldown = 0.07 -- Set cooldown for heal visuals
                     healThisFrame = 0 -- Reset heal this frame
                 end
             end
@@ -1023,8 +1025,8 @@ local fixed_dt = 1/120
 function love.update(dt)
     accumulator = accumulator + dt
     while accumulator >= fixed_dt do
-        gameFixedUpdate(fixed_dt) -- Your game logic here, using fixed_dt
-        accumulator = accumulator - fixed_dt
+        gameFixedUpdate(accumulator) -- Your game logic here, using fixed_dt
+        accumulator = 0
     end
 end
 
@@ -1557,7 +1559,7 @@ function drawSettingsMenu()
     local musicSlider = suit.Slider(musicSliderInfo, {id = "music_slider"}, sliderX, sliderY + 40, sliderWidth, sliderHeight)
     musicVolume = musicSliderInfo.value
     if backgroundMusic then
-        backgroundMusic:setVolume(musicVolume) -- Adjust the volume of the background music
+        backgroundMusic:setVolume(musicVolume/3) -- Adjust the volume of the background music
     else
         print("Background music not found")
     end
@@ -1608,7 +1610,8 @@ function love.draw()
         end
 
         -- Progress bar fill
-        local progress = Player.xp / Player.xpForNextLevel
+        local farmCoreMult = (Player.currentCore == "Farm Core" and 1.5 or 1)
+        local progress = Player.xp / (Player.xpForNextLevel * farmCoreMult)
         love.graphics.setColor(90/255, 150/255, 0.75, 1)
         if usingMoneySystem then
             love.graphics.rectangle("fill", statsWidth, screenHeight - 30, 
@@ -1840,7 +1843,11 @@ function love.keypressed(key)
         if hasItem("Abandon Greed") then
             -- gain no money
         else
-            Player.money = Player.money + 5 + math.floor(math.min(Player.money, Player.currentCore == "Economy Core" and 50 or 25)/5)
+            if Player.currentCore == "Economy Core" then
+                Player.money = Player.money + 15
+            else
+                Player.money = Player.money + 8 + math.floor(math.min(Player.money, 25)/5)
+            end
         end
         richGetRicherUpdate(moneyBefore, Player.money)
         itemsOnLevelUpEnd()
@@ -1891,7 +1898,7 @@ function love.keypressed(key)
 
         -- PERFORMANCE STRESS TESTS
 
-        if key == "q" then
+        --[[if key == "q" then
             for i=1, 100 do
                 local speedRef = 2500
                 local speedXref = math.random(-1000,1000)
@@ -1910,7 +1917,7 @@ function love.keypressed(key)
                 }
                 Balls.insertBullet(bullet)
             end
-        end
+        end]]
         if key == "x" then
             for i=1, 500 do
                 local randomBrickIdx = math.random(1, #bricks)
@@ -1951,12 +1958,12 @@ function love.keypressed(key)
             end
         end
 
-        if key == "7" then
-            Balls.addBall("Magnetic Ball")
-        end
 
         -----------------------------------
 
+        if key == "7" then
+            Balls.addBall("Magnetic Ball")
+        end
 
         -- PERFORMANCE TEST ON OFF BLOCK
 

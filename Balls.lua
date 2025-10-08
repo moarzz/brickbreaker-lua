@@ -278,9 +278,9 @@ local function brickDestroyed(brick)
             height = brick.height,
             color = {0.75, 0.75, 0.75, 1}
         }
-        local tween1 = tween.new(0.85, brickPiece1, {color = {0, 0, 0, 0}}, tween.outCubic)
-        local tween2 = tween.new(0.85, brickPiece2, {color = {0, 0, 0, 0}}, tween.outCubic)
-        local tween3 = tween.new(0.85, brickPiece3, {color = {0, 0, 0, 0}}, tween.outCubic)
+        local tween1 = tween.new(0.8, brickPiece1, {color = {0.75, 0.75, 0.75, 0}}, tween.outCubic)
+        local tween2 = tween.new(0.8, brickPiece2, {color = {0.75, 0.75, 0.75, 0}}, tween.outCubic)
+        local tween3 = tween.new(0.8, brickPiece3, {color = {0.75, 0.75, 0.75, 0}}, tween.outCubic)
         addTweenToUpdate(tween1)
         addTweenToUpdate(tween2)
         addTweenToUpdate(tween3)
@@ -377,7 +377,6 @@ function dealDamage(ball, brick, burnDamage)
         damage = ball.stats.damage
     end
     if hasItem("Phantom Bullets") and ball.type == "bullet" then
-        print("cacacaca")
         damage = math.max(math.ceil(damage / 2), 1)
     end
     
@@ -500,7 +499,7 @@ local function shoot(gunName, ball)
                 hasTriggeredOnBulletHit = false,
                 golden = (Player.currentCore == "Phantom Core" or hasItem("Phantom Bullets")),
             })
-            local chance = hasItem("Four Leafed Clover") and 10 or 5
+            local chance = hasItem("Four Leafed Clover") and 20 or 10
             if math.random(1,100) <= chance and hasItem("Sudden Mitosis") then
                 local totalSpeed = 500
                 local speedX = math.random(-totalSpeed*0.6, totalSpeed*0.6)
@@ -681,7 +680,7 @@ local function shoot(gunName, ball)
                         golden = (gun.name == "Golden Gun" or (Player.currentCore == "Phantom Core" or hasItem("Phantom Bullets"))),
                     })
                 end
-                local chance = hasItem("Four Leafed Clover") and 10 or 5
+                local chance = hasItem("Four Leafed Clover") and 20 or 10
                 if math.random(1,100) <= chance and hasItem("Sudden Mitosis") then
                     local totalSpeed = 500
                     local speedX = math.random(-totalSpeed*0.6, totalSpeed*0.6)
@@ -753,7 +752,7 @@ local function shoot(gunName, ball)
                     hasTriggeredOnBulletHit = false,
                     golden = ((Player.currentCore == "Phantom Core" or hasItem("Phantom Bullets"))),
                 })
-                local chance = hasItem("Four Leafed Clover") and 10 or 5
+                local chance = hasItem("Four Leafed Clover") and 20 or 10
                 if math.random(1,100) <= chance and hasItem("Sudden Mitosis") then
                     local totalSpeed = 500
                     local speedX = math.random(-totalSpeed*0.6, totalSpeed*0.6)
@@ -810,7 +809,7 @@ local function shoot(gunName, ball)
                     hasTriggeredOnBulletHit = false,
                     golden = (gun.name == "Golden Gun" or (Player.currentCore == "Phantom Core" or hasItem("Phantom Bullets"))),
                 })
-                local chance = hasItem("Four Leafed Clover") and 10 or 5
+                local chance = hasItem("Four Leafed Clover") and 20 or 10
                 if math.random(1,100) <= chance and hasItem("Sudden Mitosis")then
                     local totalSpeed = 500
                     local speedX = math.random(-totalSpeed*0.6, totalSpeed*0.6)
@@ -934,7 +933,7 @@ local function turretShoot(turret)
             golden = (Player.currentCore == "Phantom Core" or hasItem("Phantom Bullets"))
         }
         table.insert(bullets, bullet)
-        local chance = hasItem("Four Leafed Clover") and 10 or 5
+        local chance = hasItem("Four Leafed Clover") and 20 or 10
         if math.random(1,100) <= chance and hasItem("Sudden Mitosis") then
             local totalSpeed = 500
             local speedX = math.random(-totalSpeed*0.6, totalSpeed*0.6)
@@ -1111,41 +1110,43 @@ fire = function(techName)
     end
     if techName == "Gun Turrets" then
         -- handles the entire logic for spawning, placing and after 10 seconds, destroying a turret. also handles first shot
-        local turretType = unlockedBallTypes["Gun Turrets"]
-        local id = currentTurretId
-        local destination = {x = (math.random(50, screenWidth - 50)), y = math.random(math.max(paddle.y + 50, screenHeight - 300), screenHeight - 25)}
-        local startDir = math.random(0,1)
-        local turret = {
-            id = currentTurretId,
-            x = paddle.x + paddle.width / 2,
-            y = paddle.y + paddle.height/2, -- Position above the paddle
-            radius = 0,
-            currentAmmo = (Player.currentCore == "Madness Core" and 2 or 1) * (turretType.stats.ammo + getStatItemsBonus("ammo", turretType)),
-            angle = (startDir == 1 and math.pi*0.25 or -math.pi*0.25),
-            angleOffset = math.random(-100, 100)/100 * math.pi * 0.2,
-            stats = turretType.stats,
-            alive = true,
-        }
-        currentTurretId = currentTurretId + 1
-        local lookDirectionX, lookDirectionY = normalizeVector(screenWidth/2 - destination.x, - destination.y)
-        local directionAngle = 0
-        local turretPositionTween = tween.new(0.5, turret, {x = destination.x, y = destination.y, angle = turret.angle, radius = 65}, tween.outCubic)
-        addTweenToUpdate(turretPositionTween)
-        table.insert(turrets, turret)
-        -- first shot when turret in position
-        Timer.after(0.5, function() 
-            rotateTurret(turret, startDir == 1)
-        end)
-        Timer.after(1 + math.random(0, 100) / 100, function()
-            turretShoot(turret)
-        end)
-        Timer.after(1.5 + (Player.currentCore == "Madness Core" and 0.5 or 1) * ((turretType.stats.cooldown + getStatItemsBonus("cooldown", turretType) + (Player.permanentUpgrades.cooldown or 0)) * 0.45), function()
-            -- Refill ammo after cooldown
-            turret.currentAmmo = (Player.currentCore == "Madness Core" and 2 or 1) * (turretType.stats.ammo + getStatItemsBonus("ammo", turretType) * (turretType.ammoMult or 1))
-            fire("Gun Turrets")
-        end)
-    else
-        turretsInQueue = turretsInQueue + 1
+        if #turrets < 50 then
+            local turretType = unlockedBallTypes["Gun Turrets"]
+            local id = currentTurretId
+            local destination = {x = (math.random(50, screenWidth - 50)), y = math.random(math.max(paddle.y + 50, screenHeight - 300), screenHeight - 25)}
+            local startDir = math.random(0,1)
+            local turret = {
+                id = currentTurretId,
+                x = paddle.x + paddle.width / 2,
+                y = paddle.y + paddle.height/2, -- Position above the paddle
+                radius = 0,
+                currentAmmo = (Player.currentCore == "Madness Core" and 2 or 1) * (turretType.stats.ammo + getStatItemsBonus("ammo", turretType)),
+                angle = (startDir == 1 and math.pi*0.25 or -math.pi*0.25),
+                angleOffset = math.random(-100, 100)/100 * math.pi * 0.2,
+                stats = turretType.stats,
+                alive = true,
+            }
+            currentTurretId = currentTurretId + 1
+            local lookDirectionX, lookDirectionY = normalizeVector(screenWidth/2 - destination.x, - destination.y)
+            local directionAngle = 0
+            local turretPositionTween = tween.new(0.5, turret, {x = destination.x, y = destination.y, angle = turret.angle, radius = 65}, tween.outCubic)
+            addTweenToUpdate(turretPositionTween)
+            table.insert(turrets, turret)
+            -- first shot when turret in position
+            Timer.after(0.5, function() 
+                rotateTurret(turret, startDir == 1)
+            end)
+            Timer.after(1 + math.random(0, 100) / 100, function()
+                turretShoot(turret)
+            end)
+            Timer.after(1.5 + (Player.currentCore == "Madness Core" and 0.5 or 1) * ((turretType.stats.cooldown + getStatItemsBonus("cooldown", turretType) + (Player.permanentUpgrades.cooldown or 0)) * 0.45), function()
+                -- Refill ammo after cooldown
+                turret.currentAmmo = (Player.currentCore == "Madness Core" and 2 or 1) * (turretType.stats.ammo + getStatItemsBonus("ammo", turretType) * (turretType.ammoMult or 1))
+                fire("Gun Turrets")
+            end)
+        else
+            turretsInQueue = turretsInQueue + 1
+        end
     end
 end
 
@@ -1154,7 +1155,6 @@ local arcaneMissiles = {}
 
 local function castArcaneMissile(ball)
     -- Per-ball cooldown: only allow cast once per 2 seconds per ball
-    -- unlockedBallTypes["Arcane Missiles"].lastCast = love.timer.getTime()
     local redo = true
     local targetBrick = nil
     while redo do
@@ -1222,38 +1222,6 @@ local function cast(spellName, brick, forcedDamage)
             cast("Shadow Ball")
         end)
     end
-    --[[if spellName == "Arcane Missiles" then
-        -- Per-ball cooldown: only allow cast once per 2 seconds per ball
-        unlockedBallTypes["Arcane Missiles"].lastCast = love.timer.getTime()
-        -- Pick a random valid brick at cast time
-        local validBricks = {}
-        for _, brick in ipairs(bricks) do
-            if not brick.destroyed and brick.health > 0 and brick.y > -brick.height then
-                table.insert(validBricks, brick)
-            end
-        end
-        local targetBrick = nil
-        if #validBricks > 0 then
-            targetBrick = validBricks[math.random(1, #validBricks)]
-        end
-        local angle = (math.random() * 0.5 - 0.75) * math.pi
-        local missileSpeed = 2000
-        local startX = paddle.x + paddle.width/2
-        local startY = paddle.y
-        local vx = math.cos(angle) * missileSpeed
-        local vy = math.sin(angle) * missileSpeed
-        table.insert(arcaneMissiles, {
-            name = "Arcane Missiles",
-            x = startX,
-            y = startY,
-            vx = vx,
-            vy = vy,
-            radius = 8,
-            damage = (unlockedBallTypes["Arcane Missiles"].stats.damage or 1) + getStatItemsBonus("damage", unlockedBallTypes["Arcane Missiles"]) + (Player.permanentUpgrades.damage or 0),
-            alive = true,
-            target = targetBrick
-        })
-    end]]
     if spellName == "Fireballs" then
         print("Casting Fireballs")
         lastFireballsCastTime = gameTime
@@ -1316,7 +1284,7 @@ local function cast(spellName, brick, forcedDamage)
             end)
         end
         local cooldownValue = (Player.currentCore == "Madness Core" and 0.5 or 1) * (Player.currentCore == "Cooldown Core" and 2 or unlockedBallTypes["Lightning Pulse"].stats.cooldown + getStatItemsBonus("cooldown", unlockedBallTypes["Lightning Pulse"]) + (Player.permanentUpgrades.cooldown or 0))
-        local timeUntilNextCast = (2 + math.max(cooldownValue, 0))/6
+        local timeUntilNextCast = (1 + math.max(cooldownValue, 0))/6
         print("Next Lightning Pulse in: " .. timeUntilNextCast .. " seconds")
         playSoundEffect(lightningPulseSFX, 0.5, 0.85)
         Timer.after(timeUntilNextCast, function()
@@ -1704,7 +1672,7 @@ local function ballListInit()
             noAmount = true,
             rarity = "uncommon",
             startingPrice = 100,
-            description = "Paddle shoots Laser Beam forward equal to it's width that goes through bricks with a slow cooldown." .. 
+            description = "Paddle shoots Laser with that hits every brick in front of it. \nLong Cooldown" .. 
             "\n Very long cooldown",
             color = {0, 1, 0, 1}, -- Green color
             stats = {
@@ -1975,7 +1943,7 @@ local commonWeapons = {}
 local uncommonWeapons = {}
 local addBallsQueued = false
 local function speedCoreInitialize()
-    Player.money = 25
+    Player.money = 50
     Player.level = 5
     commonWeapons = {}
     uncommonWeapons = {}
@@ -2016,20 +1984,10 @@ function Balls.initialize()
     Player.money = 0
     Player.levelingUp = false
     Player.choosingUpgrade = false
-    if usingMoneySystem then
-        Player.newStatLevelRequirement = 10
-        Player.newWeaponLevelRequirement = 5
-        Player.xpForNextLevel = 25
-        Player.newUpgradePrice = Player.currentCore == "Economy Core" and 50 or 100
-    else
-        Player.upgradePriceMultScaling = 2
-        Player.xpForNextLevel = 15
-    end
-    if Player.currentCore == "Economy Core" then
-        Player.money = 25
-    else
-        Player.money = 10
-    end
+    Player.upgradePriceMultScaling = 2
+    Player.xpForNextLevel = 15
+    Player.money = 10
+    
     inGame = true
     deathTimerOver = false
     deathTweenValues = {speed = 1, overlayOpacity = 0}
@@ -2053,6 +2011,7 @@ function Balls.initialize()
     Player.newWeaponLevelRequirement = 5
     uiOffset.x = usingMoneySystem and 0 or statsWidth * 1.5
     organiseBallList()
+    permanentItemBonuses = {}
 end
 
 function Balls.amountDecrease(decreaseValue)
@@ -2354,7 +2313,7 @@ local function brickCollisionEffects(ball, brick)
         end
     end
     local chance = hasItem("Four Leafed Clover") and 100 or 50
-    if hasItem("Arcane Missiles") and math.random(1,100) <= chance then
+    if hasItem("Arcane Missiles") and math.random(1,100) <= 100 then
         castArcaneMissile(ball)
     end
     if ball.onBounce then
@@ -2482,8 +2441,7 @@ local function paddleCollisionCheck(ball, paddle)
        ball.y + effectiveRadius > paddle.y and ball.y - effectiveRadius < paddle.y + paddle.height  and 
        ((ball.y > paddle.y + paddle.height and ball.speedY < 0) or ball.y < paddle.y + paddle.height and ball.speedY > 0) then
         playSoundEffect(paddleBoopSFX, 0.4, 0.8, false, true)   
-        local chance = hasItem("Four Leafed Clover") and 100 or 50
-        if hasItem("Paddle Defense System") and math.random(1,100) <= chance then
+        if hasItem("Paddle Defense System") then
             local bulletSpeed = 1500
             local speedX = math.random(-500,500)
             local speed = {x = speedX, y = -math.sqrt(bulletSpeed*bulletSpeed - speedX*speedX)}
@@ -2500,7 +2458,7 @@ local function paddleCollisionCheck(ball, paddle)
                 golden = (Player.currentCore == "Phantom Core" or hasItem("Phantom Bullets"))
             }
             table.insert(bullets, bullet)
-            local chance = hasItem("Four Leafed Clover") and 10 or 5
+            local chance = hasItem("Four Leafed Clover") and 20 or 10
             if math.random(1,100) <= chance and hasItem("Sudden Mitosis") then
                 local totalSpeed = 500
                 local speedX = math.random(-totalSpeed*0.6, totalSpeed*0.6)
@@ -2654,7 +2612,7 @@ local function techUpdate(dt)
             
             -- Deal damage if we've been on target long enough
             
-            local cooldownLength = (Player.currentCore == "Madness Core" and 0.5 or 1) * 1/((Player.currentCore == "Damage Core" and 1 or (laserBeam.stats.fireRate + getStatItemsBonus("fireRate", laserBeam) + (Player.permanentUpgrades.fireRate or 0))))
+            local cooldownLength = (Player.currentCore == "Madness Core" and 0.5 or 1) * 1.25/((Player.currentCore == "Damage Core" and 1 or (laserBeam.stats.fireRate + getStatItemsBonus("fireRate", laserBeam) + (Player.permanentUpgrades.fireRate or 0))))
             if (Player.currentCore == "Spray and Pray Core" or hasItem("Spray and Pray")) then
                 local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
                 cooldownLength = cooldownLength * sprayMult
@@ -3374,7 +3332,7 @@ function Balls.update(dt, paddle, bricks)
                         local dx = (brick.x + brick.width/2) - ball.x
                         local dy = (brick.y + brick.height/2) - ball.y
                         local dist = math.sqrt(dx*dx + dy*dy)
-                        if dist < minDist then
+                        if dist < minDist and dist > brick.width then
                             minDist = dist
                             nearestBrick = brick
                         end
@@ -3764,10 +3722,9 @@ local function techDraw()
         if unlockedBallTypes["Laser"].charging then
             local chargeProgress = unlockedBallTypes["Laser"].currentChargeTime / (((Player.currentCore == "Cooldown Core" and 2 or math.max((unlockedBallTypes["Laser"].stats.cooldown + getStatItemsBonus("cooldown", unlockedBallTypes["Laser"]) + (Player.permanentUpgrades.cooldown or 0)) + 2, 1))) * (Player.currentCore == "Madness Core" and 0.5 or 1))
             local opacityMult = mapRangeClamped(chargeProgress, 0.6, 1, 0, 0.75)
-            love.graphics.setColor(0.4, 0.4, 0.4, opacityMult * 0.75)
+            love.graphics.setColor(0.85, 0.85, 0.85, opacityMult)
             love.graphics.rectangle("fill", paddle.x, 0, 1, paddle.y)
             love.graphics.rectangle("fill", paddle.x + paddle.width, 0, 1, paddle.y)
-            -- Draw charge bars from edges, clamped to paddle width
             love.graphics.setColor(0.85, 0.85, 0.85, opacityMult)
             local barWidth = math.min(paddle.width/2, paddle.width/2 * chargeProgress)
             love.graphics.rectangle("fill", paddle.x + paddle.width/2 - barWidth, 0, 1, paddle.y)
@@ -3782,7 +3739,7 @@ local function techDraw()
     if unlockedBallTypes["Laser Beam"] then
         -- Draw the actual Laser Beam
         -- Calculate charge progress
-        local chargeProgress = laserBeamTimer / ((Player.currentCore == "Madness Core" and 0.5 or 1) * (1/((Player.currentCore == "Damage Core" and 1 or (unlockedBallTypes["Laser Beam"].stats.fireRate + getStatItemsBonus("fireRate", unlockedBallTypes["Laser Beam"]) + (Player.permanentUpgrades.fireRate or 0))))))
+        local chargeProgress = laserBeamTimer / ((Player.currentCore == "Madness Core" and 0.5 or 1) * (1.25/((Player.currentCore == "Damage Core" and 1 or (unlockedBallTypes["Laser Beam"].stats.fireRate + getStatItemsBonus("fireRate", unlockedBallTypes["Laser Beam"]) + (Player.permanentUpgrades.fireRate or 0))))))
         if (Player.currentCore == "Spray and Pray Core" or hasItem("Spray and Pray")) then
             local sprayMult = hasItem("Four Leafed Clover") and 2 or 1.5
             chargeProgress = math.min(1, chargeProgress * sprayMult)

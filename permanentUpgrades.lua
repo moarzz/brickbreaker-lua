@@ -69,6 +69,7 @@ local function startingItemsDraw()
     local unlockables = {
         {name = "Pistol", label = "Pistol", key = "Pistol", price = 100},
         {name = "Laser Beam", label = "Laser Beam", key = "Laser Beam", price = 250},
+        {name = "Shadow Ball", label = "Shadow Ball", key = "Shadow Ball", price = 500}
     }
     Player.unlockedStartingBalls = Player.unlockedStartingBalls or {}
     local itemsPerCol = 5

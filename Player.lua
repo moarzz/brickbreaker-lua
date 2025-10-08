@@ -264,18 +264,18 @@ Player.availableCores = {
         price = 0
     },
     {
-        name = "Speed Core",
-        description = "Start at lvl 5 with 25$, 1 random common weapon and 1 random uncommon weapon",
-        price = 500
+        name = "Farm Core",
+        description = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown).\nIt takes 50% more xp for you to level up",
+        price = 500,
     },
     {
-        name = "Farm Core",
-        description = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown) \nYou can no longer upgrade when leveling up",
-        price = 1000,
+        name = "Speed Core",
+        description = "Start at lvl 5 with 50$, 1 random common weapon and 1 random uncommon weapon",
+        price = 2000
     },
     {
         name = "Economy Core",
-        description = "Interest cap is at 50$ instead of 25$. \nStart with 25$",
+        description = "Always gain 15$ on level up, you cannot gain money from items",
         price = 1500,
     },
     {
@@ -299,7 +299,7 @@ Player.coreDescriptions = {
     ["Speed Core"] = "Start at lvl 5 with 20$, 1 random common weapon and 1 random uncommon weapon",
     ["Economy Core"] = "Interest cap is at 50$ instead of 25$. \nStart with 20$",
     ["Collector's Core"] = "You can have up to 5 items instead of 4.\n There are only 2 items in the itemShop",
-    ["Farm Core"] = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown) \nYou can no longer buy items",
+    ["Farm Core"] = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown)\nIt takes 50% more xp for you to level up and bricks grow in health 50% faster",
     ["Picky Core"] = "Rerolling items always costs 1$.\n uncommon, rare and legendary items are twice as rare",
     --["Damage Core"] = "Amount and fireRate are always 1 and damage is multiplied by 5",
     ["Madness Core"] = "Damage and cooldown are reduced by 50%.\nevery other stat is doubled. bricks go twice as fast\n(can break the game)."
@@ -430,7 +430,7 @@ end
 function Player.levelUp()
     resetRerollPrice()
     Player.level = Player.level + 1
-    if Player.level % 5 == 0 then
+    if (Player.level - 1) % 3 == 0 then
         if usingMoneySystem then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.2)
         end
@@ -448,11 +448,13 @@ function Player.levelUp()
         if Player.level < 5 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 2)
         elseif Player.level < 15 then
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.6)
+        elseif Player.level < 20 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.5)
         elseif Player.level < 25 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.4)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.45)
         elseif Player.level < 30 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.3) 
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.35)
         elseif Player.level < 50 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.2)
         else
@@ -468,7 +470,7 @@ function Player.levelUp()
     end
     if (not usingMoneySystem) then
         Player.levelingUp = true
-        if Player.level % 5 ~= 0 then
+        if (Player.level - 1) % 3 ~= 0 then
             uiOffset.x = 0
         end
     end
@@ -500,7 +502,8 @@ end
 function Player.gain(amount)
     Player.score = Player.score + amount
     Player.xp = Player.xp + amount -- XP follows score
-    if Player.xp >= Player.xpForNextLevel then
+    local farmCoreMult = (Player.currentCore == "Farm Core" and 1.5 or 1)
+    if Player.xp >= (Player.xpForNextLevel * farmCoreMult) then
         Player.levelUp()
     end
     upgradesUI.tryQueue()
