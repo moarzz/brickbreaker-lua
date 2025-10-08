@@ -1699,8 +1699,8 @@ local function drawBallStats()
                 end
 
                 -- draw stat icon
-                local iconX = statsX + cellWidth/2 - iconsImg[statName]:getWidth()*1.75/2 * 50/500 - 7
-                love.graphics.draw(iconsImg[statName], iconX, labelY + 63,0,1.75 * 50/500,1.75 * 50/500)
+                local iconX = statsX + cellWidth/2 - iconsImg[statName]:getWidth()*1.75/2 * 35/500 - 3
+                love.graphics.draw(iconsImg[statName], iconX, labelY + 60,0,1.75 * 35/500,1.75 * 35/500)
 
                 -- draw seperator
                 if intIndex < rowCount then
@@ -1737,53 +1737,6 @@ local function drawBallStats()
                         upgradeQueued = true
                     end
                 end
-                --[[if ((upgradeStatButton.hit or (upgradeQueued and Player.money >= math.ceil(ballType.price))) and canUpgrade) and (usingMoneySystem or Player.levelingUp) then
-                    if Player.money < math.ceil(ballType.price) then
-                        -- does nothing
-                    elseif statName == "cooldown" and getStat(ballName, "cooldown") <= 0 then
-                        print("cannot upgrade cooldown any further")
-                        playSoundEffect(upgradeSFX, 0.5, 0.95, false)
-                    else
-                        playSoundEffect(upgradeSFX, 0.5, 0.95, false)
-                        if upgradeQueued then
-                            for i, queuedUpgrade in ipairs(ballType.queuedUpgrades) do
-                                if queuedUpgrade == statName then
-                                    table.remove(ballType.queuedUpgrades, i)
-                                    break
-                                end
-                            end
-                        end
-                        setFont(16)
-                        print("Upgrading " .. ballType.name .. "'s " .. statName)
-                        local stat = ballType.stats[statName] or 0-- Get the current stat value
-                        if statName == "speed" then
-                            ballType.stats.speed = ballType.stats.speed + 50 -- Example action
-                            Balls.adjustSpeed(ballType.name) -- Adjust the speed of the ball
-                        elseif statName == "amount" and not ballType.noAmount then
-                            Balls.addBall(ballType.name, true) -- Add a new ball of the same type
-                            ballType.ballAmount = ballType.ballAmount + 1
-                        elseif statName == "cooldown" then
-                            ballType.stats.cooldown = ballType.stats.cooldown - 1
-                        elseif statName == "ammo" then
-                            print(ballType.name .. " ammo increased by " .. ballType.ammoMult)
-                            ballType.currentAmmo = ballType.currentAmmo + ballType.ammoMult -- Increase ammo by ammoMult
-                            ballType.stats.ammo = ballType.stats.ammo + ballType.ammoMult -- Example action
-                        else
-                            ballType.stats[statName] = ballType.stats[statName] + 1 -- Example action
-                            print( "stat ".. statName .. " increased to " .. ballType.stats[statName])
-                        end
-                        Player.pay(math.ceil(ballType.price)) -- Deduct the cost from the player's money
-                        if usingMoneySystem then
-                            ballType.price = ballType.price * 2 -- Increase the price of the ball
-                        else
-                            ballType.price = ballType.price + 1
-                        end
-                    end
-                elseif upgradeStatButton.entered then
-                    hoveredStatName = statName
-                elseif upgradeStatButton.left then
-                    hoveredStatName = nil
-                end]]
                 
                 local upgradeCount = 0
                 for _, queuedUpgrade in ipairs(ballType.queuedUpgrades) do
