@@ -1,0 +1,147 @@
+local DepthDrawing = {}; -- not a class
+local self = DepthDrawing; -- for readability, does not affect anything outside of this script
+
+function DepthDrawing.init()
+    -- target dimmensions for screen
+    self.targetWidth  = 1920;
+    self.targetHeight = 1080;
+
+    -- width and height of the window
+    local w = love.graphics.getWidth();
+    local h = love.graphics.getHeight();
+
+    self.isActive = false;
+
+    self.render       = love.graphics.newCanvas(w, h); -- final frame
+
+    self.transformOrigin = false; -- whether or not to apply transformations whenever love.graphics.origin() is called
+
+    local function mouseGetPositionAppend(x, y)
+        if not self.enabled then
+            return x, y;
+        end
+
+        return SimpleShader.screenPointToWorldPoint(x, y);
+    end
+    local function mouseGetXAppend(x)
+        if not self.enabled then
+            return x;
+        end
+
+        return (SimpleShader.screenPointToWorldPoint(x, 0));
+    end
+    local function mouseGetYAppend(y)
+        if not self.enabled then
+            return y;
+        end
+
+        local _, _y = SimpleShader.screenPointToWorldPoint(0, y);
+
+        return _y;
+    end
+    local function mousemovedInject(x, y, dx, dy, istouch)
+        if not self.enabled then
+            return;
+        end
+
+        x,  y  = SimpleShader.screenPointToWorldPoint(x,  y);
+        dx, dy = SimpleShader.screenDeltaToWorldDelta(dx, dy);
+
+        return x, y, dx, dy, istouch;
+    end
+    local function mousepressedInject(x, y, button, istouch, presses)
+        if not self.enabled then
+            return;
+        end
+
+        x, y = SimpleShader.screenPointToWorldPoint(x, y);
+
+        return x, y, button, istouch, presses;
+    end
+
+    LoveAffix.makeFunctionInjectable("graphics", "setCanvas");
+
+    LoveAffix.injectCodeIntoLove(
+        function(canv)
+            if self.isActive then
+                return canv or self.render;
+            end
+        end,
+        "graphics",
+        "setCanvas"
+    );
+
+    LoveAffix.makeFunctionInjectable("mouse", "getPosition");
+    LoveAffix.makeFunctionInjectable("mouse", "getX");
+    LoveAffix.makeFunctionInjectable("mouse", "getY");
+    LoveAffix.makeFunctionInjectable("mousemoved");
+    LoveAffix.makeFunctionInjectable("mousepressed");
+    LoveAffix.makeFunctionInjectable("mousereleased");
+    LoveAffix.makeFunctionInjectable("draw");
+
+    LoveAffix.appendCodeIntoLove(mouseGetPositionAppend, "mouse", "getPosition");
+    LoveAffix.appendCodeIntoLove(mouseGetXAppend, "mouse", "getX");
+    LoveAffix.appendCodeIntoLove(mouseGetYAppend, "mouse", "getY");
+    LoveAffix.injectCodeIntoLove(mousemovedInject, "mousemoved");
+    LoveAffix.injectCodeIntoLove(mousepressedInject, "mousepressed");
+    LoveAffix.injectCodeIntoLove(mousepressedInject, "mousereleased");
+    LoveAffix.injectCodeIntoLove(self.startDraw, "draw");
+    LoveAffix.appendCodeIntoLove(self.stopDraw, "draw");
+
+    -- if an error occurs then dont cause a force quit for the entire application before the error screen can be drawn
+    LoveAffix.makeFunctionInjectable("errorhandler");
+    LoveAffix.injectCodeIntoLove(
+       function()
+           self.transformOrigin = false;
+       end,
+       "errorhandler"
+    );
+
+    -- have this script be notified of whenever the window is resized
+    LoveAffix.makeFunctionInjectable("resize");
+    LoveAffix.injectCodeIntoLove(self.setDimensions, "resize");
+
+    SimpleShader.setTargetDimensions(self.targetWidth, self.targetHeight); -- just to make sure they line up :3
+
+    return self; -- allow: DepthDrawing = require("depthDrawing").init();
+end
+
+function DepthDrawing.setDimensions(w, h) -- update canvases and transformations
+    self.render       = love.graphics.newCanvas(w, h);
+end
+
+function DepthDrawing.clear(r, g, b)
+    love.graphics.setCanvas(self.render);
+    love.graphics.clear();
+    love.graphics.setCanvas();
+end
+
+function DepthDrawing.startDraw()
+    -- make calling love.graphics.origin() not mess up the desired centering and scaling of the universe
+    self.transformOrigin = true;
+    SimpleShader.reapplyShader();
+
+    self.isActive = true;
+
+    love.graphics.setCanvas(self.currentLayer);
+    love.graphics.clear();
+end
+
+function DepthDrawing.stopDraw()
+    -- make calling love.graphics.origin() ignore the previous centering and scaling of the universe
+    self.transformOrigin = false;
+
+    self.isActive = false;
+
+    -- draw the currentLayer canvas to the final render target with depth
+    love.graphics.setCanvas(); -- not active so it is actually window
+    love.graphics.setShader();
+
+    love.graphics.origin();
+    love.graphics.setColor(1,1,1,1);
+    love.graphics.draw(self.render);
+
+    self.errorDrawCalls = true; -- error draw calls since theyre not done in the DepthDrawing
+end
+
+return DepthDrawing;
