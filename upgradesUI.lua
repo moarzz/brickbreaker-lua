@@ -403,12 +403,12 @@ local items = {
         description = "<font=bold>When a bullet is shot\n<mitosisChance>%</font=bold><font=default> chance to spawn a small ball that lasts 8 seconds",
         rarity = "uncommon"
     },
-    ["Electromagnetic Alignment"] = {
+    --[[["Electromagnetic Alignment"] = {
         name = "Electromagnetic Alignment",
         stats = {speed = 2},
         description = "Balls gain a small magnetic attraction towards bricks. (doesn't affect Magnetic Ball)",
-        rarity = "uncommon"
-    },
+        rarity = "test"
+    },]]
     ["Rich Get Richer"] = {
         name = "Rich Get Richer",
         stats = {amount = 0, fireRate = 0},
@@ -709,8 +709,8 @@ local items = {
     },
     ["Omnipotence"] = {
         name = "Omnipotence",
-        stats = {speed = 3, damage = 3, cooldown = -3, size = 3, amount = 3, range = 3, fireRate = 3, ammo = 3},
-        description = "Increases all stats of your weapons by 3",
+        stats = {speed = 4, damage = 4, cooldown = -4, size = 4, amount = 4, range = 4, fireRate = 4, ammo = 4},
+        description = "Increases all stats of your weapons by 4",
         descriptionOverwrite = true,
         rarity = "legendary"
     },
@@ -724,40 +724,12 @@ local items = {
     ["Nirvana"] = {
         name = "Nirvana",
         stats = {},
-        descriptionPointers = {nirvanaChance = function() return hasItem("Four Leafed Clover") and 100 or 50 end},
-        description = "<font=bold>on level up\n<nirvanaChance>%</font=bold><font=default> chance to increase every stat of all your weapons by 1",
+        description = "<font=bold>on level up\n</font=bold><font=default>increase every stat of all your weapons by 1",
         rarity = "legendary",
         levelRequired = 2,
         levelCounter = 0,
         currentLevelBeingChecked = 0,
         onLevelUp = function(self)
-            local chance = hasItem("Four Leafed Clover") and 100 or 50
-            if math.random(1,100) <= chance then
-                for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
-                    if not weapon.noAmount and weapon.type == "ball" then
-                        weapon.ballAmount = weapon.ballAmount + 1
-                        Balls.addBall(weapon.name, true)
-                    end
-                    for statName, statValue in pairs(weapon.stats) do
-                        if statName == "cooldown" then
-                            weapon.stats[statName] = statValue - 1
-                        elseif statName == "speed" then
-                            weapon.stats[statName] = statValue + 50
-                        else
-                            weapon.stats[statName] = statValue + 1
-                        end
-                    end
-                end
-            end
-        end
-    },
-    ["Sacred Gift"] = {
-        name = "Sacred Gift",
-        stats = {},
-        description = "When you buy this, increase all your weapon's stats by 1",
-        rarity = "legendary",
-        consumable = true,
-        onBuy = function()
             for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
                 if not weapon.noAmount and weapon.type == "ball" then
                     weapon.ballAmount = weapon.ballAmount + 1
@@ -774,6 +746,12 @@ local items = {
                 end
             end
         end
+    },
+    ["Market Manipulation"] = {
+        name = "Market Manipulation",
+        stats = {},
+        description = "Items cost <color=money><font=big>2$",
+        rarity = "legendary",
     },
     ["Total Economic Collapse"] = {
         name = "Total Economic Collapse",
@@ -2146,17 +2124,20 @@ local function drawItemShop()
             itemX = centerX - windowW/2
             itemY = centerY - windowH/2
 
-            local upgradePrice = item.rarity == "common" and 10 or item.rarity == "uncommon" and 20 or item.rarity == "rare" and 30 or item.rarity == "legendary" and 40 or 10
+            local itemPrice = item.rarity == "common" and 10 or item.rarity == "uncommon" and 20 or item.rarity == "rare" and 30 or item.rarity == "legendary" and 40 or 10
             if item.consumable then
-                upgradePrice = upgradePrice * 0.5
+                itemPrice = itemPrice * 0.5
                 if Player.currentCore == "Picky Core" then
                     -- upgradePrice = math.ceil(upgradePrice * 0.5)
                 end
             end
-            if hasItem("Coupon Collector") then
-                upgradePrice = upgradePrice - 1
+            if hasItem("Market Manipulation") then
+                itemPrice = 2
             end
-
+            if hasItem("Coupon Collector") then
+                itemPrice = itemPrice - 1
+            end
+            
             local color = (tableLength(Player.items) >= maxItems and not item.consumable) and {0.6, 0.6, 0.6, 1} or {1, 1, 1, 1}
             love.graphics.setColor(color)
             love.graphics.draw(getRarityWindow(item.rarity or "common"), itemX, itemY, 0, 0.75 * scale, 0.65 * scale)
@@ -2190,8 +2171,8 @@ local function drawItemShop()
             -- suit.Label(item.description or "No description", {align = "center"}, itemX + 25 * scale, itemY + 100 * scale, windowW - 50 * scale, 100 * scale)
             if dress:Button("", {id = "bruhdmsavklsam" .. i, color = invisButtonColor}, itemX, itemY, windowW, windowH).hit then
                 print("button working")
-                if (#Player.items < maxItems or item.consumable) and Player.money >= upgradePrice then
-                    Player.pay(upgradePrice)
+                if (#Player.items < maxItems or item.consumable) and Player.money >= itemPrice then
+                    Player.pay(itemPrice)
                     playSoundEffect(upgradeSFX, 0.5, 0.95)
                     table.remove(displayedItems, index)
                     if item.onBuy then
@@ -2216,7 +2197,7 @@ local function drawItemShop()
             end
             local moneyXoffset = item.consumable and -65 or 0
             local moneyYoffset = item.consumable and -25 or 0
-            printMoney(upgradePrice, itemX + uiBigWindowImg:getWidth() * 0.75 - 40 - getTextSize(upgradePrice .. "$")/2 + moneyXoffset, itemY + uiBigWindowImg:getHeight() * 0.65/2 - 85 + moneyYoffset, math.rad(4), Player.money >= upgradePrice, 50)
+            printMoney(itemPrice, itemX + uiBigWindowImg:getWidth() * 0.75 - 40 - getTextSize(itemPrice .. "$")/2 + moneyXoffset, itemY + uiBigWindowImg:getHeight() * 0.65/2 - 85 + moneyYoffset, math.rad(4), Player.money >= itemPrice, 50)
 
             i = i + 1
         end

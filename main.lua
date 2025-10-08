@@ -1,3 +1,7 @@
+LoveAffix = require("Libraries.windowCorrector.loveAffix").init();
+SimpleShader = require("Libraries.windowCorrector.simpleShader").init();
+WindowCorrector = require("Libraries.windowCorrector.windowCorrector");
+
 UtilityFunction = require("UtilityFunction") -- utility functions
 Player = require("Player") -- player logic
 Balls = require("Balls") -- ball logic
@@ -643,6 +647,7 @@ end
 
 function love.load()
     math.randomseed(os.time())
+    WindowCorrector.init()
     dress = suit.new()
     loadAssets() -- Load assets
 
@@ -1026,7 +1031,7 @@ function love.update(dt)
     accumulator = accumulator + dt
     while accumulator >= fixed_dt do
         gameFixedUpdate(accumulator) -- Your game logic here, using fixed_dt
-        accumulator = 0
+        accumulator = accumulator - fixed_dt
     end
 end
 
