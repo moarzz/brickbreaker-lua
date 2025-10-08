@@ -1837,7 +1837,7 @@ local function ballListInit()
                 range = 2
             },
         },
-        ["Light Beam"] = {
+        --[[["Light Beam"] = { LIGHT BEAM NOT READY YET
             name = "Light Beam",
             type = "spell",
             x = screenWidth / 2,
@@ -1855,7 +1855,7 @@ local function ballListInit()
             onBuy = function()
                 cast("Light Beam")
             end,
-        },
+        },]]
         ["Lightning Pulse"] = {
             name = "Lightning Pulse",
             type = "spell",
@@ -1944,7 +1944,7 @@ local uncommonWeapons = {}
 local addBallsQueued = false
 local function speedCoreInitialize()
     Player.money = 50
-    Player.level = 5
+    Player.level = 4
     commonWeapons = {}
     uncommonWeapons = {}
     for _, ballType in pairs(ballList) do
@@ -1967,7 +1967,7 @@ local function speedCoreInitialize()
         end
     end
     currentRowPopulation = 100
-    Player.xpForNextLevel = 162
+    Player.xpForNextLevel = 80
     addBallsQueued = true
 end
 
