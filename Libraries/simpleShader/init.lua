@@ -26,9 +26,19 @@ function SimpleShader.init()
     self.targetWidth = 1920;
     self.targetHeight = 1080;
 
+    self.realWidth = 0; -- unga bunga im going 2 stab a frenchy fag
+    self.realHeight = 0;
+
+    self.horizontalPixelScale = 0;
+    self.verticalPixelScale = 0;
+
+    self.leftGap = 0;
+    self.topGap = 0;
+
     -- no I did not think to make a variable for it beforehand, this is only after discovering that I commonly misspell
     -- "dimensions" as "dimmensions" about 50% of the time
     self.nameOfVariable = "targetDimensions";
+    self.nameOfHelperVariable = "gapVector";
 
     self.activeShader = nil; -- key or nil
 
@@ -70,7 +80,13 @@ function SimpleShader.init()
                 "couldnt fit regex 'return .-;' into the vertex code's 'vec4 position function' :" .. name
             );
 
-            return string.gsub(str, "return (.-);", "return (%1) * vec4(vec2(min(love_ScreenSize.x / " .. self.nameOfVariable .. ".x, love_ScreenSize.y / " .. self.nameOfVariable .. ".y)), 1.0, 1.0) + vec4(0.5, 0.5, 0.0, 0.0);");
+            local start = string.find(str, "{");
+
+            str = string.sub(str, 0, start) .. "vec2 " .. self.nameOfHelperVariable .. " = " .. self.nameOfVariable .. " / love_ScreenSize.xy;" .. self.nameOfHelperVariable .. [[ = vec2(]] .. self.nameOfVariable .. [[.x - love_ScreenSize.x * min(]] .. self.nameOfHelperVariable .. [[.x, ]] .. self.nameOfHelperVariable .. [[.y), ]] .. self.nameOfVariable .. [[.y - love_ScreenSize.y * min(]] .. self.nameOfHelperVariable .. [[.x, ]] .. self.nameOfHelperVariable .. [[.y)) / 2.0 / love_ScreenSize.xy;]] .. string.sub(str, start + 1, -1);
+
+            str = string.gsub(str, "return (.-);", "return (%1) * vec4(vec2(min(love_ScreenSize.x / " .. self.nameOfVariable .. ".x, love_ScreenSize.y / " .. self.nameOfVariable .. ".y)), 1.0, 1.0) + vec4(" .. self.nameOfHelperVariable .. " - 0.5, 0.0, 0.0);");
+
+            return str;
         end
 
         local pixelColourGSub = function(str)
@@ -199,13 +215,37 @@ function SimpleShader.init()
     return self; -- allow for _G.SimpleShader = require().init();
 end
 
+function SimpleShader.setRealDimensions(width, height)
+    self.realWidth = width;
+    self.realHeight = height;
+
+    self.horizontalPixelScale = self.targetWidth / self.realWidth;
+    self.verticalPixelScale = self.targetHeight / self.realHeight;
+
+    if self.horizontalPixelScale < self.verticalPixelScale then
+        self.topGap = (self.targetHeight - self.realHeight * self.horizontalPixelScale) / 2;
+        self.verticalPixelScale = self.horizontalPixelScale;
+        self.leftGap = 0;
+    elseif self.horizontalPixelScale > self.verticalPixelScale then
+        self.leftGap = (self.targetWidth - self.realWidth * self.verticalPixelScale) / 2;
+        self.horizontalPixelScale = self.verticalPixelScale;
+        self.topGap = 0;
+    else -- window is a multiple of 1920x1080
+        self.topGap = 0;
+        self.leftGap = 0;
+    end
+end
+
 function SimpleShader.getDefaultVertexCode()
     return [[
     uniform vec2 ]] .. self.nameOfVariable .. [[;
 
     vec4 position(mat4 transform_projection, vec4 vertex_position)
     {
-        return (transform_projection * vertex_position) * vec4(vec2(min(love_ScreenSize.x / ]] .. self.nameOfVariable .. [[.x, love_ScreenSize.y / ]] .. self.nameOfVariable .. [[.y)), 1.0, 1.0) + vec4(0.5, 0.5, 0.0, 0.0);
+        vec2 ]] .. self.nameOfHelperVariable .. [[ = ]] .. self.nameOfVariable .. [[ / love_ScreenSize.xy;
+        ]] .. self.nameOfHelperVariable .. [[ = vec2(]] .. self.nameOfVariable .. [[.x - love_ScreenSize.x * min(]] .. self.nameOfHelperVariable .. [[.x, ]] .. self.nameOfHelperVariable .. [[.y), ]] .. self.nameOfVariable .. [[.y - love_ScreenSize.y * min(]] .. self.nameOfHelperVariable .. [[.x, ]] .. self.nameOfHelperVariable .. [[.y)) / 2.0 / love_ScreenSize.xy;
+
+        return (transform_projection * vertex_position) * vec4(vec2(min(love_ScreenSize.x / ]] .. self.nameOfVariable .. [[.x, love_ScreenSize.y / ]] .. self.nameOfVariable .. [[.y)), 1.0, 1.0) + vec4(]] .. self.nameOfHelperVariable .. [[ - 0.5, 0.0, 0.0);
     }]];
     -- dont just use a file since we could accidentally mess up the name of the variable (I h8 this too)
 end
@@ -244,35 +284,43 @@ function SimpleShader.screenPointToWorldPoint(x, y) -- a given coordinate on the
     -- local retY = y * scale + love.graphics.getHeight() / 2;
 
     --? this is the inverse of the above formula
-    local scale = math.min(love.graphics.getWidth() / self.targetWidth, love.graphics.getHeight() / self.targetHeight);
-    local retX = (x - love.graphics.getWidth()  / 2) / scale;
-    local retY = (y - love.graphics.getHeight() / 2) / scale;
+    --local scale = math.min(love.graphics.getWidth() / self.targetWidth, love.graphics.getHeight() / self.targetHeight);
+    --local retX = (x - love.graphics.getWidth()  / 2) / scale;
+    --local retY = (y - love.graphics.getHeight() / 2) / scale;
 
-    return retX, retY;
+    --return retX, retY;
+
+    return x * self.horizontalPixelScale - self.leftGap, y * self.verticalPixelScale - self.topGap;
 end
 function SimpleShader.worldPointToScreenPoint(x, y)
-    local scale = math.min(love.graphics.getWidth() / self.targetWidth, love.graphics.getHeight() / self.targetHeight);
-    local retX = x * scale + love.graphics.getWidth() / 2;
-    local retY = y * scale + love.graphics.getHeight() / 2;
+    --local scale = math.min(love.graphics.getWidth() / self.targetWidth, love.graphics.getHeight() / self.targetHeight);
+    --local retX = x * scale + love.graphics.getWidth() / 2;
+    --local retY = y * scale + love.graphics.getHeight() / 2;
 
-    return retX, retY;
+    --return retX, retY;
+
+    return (x + self.leftGap) / self.horizontalPixelScale, (y + self.topGap) / self.verticalPixelScale;
 end
 
 function SimpleShader.screenDeltaToWorldDelta(x, y)
-    local scale = math.min(love.graphics.getWidth() / self.targetWidth, love.graphics.getHeight() / self.targetHeight);
+    --local scale = math.min(love.graphics.getWidth() / self.targetWidth, love.graphics.getHeight() / self.targetHeight);
 
-    local retX = x / scale;
-    local retY = y / scale;
+    --local retX = x / scale;
+    --local retY = y / scale;
 
-    return retX, retY;
+    --return retX, retY;
+
+    return x * self.horizontalPixelScale, y * self.verticalPixelScale;
 end
 function SimpleShader.worldDeltaToScreenDelta(x, y) -- just for completeness (highly doubt this has any actual usage)
-    local scale = math.min(love.graphics.getWidth() / self.targetWidth, love.graphics.getHeight() / self.targetHeight);
+    --local scale = math.min(love.graphics.getWidth() / self.targetWidth, love.graphics.getHeight() / self.targetHeight);
 
-    local retX = x * scale;
-    local retY = y * scale;
+    --local retX = x * scale;
+    --local retY = y * scale;
 
-    return retX, retY;
+    --return retX, retY;
+
+    return x / self.horizontalPixelScale, y / self.verticalPixelScale;
 end
 
 function SimpleShader.getActiveShader()

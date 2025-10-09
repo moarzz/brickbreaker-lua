@@ -2,6 +2,8 @@ LoveAffix = require("Libraries.loveAffix").init();
 SimpleShader = require("Libraries.simpleShader").init();
 WindowCorrector = require("Libraries.windowCorrector");
 
+--! these three *need* to be the first code 2 run otherwise i will eat you
+
 UtilityFunction = require("UtilityFunction") -- utility functions
 Player = require("Player") -- player logic
 Balls = require("Balls") -- ball logic

@@ -10,8 +10,6 @@ function love.conf(t)
     t.window.height = 540                    -- The window height
     t.window.fullscreen = false                -- Enable fullscreen
     t.window.vsync = 0                        -- Disable VSync
-    t.window.minwidth = 800                   -- Minimum window width
-    t.window.minheight = 600                  -- Minimum window height
 
     -- Performance
     --t.gammacorrect = true                    -- Enable gamma-correct rendering

@@ -10,6 +10,10 @@ function DepthDrawing.init()
     local w = love.graphics.getWidth();
     local h = love.graphics.getHeight();
 
+    print(h);
+
+    SimpleShader.setRealDimensions(w, h);
+
     self.isActive = false;
 
     self.render = love.graphics.newCanvas(w, h); -- final frame
@@ -18,53 +22,42 @@ function DepthDrawing.init()
     self.transformOrigin = false; -- whether or not to apply transformations whenever love.graphics.origin() is called
 
     local function drawCallErroring() -- cause dra calls to error when we want it to
-        if not self.enabled then -- if not enabled then ignore everything related to it
+        if not self.isActive then -- if not enabled then ignore everything related to it
             return;
         end
 
-        assert(self.errorDrawCalls == false, "tried to call a draw call outside of a DepthDrawing use, call DepthDrawing.startDrawingAtDepth() or use the DepthDrawing. [draw callback] ()");
+        --assert(self.errorDrawCalls == false, "tried to call a draw call outside of a DepthDrawing use, call DepthDrawing.startDrawingAtDepth() or use the DepthDrawing. [draw callback] ()");
     end
     local function mouseGetPositionAppend(x, y)
-        if not self.enabled then
-            return x, y;
-        end
-
         return SimpleShader.screenPointToWorldPoint(x, y);
     end
     local function mouseGetXAppend(x)
-        if not self.enabled then
-            return x;
-        end
-
         return (SimpleShader.screenPointToWorldPoint(x, 0));
     end
     local function mouseGetYAppend(y)
-        if not self.enabled then
-            return y;
-        end
-
         local _, _y = SimpleShader.screenPointToWorldPoint(0, y);
 
         return _y;
     end
     local function mousemovedInject(x, y, dx, dy, istouch)
-        if not self.enabled then
-            return;
-        end
-
         x,  y  = SimpleShader.screenPointToWorldPoint(x,  y);
         dx, dy = SimpleShader.screenDeltaToWorldDelta(dx, dy);
 
         return x, y, dx, dy, istouch;
     end
     local function mousepressedInject(x, y, button, istouch, presses)
-        if not self.enabled then
-            return;
-        end
-
         x, y = SimpleShader.screenPointToWorldPoint(x, y);
 
         return x, y, button, istouch, presses;
+    end
+    local function feignScreenWidth()
+        return self.targetWidth;
+    end
+    local function feignScreenHeight()
+        return self.targetHeight;
+    end
+    local function feignScreenDimmensions()
+        return self.targetWidth, self.targetHeight;
     end
 
     LoveAffix.makeFunctionInjectable("graphics", "setCanvas");
@@ -104,6 +97,9 @@ function DepthDrawing.init()
     LoveAffix.makeFunctionInjectable("mousepressed");
     LoveAffix.makeFunctionInjectable("mousereleased");
     LoveAffix.makeFunctionInjectable("draw");
+    LoveAffix.makeFunctionInjectable("graphics", "getWidth");
+    LoveAffix.makeFunctionInjectable("graphics", "getHeight");
+    LoveAffix.makeFunctionInjectable("graphics", "getDimensions");
 
     LoveAffix.injectCodeIntoLove(drawCallErroring, "graphics", "arc");
     LoveAffix.injectCodeIntoLove(drawCallErroring, "graphics", "circle");
@@ -125,6 +121,9 @@ function DepthDrawing.init()
     LoveAffix.injectCodeIntoLove(mousepressedInject, "mousereleased");
     LoveAffix.injectCodeIntoLove(self.startDraw, "draw");
     LoveAffix.appendCodeIntoLove(self.stopDraw, "draw");
+    LoveAffix.appendCodeIntoLove(feignScreenWidth, "graphics", "getWidth");
+    LoveAffix.appendCodeIntoLove(feignScreenHeight, "graphics", "getHeight");
+    LoveAffix.appendCodeIntoLove(feignScreenDimmensions, "graphics", "getDimensions");
 
     -- if an error occurs then dont cause a force quit for the entire application before the error screen can be drawn
     LoveAffix.makeFunctionInjectable("errorhandler");
@@ -147,6 +146,10 @@ end
 
 function DepthDrawing.setDimensions(w, h) -- update canvases and transformations
     self.render = love.graphics.newCanvas(w, h);
+
+    SimpleShader.setRealDimensions(w, h);
+
+    return self.targetWidth, self.targetHeight; -- fake :3 (aaahhhhh im going fucking crazy)
 end
 
 function DepthDrawing.clear()
