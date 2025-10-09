@@ -1,7 +1,9 @@
-local DepthDrawing = {}; -- not a class
-local self = DepthDrawing; -- for readability, does not affect anything outside of this script
+local WindowCorrector = {}; -- not a class
+local self = WindowCorrector; -- for readability, does not affect anything outside of this script
 
-function DepthDrawing.init()
+local defaultCanvasCount = 3;
+
+function WindowCorrector.init(canvasCount)
     -- target dimmensions for screen
     self.targetWidth  = 1920;
     self.targetHeight = 1080;
@@ -10,13 +12,22 @@ function DepthDrawing.init()
     local w = love.graphics.getWidth();
     local h = love.graphics.getHeight();
 
+    self.realWidth = w;
+    self.realHeight = h;
+
     print(h);
 
     SimpleShader.setRealDimensions(w, h);
 
     self.isActive = false;
 
-    self.render = love.graphics.newCanvas(w, h); -- final frame
+    --self.render = love.graphics.newCanvas(w, h); -- final frame
+
+    self.canvases = {};
+
+    for i = 1, (canvasCount or defaultCanvasCount) + 1 do
+        self.canvases[i] = love.graphics.newCanvas(w, h);
+    end
 
     self.errorDrawCalls = true;
     self.transformOrigin = false; -- whether or not to apply transformations whenever love.graphics.origin() is called
@@ -26,7 +37,7 @@ function DepthDrawing.init()
             return;
         end
 
-        --assert(self.errorDrawCalls == false, "tried to call a draw call outside of a DepthDrawing use, call DepthDrawing.startDrawingAtDepth() or use the DepthDrawing. [draw callback] ()");
+        --assert(self.errorDrawCalls == false, "tried to call a draw call outside of a WindowCorrector use, call WindowCorrector.startDrawingAtDepth() or use the WindowCorrector. [draw callback] ()");
     end
     local function mouseGetPositionAppend(x, y)
         return SimpleShader.screenPointToWorldPoint(x, y);
@@ -71,7 +82,7 @@ function DepthDrawing.init()
                     self.errorDrawCalls = true;
                 end
 
-                return canv or self.render;
+                return canv or self.canvases[1];
             end
         end,
         "graphics",
@@ -141,24 +152,206 @@ function DepthDrawing.init()
 
     SimpleShader.setTargetDimensions(self.targetWidth, self.targetHeight); -- just to make sure they line up :3
 
-    return self; -- allow: DepthDrawing = require("depthDrawing").init();
+    return self; -- allow: WindowCorrector = require("depthDrawing").init();
 end
 
-function DepthDrawing.setDimensions(w, h) -- update canvases and transformations
-    self.render = love.graphics.newCanvas(w, h);
+function WindowCorrector.setCanvasCount(cnt)
+    if cnt + 1 < #self.canvases then
+        for i = cnt + 1, #self.canvases do
+            self.canvases[i]:release();
+            self.canvases[i] = nil;
+        end
+    else
+        for i = #self.canvases, cnt + 1 do
+            self.canvases[i] = love.graphics.newCanvas(self.realWidth, self.realHeight);
+        end
+    end
+end
+
+function WindowCorrector.setDimensions(w, h) -- update canvases and transformations
+    for i, v in ipairs(self.canvases) do
+        v:release();
+
+        self.canvases[i] = love.graphics.newCanvas(w, h);
+    end
 
     SimpleShader.setRealDimensions(w, h);
 
     return self.targetWidth, self.targetHeight; -- fake :3 (aaahhhhh im going fucking crazy)
 end
 
-function DepthDrawing.clear()
-    love.graphics.setCanvas(self.render);
-    love.graphics.clear();
+function WindowCorrector.clear()
+    for i, v in ipairs(self.canvases) do
+        love.graphics.setCanvas(v);
+        love.graphics.clear();
+    end
+
     love.graphics.setCanvas();
 end
 
-function DepthDrawing.startDraw()
+function WindowCorrector.startDrawingToCanvas(index)
+    assert(self.isActive, "tried to start drawing to a canvas while the windowCorrector is inactive");
+
+    if not index then
+        love.graphics.setCanvas(); -- main render target
+        return;
+    end
+
+    index = index + 1;
+
+    assert(index <= #self.canvases, "tried to begin drawing to an out of bounds canvas");
+
+    love.graphics.setCanvas(self.canvases[index]);
+end
+
+function WindowCorrector.stopDrawingToCanvas()
+    assert(self.isActive, "tried to stop drawing to a canvas while the windowCorrector is inactive");
+
+    love.graphics.setCanvas();
+end
+
+--? draws canvas:index_2 onto canvas:index_1
+function WindowCorrector.mergeCanvases(index_1, index_2)
+    assert(self.isActive, "tried to merge a canvas while the windowCorrector is inactive");
+
+    if not index_2 then -- merge one canvas to the main render target
+        self.mergeCanvas(index_1);
+        return;
+    end
+
+    index_1 = index_1 + 1;
+    index_2 = index_2 + 1;
+
+    assert(index_1 <= #self.canvases and index_2 <= #self.canvases, "tried to merge an out of bounds canvas");
+
+    local curCanvas = love.graphics.getCanvas();
+
+    love.graphics.setCanvas(self.canvases[index_1]);
+
+    self.transformOrigin = false;
+    SimpleShader.reapplyShader();
+
+    love.graphics.push();
+    love.graphics.origin();
+
+    love.graphics.draw(self.canvases[index_2]);
+
+    love.graphics.pop();
+
+    self.transformOrigin = true;
+    SimpleShader.reapplyShader();
+
+    love.graphics.setCanvas(curCanvas);
+end
+
+function WindowCorrector.mergeCanvas(index)
+    assert(self.isActive, "tried to merge a canvas while the windowCorrector is inactive");
+
+    index = index + 1;
+
+    assert(index <= #self.canvases, "tried to merge an out of bounds canvas");
+
+    local curCanvas = love.graphics.getCanvas();
+
+    love.graphics.setCanvas();
+
+    self.transformOrigin = false;
+    SimpleShader.reapplyShader();
+
+    love.graphics.push();
+    love.graphics.origin();
+
+    love.graphics.draw(self.canvases[index]);
+
+    love.graphics.pop();
+
+    self.transformOrigin = true;
+    SimpleShader.reapplyShader();
+
+    love.graphics.setCanvas(curCanvas);
+end
+
+function WindowCorrector.mergeRenderToCanvas(index)
+    assert(self.isActive, "tried to merge a canvas while the windowCorrector is inactive");
+
+    index = index + 1;
+
+    assert(index <= #self.canvases, "tried to merge an out of bounds canvas");
+
+    local curCanvas = love.graphics.getCanvas();
+
+    love.graphics.setCanvas(self.canvases[index]);
+
+    self.transformOrigin = false;
+    SimpleShader.reapplyShader();
+
+    love.graphics.push();
+    love.graphics.origin();
+
+    love.graphics.draw(self.canvases[1]);
+
+    love.graphics.pop();
+
+    self.transformOrigin = true;
+    SimpleShader.reapplyShader();
+
+    love.graphics.setCanvas(curCanvas);
+end
+
+function WindowCorrector.swapCanvases(index_1, index_2)
+    assert(self.isActive, "tried to swap a canvas while the windowCorrector is inactive");
+
+    if not index_2 then -- merge one canvas to the main render target
+        self.swapRenderAndCanvas(index_1);
+        return;
+    end
+
+    index_1 = index_1 + 1;
+    index_2 = index_2 + 1;
+
+    assert(index_1 <= #self.canvases and index_2 <= #self.canvases, "tried to swap an out of bounds canvas");
+
+    self.canvases[index_1], self.canvases[index_2] = self.canvases[index_2], self.canvases[index_1];
+
+    if love.graphics.getCanvas() == self.canvases[index_1] then
+        love.graphics.setCanvas(self.canvases[index_2]);
+    elseif love.graphics.getCanvas() == self.canvases[index_2] then
+        love.graphics.setCanvas(self.canvases[index_1]);
+    end
+end
+
+function WindowCorrector.swapRenderAndCanvas(index)
+    assert(self.isActive, "tried to swap a canvas while the windowCorrector is inactive");
+
+    index = index + 1;
+
+    assert(index <= #self.canvases, "tried to swap an out of bounds canvas");
+
+    self.canvases[index], self.canvases[1] = self.canvases[1], self.canvases[index];
+
+    if love.graphics.getCanvas() == self.canvases[index] then
+        love.graphics.setCanvas(self.canvases[1]);
+    elseif love.graphics.getCanvas() == self.canvases[1] then
+        love.graphics.setCanvas(self.canvases[index]);
+    end
+end
+
+function WindowCorrector.clearCanvas(index)
+    assert(self.isActive, "tried to clear a canvas while the windowCorrector is inactive");
+
+    index = index + 1;
+
+    assert(index <= #self.canvases, "tried to clear an out of bounds canvas");
+
+    local curCanvas = love.graphics.getCanvas();
+
+    love.graphics.setCanvas(self.canvases[index]);
+    love.graphics.clear();
+
+    love.graphics.setCanvas(curCanvas);
+end
+
+function WindowCorrector.startDraw()
     -- make calling love.graphics.origin() not mess up the desired centering and scaling of the universe
     self.transformOrigin = true;
     self.errorDrawCalls = false;
@@ -167,11 +360,11 @@ function DepthDrawing.startDraw()
 
     self.isActive = true;
 
-    love.graphics.setCanvas(self.currentLayer);
-    love.graphics.clear();
+    love.graphics.setCanvas();
+    self.clear();
 end
 
-function DepthDrawing.stopDraw()
+function WindowCorrector.stopDraw()
     -- make calling love.graphics.origin() ignore the previous centering and scaling of the universe
 
     self.transformOrigin = false;
@@ -185,9 +378,9 @@ function DepthDrawing.stopDraw()
     love.graphics.origin();
     love.graphics.setColor(1,1,1,1);
 
-    love.graphics.draw(self.render);
+    love.graphics.draw(self.canvases[1]);
 
-    self.errorDrawCalls = true; -- error draw calls since theyre not done in the DepthDrawing
+    self.errorDrawCalls = true; -- error draw calls since theyre not done in the WindowCorrector
 end
 
-return DepthDrawing;
+return WindowCorrector;
