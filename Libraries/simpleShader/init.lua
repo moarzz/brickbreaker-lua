@@ -82,7 +82,7 @@ function SimpleShader.init()
 
             local start = string.find(str, "{");
 
-            str = string.sub(str, 0, start) .. "vec2 " .. self.nameOfHelperVariable .. " = " .. self.nameOfVariable .. " / love_ScreenSize.xy;" .. self.nameOfHelperVariable .. [[ = vec2(]] .. self.nameOfVariable .. [[.x - love_ScreenSize.x * min(]] .. self.nameOfHelperVariable .. [[.x, ]] .. self.nameOfHelperVariable .. [[.y), ]] .. self.nameOfVariable .. [[.y - love_ScreenSize.y * min(]] .. self.nameOfHelperVariable .. [[.x, ]] .. self.nameOfHelperVariable .. [[.y)) / 2.0 / love_ScreenSize.xy;]] .. string.sub(str, start + 1, -1);
+            str = string.sub(str, 0, start) .. "vec2 " .. self.nameOfHelperVariable .. " = " .. self.nameOfVariable .. " / love_ScreenSize.xy;" .. self.nameOfHelperVariable .. [[ = (]] .. self.nameOfVariable .. [[ - love_ScreenSize.xy * min(]] .. self.nameOfHelperVariable .. [[.x, ]] .. self.nameOfHelperVariable .. [[.y)) / 2.0 / love_ScreenSize.xy;]] .. string.sub(str, start + 1, -1);
 
             str = string.gsub(str, "return (.-);", "return (%1) * vec4(vec2(min(love_ScreenSize.x / " .. self.nameOfVariable .. ".x, love_ScreenSize.y / " .. self.nameOfVariable .. ".y)), 1.0, 1.0) + vec4(" .. self.nameOfHelperVariable .. " - 0.5, 0.0, 0.0);");
 
@@ -243,8 +243,7 @@ function SimpleShader.getDefaultVertexCode()
     vec4 position(mat4 transform_projection, vec4 vertex_position)
     {
         vec2 ]] .. self.nameOfHelperVariable .. [[ = ]] .. self.nameOfVariable .. [[ / love_ScreenSize.xy;
-        ]] .. self.nameOfHelperVariable .. [[ = vec2(]] .. self.nameOfVariable .. [[.x - love_ScreenSize.x * min(]] .. self.nameOfHelperVariable .. [[.x, ]] .. self.nameOfHelperVariable .. [[.y), ]] .. self.nameOfVariable .. [[.y - love_ScreenSize.y * min(]] .. self.nameOfHelperVariable .. [[.x, ]] .. self.nameOfHelperVariable .. [[.y)) / 2.0 / love_ScreenSize.xy;
-
+        ]] .. self.nameOfHelperVariable .. [[ = (]] .. self.nameOfVariable .. [[ - love_ScreenSize.xy * min(]] .. self.nameOfHelperVariable .. [[.x, ]] .. self.nameOfHelperVariable .. [[.y)) / 2.0 / love_ScreenSize.xy;
         return (transform_projection * vertex_position) * vec4(vec2(min(love_ScreenSize.x / ]] .. self.nameOfVariable .. [[.x, love_ScreenSize.y / ]] .. self.nameOfVariable .. [[.y)), 1.0, 1.0) + vec4(]] .. self.nameOfHelperVariable .. [[ - 0.5, 0.0, 0.0);
     }]];
     -- dont just use a file since we could accidentally mess up the name of the variable (I h8 this too)
