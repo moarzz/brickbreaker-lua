@@ -1,6 +1,4 @@
-LoveAffix = require("Libraries.windowCorrector.loveAffix").init();
-SimpleShader = require("Libraries.windowCorrector.simpleShader").init();
-WindowCorrector = require("Libraries.windowCorrector.windowCorrector");
+
 
 UtilityFunction = require("UtilityFunction") -- utility functions
 Player = require("Player") -- player logic
@@ -647,7 +645,6 @@ end
 
 function love.load()
     math.randomseed(os.time())
-    WindowCorrector.init()
     dress = suit.new()
     loadAssets() -- Load assets
 
@@ -872,7 +869,7 @@ local printDrawCalls = false
 local function gameFixedUpdate(dt)
     -- Update mouse positions
 
-    dt = dt * 1.75
+    dt = dt * 0.5
     levelUpShopTweenAlpha(dt)
     local stats = love.graphics.getStats()
     if printDrawCalls then
@@ -913,7 +910,6 @@ local function gameFixedUpdate(dt)
         local sineShaderIntensity = 0.3 -- Default base intensity
 
         dt = dt * playRate -- Adjust the delta time based on the playback rate
-        dt = dt * 0.4 -- ralenti le jeu a la bonne vitesse
         upgradesUI.update(dt) -- Update the upgrades UI
         -- Don't update game time when level up shop is open
         if Player.choosingUpgrade then
@@ -931,7 +927,7 @@ local function gameFixedUpdate(dt)
             end
         end
 
-        if not Player.choosingUpgrade and Player.levelingUp then
+        if Player.choosingUpgrade or Player.levelingUp then
             dt = 0
         end
 
@@ -996,7 +992,7 @@ local function gameFixedUpdate(dt)
             if damageCooldown > 0 then
                 damageCooldown = damageCooldown - dt -- Reduce damage cooldown
             end
-
+            
             if healCooldown > 0 then
                 healCooldown = healCooldown - dt -- Reduce heal cooldown
             end
@@ -1967,7 +1963,7 @@ function love.keypressed(key)
         -----------------------------------
 
         if key == "7" then
-            Balls.addBall("Magnetic Ball")
+            Balls.addBall("Phantom Ball")
         end
 
         -- PERFORMANCE TEST ON OFF BLOCK
