@@ -3114,6 +3114,26 @@ local function spellsUpdate(dt)
             end
         end
     end
+
+    if unlockedBallTypes["Light Beam"] then
+        if lightBeamCD <= -0.2 then
+            for _, brick in ipairs(bricks) do 
+                if brick.x < paddle.x + paddle.width/2 + 25 and brick.x + brick.width > paddle.x + paddle.width/2 - 25 then
+                    local brickCD = lightBeamBricksCD[brick.id]
+                    if brickCD then
+                        if brickCD <= 0 then
+                            dealDamage(unlockedBallTypes["Light Beam"], brick)
+                            lightBeamBricksCD[brick.id] = lightBeamDmgCD
+                        else
+                            lightBeamBricksCD[brick.id] = brickCD - dt
+                        end
+                    else
+                        lightBeamBricksCD[brick.id] = lightBeamDmgCD
+                    end
+                end
+            end
+        end
+    end
 end
 
 local incrediballColor = {0.5, 0.5, 0.5, 1}
