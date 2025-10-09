@@ -39,7 +39,7 @@ function SimpleShader.init()
         assert(name and pixelCode, "tried to create a shader with invalid info, now you need: name, pixelCode, [vertexCode]");
         assert(love.filesystem.getInfo(name) == nil, "tried to create a shader with the name of a valid file '" .. name .. "' with invalid info, now you need: name, pixelCode, [vertexCode]");
         assert(string.len(name) <= 25, "tried to create a shader with a name longer than 25 characters, this is not allowed, remember that the new arg format is: name, pixelCode, [vertexCode]");
-        
+
         --! does not technically error if providing pixelCode and vertexCode as code and no name
         --! but only if pixelCode has less than 25 character, so very unlikely
         --! (and the outcome is that it only is a vertex shader, so not completely catastrophic)
@@ -70,7 +70,7 @@ function SimpleShader.init()
                 "couldnt fit regex 'return .-;' into the vertex code's 'vec4 position function' :" .. name
             );
 
-            return string.gsub(str, "return (.-);", "return (%1) * vec4(vec2(min(love_ScreenSize.x / " .. self.nameOfVariable .. ".x, love_ScreenSize.y / " .. self.nameOfVariable .. ".y)), 1.0, 1.0) - vec4(0.5, 0.5, 0.0, 0.0);");
+            return string.gsub(str, "return (.-);", "return (%1) * vec4(vec2(min(love_ScreenSize.x / " .. self.nameOfVariable .. ".x, love_ScreenSize.y / " .. self.nameOfVariable .. ".y)), 1.0, 1.0) + vec4(0.5, 0.5, 0.0, 0.0);");
         end
 
         local pixelColourGSub = function(str)
@@ -154,9 +154,6 @@ function SimpleShader.init()
             end
         end
 
-        print(pixelCode);
-        print(vertexCode);
-
         local normalShader = self.newShader(unmodifiedPixelCode, unmodifiedVertexCode);
         local modifiedShader = self.newShader(pixelCode, vertexCode);
 
@@ -208,8 +205,8 @@ function SimpleShader.getDefaultVertexCode()
 
     vec4 position(mat4 transform_projection, vec4 vertex_position)
     {
-        return (transform_projection * vertex_position) * vec4(vec2(min(love_ScreenSize.x / ]] .. self.nameOfVariable .. [[.x, love_ScreenSize.y / ]] .. self.nameOfVariable .. [[.y)), 1.0, 1.0) - vec4(0.5, 0.5, 0.0, 0.0);
-    }]];-- + vec4(0.5, 0.5, 0.0, 0.0);
+        return (transform_projection * vertex_position) * vec4(vec2(min(love_ScreenSize.x / ]] .. self.nameOfVariable .. [[.x, love_ScreenSize.y / ]] .. self.nameOfVariable .. [[.y)), 1.0, 1.0) + vec4(0.5, 0.5, 0.0, 0.0);
+    }]];
     -- dont just use a file since we could accidentally mess up the name of the variable (I h8 this too)
 end
 function SimpleShader.getDefaultPixelCode()

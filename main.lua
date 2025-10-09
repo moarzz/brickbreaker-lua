@@ -1648,7 +1648,7 @@ function love.draw()
         suit.draw()
         return
     end
-
+    
     if currentGameState == GameState.MENU then
         
         -- Draw menu
@@ -1657,7 +1657,7 @@ function love.draw()
         suit.draw()
         return
     end
-
+    
     if currentGameState == GameState.START_SELECT then
         drawStartSelect()
         setFont(30)
@@ -1816,7 +1816,7 @@ function love.draw()
     dress:draw()    -- Draw tooltip last (on top of everything)
     KeywordSystem:drawTooltip()
     confetti:draw()
-
+    
     love.graphics.setCanvas(gameCanvas)
     VFX.draw() -- Draw VFX
     love.graphics.setCanvas()

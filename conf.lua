@@ -6,9 +6,9 @@ function love.conf(t)
 
     -- Window settings
     t.window.title = "Brick Breaker"          -- The window title
-    t.window.width = 1920                     -- The window width
-    t.window.height = 1080                    -- The window height
-    t.window.fullscreen = true                -- Enable fullscreen
+    t.window.width = 960                     -- The window width
+    t.window.height = 540                    -- The window height
+    t.window.fullscreen = false                -- Enable fullscreen
     t.window.vsync = 0                        -- Disable VSync
     t.window.minwidth = 800                   -- Minimum window width
     t.window.minheight = 600                  -- Minimum window height

@@ -12,10 +12,18 @@ function DepthDrawing.init()
 
     self.isActive = false;
 
-    self.render       = love.graphics.newCanvas(w, h); -- final frame
+    self.render = love.graphics.newCanvas(w, h); -- final frame
 
+    self.errorDrawCalls = true;
     self.transformOrigin = false; -- whether or not to apply transformations whenever love.graphics.origin() is called
 
+    local function drawCallErroring() -- cause dra calls to error when we want it to
+        if not self.enabled then -- if not enabled then ignore everything related to it
+            return;
+        end
+
+        assert(self.errorDrawCalls == false, "tried to call a draw call outside of a DepthDrawing use, call DepthDrawing.startDrawingAtDepth() or use the DepthDrawing. [draw callback] ()");
+    end
     local function mouseGetPositionAppend(x, y)
         if not self.enabled then
             return x, y;
@@ -64,6 +72,12 @@ function DepthDrawing.init()
     LoveAffix.injectCodeIntoLove(
         function(canv)
             if self.isActive then
+                if canv then
+                    self.errorDrawCalls = false;
+                else
+                    self.errorDrawCalls = true;
+                end
+
                 return canv or self.render;
             end
         end,
@@ -71,6 +85,18 @@ function DepthDrawing.init()
         "setCanvas"
     );
 
+    LoveAffix.makeFunctionInjectable("graphics", "arc");
+    LoveAffix.makeFunctionInjectable("graphics", "circle");
+    LoveAffix.makeFunctionInjectable("graphics", "draw");
+    LoveAffix.makeFunctionInjectable("graphics", "drawInstanced");
+    LoveAffix.makeFunctionInjectable("graphics", "drawLayer");
+    LoveAffix.makeFunctionInjectable("graphics", "ellipse");
+    LoveAffix.makeFunctionInjectable("graphics", "line");
+    LoveAffix.makeFunctionInjectable("graphics", "points");
+    LoveAffix.makeFunctionInjectable("graphics", "polygon");
+    LoveAffix.makeFunctionInjectable("graphics", "print");
+    LoveAffix.makeFunctionInjectable("graphics", "printf");
+    LoveAffix.makeFunctionInjectable("graphics", "rectangle");
     LoveAffix.makeFunctionInjectable("mouse", "getPosition");
     LoveAffix.makeFunctionInjectable("mouse", "getX");
     LoveAffix.makeFunctionInjectable("mouse", "getY");
@@ -79,6 +105,18 @@ function DepthDrawing.init()
     LoveAffix.makeFunctionInjectable("mousereleased");
     LoveAffix.makeFunctionInjectable("draw");
 
+    LoveAffix.injectCodeIntoLove(drawCallErroring, "graphics", "arc");
+    LoveAffix.injectCodeIntoLove(drawCallErroring, "graphics", "circle");
+    LoveAffix.injectCodeIntoLove(drawCallErroring, "graphics", "draw");
+    LoveAffix.injectCodeIntoLove(drawCallErroring, "graphics", "drawInstanced");
+    LoveAffix.injectCodeIntoLove(drawCallErroring, "graphics", "drawLayer");
+    LoveAffix.injectCodeIntoLove(drawCallErroring, "graphics", "ellipse");
+    LoveAffix.injectCodeIntoLove(drawCallErroring, "graphics", "line");
+    LoveAffix.injectCodeIntoLove(drawCallErroring, "graphics", "points");
+    LoveAffix.injectCodeIntoLove(drawCallErroring, "graphics", "polygon");
+    LoveAffix.injectCodeIntoLove(drawCallErroring, "graphics", "print");
+    LoveAffix.injectCodeIntoLove(drawCallErroring, "graphics", "printf");
+    LoveAffix.injectCodeIntoLove(drawCallErroring, "graphics", "rectangle");
     LoveAffix.appendCodeIntoLove(mouseGetPositionAppend, "mouse", "getPosition");
     LoveAffix.appendCodeIntoLove(mouseGetXAppend, "mouse", "getX");
     LoveAffix.appendCodeIntoLove(mouseGetYAppend, "mouse", "getY");
@@ -93,6 +131,7 @@ function DepthDrawing.init()
     LoveAffix.injectCodeIntoLove(
        function()
            self.transformOrigin = false;
+           self.errorDrawCalls = false;
        end,
        "errorhandler"
     );
@@ -107,10 +146,10 @@ function DepthDrawing.init()
 end
 
 function DepthDrawing.setDimensions(w, h) -- update canvases and transformations
-    self.render       = love.graphics.newCanvas(w, h);
+    self.render = love.graphics.newCanvas(w, h);
 end
 
-function DepthDrawing.clear(r, g, b)
+function DepthDrawing.clear()
     love.graphics.setCanvas(self.render);
     love.graphics.clear();
     love.graphics.setCanvas();
@@ -119,6 +158,8 @@ end
 function DepthDrawing.startDraw()
     -- make calling love.graphics.origin() not mess up the desired centering and scaling of the universe
     self.transformOrigin = true;
+    self.errorDrawCalls = false;
+
     SimpleShader.reapplyShader();
 
     self.isActive = true;
@@ -129,6 +170,7 @@ end
 
 function DepthDrawing.stopDraw()
     -- make calling love.graphics.origin() ignore the previous centering and scaling of the universe
+
     self.transformOrigin = false;
 
     self.isActive = false;
@@ -139,6 +181,7 @@ function DepthDrawing.stopDraw()
 
     love.graphics.origin();
     love.graphics.setColor(1,1,1,1);
+
     love.graphics.draw(self.render);
 
     self.errorDrawCalls = true; -- error draw calls since theyre not done in the DepthDrawing
