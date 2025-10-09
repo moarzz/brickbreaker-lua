@@ -70,6 +70,18 @@ function WindowCorrector.init(canvasCount)
     local function feignScreenDimmensions()
         return self.targetWidth, self.targetHeight;
     end
+    local prevFullScreen = love.window.setFullscreen;
+    local function setFullscreen(...)
+        local canv = love.graphics.getCanvas();
+        local prevActive = self.isActive;
+        self.isActive = false;
+        love.graphics.setCanvas();
+
+        prevFullScreen(...);
+
+        self.isActive = prevActive;
+        love.graphics.setCanvas(canv);
+    end
 
     LoveAffix.makeFunctionInjectable("graphics", "setCanvas");
 
@@ -111,6 +123,7 @@ function WindowCorrector.init(canvasCount)
     LoveAffix.makeFunctionInjectable("graphics", "getWidth");
     LoveAffix.makeFunctionInjectable("graphics", "getHeight");
     LoveAffix.makeFunctionInjectable("graphics", "getDimensions");
+    LoveAffix.makeFunctionInjectable("window", "setFullscreen");
 
     LoveAffix.injectCodeIntoLove(drawCallErroring, "graphics", "arc");
     LoveAffix.injectCodeIntoLove(drawCallErroring, "graphics", "circle");
@@ -135,6 +148,7 @@ function WindowCorrector.init(canvasCount)
     LoveAffix.appendCodeIntoLove(feignScreenWidth, "graphics", "getWidth");
     LoveAffix.appendCodeIntoLove(feignScreenHeight, "graphics", "getHeight");
     LoveAffix.appendCodeIntoLove(feignScreenDimmensions, "graphics", "getDimensions");
+    LoveAffix.replaceFunctionInLove(setFullscreen, "window", "setFullscreen");
 
     -- if an error occurs then dont cause a force quit for the entire application before the error screen can be drawn
     LoveAffix.makeFunctionInjectable("errorhandler");

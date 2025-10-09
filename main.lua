@@ -47,6 +47,7 @@ currentGameState = GameState.MENU
 -- Add settings variables
 musicVolume = 1
 sfxVolume = 1
+fullScreenCheckbox = love.window.getFullscreen();
 
 -- Add this variable to store the player's choice
 local startingChoice = nil
@@ -1596,8 +1597,18 @@ function drawSettingsMenu()
         playSoundEffect(selectSFX, sfxVolume, 1, false)
     end
 
+    local prevChecked = fullScreenCheckbox;
+    local checkboxInfo = {checked = fullScreenCheckbox};
+    suit.Label("Fullscreen", {align = "left"}, sliderX, sliderY + sliderSpacing * 2, sliderWidth, 40);
+    local fullScreenTickBox = suit.Checkbox(checkboxInfo, {id = "fullscreen_checkbox"}, sliderX, sliderY + sliderSpacing * 2 + 40, 40, 40);
+    fullScreenCheckbox = checkboxInfo.checked;
+
+    if fullScreenCheckbox ~= prevChecked then
+        love.window.setFullscreen(fullScreenCheckbox);
+    end
+
     -- Back button
-    local backBtn = suit.Button("Back", {id="settings_back"}, sliderX, sliderY + sliderSpacing*2 + 60, sliderWidth, buttonHeight)
+    local backBtn = suit.Button("Back", {id="settings_back"}, sliderX, sliderY + sliderSpacing * 3 + 20, sliderWidth, buttonHeight)
     if backBtn.hit then
         playSoundEffect(selectSFX, 1, 0.8)
         if inGame then
