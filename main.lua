@@ -19,6 +19,7 @@ local KeySys = require("KeywordSystem") -- Keyword system for text parsing
 local Explosion = require("particleSystems.explosion") -- Explosion particle system
 
 usingMoneySystem = false
+usingNormalXpSystem = true
 goldEarnedFrl = 0 -- ignore, mais delete pas
 local startingItemName = nil
 
@@ -312,6 +313,7 @@ local function spawnBoss()
         height = bossHeight,
         destroyed = false,
         health = bossHealth,
+        maxHealth = bossHealth,
         color = {brickColor[1], brickColor[2], brickColor[3], 1},
         hitLastFrame = false,
         lastHitVfxTime = 0,
@@ -327,6 +329,7 @@ local function spawnBoss()
                     bossPosY = brick.y
                 end
             end
+            local health = math.random(60,125)
             table.insert(bricks, 2, {
                 type = "small",
                 id = brickId,
@@ -340,7 +343,8 @@ local function spawnBoss()
                 width = brickWidth,
                 height = brickHeight,
                 destroyed = false,
-                health = math.random(60,125),
+                health = health,
+                maxHealth = health,
                 color = {brickColor[1], brickColor[2], brickColor[3], 1},
                 hitLastFrame = false,
                 lastHitVfxTime = 0,
@@ -449,6 +453,7 @@ local function generateRow(brickCount, yPos)
                             height = brickHeight*2,
                             destroyed = false,
                             health = bigBrickHealth,
+                            maxHealth = bigBrickHealth,
                             colorHealth = bigBrickHealth / 5, -- store the divided value for color
                             color = {brickColor[1], brickColor[2], brickColor[3], 1},
                             hitLastFrame = false,
@@ -475,6 +480,7 @@ local function generateRow(brickCount, yPos)
                         height = brickHeight,
                         destroyed = false,
                         health = math.ceil(brickHealth/2),
+                        maxHealth = math.ceil(brickHealth/2),
                         color = {brickColor[1], brickColor[2], brickColor[3], 1},
                         hitLastFrame = false,
                         lastHitVfxTime = 0,
@@ -516,6 +522,7 @@ local function generateRow(brickCount, yPos)
                         height = brickHeight,
                         destroyed = false,
                         health = brickHealth,
+                        maxHealth = brickHealth,
                         color = {brickColor[1], brickColor[2], brickColor[3], 1},
                         hitLastFrame = false,
                         lastHitVfxTime = 0,

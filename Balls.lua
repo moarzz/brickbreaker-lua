@@ -232,6 +232,7 @@ function totalUpgrade()
     end
 end
 
+local xpOrbs = {}
 brickPieces = {}
 local function brickDestroyed(brick)
     Player.bricksDestroyed = (Player.bricksDestroyed or 0) + 1
@@ -248,45 +249,62 @@ local function brickDestroyed(brick)
             ballType.onBrickDestroyed()
         end
     end
-        local brickPiece1 = {
-            x = brick.x,
-            y = brick.y,
-            speedX = math.random(-100, -50), -- Random speed for the piece
-            speedY = -math.random(50, 100), -- Random speed for the piece
-            img = brickPiece1Img,
-            width = brick.width,
-            height = brick.height / 2,
-            color = {0.75, 0.75, 0.75, 1}
+    local brickPiece1 = {
+        x = brick.x,
+        y = brick.y,
+        speedX = math.random(-100, -50), -- Random speed for the piece
+        speedY = -math.random(50, 100), -- Random speed for the piece
+        img = brickPiece1Img,
+        width = brick.width,
+        height = brick.height / 2,
+        color = {0.75, 0.75, 0.75, 1}
+    }
+    local brickPiece2 = {
+        x = brick.x,
+        y = brick.y + brick.height / 2,
+        speedX = math.random(-25, 50), -- Random speed for the piece
+        speedY = -math.random(50, 100), -- Random speed for the piece
+        img = brickPiece2Img,
+        width = brick.width,
+        height = brick.height / 2,
+        color = {0.75, 0.75, 0.75, 1}
+    }
+    local brickPiece3 = {
+        x = brick.x + brick.width / 2,
+        y = brick.y,
+        speedX = math.random(50, 100), -- Random speed for the piece
+        speedY = -math.random(50, 100), -- Random speed for the piece
+        img = brickPiece3Img,
+        width = brick.width / 2,
+        height = brick.height,
+        color = {0.75, 0.75, 0.75, 1}
+    }
+    local tween1 = tween.new(0.8, brickPiece1, {color = {0.75, 0.75, 0.75, 0}}, tween.outCubic)
+    local tween2 = tween.new(0.8, brickPiece2, {color = {0.75, 0.75, 0.75, 0}}, tween.outCubic)
+    local tween3 = tween.new(0.8, brickPiece3, {color = {0.75, 0.75, 0.75, 0}}, tween.outCubic)
+    addTweenToUpdate(tween1)
+    addTweenToUpdate(tween2)
+    addTweenToUpdate(tween3)
+    table.insert(brickPieces, brickPiece1)
+    table.insert(brickPieces, brickPiece2)
+    table.insert(brickPieces, brickPiece3)
+
+    if not usingNormalXpSystem then
+        local xpAmount = brick.maxHealth or 1
+        local size = mapRange(math.pow(xpAmount, 0.4), 1, 8, 3, 20)
+        local xpOrb = {
+            x = brick.x + brick.width / 2 - 8,
+            y = brick.y + brick.height / 2 - 8,
+            speedY = -100, -- Initial upward speed
+            speedX = math.random(-50, 50), -- Random horizontal speed
+            radius = 0,
+            color = {1, 1, 0, 1},
+            value = xpAmount
         }
-        local brickPiece2 = {
-            x = brick.x,
-            y = brick.y + brick.height / 2,
-            speedX = math.random(-25, 50), -- Random speed for the piece
-            speedY = -math.random(50, 100), -- Random speed for the piece
-            img = brickPiece2Img,
-            width = brick.width,
-            height = brick.height / 2,
-            color = {0.75, 0.75, 0.75, 1}
-        }
-        local brickPiece3 = {
-            x = brick.x + brick.width / 2,
-            y = brick.y,
-            speedX = math.random(50, 100), -- Random speed for the piece
-            speedY = -math.random(50, 100), -- Random speed for the piece
-            img = brickPiece3Img,
-            width = brick.width / 2,
-            height = brick.height,
-            color = {0.75, 0.75, 0.75, 1}
-        }
-        local tween1 = tween.new(0.8, brickPiece1, {color = {0.75, 0.75, 0.75, 0}}, tween.outCubic)
-        local tween2 = tween.new(0.8, brickPiece2, {color = {0.75, 0.75, 0.75, 0}}, tween.outCubic)
-        local tween3 = tween.new(0.8, brickPiece3, {color = {0.75, 0.75, 0.75, 0}}, tween.outCubic)
-        addTweenToUpdate(tween1)
-        addTweenToUpdate(tween2)
-        addTweenToUpdate(tween3)
-        table.insert(brickPieces, brickPiece1)
-        table.insert(brickPieces, brickPiece2)
-        table.insert(brickPieces, brickPiece3)
+        table.insert(xpOrbs, xpOrb)
+        local orbCreationTween = tween.new(0.125, xpOrb, {radius = size}, tween.outCubic)
+        addTweenToUpdate(orbCreationTween)
+    end
 end
 
 function Balls.reduceCooldown(typeName) 
