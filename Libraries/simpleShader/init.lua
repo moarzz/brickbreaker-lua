@@ -91,23 +91,6 @@ function SimpleShader.init()
             return str;
         end
 
-        local pixelColourGSub = function(str)
-            assert(
-                string.match(str, "return .-;"),
-                "couldnt fit regex 'return .-;' into the vertex code's 'vec4 effect function' :" .. name
-            );
-
-            return string.gsub(str, "return (.-);", "vec4 _ret_colour = %1; return _ret_colour.a == 0 ? _ret_colour : vec4(_ret_colour.rgb, 1.0);");
-        end
-
-        -- remove coments but dont change amount of line of code (to not mess up error codes)
-        pixelCode = string.gsub(pixelCode, "//.-\n", "\n");
-        pixelCode = string.gsub(pixelCode, "/%*.-%*/",
-            function(str)
-                return string.gsub(str, "[^\n]", ""); -- leave just the "\n"s
-            end
-        );
-
         if vertexCode then -- there is definitely vertex code since its specified
             -- remove coments but dont change amount of line of code (to not mess up error codes)
             vertexCode = string.gsub(vertexCode, "//.-\n", "\n");
@@ -136,8 +119,6 @@ function SimpleShader.init()
                 string.match(pixelCode, "vec4%s*effect%(.-%)[%s\n]-%b{}"),
                 "couldnt fit regex 'vec4%s*effect%(.-%)[%s\n]-%b{}' into pixel code, make sure it will encase your position function :" .. name
             );
-
-            pixelCode = string.gsub(pixelCode, "vec4%s*effect%(.-%)[%s\n]-%b{}", pixelColourGSub);
         else -- vertex code may be inside of pixelCode, or not exist at all
             if string.match(pixelCode, "vec4%s*position") then -- if contains an internal vertex code then edit it as such
                 assert(
@@ -158,17 +139,6 @@ function SimpleShader.init()
                 print("no vertex internal located for shader: " .. name);
 
                 vertexCode = self.getDefaultVertexCode();
-            end
-
-            if string.match(pixelCode, "vec4%s*effect") then
-                assert(
-                    string.match(pixelCode, "vec4%s*effect%(.-%)[%s\n]-%b{}"),
-                    "couldnt fit regex 'vec4%s*effect%(.-%)[%s\n]-%b{}' into pixel code, make sure it will encase your position function :" .. name
-                );
-
-                pixelCode = string.gsub(pixelCode, "vec4%s*effect%(.-%)[%s\n]-%b{}", pixelColourGSub);
-            else
-                pixelCode = pixelCode .. "\n" .. self.getDefaultPixelCode();
             end
         end
 
@@ -252,8 +222,7 @@ function SimpleShader.getDefaultPixelCode()
     return [[
     vec4 effect(vec4 colour, Image tex, vec2 textureCoords, vec2 screenCoords)
     {
-        vec4 texturecolor = Texel(tex, textureCoords);
-        vec4 _ret_colour = texturecolor * colour; return _ret_colour.a == 0 ? _ret_colour : vec4(_ret_colour.rgb, 1.0);
+        return Texel(tex, textureCoords) * colour;
     }]];
     -- dont just use a file since we did this for the vertex code and we should keep it consistent
 end
