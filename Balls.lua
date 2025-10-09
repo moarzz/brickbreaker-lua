@@ -1837,7 +1837,7 @@ local function ballListInit()
                 range = 2
             },
         },
-        --[[["Light Beam"] = { LIGHT BEAM NOT READY YET
+        ["Light Beam"] = {
             name = "Light Beam",
             type = "spell",
             x = screenWidth / 2,
@@ -1850,12 +1850,12 @@ local function ballListInit()
             color = {1, 1, 0.5, 1}, -- Yellow color for Light Beam
             stats = {
                 damage = 2,
-                fireRate = 1,
+                cooldown = 15
             },
             onBuy = function()
                 cast("Light Beam")
             end,
-        },]]
+        },
         ["Lightning Pulse"] = {
             name = "Lightning Pulse",
             type = "spell",
@@ -2984,6 +2984,9 @@ local function drawShadowBall(shadowBall)
     love.graphics.setColor(1, 1, 1, 1)
 end
 
+local lightBeamBricksCD = {}
+local lightBeamCD = 0
+local lightBeamDmgCD = 0.35
 local function spellsUpdate(dt)
 
     -- Update shadowBalls
@@ -3116,10 +3119,15 @@ local function spellsUpdate(dt)
     end
 
     if unlockedBallTypes["Light Beam"] then
-        if lightBeamCD <= -0.2 then
-            for _, brick in ipairs(bricks) do 
+        if lightBeamCD <= 0 then
+            for _, brick in ipairs(bricks) do
+                if lightBeamCD <= -2.5 then
+                    lightBeamCD = (2 + unlockedBallTypes["Light Beam"].stats.cooldown + getStatItemsBonus("cooldown", unlockedBallTypes["Light Beam"]) + (Player.permanentUpgrades.cooldown or 0))
+                end
+                print("caca")
                 if brick.x < paddle.x + paddle.width/2 + 25 and brick.x + brick.width > paddle.x + paddle.width/2 - 25 then
-                    local brickCD = lightBeamBricksCD[brick.id]
+                    local brickCD = lightBeamBricksCD[brick.id] or 0
+                    print("caca")
                     if brickCD then
                         if brickCD <= 0 then
                             dealDamage(unlockedBallTypes["Light Beam"], brick)
@@ -3128,10 +3136,13 @@ local function spellsUpdate(dt)
                             lightBeamBricksCD[brick.id] = brickCD - dt
                         end
                     else
+                        dealDamage(unlockedBallTypes["Light Beam"], brick)
                         lightBeamBricksCD[brick.id] = lightBeamDmgCD
-                    end
+                    end     
                 end
             end
+        else
+            lightBeamCD = lightBeamCD - dt
         end
     end
 end
