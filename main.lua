@@ -1265,22 +1265,25 @@ function drawBricks()
             local scaleY = scale * (brick.height / brickImg:getHeight())
             local centerX = brick.x + brick.width / 2 + brick.drawOffsetX
             local centerY = brick.y + brick.height / 2 + brick.drawOffsetY
+            print(centerX, centerY);
             batch:setColor(color)
-            local id = batch:add(
-                centerX,
-                centerY,
-                brick.drawOffsetRot,
-                scaleX,
-                scaleY,
-                brickImg:getWidth() / 2,
-                brickImg:getHeight() / 2
-            )
+            --local id = batch:add(
+            --    centerX,
+            --    centerY,
+            --    brick.drawOffsetRot,
+            --    scaleX,
+            --    scaleY,
+            --    brickImg:getWidth() / 2,
+            --    brickImg:getHeight() / 2
+            --)
+            love.graphics.setColor(color);
+            love.graphics.draw(brickImg, centerX, centerY, brick.drawOffsetRot, scaleX, scaleY, brickImg:getWidth() / 2, brickImg:getHeight() / 2);
             table.insert(batchData, {centerX=centerX, centerY=centerY, health=brick.health})
         end
     end
 
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.draw(batch)
+    --love.graphics.draw(batch)
 
     -- Draw HP text for batched bricks in optimized way
     setFont(15)
