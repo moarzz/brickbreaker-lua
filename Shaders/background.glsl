@@ -18,7 +18,7 @@ vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
     vec4 fragColor = vec4(0.0, 0.0, 0.0, 1.0);  // Initialize with alpha = 1.0
     
     // Use screen coordinates as input (similar to Shadertoy's fragCoord)
-    vec2 I = screen_coords;
+    vec2 I = screen_coords * vec2(1920, 1080) / love_ScreenSize.xy;
     
     float pi = 3.14159265359;
     // Iterator, raymarch depth and step distance

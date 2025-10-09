@@ -206,6 +206,7 @@ end
 
 local function loadAssets()
     --load images
+    pixelTexture = love.graphics.newImage("assets/sprites/pixel.png");
     paddleImg = love.graphics.newImage("assets/sprites/paddle.png")
     auraImg = love.graphics.newImage("assets/sprites/aura.png")
     healImg = love.graphics.newImage("assets/sprites/heal.png")
@@ -650,7 +651,7 @@ end
 function love.load()
     math.randomseed(os.time())
 
-    WindowCorrector.init();
+    WindowCorrector.init(7); -- 5 additional render canvases for shaders and draw order stuff
 
     dress = suit.new()
     loadAssets() -- Load assets
@@ -666,31 +667,31 @@ function love.load()
     brickFont = love.graphics.newFont(14)    -- Get screen dimensions
     screenWidth, screenHeight = love.graphics.getDimensions()
 
-    gameCanvas = love.graphics.newCanvas(screenWidth, screenHeight)
-    uiCanvas = love.graphics.newCanvas(screenWidth, screenHeight)
+    gameCanvas = 1; -- enum for windowCorrector canvas --love.graphics.newCanvas(screenWidth, screenHeight)
+    uiCanvas = 2; -- enum for windowCorrector canvas --love.graphics.newCanvas(screenWidth, screenHeight)
 
     -- Render glow canvases at half resolution for performance
-    local glowWidth, glowHeight = math.floor(screenWidth / 2), math.floor(screenHeight / 2)
+    --local glowWidth, glowHeight = math.floor(screenWidth / 2), math.floor(screenHeight / 2)
     glowCanvas = {
-        weak = love.graphics.newCanvas(glowWidth, glowHeight, {
-            format = "rgba8",
-            msaa = 1
-        }),
-        normal = love.graphics.newCanvas(glowWidth, glowHeight, {
-            format = "rgba8",
-            msaa = 1
-        }),
-        bright = love.graphics.newCanvas(glowWidth, glowHeight, {
-            format = "rgba8",
-            msaa = 1
-        })
+        weak = 3; -- enum for windowCorrector canvas --love.graphics.newCanvas(glowWidth, glowHeight, {
+        --    format = "rgba8",
+        --    msaa = 1
+        --}),
+        normal = 4; -- enum for windowCorrector canvas --love.graphics.newCanvas(glowWidth, glowHeight, {
+        --    format = "rgba8",
+        --    msaa = 1
+        --}),
+        bright = 5; -- enum for windowCorrector canvas --love.graphics.newCanvas(glowWidth, glowHeight, {
+        --    format = "rgba8",
+        --    msaa = 1
+        --})
     }
 
     -- Create a new canvas for the shader overlay
-    shaderOverlayCanvas = love.graphics.newCanvas(screenWidth, screenHeight)
+    shaderOverlayCanvas = 6; -- enum for windowCorrector canvas --love.graphics.newCanvas(screenWidth, screenHeight)
 
     -- Create temporary canvas for blur
-    blurTempCanvas = love.graphics.newCanvas(glowWidth, glowHeight, {format = "rgba8", msaa = 1})
+    blurTempCanvas = 7; -- enum for windowCorrector canvas --love.graphics.newCanvas(glowWidth, glowHeight, {format = "rgba8", msaa = 1})
 
     love.window.setTitle("Brick Breaker")    -- Reset game start time and frozen time tracking
 
@@ -1255,6 +1256,8 @@ function drawBricks()
     local batch = love.graphics.newSpriteBatch(brickImg, #bricks)
     local batchData = {} -- Store info for HP text
 
+    setFont(18)
+
     -- Batch all bricks (except boss)
     for _, brick in ipairs(bricks) do
         if (not brick.type or brick.type ~= "boss") and not brick.destroyed and brick.y + brick.height > screenTop - 10 and brick.y < screenBottom + 10 then
@@ -1265,7 +1268,6 @@ function drawBricks()
             local scaleY = scale * (brick.height / brickImg:getHeight())
             local centerX = brick.x + brick.width / 2 + brick.drawOffsetX
             local centerY = brick.y + brick.height / 2 + brick.drawOffsetY
-            print(centerX, centerY);
             batch:setColor(color)
             --local id = batch:add(
             --    centerX,
@@ -1278,6 +1280,11 @@ function drawBricks()
             --)
             love.graphics.setColor(color);
             love.graphics.draw(brickImg, centerX, centerY, brick.drawOffsetRot, scaleX, scaleY, brickImg:getWidth() / 2, brickImg:getHeight() / 2);
+            local text = tostring(brick.health);
+            love.graphics.setColor(0,0,0);
+            love.graphics.print(text, centerX, centerY, 0, 1,1, love.graphics.getFont():getWidth(text) / 2, love.graphics.getFont():getHeight() / 2);
+            love.graphics.setColor(1,1,1);
+            love.graphics.print(text, centerX, centerY, 0, 1,1, love.graphics.getFont():getWidth(text) / 2, love.graphics.getFont():getHeight() / 2);
             table.insert(batchData, {centerX=centerX, centerY=centerY, health=brick.health})
         end
     end
@@ -1286,7 +1293,7 @@ function drawBricks()
     --love.graphics.draw(batch)
 
     -- Draw HP text for batched bricks in optimized way
-    setFont(15)
+    setFont(18)
     local font = love.graphics.getFont()
     local fontHeight = font:getHeight()
 
@@ -1312,7 +1319,7 @@ function drawBricks()
     end
 
     -- Draw all black outlines in one batch
-    love.graphics.setColor(0, 0, 0, 1)
+    --[[love.graphics.setColor(0, 0, 0, 1)
     for health, positions in pairs(healthGroups) do
         local text = textCache[health]
         local width = widthCache[health]
@@ -1321,8 +1328,8 @@ function drawBricks()
                 pos.centerX + 2, 
                 pos.centerY + 2, 
                 0, 
-                1.2, 
-                1.2, 
+                1, 
+                1, 
                 width/2, 
                 fontHeight/2
             )
@@ -1339,13 +1346,13 @@ function drawBricks()
                 pos.centerX, 
                 pos.centerY, 
                 0, 
-                1.2, 
-                1.2, 
+                1, 
+                1, 
                 width/2, 
                 fontHeight/2
             )
         end
-    end
+    end]]
 
     -- draw heal symbol on healBricks
     for i = #healBricks, 1, -1 do
@@ -1605,7 +1612,7 @@ end
 local old_love_draw = love.draw
 function love.draw()
     love.graphics.setShader(backgroundShader)
-    love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
+    WindowCorrector.mergeCanvas(1);
     love.graphics.setShader()
 
     resetButtonLastID()
@@ -1711,20 +1718,22 @@ function love.draw()
     KeywordSystem:resetTooltip()
 
     -- First render the game to the game canvas
-    love.graphics.setCanvas(gameCanvas) -- Set the canvas for drawing
+    WindowCorrector.startDrawingToCanvas(gameCanvas);
+    --love.graphics.setCanvas(gameCanvas) -- Set the canvas for drawing
     love.graphics.clear()
     love.graphics.push()
 
     love.graphics.translate(screenOffset.x, screenOffset.y) -- Apply screen shake
 
     -- Draw game objects to glow canvases (at lower resolution)
-    love.graphics.setCanvas(glowCanvas.bright)
+    WindowCorrector.startDrawingToCanvas(glowCanvas.bright);
+    --love.graphics.setCanvas(glowCanvas.bright)
     --love.graphics.clear()
     love.graphics.push()
-    love.graphics.scale(0.5, 0.5) -- Downscale drawing for half-res canvas
+    --love.graphics.scale(0.5, 0.5) -- Downscale drawing for half-res canvas
     love.graphics.setColor(1, 1, 1, 1)
 
-    love.graphics.setCanvas(glowCanvas.bright)
+    --love.graphics.setCanvas(glowCanvas.bright)
     love.graphics.clear()
     -- Draw the paddle
     love.graphics.draw(paddleImg, paddle.x, paddle.y - 2, 0,  paddle.width/250, 1)
@@ -1733,30 +1742,33 @@ function love.draw()
     love.graphics.pop()
 
     love.graphics.push()
-    love.graphics.scale(0.5, 0.5)
+    --love.graphics.scale(0.5, 0.5)
     if currentGameState == GameState.PLAYING then
         drawBricks() -- Draw bricks
     end
     love.graphics.pop()
 
-    love.graphics.setCanvas(glowCanvas.bright)
+    --love.graphics.setCanvas(glowCanvas.bright)
     love.graphics.push()
-    love.graphics.scale(0.5, 0.5)
+    --love.graphics.scale(0.5, 0.5)
     love.graphics.setColor(1, 1, 1, 1)
     Balls:draw() -- Draw balls
     love.graphics.pop()
-    love.graphics.setCanvas()
+    --love.graphics.setCanvas()
+    WindowCorrector.stopDrawingToCanvas();
 
     -- Apply glow effect and draw to main canvas
     love.graphics.setColor(1,1,1,1)
-    love.graphics.setCanvas(gameCanvas)
+    WindowCorrector.startDrawingToCanvas(gameCanvas);
+    --love.graphics.setCanvas(gameCanvas)
     love.graphics.setShader(glowShader)
 
     -- draw bright canvas for glow effect
     glowShader:send("resolution", {screenWidth, screenHeight})
     glowShader:send("intensity", 1.25)
-    love.graphics.draw(glowCanvas.bright, 0, 0, 0, 2, 2)
-    love.graphics.setBlendMode("alpha")
+    WindowCorrector.mergeCanvases(gameCanvas, glowCanvas.bright);
+    --love.graphics.draw(glowCanvas.bright, 0, 0, 0, 2, 2)
+    --love.graphics.setBlendMode("alpha") -- ! was weird, watch out if was needed
     love.graphics.setShader()
     
     -- Now draw the paddle and other objects solid
@@ -1773,7 +1785,8 @@ function love.draw()
     for i=1, Player.lives do
         --love.graphics.draw(heartImg, -20, 75 + ((heartImg:getHeight()*2 + 5)*(i-1)), 0, 4, 4)
     end
-    love.graphics.setCanvas(gameCanvas)
+    WindowCorrector.startDrawingToCanvas(gameCanvas);
+    --love.graphics.setCanvas(gameCanvas)
     -- love.graphics.rectangle("fill", paddle.x, paddle.y, paddle.width * paddle.widthMult, paddle.height)
     --love.graphics.draw(glowCanvas.bright)
 
@@ -1822,20 +1835,24 @@ function love.draw()
     KeywordSystem:drawTooltip()
     confetti:draw()
     
-    love.graphics.setCanvas(gameCanvas)
+    WindowCorrector.startDrawingToCanvas(gameCanvas);
+    --love.graphics.setCanvas(gameCanvas)
     VFX.draw() -- Draw VFX
-    love.graphics.setCanvas()
+    WindowCorrector.stopDrawingToCanvas();
+    --love.graphics.setCanvas()
 
     -- Draw the game canvas gameCanvasfirst
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.draw(gameCanvas)
+    WindowCorrector.mergeCanvas(gameCanvas);
+    --love.graphics.draw(gameCanvas)
     
     -- Then draw the shader overlay on top with some transparency to blend with the game
     love.graphics.setColor(1, 1, 1, 1.0) -- Adjust alpha for desired effect
     --love.graphics.draw(shaderOverlayCanvas)
 
     -- draw ui canvas
-    love.graphics.draw(uiCanvas)
+    WindowCorrector.mergeCanvas(uiCanvas);
+    --love.graphics.draw(uiCanvas)
     drawFPS()
 
     love.graphics.setShader()
