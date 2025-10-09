@@ -11,6 +11,8 @@ function love.conf(t)
     t.window.fullscreen = false                -- Enable fullscreen
     t.window.vsync = 0                        -- Disable VSync
 
+    t.window.resizable = true;
+
     -- Performance
     --t.gammacorrect = true                    -- Enable gamma-correct rendering
     --t.window.refreshrate = 120                -- Target refresh rate (cap FPS)
