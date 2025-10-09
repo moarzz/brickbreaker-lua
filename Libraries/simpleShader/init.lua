@@ -114,11 +114,6 @@ function SimpleShader.init()
             );
 
             vertexCode = string.gsub(vertexCode, "vec4%s*position%(.-%)[%s\n]-%b{}", vertexPositionGSub);
-
-            assert(
-                string.match(pixelCode, "vec4%s*effect%(.-%)[%s\n]-%b{}"),
-                "couldnt fit regex 'vec4%s*effect%(.-%)[%s\n]-%b{}' into pixel code, make sure it will encase your position function :" .. name
-            );
         else -- vertex code may be inside of pixelCode, or not exist at all
             if string.match(pixelCode, "vec4%s*position") then -- if contains an internal vertex code then edit it as such
                 assert(
