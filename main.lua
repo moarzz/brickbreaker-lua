@@ -1,3 +1,9 @@
+LoveAffix = require("Libraries.loveAffix").init();
+SimpleShader = require("Libraries.simpleShader").init();
+WindowCorrector = require("Libraries.windowCorrector");
+
+--! these three *need* to be the first code 2 run otherwise i will eat you
+
 UtilityFunction = require("UtilityFunction") -- utility functions
 Player = require("Player") -- player logic
 Balls = require("Balls") -- ball logic
@@ -254,8 +260,8 @@ local function loadAssets()
 
 
     -- load shaders
-    backgroundShader = love.graphics.newShader("Shaders/background.glsl")
-    glowShader = love.graphics.newShader("Shaders/glow.glsl")
+    backgroundShader = love.graphics.newShader("background", "Shaders/background.glsl")
+    glowShader = love.graphics.newShader("glow", "Shaders/glow.glsl")
 
     -- load spriteSheets
     impactVFX = love.graphics.newImage("assets/sprites/VFX/Impact.png")
@@ -643,6 +649,9 @@ end
 
 function love.load()
     math.randomseed(os.time())
+
+    WindowCorrector.init();
+
     dress = suit.new()
     loadAssets() -- Load assets
 
@@ -1256,22 +1265,25 @@ function drawBricks()
             local scaleY = scale * (brick.height / brickImg:getHeight())
             local centerX = brick.x + brick.width / 2 + brick.drawOffsetX
             local centerY = brick.y + brick.height / 2 + brick.drawOffsetY
+            print(centerX, centerY);
             batch:setColor(color)
-            local id = batch:add(
-                centerX,
-                centerY,
-                brick.drawOffsetRot,
-                scaleX,
-                scaleY,
-                brickImg:getWidth() / 2,
-                brickImg:getHeight() / 2
-            )
+            --local id = batch:add(
+            --    centerX,
+            --    centerY,
+            --    brick.drawOffsetRot,
+            --    scaleX,
+            --    scaleY,
+            --    brickImg:getWidth() / 2,
+            --    brickImg:getHeight() / 2
+            --)
+            love.graphics.setColor(color);
+            love.graphics.draw(brickImg, centerX, centerY, brick.drawOffsetRot, scaleX, scaleY, brickImg:getWidth() / 2, brickImg:getHeight() / 2);
             table.insert(batchData, {centerX=centerX, centerY=centerY, health=brick.health})
         end
     end
 
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.draw(batch)
+    --love.graphics.draw(batch)
 
     -- Draw HP text for batched bricks in optimized way
     setFont(15)
@@ -1641,7 +1653,7 @@ function love.draw()
         suit.draw()
         return
     end
-
+    
     if currentGameState == GameState.MENU then
         
         -- Draw menu
@@ -1650,7 +1662,7 @@ function love.draw()
         suit.draw()
         return
     end
-
+    
     if currentGameState == GameState.START_SELECT then
         drawStartSelect()
         setFont(30)
@@ -1809,7 +1821,7 @@ function love.draw()
     dress:draw()    -- Draw tooltip last (on top of everything)
     KeywordSystem:drawTooltip()
     confetti:draw()
-
+    
     love.graphics.setCanvas(gameCanvas)
     VFX.draw() -- Draw VFX
     love.graphics.setCanvas()

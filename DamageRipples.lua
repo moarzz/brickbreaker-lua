@@ -70,7 +70,7 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) 
 
 function damageRipples.load()
     -- Create the shader
-    shader = love.graphics.newShader(fragmentShaderCode)
+    shader = love.graphics.newShader("damageRipples", fragmentShaderCode)
     
     -- Initialize points (converted from your original hardcoded points)
     local modulation = 10.0
