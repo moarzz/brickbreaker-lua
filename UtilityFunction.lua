@@ -1163,23 +1163,16 @@ function drawDamageNumbers()
 
             -- Draw each damage value group
             for damage, numbers in pairs(valueGroups) do
-                -- Create or get cached Text object
-                if not textObjects[damage] then
-                    textObjects[damage] = love.graphics.newText(damageNumberFont, damage)
-                end
-                local text = textObjects[damage]
-                local textWidth = text:getWidth()
-                local textHeight = text:getHeight()
-
                 -- Draw all instances of this damage value
                 for _, number in ipairs(numbers) do
                     love.graphics.setColor(number.color[1], number.color[2], number.color[3], number.color[4] * number.alpha)
-                    local x = (number.x * 3 / fontSize) - textWidth/2
-                    local y = (number.y * 3 / fontSize) - textHeight/2
-                    love.graphics.draw(text, x, y)
+                    local x = (number.x * 3 / fontSize)
+                    local y = (number.y * 3 / fontSize)
+                    love.graphics.print(tostring(damage), x, y);
+                    --love.graphics.draw(text, x, y)
                 end
             end
-            
+
             love.graphics.pop()
         end
     end
