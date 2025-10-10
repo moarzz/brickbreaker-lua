@@ -73,12 +73,7 @@ healThisFrame = 0
 
 local mt = {
     __index = function(t, k)
-        print("wtf")
         local value = rawget(t, k)
-        print("caca")
-        if k == "width" then
-            print("woohooooo")
-        end
         if hasItem("Huge Paddle") and k == "width" then
             if hasItem("Four Leafed Clover") then
                 return value * 2.25
@@ -1249,17 +1244,20 @@ local function drawStartSelect()
 end
 
 function drawBricks()
+    -- Initialize bricks if they don't exist
+    if not bricks then 
+        bricks = {}
+        initializeBricks()
+        return
+    end
+    
     -- Only draw bricks that are on screen (culling)
     local screenTop = 0
     local screenBottom = screenHeight
 
-    -- SpriteBatch for normal bricks
-    local batch = love.graphics.newSpriteBatch(brickImg, #bricks)
-    local batchData = {} -- Store info for HP text
-
     setFont(18)
 
-    -- Batch all bricks (except boss)
+    -- Draw all bricks (except boss)
     for _, brick in ipairs(bricks) do
         if (not brick.type or brick.type ~= "boss") and not brick.destroyed and brick.y + brick.height > screenTop - 10 and brick.y < screenBottom + 10 then
             local type = brick.type or "small"
@@ -1269,34 +1267,24 @@ function drawBricks()
             local scaleY = scale * (brick.height / brickImg:getHeight())
             local centerX = brick.x + brick.width / 2 + brick.drawOffsetX
             local centerY = brick.y + brick.height / 2 + brick.drawOffsetY
-            batch:setColor(color)
-            --local id = batch:add(
-            --    centerX,
-            --    centerY,
-            --    brick.drawOffsetRot,
-            --    scaleX,
-            --    scaleY,
-            --    brickImg:getWidth() / 2,
-            --    brickImg:getHeight() / 2
-            --)
-            love.graphics.setColor(color);
-            love.graphics.draw(brickImg, centerX, centerY, brick.drawOffsetRot, scaleX, scaleY, brickImg:getWidth() / 2, brickImg:getHeight() / 2);
-            local text = tostring(brick.health);
-            love.graphics.setColor(0,0,0);
-            love.graphics.print(text, centerX, centerY, 0, 1,1, love.graphics.getFont():getWidth(text) / 2, love.graphics.getFont():getHeight() / 2);
-            love.graphics.setColor(1,1,1);
-            love.graphics.print(text, centerX, centerY, 0, 1,1, love.graphics.getFont():getWidth(text) / 2, love.graphics.getFont():getHeight() / 2);
-            table.insert(batchData, {centerX=centerX, centerY=centerY, health=brick.health})
+            
+            -- Draw brick
+            love.graphics.setColor(color)
+            love.graphics.draw(brickImg, centerX, centerY, brick.drawOffsetRot, scaleX, scaleY, brickImg:getWidth() / 2, brickImg:getHeight() / 2)
+            
+            -- Draw health text (black outline)
+            local text = tostring(brick.health)
+            love.graphics.setColor(0, 0, 0)
+            love.graphics.print(text, centerX, centerY, 0, 1, 1, love.graphics.getFont():getWidth(text) / 2, love.graphics.getFont():getHeight() / 2)
+            
+            -- Draw health text (white)
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.print(text, centerX, centerY, 0, 1, 1, love.graphics.getFont():getWidth(text) / 2, love.graphics.getFont():getHeight() / 2)
         end
     end
 
+    -- Reset color
     love.graphics.setColor(1, 1, 1, 1)
-    --love.graphics.draw(batch)
-
-    -- Draw HP text for batched bricks in optimized way
-    setFont(18)
-    local font = love.graphics.getFont()
-    local fontHeight = font:getHeight()
 
     -- Cache text objects and widths
     local textCache = {}
@@ -1304,12 +1292,6 @@ function drawBricks()
     
     -- Group text by same health values
     local healthGroups = {}
-    for _, data in ipairs(batchData) do
-        local health = data.health or 0
-        healthGroups[health] = healthGroups[health] or {}
-        table.insert(healthGroups[health], data)
-    end
-
     -- Create/get cached text objects
     for health, positions in pairs(healthGroups) do
         if not textCache[health] then
@@ -2002,7 +1984,7 @@ function love.keypressed(key)
         -----------------------------------
 
         if key == "7" then
-            Balls.addBall("Magnetic Ball")
+            Balls.addBall("Light Beam")
         end
 
         -- PERFORMANCE TEST ON OFF BLOCK

@@ -1185,6 +1185,7 @@ end
 
 local shadowBalls = {}
 local fireballs = {}
+local lightBeams = {}
 
 local lastFireballsCastTime = 0
 local lightningSFXCooldown = 0
@@ -1249,10 +1250,23 @@ local function cast(spellName, brick, forcedDamage)
         local timeUntilNextCast = (3 + math.max(cooldownValue, 0))/4
     end
     if spellName == "Light Beam" then
-        local angle = math.pi -- + math.random(-25, 25)/100 * math.pi
-        lightBeamAngle = angle
-        local tweenStart = tween.new(0.1, lightBeamOpacity, {a = 1}, tween.outCubic)
-        addTweenToUpdate(tweenStart)
+        for i=1, (Player.currentCore == "Madness Core" and 2 or 1) * (unlockedBallTypes["Light Beam"].stats.amount + getStatItemsBonus("amount", unlockedBallTypes["Light Beam"]) + (Player.permanentUpgrades.amount or 0)) do
+            Timer.after(i * 0.35, function()
+                local angle = math.pi + math.random(-25, 25)/100 * math.pi
+                local lightBeam = {
+                    angle = angle,
+                    opacity = 0,
+                    bricksCD = {},
+                }
+                table.insert(lightBeams, lightBeam)
+                local tweenStart = tween.new(0.1, lightBeam, {opacity = 1}, tween.outCubic)
+                addTweenToUpdate(tweenStart)
+                Timer.after(0.5, function() 
+                    local tweenEnd = tween.new(0.25, lightBeam, {opacity = 0}, tween.inCubic)
+                    addTweenToUpdate(tweenEnd)
+                end)
+            end)
+        end
     end
     if spellName == "Lightning Pulse" then
         print("Casting Lightning Pulse")
@@ -1846,10 +1860,11 @@ local function ballListInit()
             noAmount = true,
             rarity = "rare",
             startingPrice = 100,
-            description = "Fires a beam of light that pierces through bricks, dealing damage over time.",
+            description = "Fires beams of light that pierces through bricks, dealing huge aoe damage.",
             color = {1, 1, 0.5, 1}, -- Yellow color for Light Beam
             stats = {
                 damage = 2,
+                amount = 1,
                 cooldown = 15
             },
             onBuy = function()
@@ -3119,30 +3134,29 @@ local function spellsUpdate(dt)
     end
 
     if unlockedBallTypes["Light Beam"] then
-        if lightBeamCD <= 0 then
-            for _, brick in ipairs(bricks) do
-                if lightBeamCD <= -2.5 then
-                    lightBeamCD = (2 + unlockedBallTypes["Light Beam"].stats.cooldown + getStatItemsBonus("cooldown", unlockedBallTypes["Light Beam"]) + (Player.permanentUpgrades.cooldown or 0))
-                end
-                print("caca")
-                if brick.x < paddle.x + paddle.width/2 + 25 and brick.x + brick.width > paddle.x + paddle.width/2 - 25 then
-                    local brickCD = lightBeamBricksCD[brick.id] or 0
-                    print("caca")
-                    if brickCD then
-                        if brickCD <= 0 then
-                            dealDamage(unlockedBallTypes["Light Beam"], brick)
-                            lightBeamBricksCD[brick.id] = lightBeamDmgCD
+        for _, lightBeam in ipairs(lightBeams) do
+            if lightBeam.opacity >= 0.8 then
+                for _, brick in ipairs(bricks) do
+                    local bricksInHitbox = getBricksInRectangle(paddle.x, paddle.y, 50, 10000, lightBeam.angle)
+                    for _, brick in ipairs(bricksInHitbox) do
+                        local brickCD = lightBeam.bricksCD[brick.id] or 0
+                        print("caca")
+                        if brickCD then
+                            if brickCD <= 0 then
+                                dealDamage(unlockedBallTypes["Light Beam"], brick)
+                                lightBeam.bricksCD[brick.id] = lightBeamDmgCD
+                            else
+                                lightBeam.bricksCD[brick.id] = brickCD - dt
+                            end
                         else
-                            lightBeamBricksCD[brick.id] = brickCD - dt
+                            dealDamage(unlockedBallTypes["Light Beam"], brick)
+                            lightBeam.bricksCD[brick.id] = lightBeamDmgCD
                         end
-                    else
-                        dealDamage(unlockedBallTypes["Light Beam"], brick)
-                        lightBeamBricksCD[brick.id] = lightBeamDmgCD
-                    end     
+                    end
                 end
+            else
+                lightBeamCD = lightBeamCD - dt
             end
-        else
-            lightBeamCD = lightBeamCD - dt
         end
     end
 end
@@ -3865,15 +3879,17 @@ local function spellDraw()
         end
     end
     if unlockedBallTypes["Light Beam"] then
-        love.graphics.setColor(1, 1, 1, lightBeamOpacity.a)
-        local centerX = paddle.x + paddle.width/2
-        local centerY = paddle.y + paddle.height/2
-        
-        -- When lightBeamAngle is math.pi, cos will be -1, making the beam centered
-        local x = centerX - math.cos(lightBeamAngle) * lightBeamImg:getWidth() * 0.125
-        local y = centerY - math.sin(lightBeamAngle) * lightBeamImg:getWidth() * 0.125
-        
-        love.graphics.draw(lightBeamImg, x, y, lightBeamAngle, 0.25, 5)
+        for _, lightbeam in ipairs(lightBeams) do
+            love.graphics.setColor(1, 1, 1, lightbeam.opacity)
+            local centerX = paddle.x + paddle.width/2
+            local centerY = paddle.y + paddle.height/2
+            
+            -- When lightBeamAngle is math.pi, cos will be -1, making the beam centered
+            local x = centerX - math.cos(lightbeam.angle) * lightBeamImg:getWidth() * 0.125
+            local y = centerY - math.sin(lightbeam.angle) * lightBeamImg:getWidth() * 0.125
+
+            love.graphics.draw(lightBeamImg, x, y, lightbeam.angle, 0.25, 5)
+        end
     end
 end
 
