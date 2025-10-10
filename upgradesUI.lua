@@ -1699,8 +1699,8 @@ local function drawBallStats()
                 end
 
                 -- draw stat icon
-                local iconX = statsX + cellWidth/2 - iconsImg[statName]:getWidth()*1.75/2 * 50/500 - 7
-                love.graphics.draw(iconsImg[statName], iconX, labelY + 63,0,1.75 * 50/500,1.75 * 50/500)
+                local iconX = statsX + cellWidth/2 - iconsImg[statName]:getWidth()*1.35/2 * 50/500 - 3
+                love.graphics.draw(iconsImg[statName], iconX, labelY + 55,0,1.35 * 50/500,1.35 * 50/500)
 
                 -- draw seperator
                 if intIndex < rowCount then
