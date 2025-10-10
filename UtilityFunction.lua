@@ -1216,37 +1216,35 @@ function lerpColor(color1, color2, t)
 end
 
 function getBricksInRectangle(x, y, width, height, angle)
-    angle = angle or 0  -- Default angle to 0 if not provided
+    angle = angle or 0
     local bricksInRect = {}
-    local centerX = x + width/2
-    local centerY = y + height/2
-    local cos_angle = math.cos(-angle)  -- Negative angle because LÖVE's coordinate system
+    local cos_angle = math.cos(-angle)
     local sin_angle = math.sin(-angle)
-    
+
     for _, brick in ipairs(bricks) do
         if not brick.destroyed then
-            -- Get brick corners relative to rectangle center
+            -- Get brick corners relative to rectangle's top-left corner
             local corners = {
-                {x = brick.x - centerX, y = brick.y - centerY},                          -- Top Left
-                {x = brick.x + brick.width - centerX, y = brick.y - centerY},            -- Top Right
-                {x = brick.x + brick.width - centerX, y = brick.y + brick.height - centerY},  -- Bottom Right
-                {x = brick.x - centerX, y = brick.y + brick.height - centerY}            -- Bottom Left
+                {x = brick.x - x, y = brick.y - y},                          -- Top Left
+                {x = brick.x + brick.width - x, y = brick.y - y},            -- Top Right
+                {x = brick.x + brick.width - x, y = brick.y + brick.height - y},  -- Bottom Right
+                {x = brick.x - x, y = brick.y + brick.height - y}            -- Bottom Left
             }
-            
-            -- Rotate each corner back by -angle and check if it's in the original rectangle
+
+            -- Rotate each corner and check if it's in the rectangle
             local isInside = false
             for _, corner in ipairs(corners) do
-                -- Rotate point
+                -- Rotate point around (0,0)
                 local rotX = corner.x * cos_angle - corner.y * sin_angle
                 local rotY = corner.x * sin_angle + corner.y * cos_angle
-                
-                -- Check if rotated point is inside the original rectangle bounds
-                if math.abs(rotX) < width/2 and math.abs(rotY) < height/2 then
+
+                -- Check if rotated point is inside rectangle bounds
+                if rotX >= 0 and rotX <= width and rotY >= 0 and rotY <= height then
                     isInside = true
                     break
                 end
             end
-            
+
             if isInside then
                 table.insert(bricksInRect, brick)
             end
