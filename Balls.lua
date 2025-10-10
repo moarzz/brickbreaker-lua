@@ -1252,7 +1252,7 @@ local function cast(spellName, brick, forcedDamage)
     if spellName == "Light Beam" then
         local lastI
         for i=1, (Player.currentCore == "Madness Core" and 2 or 1) * (unlockedBallTypes["Light Beam"].stats.amount + getStatItemsBonus("amount", unlockedBallTypes["Light Beam"]) + (Player.permanentUpgrades.amount or 0)) do
-            Timer.after(i * 0.35, function()
+            Timer.after(i * 0.4, function()
                 local angle = math.pi + math.random(-25, 25)/100 * math.pi
                 local lightBeam = {
                     angle = angle,
@@ -1269,7 +1269,8 @@ local function cast(spellName, brick, forcedDamage)
             end)
             lastI = i
         end
-        Timer.after(0.35 * lastI + 0.5, function()
+        local cooldownValue = (Player.currentCore == "Madness Core" and 0.5 or 1) * 0.75 * (Player.currentCore == "Cooldown Core" and 2 or unlockedBallTypes["Light Beam"].stats.cooldown + getStatItemsBonus("cooldown", unlockedBallTypes["Light Beam"]) + (Player.permanentUpgrades.cooldown or 0))
+        Timer.after(0.4 * lastI + cooldownValue, function()
             cast("Light Beam")
         end)
     end
@@ -1870,7 +1871,7 @@ local function ballListInit()
             stats = {
                 damage = 2,
                 amount = 1,
-                cooldown = 15
+                cooldown = 12
             },
             onBuy = function()
                 cast("Light Beam")
@@ -3141,7 +3142,7 @@ local function spellsUpdate(dt)
     if unlockedBallTypes["Light Beam"] then
         for _, lightBeam in ipairs(lightBeams) do
             if lightBeam.opacity >= 0.7 then
-                local bricksInHitbox = getBricksInRectangle(paddle.x +25, paddle.y, 50, 5000000000, lightBeam.angle)
+                local bricksInHitbox = getBricksInRectangle(paddle.x + paddle.width/2 - 25, paddle.y, 50, 5000000000, lightBeam.angle)
                 print("bricks in hitbox: " .. #bricksInHitbox)
                 for _, brick in ipairs(bricksInHitbox) do
                     if brick.y > -brick.height and brick.health > 0 and not brick.destroyed then
@@ -3886,25 +3887,12 @@ local function spellDraw()
         for _, lightbeam in ipairs(lightBeams) do
             love.graphics.setColor(1, 1, 1, lightbeam.opacity)
             local centerX = paddle.x + paddle.width/2
+            centerX = centerX
             local centerY = paddle.y + paddle.height/2
             
             -- When lightBeamAngle is math.pi, cos will be -1, making the beam centered
             local x = centerX - math.cos(lightbeam.angle) * lightBeamImg:getWidth() * 0.125
             local y = centerY - math.sin(lightbeam.angle) * lightBeamImg:getWidth() * 0.125
-
-            -- love.graphics.rectangle("line", paddle.x + 25, paddle.y, 50, 1000000, 0, lightbeam.angle)   
-            local x = centerX + 25          -- X-coordinate of the rectangle's top-left corner
-            local y = centerY                -- Y-coordinate of the rectangle's top-left corner
-            local width = 30                  -- Width of the rectangle
-            local height = 1000000            -- Height of the rectangle
-            local angle = lightbeam.angle     -- Rotation angle in radians (e.g., 45 degrees)
-
-            -- Draw the rectangle with rotation
-            love.graphics.push()  -- Save the current transformation state
-            love.graphics.translate(x + width / 2, y + height / 2)  -- Move the origin to the rectangle's center
-            love.graphics.rotate(angle)  -- Rotate around the new origin
-            love.graphics.rectangle("line", -width / 2, -height / 2, width, height)  -- Draw the rectangle centered at the origin
-            love.graphics.pop()
 
             love.graphics.draw(lightBeamImg, x, y, lightbeam.angle, 0.25, 5)
         end
