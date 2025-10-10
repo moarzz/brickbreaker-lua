@@ -1365,8 +1365,8 @@ local function drawPlayerUpgrades()
             suit.Label(tostring((bonusName ~= "cooldown" and "+ " or "") .. tostring(Player.bonuses[bonusName] or 0)), {align = "center"}, x-5, y+50, cellWidth, 100) -- Display the stat value
 
             -- draw stat icon
-            local iconX = x + cellWidth/2 - iconsImg[statName]:getWidth()*1.5/2 +3
-            love.graphics.draw(iconsImg[statName], iconX, y + 120, 0, 1.5, 1.)
+            local iconX = x + cellWidth/2 - iconsImg[statName]:getWidth()*1.75/2
+            love.graphics.draw(iconsImg[statName], iconX, y + 125, 0, 1.75, 1.75)
             y = y + 25
 
             -- draw separator
@@ -1699,11 +1699,7 @@ local function drawBallStats()
                 end
 
                 -- draw stat icon
-<<<<<<< Updated upstream
                 local iconX = statsX + cellWidth/2 - iconsImg[statName]:getWidth()*1.35/2 * 50/500 - 3
-=======
-                local iconX = statsX + cellWidth/2 - iconsImg[statName]:getWidth()*1.35/2 * 50/500 - 2
->>>>>>> Stashed changes
                 love.graphics.draw(iconsImg[statName], iconX, labelY + 55,0,1.35 * 50/500,1.35 * 50/500)
 
                 -- draw seperator
