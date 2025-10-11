@@ -241,6 +241,9 @@ local function loadAssets()
         income = love.graphics.newImage("assets/sprites/UI/icons/income.png"),
         health = love.graphics.newImage("assets/sprites/UI/icons/health.png"),
     }
+    itemIcons = {
+        [""] = love.graphics.newImage("assets/sprites/UI/icons/New/amount.png"),
+    }
 
     -- load sounds
     backgroundMusicSFX = love.audio.newSource("assets/SFX/game song.mp3", "static")
@@ -281,13 +284,6 @@ local function loadAssets()
 end
 
 dmgVFXOn = true
-
-local function getMaxBrickHealth()
-    -- Scale max health from 1 to 26 over 5 minutes
-    local timeSinceStart = love.timer.getTime() - gameStartTime
-    local maxHealth = math.floor(mapRangeClamped(timeSinceStart, 0, 300, 1, 26))
-    return maxHealth
-end
 
 local canHeal = true
 local bossWidth, bossHeight = 500, 300

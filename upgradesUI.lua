@@ -44,6 +44,7 @@ local items = {
         rarity = "common",
         stats = {},
         description = "",
+        imageReference = "assets/sprites/UI/itemIcons/Triple-Trouble.png",
         onInShop = function(self)
             self.stats = {}  -- Clear previous stats!
             local iterations = 0
@@ -81,6 +82,7 @@ local items = {
                 richGetRicherUpdate(moneyBefore, Player.money)
             end
         end,
+        imageReference = "assets/sprites/UI/itemIcons/Financial-Plan.png",
         rarity = "common"
     },
     ["Coupon Collector"] = {
@@ -88,6 +90,7 @@ local items = {
         stats = {},
         description = "<font=bold>On Level Up</font=bold><font=default>\nGain <color=money>2$</color=money><color=white> and reduce the upgrade price of a weapon by </color=white><color=money>1$</color=money>\n\n</color=money><color=white>Items cost </color=white><color=money>1$</color=money><color=white> less",
         rarity = "common",
+        imageReference = "assets/sprites/UI/itemIcons/Coupon-Collector.png",
         onLevelUp = function()
             if not hasItem("Abandon Greed") then
                 Player.money = Player.money + 2
@@ -104,7 +107,7 @@ local items = {
             end
         end
     },
-    ["Livin' on a Prayer"] = {
+    --[[["Livin' on a Prayer"] = {
         name = "Livin' on a Prayer",
         stats = {},
         description = "<font=bold>on level up\n <livinValue>%</font=bold><font=default> chance to Unlock a new weapon and destroy this item",
@@ -126,7 +129,7 @@ local items = {
                 self.randomnessMult = self.randomnessMult + 0.1
             end
         end,
-    },
+    },]]
     ["Homing Bullets"] = {
         name = "Homing Bullets",
         stats = {fireRate = 1, ammo = 1, cooldown = -1},
@@ -137,7 +140,7 @@ local items = {
         name = "Long Term Investment",
         stats = {},
         description = "Gain <color=money><font=big><longTermValue>$</color=money></font=big><color=white><font=default>\nIncrease the </color=white><color=money>$</color=money><color=white> gain of every future \n</font=default><font=big>Long Term Investment</font=big><font=default> by </color=white><color=money>1$</color=money><color=white> (max </color=white><color=money>20$</color=money><color=white>)",
-        rarity = "commo",
+        rarity = "common",
         descriptionOverwrite = true,
         onBuy = function(self)
             if not hasItem("Abandon Greed") then
@@ -154,12 +157,14 @@ local items = {
         stats = {amount = 1},
         descriptionPointers = {paddleWidth = function() return hasItem("Four Leafed Clover") and 100 or 50 end},
         description = "paddle width is increased by <font=bold><paddleWidth>%</font=bold><font=default>",
+        imageReference = "assets/sprites/UI/itemIcons/Huge-Paddle.png",
         rarity = "common"
     },
     ["Loaded Dices"] = {
         name = "Loaded Dices",
         stats = {},
         description = "rerollPrice starts at <color=money>0$</color=money>",
+        imageReference = "assets/sprites/UI/itemIcons/Loaded-Dices.png",
         rarity = "common",
         onBuy = function(self)
             rerollPrice = 0
@@ -170,6 +175,7 @@ local items = {
         stats = {},
         description = "<font=bold>on level up</font=bold><font=default>\nupgrade a random stat from a random weapon",
         rarity = "common",
+        imageReference = "assets/sprites/UI/itemIcons/Mechanic.png",
         onLevelUp = function()
             local unlockedWeapons = Balls.getUnlockedBallTypes()
             if tableLength(unlockedWeapons) == 0 then return end
@@ -210,12 +216,13 @@ local items = {
             print("Upgraded " .. selectedWeapon.name .. "'s " .. statToUpgrade .. " by 1!")
         end
     },
-    ["Handy Wrench"] = {
-        name = "Handy Wrench",
+    ["Power Drill"] = {
+        name = "Power Drill",
         stats = {},
         description = "When you buy this, reduce the upgrade price of a random weapon by 3 (min 0)",
         priceDiff = -1,
         rarity = "common",
+        imageReference = "assets/sprites/UI/itemIcons/Power-Drill.png",
         onBuy = function() 
             local randomWeaponId = math.random(1, tableLength(Balls.getUnlockedBallTypes()))
             local i = 1
@@ -247,6 +254,7 @@ local items = {
     ["Triple Trouble +"] = {
         name = "Triple Trouble +",
         rarity = "uncommon",
+        imageReference = "assets/sprites/UI/itemIcons/Triple-Trouble.png",
         stats = {},
         description = "",
         onInShop = function(self)
@@ -329,12 +337,14 @@ local items = {
                 Balls.amountIncrease(1)
             end
         end,
-        rarity = "test"
+        imageReference = "assets/sprites/UI/itemIcons/Grow-Cube.png",
+        rarity = "uncommon"
     },
     ["Satanic Necklace"] = {
         name = "Satanic Necklace",
         stats = {damage = 5, amount = -1, fireRate = -1, ammo = -1, cooldown = 1, speed = -1, range = -1},
         description = "+5 damage, -1 to every other stat",
+        imageReference = "assets/sprites/UI/itemIcons/Satanic-Necklace.png",
         descriptionOverwrite = true,
         rarity = "uncommon"
     },
@@ -344,6 +354,7 @@ local items = {
         descriptionPointers = {gambleChance = function() return hasItem("Four Leafed Clover") and 70 or 35 end},
         description = "<font=bold>on level up\n<gambleChance>%</font=bold><font=default> chance to gain <font=big><color=money>25$</color=money>",
         rarity = "uncommon",
+        imageReference = "assets/sprites/UI/itemIcons/Degenerate-Gambling.png",
         randomnessMult = 0.8,
         onLevelUp = function() 
             if math.random(1,100) <= (hasItem("Four Leafed Clover") and 70 or 35) and not hasItem("Abandon Greed") then
@@ -358,6 +369,7 @@ local items = {
         stats = {fireRate = 1, speed = 1, cooldown = -1, size = 1, amount = 1, range = 1, ammo = 1},
         description = "Increases all stats of your weapons by 1 (except <color=damage>damage</color=damage><color=white>)",
         descriptionOverwrite = true,
+        imageReference = "assets/sprites/UI/itemIcons/Swiss-Army-Knife.png",
         rarity = "uncommon"
     },
     ["Paddle Defense System"] = {
@@ -365,14 +377,16 @@ local items = {
         stats = {speed = 2},
         -- descriptionPointers = {paddleDefenseChance = function() return hasItem("Four Leafed Clover") and 100 or 50 end},
         description = "<font=bold>On ball bounce with paddle\n</font=bold><font=default>shoot a bullet that deals <color=damage>damage</color=damage><color=white> equal to that ball's </color=white><color=damage>damage",
-        rarity = "uncommon"
+        rarity = "uncommon",
+        imageReference = "assets/sprites/UI/itemIcons/Paddle-Defense-System.png",
     },
     ["Spray and Pray"] = {
         name = "Spray and Pray",
         stats = {fireRate = 2},
         descriptionPointers = {fireRateMult = function() return hasItem("Four Leafed Clover") and 70 or 35 end},
         description = "fireRate items shoot <font=bold><fireRateMult>%</font=bold><font=default> faster but are a lot less accurate",
-        rarity = "uncommon"
+        rarity = "uncommon",
+        imageReference = "assets/sprites/UI/itemIcons/Spray-and-Pray.png",
     },
     ["Superhero t-shirt"] = {
         name = "Superhero t-shirt",
@@ -397,14 +411,15 @@ local items = {
         stats = {},
         descriptionPointers = {mitosisChance = function() return hasItem("Four Leafed Clover") and 20 or 10 end},
         description = "<font=bold>When a bullet is shot\n<mitosisChance>%</font=bold><font=default> chance to spawn a small ball that lasts 8 seconds",
-        rarity = "uncommon"
+        rarity = "uncommon",
+        imageReference = "assets/sprites/UI/itemIcons/Sudden-Mitosis.png",
     },
-    ["Electromagnetic Alignment"] = {
+    --[[["Electromagnetic Alignment"] = {
         name = "Electromagnetic Alignment",
         stats = {speed = 2},
         description = "Balls gain a small magnetic attraction towards bricks. (doesn't affect Magnetic Ball)",
         rarity = "uncommon"
-    },
+    },]]
     ["Rich Get Richer"] = {
         name = "Rich Get Richer",
         stats = {amount = 0, fireRate = 0},
@@ -833,6 +848,9 @@ function initializeRarityItemLists()
     legendaryItemsConsumable = {}
     testItems = {}
     for itemName, itemData in pairs(items) do
+        if itemData.imageReference then
+            itemData.image = love.graphics.newImage(itemData.imageReference)
+        end
         local consumable = itemData.consumable or false
         if itemData.rarity == "common" then
             if consumable then
@@ -2215,31 +2233,36 @@ local function drawItemShop()
             setFont(27)
             drawTextCenteredWithScale(item.name or "Unknown", itemX + 10 * scale, itemY + 30 * scale, scale, windowW - 20 * scale, color)
 
-            local getValue = function() return longTermInvestment.value end
-            local pointers = {
-                default = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 18),
-                big = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 23),
-                bold = love.graphics.newFont("assets/Fonts/KenneyFutureBold.ttf", 25),
-                longTermValue = getValue
-            }
-            if item.descriptionPointers then
-                for valueName, functionPointer in pairs(item.descriptionPointers) do
-                    pointers[valueName] = functionPointer
+            if item.image then
+                love.graphics.setColor(1,1,1,1)
+                local imgScale = scale * 0.75
+                love.graphics.draw(item.image,centerX - (item.image:getWidth()*imgScale)/2, itemY + 140 * imgScale,0,imgScale,imgScale)
+            else
+                local getValue = function() return longTermInvestment.value end
+                local pointers = {
+                    default = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 18),
+                    big = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 23),
+                    bold = love.graphics.newFont("assets/Fonts/KenneyFutureBold.ttf", 25),
+                    longTermValue = getValue
+                }
+                if item.descriptionPointers then
+                    for valueName, functionPointer in pairs(item.descriptionPointers) do
+                        pointers[valueName] = functionPointer
+                    end
+                end
+                local id = "fancyText" .. i .. item.name:gsub("%s+", "_")
+                if fancyTexts[id] then
+                    fancyTexts[id]:update()
+                    fancyTexts[id]:draw()
+                else
+                    local text = getItemFullDescription(item) or ""
+                    local fancyText = FancyText.new(text, itemX + 25 * scale, itemY + 110 * scale, windowW - 50 * scale, 20, "center", pointers.default, pointers)
+                    fancyTexts[id] = fancyText
+                    fancyText:update()
+                    fancyText:draw()
                 end
             end
-            local id = "fancyText" .. i .. item.name:gsub("%s+", "_")
-            if fancyTexts[id] then
-                fancyTexts[id]:update()
-                fancyTexts[id]:draw()
-            else
-                local text = getItemFullDescription(item) or ""
-                local fancyText = FancyText.new(text, itemX + 25 * scale, itemY + 110 * scale, windowW - 50 * scale, 20, "center", pointers.default, pointers)
-                fancyTexts[id] = fancyText
-                fancyText:update()
-                fancyText:draw()
-            end
 
-            -- suit.Label(item.description or "No description", {align = "center"}, itemX + 25 * scale, itemY + 100 * scale, windowW - 50 * scale, 100 * scale)
             if dress:Button("", {id = "bruhdmsavklsam" .. i, color = invisButtonColor}, itemX, itemY, windowW, windowH).hit then
                 print("button working")
                 if (#Player.items < maxItems or item.consumable) and Player.money >= upgradePrice then
