@@ -257,6 +257,7 @@ local function loadAssets()
     laserSFX = love.audio.newSource("assets/SFX/laser.mp3", "static")
     lightningPulseSFX = love.audio.newSource("assets/SFX/lightningPulse.mp3", "static")
     lightningSFX = love.audio.newSource("assets/SFX/lightning.mp3", "static")
+    lightBeamSFX = love.audio.newSource("assets/SFX/lightBeam.mp3", "static")
 
 
     -- load shaders
