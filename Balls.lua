@@ -1272,6 +1272,9 @@ local function cast(spellName, brick, forcedDamage)
     end
     if spellName == "Light Beam" then        local amountValue = (Player.currentCore == "Madness Core" and 2 or 1) * (unlockedBallTypes["Light Beam"].stats.amount + getStatItemsBonus("amount", unlockedBallTypes["Light Beam"]) + (Player.permanentUpgrades.amount or 0))
         for i=1, amountValue do
+            Timer.after((i-1) * 0.125 + 0.05, function()
+                playSoundEffect(lightBeamSFX, 0.2, 0.6)
+            end)
             Timer.after(i * 0.125, function()
                 local angle = math.pi + math.random(-10, 10)/100 * math.pi
                 local lightBeam = {
@@ -1280,16 +1283,16 @@ local function cast(spellName, brick, forcedDamage)
                     bricksCD = {},
                 }
                 table.insert(lightBeams, lightBeam)
-                local tweenStart = tween.new(0.05, lightBeam, {opacity = 1}, tween.outCubic)
+                local tweenStart = tween.new(0.05, lightBeam, {opacity = 1}, tween.outExpo)
                 addTweenToUpdate(tweenStart)
                 Timer.after(0.05, function()
-                    local bricksInHitbox = getBricksInRectangle(paddle.x + paddle.width/2 - 25, paddle.y, 50, 5000000000, lightBeam.angle)
+                    local bricksInHitbox = getBricksInRectangle(paddle.x + paddle.width/2 - 0, paddle.y, 60, 5000000000, lightBeam.angle)
                     for _, brick in ipairs(bricksInHitbox) do
                         if brick.y > -brick.height then
                             dealDamage(unlockedBallTypes["Light Beam"], brick)
                         end
                     end
-                    local tweenEnd = tween.new(0.15, lightBeam, {opacity = 0}, tween.inCubic)
+                    local tweenEnd = tween.new(0.15, lightBeam, {opacity = 0}, tween.outExpo)
                     addTweenToUpdate(tweenEnd)
                 end)
             end)        end
