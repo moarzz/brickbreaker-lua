@@ -319,14 +319,17 @@ local items = {
     ["Grow Cube"] = {
         name = "Grow Cube",
         stats = {},
-        description = "On Level Up, this Item gains +1 to a random stat",
+        description = "<font=bold>On Level Up</font=bold><font=default>this Item gains +1 to a random stat",
         onLevelUp = function(self)
             local statNames = {"damage", "speed", "amount", "ammo", "fireRate", "cooldown", "range"}
             local randomIndex = math.random(1,7)
             local randomStatName = statNames[randomIndex]
             self.stats[randomStatName] = (self.stats[randomStatName] or 0) + 1 * (randomStatName == "cooldown" and -1 or 1)
+            if randomStatName == "amount" then
+                Balls.amountIncrease(1)
+            end
         end,
-        rarity = "uncommon"
+        rarity = "test"
     },
     ["Satanic Necklace"] = {
         name = "Satanic Necklace",
@@ -418,7 +421,7 @@ local items = {
             self.stats.fireRate = bonus
         end
     },
-    ["Alchemical Experiments"] = {
+    --[[["Alchemical Experiments"] = {
         name = "Alchemical Experiments",
         stats = {},
         descriptionPointers = {alchemyChance = function() return hasItem("Four Leafed Clover") and 70 or 35 end},
@@ -451,7 +454,7 @@ local items = {
             end
         end,
         rarity = "uncommon"
-    },
+    },]]
     ["Assassin's Cloak"] = {
         name = "Assassin's Cloak",
         stats = {damage = 2},
@@ -713,6 +716,12 @@ local items = {
         descriptionPointers = {killChance = function() return hasItem("Four Leafed Clover") and 20 or 10 end, bigKillChance = function() return hasItem("Four Leafed Clover") and 10 or 5 end},
         description = "Every damage you deal has a <font=bold><killChance>%</font=bold><font=default> chance of instantly killing the brick (<font=bold><bigKillChance>%</font=bold><font=default> for big bricks, <font=bold>0%</font=bold><font=default> for boss)",
         rarity = "legendary",
+    },
+    ["Elon's Shmuck"] = {
+        name = "Elon's Shmuck",
+        stats = {},
+        description = "Items and rerolls cost 2$",
+        rarity = "legendary"
     },
     ["Nirvana"] = {
         name = "Nirvana",
@@ -2101,7 +2110,7 @@ function setItemShop(forcedItems)
         local iterations = 0
         while doAgain and iterations < maxIterations do
             local randomChance = math.random(1,100)/100
-            local isConsumable = math.random(1,100) <= 10 -- 15% chance to be a consumable
+            local isConsumable = math.random(1,100) <= 15 -- 15% chance to be a consumable
             iterations = iterations + 1
             doAgain = false
             if randomChance <= commonChance then
@@ -2193,6 +2202,9 @@ local function drawItemShop()
                     -- upgradePrice = math.ceil(upgradePrice * 0.5)
                 end
             end
+            if hasItem("Elon's Shmuck") then
+                upgradePrice = 2
+            end
             if hasItem("Coupon Collector") then
                 upgradePrice = upgradePrice - 1
             end
@@ -2263,6 +2275,9 @@ local function drawItemShop()
         love.graphics.draw(uiLabelImg, screenWidth - 275, 50 + uiBigWindowImg:getHeight() * 0.65/2 - 60) -- Draw the title background image
         setFont(30)
         local actualRerollPrice = Player.currentCore == "Picky Core" and 1 or rerollPrice
+        if hasItem("Elon's Shmuck") then
+            actualRerollPrice = 2
+        end
         if suit.Button("Reroll", {id = "reroll_items", color = invisButtonColor}, screenWidth - 260, 50 + uiBigWindowImg:getHeight() * 0.65/2 - 57, uiLabelImg:getWidth() - 30, uiLabelImg:getHeight() - 6).hit then
             if Player.money >= actualRerollPrice then
                 Player.pay(actualRerollPrice)

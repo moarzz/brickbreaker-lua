@@ -547,7 +547,7 @@ local function addMoreBricks()
                     bossSpawned = true
                     spawnBossNextRow = false
                     currentRowPopulation = 1000
-                elseif not (bossSpawned or spawnBossNextRow) and Player.level >= 25 then
+                elseif not (bossSpawned or spawnBossNextRow) and Player.level >= 20 then
                     spawnBossNextRow = true
                 end
             end
@@ -765,7 +765,7 @@ function getBrickSpeedMult()
         return mapRangeClamped(boss.y, -boss.height, screenHeight/3, 2.8, 0.75) * getBrickSpeedByTime()
     else
         local posMult = 1
-        posMult = mapRangeClamped(getHighestBrickY(), 100, (screenHeight/2 + 200), 10, 1)
+        posMult = mapRangeClamped(getHighestBrickY(), 100, (screenHeight/2 + 200), 15, 1)
         if #bricks == 0 then
             return 1
         end

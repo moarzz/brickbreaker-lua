@@ -320,7 +320,7 @@ end
 
 
 
-local ballTrailLength = 30   -- Length of the ball trail
+local ballTrailLength = 35   -- Length of the ball trail
 local bullets = {}
 local deadBullets = {}
 local laserBeamBrick
@@ -1270,64 +1270,63 @@ local function cast(spellName, brick, forcedDamage)
         local cooldownValue = ((Player.currentCore == "Madness Core" and 0.5 or 1) * 8 + 4) / (unlockedBallTypes["Fireballs"].stats.fireRate + getStatItemsBonus("fireRate", unlockedBallTypes["Fireballs"]) + (Player.permanentUpgrades.fireRate or 0))
         local timeUntilNextCast = (3 + math.max(cooldownValue, 0))/4
     end
-    if spellName == "Light Beam" then
-        local lastI
-        for i=1, (Player.currentCore == "Madness Core" and 2 or 1) * (unlockedBallTypes["Light Beam"].stats.amount + getStatItemsBonus("amount", unlockedBallTypes["Light Beam"]) + (Player.permanentUpgrades.amount or 0)) do
-            Timer.after(i * 0.25, function()
-                local angle = math.pi + math.random(-25, 25)/100 * math.pi
+    if spellName == "Light Beam" then        local amountValue = (Player.currentCore == "Madness Core" and 2 or 1) * (unlockedBallTypes["Light Beam"].stats.amount + getStatItemsBonus("amount", unlockedBallTypes["Light Beam"]) + (Player.permanentUpgrades.amount or 0))
+        for i=1, amountValue do
+            Timer.after(i * 0.125, function()
+                local angle = math.pi + math.random(-10, 10)/100 * math.pi
                 local lightBeam = {
                     angle = angle,
                     opacity = 0,
                     bricksCD = {},
                 }
                 table.insert(lightBeams, lightBeam)
-                local tweenStart = tween.new(0.1, lightBeam, {opacity = 1}, tween.outCubic)
+                local tweenStart = tween.new(0.05, lightBeam, {opacity = 1}, tween.outCubic)
                 addTweenToUpdate(tweenStart)
-                Timer.after(0.07, function()
+                Timer.after(0.05, function()
                     local bricksInHitbox = getBricksInRectangle(paddle.x + paddle.width/2 - 25, paddle.y, 50, 5000000000, lightBeam.angle)
                     for _, brick in ipairs(bricksInHitbox) do
-                        dealDamage(unlockedBallTypes["Light Beam"], brick)
+                        if brick.y > -brick.height then
+                            dealDamage(unlockedBallTypes["Light Beam"], brick)
+                        end
                     end
-                end)
-                Timer.after(0.1, function() 
-                    local tweenEnd = tween.new(0.2, lightBeam, {opacity = 0}, tween.inCubic)
+                    local tweenEnd = tween.new(0.15, lightBeam, {opacity = 0}, tween.inCubic)
                     addTweenToUpdate(tweenEnd)
                 end)
-            end)
-            lastI = i
-        end
-        local cooldownValue = (Player.currentCore == "Madness Core" and 0.5 or 1) * 0.75 * (Player.currentCore == "Cooldown Core" and 2 or unlockedBallTypes["Light Beam"].stats.cooldown + getStatItemsBonus("cooldown", unlockedBallTypes["Light Beam"]) + (Player.permanentUpgrades.cooldown or 0))
-        Timer.after(0.25 * lastI + cooldownValue, function()
+            end)        end
+        local cooldownValue = (Player.currentCore == "Madness Core" and 0.5 or 1) * 1 * (Player.currentCore == "Cooldown Core" and 2 or unlockedBallTypes["Light Beam"].stats.cooldown + getStatItemsBonus("cooldown", unlockedBallTypes["Light Beam"]) + (Player.permanentUpgrades.cooldown or 0))
+        Timer.after(0.125 * amountValue + cooldownValue, function()
             cast("Light Beam")
         end)
     end
     if spellName == "Lightning Pulse" then
         print("Casting Lightning Pulse")
         for i=1, (Player.currentCore == "Madness Core" and 2 or 1) * (Player.currentCore == "Damage Core" and 1 or (unlockedBallTypes["Lightning Pulse"].stats.amount + getStatItemsBonus("amount", unlockedBallTypes["Lightning Pulse"]) + (Player.permanentUpgrades.amount or 0))) do
-            local selectedBrickIds = {}
-            local iterations = 0
-            local go = true
-            local randomBrick
-            while go do
-                iterations = iterations + 1
-                local randomBrickId = math.random(1, #bricks)
-                randomBrick = bricks[randomBrickId]
-                if randomBrick.y >= 0 and randomBrick.health > 0 and (not randomBrick.destroyed) then
-                    go = false
-                    for _, Id in ipairs(selectedBrickIds) do
-                        if randomBrickId == Id then
-                            go = true
-                        else
-                            table.insert(selectedBrickIds, randomBrickId)
+            Timer.after(i * 0.025, function()
+                local selectedBrickIds = {}
+                local iterations = 0
+                local go = true
+                local randomBrick
+                while go do
+                    iterations = iterations + 1
+                    local randomBrickId = math.random(1, #bricks)
+                    randomBrick = bricks[randomBrickId]
+                    if randomBrick.y >= 0 and randomBrick.health > 0 and (not randomBrick.destroyed) then
+                        go = false
+                        for _, Id in ipairs(selectedBrickIds) do
+                            if randomBrickId == Id then
+                                go = true
+                            else
+                                table.insert(selectedBrickIds, randomBrickId)
+                            end
                         end
+                    elseif iterations >= 100 then
+                        go = false
                     end
-                elseif iterations >= 100 then
-                    go = false
                 end
-            end
-            createSpriteAnimation(randomBrick.x + randomBrick.width/2, randomBrick.y + randomBrick.height/2, 0.25, sparkVFX, 512, 512, 0.075, 1)
-            Timer.after(0.125, function()
-                dealDamage(unlockedBallTypes["Lightning Pulse"], randomBrick)
+                createSpriteAnimation(randomBrick.x + randomBrick.width/2, randomBrick.y + randomBrick.height/2, 0.25, sparkVFX, 512, 512, 0.075, 1)
+                Timer.after(0.125, function()
+                    dealDamage(unlockedBallTypes["Lightning Pulse"], randomBrick)
+                end)
             end)
         end
         local cooldownValue = (Player.currentCore == "Madness Core" and 0.5 or 1) * (Player.currentCore == "Cooldown Core" and 2 or unlockedBallTypes["Lightning Pulse"].stats.cooldown + getStatItemsBonus("cooldown", unlockedBallTypes["Lightning Pulse"]) + (Player.permanentUpgrades.cooldown or 0))
@@ -1724,7 +1723,7 @@ local function ballListInit()
             color = {0, 1, 0, 1}, -- Green color
             stats = {
                 damage = 3,
-                cooldown = 15,
+                cooldown = 14,
             },
         },
         ["Laser Beam"] = {
@@ -3161,32 +3160,6 @@ local function spellsUpdate(dt)
             end
         end
     end
-
-    if unlockedBallTypes["Light Beam"] and false then
-        for _, lightBeam in ipairs(lightBeams) do
-            if lightBeam.opacity >= 0.7 then
-                local bricksInHitbox = getBricksInRectangle(paddle.x + paddle.width/2 - 25, paddle.y, 50, 5000000000, lightBeam.angle)
-                print("bricks in hitbox: " .. #bricksInHitbox)
-                for _, brick in ipairs(bricksInHitbox) do
-                    if brick.y > -brick.height and brick.health > 0 and not brick.destroyed then
-                        if lightBeam.bricksCD[brick.id] then
-                            if lightBeam.bricksCD[brick.id] <= 0 then
-                                dealDamage(unlockedBallTypes["Light Beam"], brick)
-                                lightBeam.bricksCD[brick.id] = lightBeamDmgCD
-                            else
-                                lightBeam.bricksCD[brick.id] = lightBeam.bricksCD[brick.id] - dt
-                            end
-                        else
-                            dealDamage(unlockedBallTypes["Light Beam"], brick)
-                            lightBeam.bricksCD[brick.id] = lightBeamDmgCD
-                        end
-                    end
-                end
-            else
-                lightBeamCD = lightBeamCD - dt
-            end
-        end
-    end
 end
 
 local incrediballColor = {0.5, 0.5, 0.5, 1}
@@ -3357,7 +3330,7 @@ function Balls.update(dt, paddle, bricks)
             ball.y = ball.y + (ball.speedY + speedExtra * multY * 50) * ball.speedMult * dt * (Player.currentCore == "Madness Core" and 2 or 1) * speedMult
 
             if ball.type == "ball" then
-                local trailSpacing = 5 -- Distance between trail points
+                local trailSpacing = 3 -- Distance between trail points
                 if not ball.lastTrailPos then
                     ball.lastTrailPos = {x = ball.x, y = ball.y}
                     table.insert(ball.trail, {x = ball.x, y = ball.y})
@@ -3365,11 +3338,9 @@ function Balls.update(dt, paddle, bricks)
                     local dx = ball.x - ball.lastTrailPos.x
                     local dy = ball.y - ball.lastTrailPos.y
                     local distanceMoved = math.sqrt(dx * dx + dy * dy)
-                    if distanceMoved >= trailSpacing then
-                        table.insert(ball.trail, {x = ball.x, y = ball.y})
-                        ball.lastTrailPos.x = ball.x
-                        ball.lastTrailPos.y = ball.y
-                    end
+                    table.insert(ball.trail, {x = ball.x, y = ball.y})
+                    ball.lastTrailPos.x = ball.x
+                    ball.lastTrailPos.y = ball.y
                 end
 
                 -- Limit the trail length
@@ -3966,7 +3937,7 @@ function Balls:draw()
             if not ball.dead and ball.name ~= "Phantom Ball" then
                 for i = 1, #ball.trail do
                     local p = ball.trail[i]
-                    local t = i / #ball.trail
+                    local t = i / ballTrailLength
                     local trailRadius = ball.radius * ball.drawSizeBoost * sizeBoost * (ball.drawSizeMult or 1) * math.pow(t,1.25) -- Starts at 0, grows to ball.radius
                     love.graphics.setColor(ballColor[1], ballColor[2], ballColor[3], math.pow(t,4)) -- Fade the trail
                     love.graphics.circle("fill", p.x, p.y, trailRadius)
