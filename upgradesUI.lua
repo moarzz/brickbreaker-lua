@@ -31,9 +31,9 @@ local items = {
         description = "",
         onInShop = function(self)
             self.stats = {} 
-            local statNames = {"damage", "speed", "amount", "ammo", "fireRate", "cooldown", "range"}
-            local itemNames = {"Kitchen Knife", "Running Shoes", "2 for 1 Meal Ticket", "Extended Magazine", "Fast Hands", "Duct Tape", "Fake Pregnancy Belly"}
-            local randomIndex = math.random(1,7)
+            local statNames = {"speed", "amount", "ammo", "fireRate", "cooldown", "range"}
+            local itemNames = {"Running Shoes", "2 for 1 Meal Ticket", "Extended Magazine", "Fast Hands", "Duct Tape", "Fake Pregnancy Belly"}
+            local randomIndex = math.random(1,6)
             local randomStatName = statNames[randomIndex]
             self.name = itemNames[randomIndex]
             self.stats[randomStatName] = 3 * (randomStatName == "cooldown" and -1 or 1)
@@ -236,9 +236,9 @@ local items = {
         description = "",
         onInShop = function(self)
             self.stats = {}
-            local statNames = {"damage", "speed", "amount", "ammo", "fireRate", "cooldown", "range"}
-            local itemNames = {"Kitchen Knife +", "Running Shoes +", "2 for 1 Meal Ticket +", "Extended Magazine +", "Fast Hands +", "Duct Tape +", "Fake Pregnancy Belly +"}
-            local randomIndex = math.random(1,7)
+            local statNames = {"speed", "amount", "ammo", "fireRate", "cooldown", "range"}
+            local itemNames = {"Running Shoes +", "2 for 1 Meal Ticket +", "Extended Magazine +", "Fast Hands +", "Duct Tape +", "Fake Pregnancy Belly +"}
+            local randomIndex = math.random(1,6)
             local randomStatName = statNames[randomIndex]
             self.name = itemNames[randomIndex]
             self.stats[randomStatName] = 6 * (randomStatName == "cooldown" and -1 or 1)
@@ -330,18 +330,11 @@ local items = {
     },
     ["Satanic Necklace"] = {
         name = "Satanic Necklace",
-        stats = {damage = 6, amount = -1, fireRate = -1, ammo = -1, cooldown = 1, speed = -1, range = -1},
-        description = "+6 damage, -1 to every other stat",
+        stats = {damage = 5, amount = -1, fireRate = -1, ammo = -1, cooldown = 1, speed = -1, range = -1},
+        description = "+5 damage, -1 to every other stat",
         descriptionOverwrite = true,
         rarity = "uncommon"
     },
-    --[[["Ballbuster"] = {
-        name = "Ballbuster",
-        stats = {speed = 2, amount = 2, damage = 2, range = 2, fireRate = 2, ammo = 2, cooldown = -2},
-        description = "ball weapons gain +2 to all stats. (-2 for cooldown)",
-        statsCondition = function(weapon) return weapon.type == "ball" end,
-        rarity = "uncommon"
-    },]]
     ["Degenerate Gambling"] = {
         name = "Degenerate Gambling",
         stats = {},
@@ -357,10 +350,10 @@ local items = {
             end
         end
     },
-    [" "] = {
+    ["Swiss Army Knife"] = {
         name = "Swiss Army Knife",
         stats = {fireRate = 1, speed = 1, cooldown = -1, size = 1, amount = 1, range = 1, ammo = 1},
-        description = "Increases all stats of your weapons by 1 (except damage)",
+        description = "Increases all stats of your weapons by 1 (except <color=damage>damage</color=damage><color=white>)",
         descriptionOverwrite = true,
         rarity = "uncommon"
     },
@@ -381,7 +374,7 @@ local items = {
     ["Superhero t-shirt"] = {
         name = "Superhero t-shirt",
         stats = {},
-        description = "While you own this item, 'Incrediball' is added to the pool of weapons you can unlcock.",
+        description = "While you own this item, 'Incrediball' is added to the pool of weapons you can unlock.",
         rarity = "uncommon"
     },
     ["Flash Sale"] = {
@@ -513,9 +506,9 @@ local items = {
         description = "",
         onInShop = function(self) 
             self.stats = {}
-            local statNames = {"damage", "speed", "amount", "ammo", "fireRate", "cooldown", "range"}
-            local itemNames = {"Kitchen Knife ++", "Running Shoes ++", "2 for 1 Meal Ticket ++", "Extended Magazine ++", "Fast Hands ++", "Duct Tape ++", "Fake Pregnancy Belly ++"}
-            local randomIndex = math.random(1,7)
+            local statNames = {"speed", "amount", "ammo", "fireRate", "cooldown", "range"}
+            local itemNames = {"Running Shoes ++", "2 for 1 Meal Ticket ++", "Extended Magazine ++", "Fast Hands ++", "Duct Tape ++", "Fake Pregnancy Belly ++"}
+            local randomIndex = math.random(1,6)
             local randomStatName = statNames[randomIndex]
             self.name = itemNames[randomIndex]
             self.stats[randomStatName] = 9 * (randomStatName == "cooldown" and -1 or 1)
@@ -1023,13 +1016,13 @@ local function drawPlayerStats()
     local moneyBoxH = love.graphics.getFont():getHeight()
     local mouseX, mouseY = love.mouse.getPosition()
     local interestValue = math.floor(math.min(Player.money, Player.currentCore == "Economy Core" and 50 or 25)/5)
-    local gainValue = 8 + interestValue
+    local gainValue = 5 + interestValue
     if Player.currentCore == "Economy Core" then
-        gainValue = 15
+        gainValue = 12
     end
     local popupText = "At the end of the level up phase, gain <color=money><font=big>8$</color=money></font=big><color=white><font=default> + </font=default></color=white><font=big><color=money>1$ </color=money></font=big><color=white><font=default>for every <font=big><color=money>5$</color=money></font=big><color=white><font=default> you have, max </color=white></font=default><color=money><font=big>13$ </color=money></font=big><color=white><font=default><font=default><color=white>"
     if Player.currentCore == "Economy Core" then
-        popupText = "At the end of the level up phase, gain <color=money><font=big>15$"
+        popupText = "At the end of the level up phase, gain <color=money><font=big>12$"
     end
     local pointers = {
         default = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 20),
@@ -1043,9 +1036,9 @@ local function drawPlayerStats()
     popup:draw()
 
     -- render interest if player has not finished leveling up
-    local interestValue = 8 + math.floor(math.min(Player.money, Player.currentCore == "Economy Core" and 50 or 25)/5) + getItemsIncomeBonus()
+    local interestValue = 5 + math.floor(math.min(Player.money, Player.currentCore == "Economy Core" and 50 or 25)/5) + getItemsIncomeBonus()
     if Player.currentCore == "Economy Core" then
-        interestValue = 15
+        interestValue = 12
     end
     if Player.levelingUp and interestValue > 0 then
         setFont(45)
@@ -2193,7 +2186,7 @@ local function drawItemShop()
             itemX = centerX - windowW/2
             itemY = centerY - windowH/2
 
-            local upgradePrice = item.rarity == "common" and 10 or item.rarity == "uncommon" and 20 or item.rarity == "rare" and 30 or item.rarity == "legendary" and 40 or 10
+            local upgradePrice = item.rarity == "common" and 8 or item.rarity == "uncommon" and 16 or item.rarity == "rare" and 24 or item.rarity == "legendary" and 32 or 8
             if item.consumable then
                 upgradePrice = upgradePrice * 0.5
                 if Player.currentCore == "Picky Core" then

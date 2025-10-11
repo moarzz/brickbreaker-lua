@@ -297,7 +297,7 @@ Player.availableCores = {
 
 Player.coreDescriptions = {
     ["Speed Core"] = "Start at lvl 5 with 20$, 1 random common weapon and 1 random uncommon weapon",
-    ["Economy Core"] = "Interest cap is at 50$ instead of 25$. \nStart with 20$",
+    ["Economy Core"] = "Always gain 12$ on level up, you cannot gain money from items",
     ["Collector's Core"] = "You can have up to 5 items instead of 4.\n There are only 2 items in the itemShop",
     ["Farm Core"] = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown)\nIt takes 50% more xp for you to level up and bricks grow in health 50% faster",
     ["Picky Core"] = "Rerolling items always costs 1$.\n uncommon, rare and legendary items are twice as rare",
@@ -447,16 +447,20 @@ function Player.levelUp()
     else
         if Player.level < 5 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 2)
-        elseif Player.level < 15 then
+        elseif Player.level < 10 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.6)
-        elseif Player.level < 20 then
+        elseif Player.level < 15 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.5)
+        elseif Player.level < 20 then
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.4)
         elseif Player.level < 25 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.45)
-        elseif Player.level < 30 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.35)
-        elseif Player.level < 50 then
+        elseif Player.level < 30 then
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.3)
+        elseif Player.level < 35 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.2)
+        elseif Player.level < 50 then
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.15)
         else
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 2)
         end
@@ -464,6 +468,9 @@ function Player.levelUp()
     lvlUpPopup()
     if Player.currentCore == "Farm Core" then
         FarmCoreUpgrade()
+        if hasItem("Birthday Hat") then
+            FarmCoreUpgrade() -- Trigger a second time if the player has the Birthday Hat
+        end
     elseif Player.currentCore == "Picky Core" then
         -- Every reroll costs 2$ instead of 1$
         Player.rerolls = 0
@@ -489,10 +496,11 @@ function Player.levelUp()
             setItemShop({getItem("Long Term Investment")})
         end
     elseif hasItem("Archeologist Hat") then
+        local rarity = math.random(1,100) <= 75 and "rare" or "legendary"
         if hasItem("Birthday Hat") then
-            setItemShop({getRandomItemOfRarity("legendary", math.random(1,100) <= 25), getRandomItemOfRarity("rare", math.random(1,100) <= 25)})
+            setItemShop({getRandomItemOfRarity(rarity, math.random(1,100) <= 20), getRandomItemOfRarity(rarity, math.random(1,100) <= 20)})
         else
-            setItemShop({getRandomItemOfRarity("legendary", math.random(1,100) <= 25)})
+            setItemShop({getRandomItemOfRarity(rarity, math.random(1,100) <= 20)})
         end
     else
         setItemShop()

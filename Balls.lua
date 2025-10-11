@@ -232,6 +232,22 @@ function totalUpgrade()
     end
 end
 
+local xpOrbs = {}
+local function createXpOrb(x, y, amount)
+    local xpOrb = {
+        x = x,
+        y = y,
+        bounceAmount = 2,
+        amount = amount,
+        radius = mapRangeClamped(amount, 1, 50, 5, 15),
+        speedX = math.random(-50, 50),
+        speedY = -100,
+        gravity = 500,
+        lifetime = 10,
+    }
+    table.insert(xpOrbs, xpOrb)
+end
+
 brickPieces = {}
 local function brickDestroyed(brick)
     Player.bricksDestroyed = (Player.bricksDestroyed or 0) + 1
@@ -248,45 +264,48 @@ local function brickDestroyed(brick)
             ballType.onBrickDestroyed()
         end
     end
-        local brickPiece1 = {
-            x = brick.x,
-            y = brick.y,
-            speedX = math.random(-100, -50), -- Random speed for the piece
-            speedY = -math.random(50, 100), -- Random speed for the piece
-            img = brickPiece1Img,
-            width = brick.width,
-            height = brick.height / 2,
-            color = {0.75, 0.75, 0.75, 1}
-        }
-        local brickPiece2 = {
-            x = brick.x,
-            y = brick.y + brick.height / 2,
-            speedX = math.random(-25, 50), -- Random speed for the piece
-            speedY = -math.random(50, 100), -- Random speed for the piece
-            img = brickPiece2Img,
-            width = brick.width,
-            height = brick.height / 2,
-            color = {0.75, 0.75, 0.75, 1}
-        }
-        local brickPiece3 = {
-            x = brick.x + brick.width / 2,
-            y = brick.y,
-            speedX = math.random(50, 100), -- Random speed for the piece
-            speedY = -math.random(50, 100), -- Random speed for the piece
-            img = brickPiece3Img,
-            width = brick.width / 2,
-            height = brick.height,
-            color = {0.75, 0.75, 0.75, 1}
-        }
-        local tween1 = tween.new(0.8, brickPiece1, {color = {0.75, 0.75, 0.75, 0}}, tween.outCubic)
-        local tween2 = tween.new(0.8, brickPiece2, {color = {0.75, 0.75, 0.75, 0}}, tween.outCubic)
-        local tween3 = tween.new(0.8, brickPiece3, {color = {0.75, 0.75, 0.75, 0}}, tween.outCubic)
-        addTweenToUpdate(tween1)
-        addTweenToUpdate(tween2)
-        addTweenToUpdate(tween3)
-        table.insert(brickPieces, brickPiece1)
-        table.insert(brickPieces, brickPiece2)
-        table.insert(brickPieces, brickPiece3)
+    local brickPiece1 = {
+        x = brick.x,
+        y = brick.y,
+        speedX = math.random(-100, -50), -- Random speed for the piece
+        speedY = -math.random(50, 100), -- Random speed for the piece
+        img = brickPiece1Img,
+        width = brick.width,
+        height = brick.height / 2,
+        color = {0.75, 0.75, 0.75, 1}
+    }
+    local brickPiece2 = {
+        x = brick.x,
+        y = brick.y + brick.height / 2,
+        speedX = math.random(-25, 50), -- Random speed for the piece
+        speedY = -math.random(50, 100), -- Random speed for the piece
+        img = brickPiece2Img,
+        width = brick.width,
+        height = brick.height / 2,
+        color = {0.75, 0.75, 0.75, 1}
+    }
+    local brickPiece3 = {
+        x = brick.x + brick.width / 2,
+        y = brick.y,
+        speedX = math.random(50, 100), -- Random speed for the piece
+        speedY = -math.random(50, 100), -- Random speed for the piece
+        img = brickPiece3Img,
+        width = brick.width / 2,
+        height = brick.height,
+        color = {0.75, 0.75, 0.75, 1}
+    }
+    local tween1 = tween.new(0.8, brickPiece1, {color = {0.75, 0.75, 0.75, 0}}, tween.outCubic)
+    local tween2 = tween.new(0.8, brickPiece2, {color = {0.75, 0.75, 0.75, 0}}, tween.outCubic)
+    local tween3 = tween.new(0.8, brickPiece3, {color = {0.75, 0.75, 0.75, 0}}, tween.outCubic)
+    addTweenToUpdate(tween1)
+    addTweenToUpdate(tween2)
+    addTweenToUpdate(tween3)
+    table.insert(brickPieces, brickPiece1)
+    table.insert(brickPieces, brickPiece2)
+    table.insert(brickPieces, brickPiece3)
+    if not usingNormalXpSystem then
+        createXpOrb(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth)
+    end
 end
 
 function Balls.reduceCooldown(typeName) 
@@ -298,6 +317,8 @@ function Balls.reduceAllCooldowns()
         ballType.currentCooldown = math.max(0, ballType.currentCooldown - 1)
     end]]
 end
+
+
 
 local ballTrailLength = 30   -- Length of the ball trail
 local bullets = {}
@@ -423,7 +444,7 @@ function dealDamage(ball, brick, burnDamage)
     damageThisFrame = (damageThisFrame or 0) + damage
     VFX.brickHit(brick, ball, damage)
     
-    if ball.name ~= "Gold Ball" then
+    if usingNormalXpSystem then
         Player.gain(damage)
     end
     
@@ -854,10 +875,10 @@ local function shoot(gunName, ball)
             end
             if gun.name == "Minigun" then
                 local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
-                Timer.after(gun.fireRateMult * (mapRangeClamped(gun.stats.ammo - gun.currentAmmo, 0, 25, 3.25, 0.5) * (spray and sprayMult or 1))/((Player.currentCore == "Madness Core" and 0.5 or (Player.currentCore == "Damage Core" and 1 or (gun.stats.fireRate + getStatItemsBonus("fireRate", gun) + (Player.permanentUpgrades.fireRate or 0)))) * bulletStormMult), function() shoot(gunName) end)
+                Timer.after(gun.fireRateMult * (mapRangeClamped(gun.stats.ammo - gun.currentAmmo, 0, 25, 4, 0.5) * (spray and sprayMult or 1))/((Player.currentCore == "Madness Core" and 0.5 or (Player.currentCore == "Damage Core" and 1 or (gun.stats.fireRate + getStatItemsBonus("fireRate", gun) + (Player.permanentUpgrades.fireRate or 0)))) * bulletStormMult), function() shoot(gunName) end)
             else
                 local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
-                Timer.after((gun.fireRateMult * 2.0 * (spray and sprayMult or 1))/((Player.currentCore == "Madness Core" and 2 or (Player.currentCore == "Damage Core" and 1 or (gun.stats.fireRate + getStatItemsBonus("fireRate", gun) + (Player.permanentUpgrades.fireRate or 0)))) * bulletStormMult), function() shoot(gunName) end)
+                Timer.after((gun.fireRateMult * 3.0 * (spray and sprayMult or 1))/((Player.currentCore == "Madness Core" and 2 or (Player.currentCore == "Damage Core" and 1 or (gun.stats.fireRate + getStatItemsBonus("fireRate", gun) + (Player.permanentUpgrades.fireRate or 0)))) * bulletStormMult), function() shoot(gunName) end)
             end
         else
             gun.currentAmmo = (gun.stats.ammo + getStatItemsBonus("ammo", gun) * (gun.ammoMult or 1)) * (Player.currentCore == "Madness Core" and 2 or 1)
@@ -1062,12 +1083,12 @@ fire = function(techName)
             -- Reset ammo and set cooldown
             if unlockedBallTypes["Rocket Launcher"].currentAmmo <= 0 then
                 local cooldownValue = (Player.currentCore == "Cooldown Core" and 2 or unlockedBallTypes["Rocket Launcher"].stats.cooldown + getStatItemsBonus("cooldown", unlockedBallTypes["Rocket Launcher"]) + (Player.permanentUpgrades.cooldown or 0)) * 0.75 * (Player.currentCore == "Madness Core" and 0.5 or 1)
-                Timer.after(math.max(cooldownValue, (Player.currentCore == "Madness Core" and 0.5 or 1) * 5/(Player.currentCore == "Damage Core" and 1 or (unlockedBallTypes["Rocket Launcher"].stats.fireRate + getStatItemsBonus("fireRate", unlockedBallTypes["Rocket Launcher"]) + (Player.permanentUpgrades.fireRate or 0)))), function()
+                Timer.after(math.max(cooldownValue, (Player.currentCore == "Madness Core" and 0.5 or 1) * 6/(Player.currentCore == "Damage Core" and 1 or (unlockedBallTypes["Rocket Launcher"].stats.fireRate + getStatItemsBonus("fireRate", unlockedBallTypes["Rocket Launcher"]) + (Player.permanentUpgrades.fireRate or 0)))), function()
                     unlockedBallTypes["Rocket Launcher"].currentAmmo = (Player.currentCore == "Madness Core" and 2 or 1) * unlockedBallTypes["Rocket Launcher"].stats.ammo + (getStatItemsBonus("ammo", unlockedBallTypes["Rocket Launcher"]) * (unlockedBallTypes["Rocket Launcher"].ammoMult or 1))
                     fire("Rocket Launcher")
                 end)
             else
-                local timerLength = (Player.currentCore == "Madness Core" and 0.5 or 1) * 4/(Player.currentCore == "Damage Core" and 1 or(unlockedBallTypes["Rocket Launcher"].stats.fireRate + getStatItemsBonus("fireRate", unlockedBallTypes["Rocket Launcher"]) + (Player.permanentUpgrades.fireRate or 0)))
+                local timerLength = (Player.currentCore == "Madness Core" and 0.5 or 1) * 6/(Player.currentCore == "Damage Core" and 1 or(unlockedBallTypes["Rocket Launcher"].stats.fireRate + getStatItemsBonus("fireRate", unlockedBallTypes["Rocket Launcher"]) + (Player.permanentUpgrades.fireRate or 0)))
                 if (Player.currentCore == "Spray and Pray Core" or hasItem("Spray and Pray")) then
                     local timerMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
                     timerLength = timerLength * timerMult
@@ -1252,7 +1273,7 @@ local function cast(spellName, brick, forcedDamage)
     if spellName == "Light Beam" then
         local lastI
         for i=1, (Player.currentCore == "Madness Core" and 2 or 1) * (unlockedBallTypes["Light Beam"].stats.amount + getStatItemsBonus("amount", unlockedBallTypes["Light Beam"]) + (Player.permanentUpgrades.amount or 0)) do
-            Timer.after(i * 0.4, function()
+            Timer.after(i * 0.25, function()
                 local angle = math.pi + math.random(-25, 25)/100 * math.pi
                 local lightBeam = {
                     angle = angle,
@@ -1262,15 +1283,21 @@ local function cast(spellName, brick, forcedDamage)
                 table.insert(lightBeams, lightBeam)
                 local tweenStart = tween.new(0.1, lightBeam, {opacity = 1}, tween.outCubic)
                 addTweenToUpdate(tweenStart)
-                Timer.after(0.5, function() 
-                    local tweenEnd = tween.new(0.25, lightBeam, {opacity = 0}, tween.inCubic)
+                Timer.after(0.07, function()
+                    local bricksInHitbox = getBricksInRectangle(paddle.x + paddle.width/2 - 25, paddle.y, 50, 5000000000, lightBeam.angle)
+                    for _, brick in ipairs(bricksInHitbox) do
+                        dealDamage(unlockedBallTypes["Light Beam"], brick)
+                    end
+                end)
+                Timer.after(0.1, function() 
+                    local tweenEnd = tween.new(0.2, lightBeam, {opacity = 0}, tween.inCubic)
                     addTweenToUpdate(tweenEnd)
                 end)
             end)
             lastI = i
         end
         local cooldownValue = (Player.currentCore == "Madness Core" and 0.5 or 1) * 0.75 * (Player.currentCore == "Cooldown Core" and 2 or unlockedBallTypes["Light Beam"].stats.cooldown + getStatItemsBonus("cooldown", unlockedBallTypes["Light Beam"]) + (Player.permanentUpgrades.cooldown or 0))
-        Timer.after(0.4 * lastI + cooldownValue, function()
+        Timer.after(0.25 * lastI + cooldownValue, function()
             cast("Light Beam")
         end)
     end
@@ -2115,20 +2142,16 @@ function Balls.addBall(ballName, singleBall)
     if ballTemplate then -- makes sure there is a ball with ballName in ballList
         print("isNewBall: " .. tostring(isNewBall))
         local upgradePrice
-        if usingMoneySystem then
-            upgradePrice = Player.currentCore == "Economy Core" and ballTemplate.startingPrice*0.5 or ballTemplate.startingPrice
+        if ballTemplate.rarity == "common" then
+            upgradePrice = 5
+        elseif ballTemplate.rarity == "uncommon" then
+            upgradePrice = 7
+        elseif ballTemplate.rarity == "rare" then
+            upgradePrice = 9
+        elseif ballTemplate.rarity == "legendary" then
+            upgradePrice = 11
         else
-            if ballTemplate.rarity == "common" then
-                upgradePrice = 5
-            elseif ballTemplate.rarity == "uncommon" then
-                upgradePrice = 7
-            elseif ballTemplate.rarity == "rare" then
-                upgradePrice = 9
-            elseif ballTemplate.rarity == "legendary" then
-                upgradePrice = 11
-            else
-                upgradePrice = 1
-            end
+            upgradePrice = 1
         end
         if isNewBall then
             local newBallType = {
@@ -2976,8 +2999,8 @@ local function updateDeadBullets(dt)
         if fade <= 0 or not bullet.trail or #bullet.trail < 2 then
             table.remove(deadBullets, i)
         else
-            bullet.x = bullet.x + bullet.speedX * dt * 0.5
-            bullet.y = bullet.y + bullet.speedY * dt * 0.5
+            bullet.x = bullet.x + bullet.speedX * dt
+            bullet.y = bullet.y + bullet.speedY * dt
         end
     end
 end
@@ -3139,7 +3162,7 @@ local function spellsUpdate(dt)
         end
     end
 
-    if unlockedBallTypes["Light Beam"] then
+    if unlockedBallTypes["Light Beam"] and false then
         for _, lightBeam in ipairs(lightBeams) do
             if lightBeam.opacity >= 0.7 then
                 local bricksInHitbox = getBricksInRectangle(paddle.x + paddle.width/2 - 25, paddle.y, 50, 5000000000, lightBeam.angle)
@@ -3334,30 +3357,24 @@ function Balls.update(dt, paddle, bricks)
             ball.y = ball.y + (ball.speedY + speedExtra * multY * 50) * ball.speedMult * dt * (Player.currentCore == "Madness Core" and 2 or 1) * speedMult
 
             if ball.type == "ball" then
-                -- Distance-based trail updating
-                local trailSpacing = 5 -- Adjust this value to control spacing between trail points
-                
-                -- Initialize last trail position if it doesn't exist
+                local trailSpacing = 5 -- Distance between trail points
                 if not ball.lastTrailPos then
                     ball.lastTrailPos = {x = ball.x, y = ball.y}
                     table.insert(ball.trail, {x = ball.x, y = ball.y})
                 else
-                    -- Calculate distance moved since last trail point
                     local dx = ball.x - ball.lastTrailPos.x
                     local dy = ball.y - ball.lastTrailPos.y
                     local distanceMoved = math.sqrt(dx * dx + dy * dy)
-                    
-                    -- Only add trail point if we've moved far enough
                     if distanceMoved >= trailSpacing then
                         table.insert(ball.trail, {x = ball.x, y = ball.y})
                         ball.lastTrailPos.x = ball.x
                         ball.lastTrailPos.y = ball.y
-                        
-                        -- Limit the trail length
-                        if #ball.trail > ballTrailLength then
-                            table.remove(ball.trail, 1)
-                        end
                     end
+                end
+
+                -- Limit the trail length
+                while #ball.trail > ballTrailLength do
+                    table.remove(ball.trail, 1)
                 end
             end
 
@@ -3479,8 +3496,8 @@ function Balls.update(dt, paddle, bricks)
         -- Store last position for raycast
         local lastX, lastY = bullet.x, bullet.y
         -- Update position
-        bullet.x = bullet.x + bullet.speedX * dt * 0.6
-        bullet.y = bullet.y + bullet.speedY * dt * 0.6
+        bullet.x = bullet.x + bullet.speedX * dt
+        bullet.y = bullet.y + bullet.speedY * dt
         -- Calculate movement vector
         local moveX = bullet.x - lastX
         local moveY = bullet.y - lastY
@@ -3657,6 +3674,26 @@ function Balls.update(dt, paddle, bricks)
         else
             flamethrower.vfx:setPosition(paddle.x + paddle.width / 2, paddle.y)
             flamethrower.vfx:update(dt)
+        end
+    end
+
+    if not usingNormalXpSystem then
+        for i=#xpOrbs, 1, -1 do
+            local orb = xpOrbs[i]
+            orb.y = orb.y + orb.speedY * dt
+            orb.x = orb.x + orb.speedX * dt
+            if orb.x < 0 then orb.speedX = -orb.speedX end
+            if orb.x > screenWidth then orb.speedX = -orb.speedX end
+            if orb.y > screenHeight then
+                if orb.bounceAmount > 0 then
+                    orb.y = screenHeight
+                    orb.speedY = -orb.speedY * 0.85
+                    orb.bounceAmount = orb.bounceAmount - 1
+                else
+                    table.remove(xpOrbs, i)
+                end
+            end
+            orb.speedY = orb.speedY + 500 * dt
         end
     end
 end
@@ -3978,6 +4015,14 @@ function Balls:draw()
         -- Restore previous state
         love.graphics.setBlendMode(currentBlendMode)
         love.graphics.setColor(1, 1, 1, 1)
+    end
+
+    if not usingMoneySystem then
+        for _, xpOrb in ipairs(xpOrbs) do
+            love.graphics.setColor(1, 1, 0, 1)
+            love.graphics.circle("fill", xpOrb.x, xpOrb.y, xpOrb.radius)
+            love.graphics.setColor(1, 1, 1, 1)
+        end
     end
 end
 
