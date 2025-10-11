@@ -4,6 +4,8 @@ WindowCorrector = require("Libraries.windowCorrector");
 
 --! these three *need* to be the first code 2 run otherwise i will eat you
 
+require("limitFPS"); -- limit the fps
+
 UtilityFunction = require("UtilityFunction") -- utility functions
 Player = require("Player") -- player logic
 Balls = require("Balls") -- ball logic
@@ -1031,14 +1033,8 @@ local function gameFixedUpdate(dt)
     end    
 end
 
-local accumulator = 0
-local fixed_dt = 1/120
 function love.update(dt)
-    accumulator = accumulator + dt
-    while accumulator >= fixed_dt do
-        gameFixedUpdate(accumulator) -- Your game logic here, using fixed_dt
-        accumulator = 0
-    end
+    gameFixedUpdate(dt);
 end
 
 -- Menu settings
