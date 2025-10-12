@@ -504,7 +504,8 @@ local items = {
         stats = {ammo = 2},
         descriptionPointers = {splitChance = function() return hasItem("Four Leafed Clover") and 50 or 25 end},
         description = "Bullets have a <font=bold><splitChance>%</font=bold><font=default> chance to split into 2 after being shot",
-        rarity = "uncommon"
+        rarity = "uncommon",
+        imageReference = "assets/sprites/UI/itemIcons/Split-Shooter.png",
     },
     ["Recession"] = {
         name = "Recession",
@@ -522,6 +523,7 @@ local items = {
         name = "Four Leafed Clover",
         stats = {},
         description = "every <font=bold>%</font=bold><font=default> on items is doubled",
+        imageReference = "assets/sprites/UI/itemIcons/Four-Leafed-Clover.png",
         rarity = "uncommon"
     },
     ["+9 buff"] = {
