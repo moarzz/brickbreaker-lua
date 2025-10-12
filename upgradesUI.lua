@@ -390,12 +390,12 @@ local items = {
         rarity = "uncommon",
         imageReference = "assets/sprites/UI/itemIcons/Spray-and-Pray.png",
     },
-    ["Superhero t-shirt"] = {
+    --[[["Superhero t-shirt"] = {
         name = "Superhero t-shirt",
         stats = {},
         description = "While you own this item, 'Incrediball' is added to the pool of weapons you can unlock.",
         rarity = "uncommon"
-    },
+    },]]
     ["Flash Sale"] = {
         name = "Flash Sale",
         stats = {},
@@ -512,6 +512,7 @@ local items = {
         stats = {},
         description = "<font=bold>On Level Up</font=bold><font=default>\nreduce the upgrade price of all your items by 1 (min 0)",
         descriptionOverwrite = true,
+        imageReference = "assets/sprites/UI/itemIcons/Recession.png",
         rarity = "uncommon",
         onLevelUp = function() 
             for _, weaponType in pairs(Balls.getUnlockedBallTypes()) do
@@ -545,12 +546,14 @@ local items = {
         name = "Bouncy Walls",
         stats = {amount = 2, speed = 2},
         description = "Balls gain a temporary boost of speed after bouncing off walls",
-        rarity = "rare"
+        rarity = "rare",
+        imageReference = "assets/sprites/UI/itemIcons/Bouncy-Walls.png",
     },
     ["Sommelier"] = {
         name = "Sommelier",
         stats = {},
         description = "<font=big>Consumable Items</font=big><font=default> trigger twice",
+        imageReference = "assets/sprites/UI/itemIcons/Sommelier.png",
         rarity = "rare"
     },
     ["Arcane Missiles"] = {
@@ -558,11 +561,13 @@ local items = {
         stats = {},
         -- descriptionPointers = {arcaneChance = function() return hasItem("Four Leafed Clover") and 100 or 50 end},
         description = "<font=bold>On ball bounce with Brick</font=bold>\n<font=default>shoot an arcane missile of that ball's <color=damage>damage",
+        imageReference = "assets/sprites/UI/itemIcons/Arcane-Missiles.png", 
         rarity = "rare"
     },
     ["Investment Guru"] = {
         name = "Investment Guru",
         stats = {},
+        imageReference = "assets/sprites/UI/itemIcons/Investment-Guru.png",
         description = "<font=bold>On level up</font=bold><font=default>\nadd a </font=default><font=bold>Long Term Investment</font=bold><font=default> in the shop",
         rarity = "rare"
     },
@@ -570,11 +575,13 @@ local items = {
         name = "Birthday Hat",
         stats = {},
         description = "<font=bold>on Level up</font><font=default> effects are doubled",
+        imageReference = "assets/sprites/UI/itemIcons/Birthday-Hat.png",
         rarity = "rare"
     },
     ["Triple Trouble ++"] = {
         name = "Triple Trouble ++",
         rarity = "rare",
+        imageReference = "assets/sprites/UI/itemIcons/Triple-Trouble.png",
         stats = {},
         description = "",
         onInShop = function(self)
@@ -632,8 +639,8 @@ local items = {
             end
         end
     },
-    ["Phantom Bullets"] = {
-        name = "Phantom Bullets",
+    ["Reinforced Bullets"] = {
+        name = "Reinforced Bullets",
         stats = {},
         description = "Bullets only lose 1 dmg when they pass through bricks\nBullets start with half damage",
         rarity = "rare"

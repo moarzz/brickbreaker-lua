@@ -362,7 +362,7 @@ function dealDamage(ball, brick, burnDamage)
         
         if brick.health >= 1 then
             brick.hitLastFrame = true
-        elseif not hasItem("Phantom Bullets") then
+        elseif not hasItem("Reinforced Bullets") then
             kill = true
             brickKilledThisFrame = true
             brick.destroyed = true
@@ -397,7 +397,7 @@ function dealDamage(ball, brick, burnDamage)
     if ball.type == "bullet" then
         damage = ball.stats.damage
     end
-    if hasItem("Phantom Bullets") and ball.type == "bullet" then
+    if hasItem("Reinforced Bullets") and ball.type == "bullet" then
         damage = math.max(math.ceil(damage / 2), 1)
     end
     
@@ -518,7 +518,7 @@ local function shoot(gunName, ball)
                 stats = {damage = bulletDamage * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1)},
                 hasSplit = false,
                 hasTriggeredOnBulletHit = false,
-                golden = (Player.currentCore == "Phantom Core" or hasItem("Phantom Bullets")),
+                golden = (Player.currentCore == "Phantom Core" or hasItem("Reinforced Bullets")),
             })
             local chance = hasItem("Four Leafed Clover") and 20 or 10
             if math.random(1,100) <= chance and hasItem("Sudden Mitosis") then
@@ -698,7 +698,7 @@ local function shoot(gunName, ball)
                         stats = {damage = bulletDamage * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1)},
                         hasSplit = false,
                         hasTriggeredOnBulletHit = false,
-                        golden = (gun.name == "Golden Gun" or (Player.currentCore == "Phantom Core" or hasItem("Phantom Bullets"))),
+                        golden = (gun.name == "Golden Gun" or (Player.currentCore == "Phantom Core" or hasItem("Reinforced Bullets"))),
                     })
                 end
                 local chance = hasItem("Four Leafed Clover") and 20 or 10
@@ -771,7 +771,7 @@ local function shoot(gunName, ball)
                     stats = {damage = bulletDamage * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1)},
                     hasSplit = false,
                     hasTriggeredOnBulletHit = false,
-                    golden = ((Player.currentCore == "Phantom Core" or hasItem("Phantom Bullets"))),
+                    golden = ((Player.currentCore == "Phantom Core" or hasItem("Reinforced Bullets"))),
                 })
                 local chance = hasItem("Four Leafed Clover") and 20 or 10
                 if math.random(1,100) <= chance and hasItem("Sudden Mitosis") then
@@ -828,7 +828,7 @@ local function shoot(gunName, ball)
                     stats = {damage = bulletDamage * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1)},
                     hasSplit = false,
                     hasTriggeredOnBulletHit = false,
-                    golden = (gun.name == "Golden Gun" or (Player.currentCore == "Phantom Core" or hasItem("Phantom Bullets"))),
+                    golden = (gun.name == "Golden Gun" or (Player.currentCore == "Phantom Core" or hasItem("Reinforced Bullets"))),
                 })
                 local chance = hasItem("Four Leafed Clover") and 20 or 10
                 if math.random(1,100) <= chance and hasItem("Sudden Mitosis")then
@@ -951,7 +951,7 @@ local function turretShoot(turret)
             stats = {damage = bulletDamage * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1), type = "tech"},
             name = "Gun Turrets",
             type = "bullet",
-            golden = (Player.currentCore == "Phantom Core" or hasItem("Phantom Bullets"))
+            golden = (Player.currentCore == "Phantom Core" or hasItem("Reinforced Bullets"))
         }
         table.insert(bullets, bullet)
         local chance = hasItem("Four Leafed Clover") and 20 or 10
@@ -2501,7 +2501,7 @@ local function paddleCollisionCheck(ball, paddle)
                 stats = {damage = getStat(ball.name, "damage") * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1), type = "gun"},
                 name = "Paddle Defense System",
                 type = "bullet",
-                golden = (Player.currentCore == "Phantom Core" or hasItem("Phantom Bullets"))
+                golden = (Player.currentCore == "Phantom Core" or hasItem("Reinforced Bullets"))
             }
             table.insert(bullets, bullet)
             local chance = hasItem("Four Leafed Clover") and 20 or 10
@@ -3568,10 +3568,10 @@ function Balls.update(dt, paddle, bricks)
                         -- Deal damage to the brick
                         local kill = dealDamage(bullet, brick)
 
-                        if hasItem("Phantom Bullets") then
+                        if hasItem("Reinforced Bullets") then
                             bullet.stats.damage = bullet.stats.damage - 2
                         end
-                        if (not kill and (not bullet.golden)) or (hasItem("Phantom Bullets") and bullet.stats.damage <= 0) then
+                        if (not kill and (not bullet.golden)) or (hasItem("Reinforced Bullets") and bullet.stats.damage <= 0) then
                             shouldRemoveBullet = true
                             break -- Exit brick loop once we know bullet should be removed
                         end
