@@ -134,6 +134,7 @@ local items = {
         name = "Homing Bullets",
         stats = {fireRate = 1, ammo = 1, cooldown = -1},
         description = "Bullets will home in on the nearest brick",
+        imageReference = "assets/sprites/UI/itemIcons/Homing-Bullets.png",
         rarity = "common"
     },
     ["Long Term Investment"] = {
@@ -142,6 +143,7 @@ local items = {
         description = "Gain <color=money><font=big><longTermValue>$</color=money></font=big><color=white><font=default>\nIncrease the </color=white><color=money>$</color=money><color=white> gain of every future \n</font=default><font=big>Long Term Investment</font=big><font=default> by </color=white><color=money>1$</color=money><color=white> (max </color=white><color=money>20$</color=money><color=white>)",
         rarity = "common",
         descriptionOverwrite = true,
+        imageReference = "assets/sprites/UI/itemIcons/Long-Term-Investment.png",
         onBuy = function(self)
             if not hasItem("Abandon Greed") then
                 Player.money = Player.money + math.min((longTermInvestment.value), 20)
@@ -403,6 +405,7 @@ local items = {
                 weaponType.price = math.max(weaponType.price - 2, 0)
             end
         end,
+        imageReference = "assets/sprites/UI/itemIcons/Flash-Sale.png",
         rarity = "uncommon",
         consumable = true
     },
@@ -425,6 +428,7 @@ local items = {
         stats = {amount = 0, fireRate = 0},
         description = "+1 for every <color=money><font=big>20$</color=money></font=big><color=white><font=default> you have",
         rarity = "uncommon",
+        imageReference = "assets/sprites/UI/itemIcons/Rich-Get-Richer.png",
         onBuy = function(self)
             local bonus = math.floor(Player.money / 20)
             self.stats.amount = bonus
@@ -470,19 +474,21 @@ local items = {
         end,
         rarity = "uncommon"
     },]]
-    ["Assassin's Cloak"] = {
-        name = "Assassin's Cloak",
+    ["Assassin's Dagger"] = {
+        name = "Assassin's Dagger",
         stats = {damage = 2},
         descriptionPointers = {critChance = function() return hasItem("Four Leafed Clover") and 70 or 35 end},
         description = "Damage has a <font=bold><critChance>%</font=bold><font=default> chance to be doubled",
         rarity = "uncommon",
+        imageReference = "assets/sprites/UI/itemIcons/Assassins-Dagger.png",
     },
     ["Tesla Bullets"] = {
         name = "Tesla Bullets",
         stats = {fireRate = 2},
         descriptionPointers = {teslaChance = function() return hasItem("Four Leafed Clover") and 50 or 25 end},
         description = "<font=bold>On Bullet Hit\n<teslaChance>%</font=bold><font=default> chance to start an electric current that jumps to 3 nearby bricks. Dealing the bullet's <color=damage>damage</color>",
-        rarity = "uncommon"
+        rarity = "uncommon",
+        imageReference = "assets/sprites/UI/itemIcons/Tesla-Bullets.png",
     },
     ["Overclock"] = {
         name = "Overclock",
@@ -490,7 +496,8 @@ local items = {
         description = "When you buy this, all your weapons get a permanent upgrade to a random one of their stats",
         rarity = "uncommon",
         onBuy = function() FarmCoreUpgrade() end,
-        consumable = true
+        consumable = true,
+        imageReference = "assets/sprites/UI/itemIcons/Overclock.png",
     },
     ["Split Shooter"] = {
         name = "Split Shooter",

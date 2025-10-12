@@ -417,7 +417,7 @@ function dealDamage(ball, brick, burnDamage)
     end
 
     local critChance = hasItem("Four Leafed Clover") and 50 or 25
-    if hasItem("Assassin's Cloak") and math.random(1,100) <= critChance and ball.type ~= "bullet" then
+    if hasItem("Assassin's Dagger") and math.random(1,100) <= critChance and ball.type ~= "bullet" then
         damage = damage * 2
     end
     
@@ -515,7 +515,7 @@ local function shoot(gunName, ball)
                 speedX = speedXref,
                 speedY = speedYref,
                 radius = 5,
-                stats = {damage = bulletDamage * ((hasItem("Assassin's Cloak") and math.random(1,100) <= critChance) and 2 or 1)},
+                stats = {damage = bulletDamage * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1)},
                 hasSplit = false,
                 hasTriggeredOnBulletHit = false,
                 golden = (Player.currentCore == "Phantom Core" or hasItem("Phantom Bullets")),
@@ -695,7 +695,7 @@ local function shoot(gunName, ball)
                         speedX = speedXref + math.random(-90, 90),
                         speedY = -math.sqrt(bulletSpeed^2 - (speedXref + math.random(-80, 80))^2),
                         radius = 5,
-                        stats = {damage = bulletDamage * ((hasItem("Assassin's Cloak") and math.random(1,100) <= critChance) and 2 or 1)},
+                        stats = {damage = bulletDamage * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1)},
                         hasSplit = false,
                         hasTriggeredOnBulletHit = false,
                         golden = (gun.name == "Golden Gun" or (Player.currentCore == "Phantom Core" or hasItem("Phantom Bullets"))),
@@ -768,7 +768,7 @@ local function shoot(gunName, ball)
                     speedX = speedXref,
                     speedY = speedYref,
                     radius = 5,
-                    stats = {damage = bulletDamage * ((hasItem("Assassin's Cloak") and math.random(1,100) <= critChance) and 2 or 1)},
+                    stats = {damage = bulletDamage * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1)},
                     hasSplit = false,
                     hasTriggeredOnBulletHit = false,
                     golden = ((Player.currentCore == "Phantom Core" or hasItem("Phantom Bullets"))),
@@ -825,7 +825,7 @@ local function shoot(gunName, ball)
                     speedX = speedXref,
                     speedY = -math.sqrt(bulletSpeed^2 - speedXref^2),
                     radius = 5,
-                    stats = {damage = bulletDamage * ((hasItem("Assassin's Cloak") and math.random(1,100) <= critChance) and 2 or 1)},
+                    stats = {damage = bulletDamage * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1)},
                     hasSplit = false,
                     hasTriggeredOnBulletHit = false,
                     golden = (gun.name == "Golden Gun" or (Player.currentCore == "Phantom Core" or hasItem("Phantom Bullets"))),
@@ -948,7 +948,7 @@ local function turretShoot(turret)
             speedX = speed.x,
             speedY = speed.y,
             radius = 5,
-            stats = {damage = bulletDamage * ((hasItem("Assassin's Cloak") and math.random(1,100) <= critChance) and 2 or 1), type = "tech"},
+            stats = {damage = bulletDamage * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1), type = "tech"},
             name = "Gun Turrets",
             type = "bullet",
             golden = (Player.currentCore == "Phantom Core" or hasItem("Phantom Bullets"))
@@ -2498,7 +2498,7 @@ local function paddleCollisionCheck(ball, paddle)
                 speedX = speed.x,
                 speedY = speed.y,
                 radius = 5,
-                stats = {damage = getStat(ball.name, "damage") * ((hasItem("Assassin's Cloak") and math.random(1,100) <= critChance) and 2 or 1), type = "gun"},
+                stats = {damage = getStat(ball.name, "damage") * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1), type = "gun"},
                 name = "Paddle Defense System",
                 type = "bullet",
                 golden = (Player.currentCore == "Phantom Core" or hasItem("Phantom Bullets"))
