@@ -2207,11 +2207,11 @@ local function drawItemShop()
         setFont(60)
         for i=#displayedItems,1,-1 do
             local item = displayedItems[i]
-            local scale = item.consumable and 0.8 or 1.1
+            local scale = item.consumable and 0.8 or 1.0
             local windowW = uiBigWindowImg:getWidth() * 0.75 * scale
             local windowH = uiBigWindowImg:getHeight() * 0.65 * scale
             local itemX = 450 + (i-1) * (uiBigWindowImg:getWidth()*0.75 + 50)
-            local itemY = 50
+            local itemY = 25
             -- Center the window at the same position as a normal item
             local centerX = itemX + uiBigWindowImg:getWidth()*0.75/2
             local centerY = itemY + uiBigWindowImg:getHeight()*0.65/2
@@ -2233,9 +2233,9 @@ local function drawItemShop()
             end
 
             --description display when hovered
-            local buyButton = dress:Button("", {id = "bruhdmsavklsam" .. i, color = invisButtonColor}, itemX, itemY, windowW, windowH)
-            if buyButton.hovered then
-                love.graphics.draw(getRarityWindow(item.rarity or "common"), centerX - uiBigWindowImg:getWidth() * 0.65 * scale/2, itemY + windowH - 100, 0, 0.65 * scale, 0.55 * scale)
+            local buyButton = dress:Button("", {id = "bruhdmsavklsam" .. i, color = invisButtonColor}, itemX + 10, itemY + 12, windowW - 20, windowH - 24)
+            if buyButton.hovered and item.image then
+                love.graphics.draw(getRarityWindow(item.rarity or "common"), centerX - uiBigWindowImg:getWidth() * 0.65 * scale/2, itemY + windowH - 85, 0, 0.65 * scale, 0.55 * scale)
                 local getValue = function() return longTermInvestment.value end
                 local pointers = {
                     default = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 18),
@@ -2254,7 +2254,7 @@ local function drawItemShop()
                     fancyTexts[id]:draw()
                 else
                     local text = getItemFullDescription(item) or ""
-                    local fancyText = FancyText.new(text, centerX - uiBigWindowImg:getWidth() * 0.55 * scale/2, itemY + windowH, uiBigWindowImg:getWidth() * 0.55 * scale, 20, "center", pointers.default, pointers)
+                    local fancyText = FancyText.new(text, centerX - uiBigWindowImg:getWidth() * 0.55 * scale/2, itemY + windowH, uiBigWindowImg:getWidth() * 0.55 * scale, 17, "center", pointers.default, pointers)
                     fancyTexts[id] = fancyText
                     fancyText:update()
                     fancyText:draw()
