@@ -480,7 +480,7 @@ local items = {
         descriptionPointers = {critChance = function() return hasItem("Four Leafed Clover") and 70 or 35 end},
         description = "Damage has a <font=bold><critChance>%</font=bold><font=default> chance to be doubled",
         rarity = "uncommon",
-        imageReference = "assets/sprites/UI/itemIcons/Assassins-Dagger.png",
+        imageReference = "assets/sprites/UI/itemIcons/Assassin's-Dagger.png",
     },
     ["Tesla Bullets"] = {
         name = "Tesla Bullets",
@@ -610,6 +610,21 @@ local items = {
             self.stats[thirdRandomStatName] = 3 * (thirdRandomStatName == "cooldown" and -1 or 1)
         end
     },
+    ["Phantom Bullets"] = {
+        name = "Phantom Bullets",
+        stats = {},
+        description = "Bullets only lose 1 dmg when they pass through bricks\nBullets start with half damage",
+        imageReference = "assets/sprites/UI/itemIcons/Phantom-Bullets.png",
+        rarity = "rare"
+    },
+    ["Jack Of All Trades"] = {
+        name = "Jack Of All Trades",
+        stats = {speed = 2, cooldown = -2, amount = 2, range = 2, fireRate = 2, ammo = 2},
+        description = "Increases all stats of your weapons by 2 (except damage), but decreases cooldown by 2",
+        imageReference = "assets/sprites/UI/itemIcons/Jack-Of-All-Trades.png",
+        descriptionOverwrite = true,
+        rarity = "rare"
+    },
     ["Glorious Evolution"] = {
         name = "Glorious Evolution",
         stats = {},
@@ -638,19 +653,6 @@ local items = {
                 end
             end
         end
-    },
-    ["Reinforced Bullets"] = {
-        name = "Reinforced Bullets",
-        stats = {},
-        description = "Bullets only lose 1 dmg when they pass through bricks\nBullets start with half damage",
-        rarity = "rare"
-    },
-    ["Jack Of All Trades"] = {
-        name = "Jack Of All Trades",
-        stats = {speed = 2, cooldown = -2, amount = 2, range = 2, fireRate = 2, ammo = 2},
-        description = "Increases all stats of your weapons by 2 (except damage), but decreases cooldown by 2",
-        descriptionOverwrite = true,
-        rarity = "rare"
     },
     ["Archeologist Hat"] = {
         name = "Archeologist Hat",
@@ -1601,14 +1603,15 @@ local function drawBallStats()
         -- draw title label and title
         setFont(26)
         love.graphics.draw(uiLabelImg, currentX + statsWidth/2-uiLabelImg:getWidth()/2-10, y-25)
-        setFont(getMaxFittingFontSize(ballType.name or "Unk", 30, uiLabelImg:getWidth()-30))
-        suit.Label(ballType.name or "Unk", {align = "center"}, currentX + statsWidth/2-uiLabelImg:getWidth()/2-7, y-25, uiLabelImg:getWidth(), uiLabelImg:getHeight())
+        setFont(getMaxFittingFontSize(ballType.name or "Unk", 30, uiLabelImg:getWidth()-20))
+        drawTextCenteredWithScale(ballType.name or "Unk", currentX + statsWidth/2-uiLabelImg:getWidth()/2 + 3, y - 8, 1, uiLabelImg:getWidth()-20)
 
         -- type label
         setFont(20)
         local typeColor = {normal = {fg = {0.6,0.6,0.6,1}}}
         local labelY = y + uiLabelImg:getHeight()/2
-        suit.Label(ballType.type or "Unk type", {color = typeColor, align = "center"}, currentX + statsWidth/2-50-7, labelY, 100, 50)
+        -- suit.Label(ballType.type or "Unk type", {color = typeColor, align = "center"}, currentX + statsWidth/2-50-7, labelY, 100, 50)
+        -- drawTextCenteredWithScale(ballType.type or "Unk type", currentX + statsWidth/2-50-7, labelY, 1, 100, {0.6,0.6,0.6,1})
 
         -- price label
         setFont(50)
@@ -1729,9 +1732,9 @@ local function drawBallStats()
                     end
                 end
                 if (Player.currentCore == "Phantom Core" and ballType.type == "gun" and statName == "damage") or (Player.currentCore == "Madness Core" and (statName == "damage" or statName == "cooldown")) then
-                    suit.Label(tostring(string.format("%.1f", value)), {align = "center"}, statsX, labelY-25, cellWidth, 100)
+                    drawTextCenteredWithScale(tostring(string.format("%.1f", value)), statsX, labelY-15, 1, cellWidth)
                 else
-                    suit.Label(tostring(value), {align = "center"}, statsX, labelY-25, cellWidth, 100)
+                    drawTextCenteredWithScale(tostring(value), statsX, labelY-15, 1, cellWidth)
                 end
 
                 -- draw stat icon
@@ -1915,8 +1918,9 @@ local function drawBallStats()
     local angle = angle or math.rad(1.5) -- Default angle if not provided
     love.graphics.setColor(1, 1, 1, 1)
     setFont(35)
-    local levelRequirement = Player.newWeaponLevelRequirement or 5
-    suit.Label("unlock new weapon at lvl " .. levelRequirement, {align = "center", color = invisButtonColor}, suit.layout:row(uiSmallWindowImg:getWidth() - 35, uiSmallWindowImg:getHeight() - 35))
+    local levelRequirement = Player.level + (3 - ((Player.level - 1) % 3))
+
+    drawTextCenteredWithScale("unlock new weapon at lvl " .. levelRequirement, currentX, y + 50, 1, uiSmallWindowImg:getWidth() - 40)
     if unlockNewWeaponQueued then
         --[[ Balls.NextBallPriceIncrease()
         setLevelUpShop(true) -- Set the level up shop with ball unlockedBallTypes
@@ -1944,21 +1948,6 @@ local function drawBallStats()
             end
         end
     end
-end
-
-local function drawPerks()
-    local padding = 10 -- Padding between elements
-    local cellWidth, cellHeight = 200, 50 -- Dimensions for each cell
-    local rowCount = 3 -- Number of rows
-
-    --drawTitle
-    setFont(28) -- Set font for the title
-    local x,y,w,h = suit.layout:nextRow(statsWidth - 20, 60)
-    y = y + 200 -- Adjust y position for the title
-    suit.layout:reset(x, y, padding, padding) -- Reset layout with padding
-    love.graphics.draw(uiBigWindowImg, 0, y +25) -- Draw the background window image
-    love.graphics.draw(uiLabelImg, x+15, y,0,1.5,1) -- Draw the title background image
-    suit.Label("Player Upgrades", {align = "center", valign = "center"}, suit.layout:row(statsWidth - 20, 60)) -- Title row
 end
 
 function drawLevelUpShop()
@@ -2216,12 +2205,12 @@ end
 local function drawItemShop()
     if Player.levelingUp and not Player.choosingUpgrade then
         setFont(60)
-        local i = 0
-        for index, item in ipairs(displayedItems) do
+        for i=#displayedItems,1,-1 do
+            local item = displayedItems[i]
             local scale = item.consumable and 0.8 or 1.1
             local windowW = uiBigWindowImg:getWidth() * 0.75 * scale
             local windowH = uiBigWindowImg:getHeight() * 0.65 * scale
-            local itemX = 450 + (i) * (uiBigWindowImg:getWidth()*0.75 + 50)
+            local itemX = 450 + (i-1) * (uiBigWindowImg:getWidth()*0.75 + 50)
             local itemY = 50
             -- Center the window at the same position as a normal item
             local centerX = itemX + uiBigWindowImg:getWidth()*0.75/2
@@ -2243,12 +2232,41 @@ local function drawItemShop()
                 upgradePrice = upgradePrice - 1
             end
 
+            --description display when hovered
+            local buyButton = dress:Button("", {id = "bruhdmsavklsam" .. i, color = invisButtonColor}, itemX, itemY, windowW, windowH)
+            if buyButton.hovered then
+                love.graphics.draw(getRarityWindow(item.rarity or "common"), centerX - uiBigWindowImg:getWidth() * 0.65 * scale/2, itemY + windowH - 100, 0, 0.65 * scale, 0.55 * scale)
+                local getValue = function() return longTermInvestment.value end
+                local pointers = {
+                    default = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 18),
+                    big = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 23),
+                    bold = love.graphics.newFont("assets/Fonts/KenneyFutureBold.ttf", 25),
+                    longTermValue = getValue
+                }
+                if item.descriptionPointers then
+                    for valueName, functionPointer in pairs(item.descriptionPointers) do
+                        pointers[valueName] = functionPointer
+                    end
+                end
+                local id = "fancyText" .. i .. item.name:gsub("%s+", "_")
+                if fancyTexts[id] then
+                    fancyTexts[id]:update()
+                    fancyTexts[id]:draw()
+                else
+                    local text = getItemFullDescription(item) or ""
+                    local fancyText = FancyText.new(text, centerX - uiBigWindowImg:getWidth() * 0.55 * scale/2, itemY + windowH, uiBigWindowImg:getWidth() * 0.55 * scale, 20, "center", pointers.default, pointers)
+                    fancyTexts[id] = fancyText
+                    fancyText:update()
+                    fancyText:draw()
+                end
+            end
+
             local color = (tableLength(Player.items) >= maxItems and not item.consumable) and {0.6, 0.6, 0.6, 1} or {1, 1, 1, 1}
             love.graphics.setColor(color)
             love.graphics.draw(getRarityWindow(item.rarity or "common"), itemX, itemY, 0, 0.75 * scale, 0.65 * scale)
             setFont(27)
             drawTextCenteredWithScale(item.name or "Unknown", itemX + 10 * scale, itemY + 30 * scale, scale, windowW - 20 * scale, color)
-
+            
             if item.image then
                 love.graphics.setColor(1,1,1,1)
                 local imgScale = scale * 0.75
@@ -2279,7 +2297,7 @@ local function drawItemShop()
                 end
             end
 
-            if dress:Button("", {id = "bruhdmsavklsam" .. i, color = invisButtonColor}, itemX, itemY, windowW, windowH).hit then
+            if buyButton.hit then
                 print("button working")
                 if (#Player.items < maxItems or item.consumable) and Player.money >= upgradePrice then
                     Player.pay(upgradePrice)

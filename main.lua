@@ -1933,7 +1933,7 @@ function love.keypressed(key)
                     stats = {damage = 1},
                     hasSplit = false,
                     hasTriggeredOnBulletHit = false,
-                    golden = (Player.currentCore == "Phantom Core" or hasItem("Reinforced Bullets")),
+                    golden = (Player.currentCore == "Phantom Core" or hasItem("Phantom Bullets")),
                 }
                 Balls.insertBullet(bullet)
             end

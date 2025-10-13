@@ -1083,51 +1083,52 @@ end
 function drawTextCenteredWithScale(text, x, y, scale, maxWidth, color)
     color = color or {1, 1, 1, 1}
     love.graphics.setColor(color)
-    local font = love.graphics.getFont(); -- the font being used
-    local drawY = y; -- the y position of th text being draw currently
-    local toPrint = text; -- text remaining to print
+    local font = love.graphics.getFont()
+    local drawY = y
+    local toPrint = text
 
-    while toPrint ~= "" do -- keep looping until 'toPrint' is an empty string
+    while toPrint ~= "" do
         if font:getWidth(toPrint) * scale > maxWidth then
-            local lastWorkingStr = "";
+            local lastWorkingStr = ""
 
+            -- Try to find the largest substring that fits within maxWidth
             for str in string.gmatch(toPrint, "[^%s]*%s") do
                 if font:getWidth(lastWorkingStr .. str) * scale < maxWidth then
-                    lastWorkingStr = lastWorkingStr .. str;
+                    lastWorkingStr = lastWorkingStr .. str
                 else
-                    break; -- exit the for loop (no use in moving forward since the width can only increase more)
+                    break
                 end
             end
 
-            -- make sure string isnt empty, if it is then fill it with the most letters possible
+            -- If no valid substring is found, fit as many characters as possible
             if lastWorkingStr == "" then
                 for char in string.gmatch(toPrint, ".") do
                     if font:getWidth(lastWorkingStr .. char) * scale < maxWidth then
-                        lastWorkingStr = lastWorkingStr .. char;
+                        lastWorkingStr = lastWorkingStr .. char
                     else
-                        break;
+                        break
                     end
                 end
             end
 
-            -- clean up the rendered text a bit before drawing it
-            local cleanedStr = lastWorkingStr;
-
-            if string.match(cleanedStr, "%s$") then -- if the text ends in a space then exclude it from the draw
-                cleanedStr = string.sub(cleanedStr, 1, -2);
+            -- If `lastWorkingStr` is still empty, terminate the loop to prevent infinite looping
+            if lastWorkingStr == "" then
+                print("Warning: Unable to fit text within maxWidth. Skipping remaining text.")
+                break
             end
 
-            local drawX = x - font:getWidth(cleanedStr) * scale / 2 + maxWidth / 2;
-            love.graphics.print(cleanedStr, drawX, drawY, 0, scale, scale);
+            -- Draw the substring and update `toPrint`
+            local cleanedStr = string.gsub(lastWorkingStr, "%s$", "") -- Remove trailing spaces
+            local drawX = x - font:getWidth(cleanedStr) * scale / 2 + maxWidth / 2
+            love.graphics.print(cleanedStr, drawX, drawY, 0, scale, scale)
 
-            toPrint = string.sub(toPrint, string.len(lastWorkingStr) + 1, -1);
-
-            drawY = drawY + font:getHeight("|") * scale;
+            toPrint = string.sub(toPrint, string.len(lastWorkingStr) + 1, -1)
+            drawY = drawY + font:getHeight("|") * scale
         else
-            local drawX = x - font:getWidth(toPrint) * scale / 2 + maxWidth / 2;
-
-            love.graphics.print(toPrint, drawX, drawY, 0, scale, scale);
-            toPrint = "";
+            -- Draw the remaining text
+            local drawX = x - font:getWidth(toPrint) * scale / 2 + maxWidth / 2
+            love.graphics.print(toPrint, drawX, drawY, 0, scale, scale)
+            toPrint = ""
         end
     end
 end
