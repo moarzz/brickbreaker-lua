@@ -102,7 +102,13 @@ function FancyText:alignText()
             if string.find(strToReplace, "=") then
                 return nil; -- dont alter the string (yet)
             else -- otherwise its a key to the pointer table
-                return tostring(self.pointer[string.sub(strToReplace,2,-2)]);
+                local ret = self.pointer[string.sub(strToReplace,2,-2)];
+
+                if type(ret) == "function" then
+                    ret = ret();
+                end
+
+                return tostring(ret);
             end
         end
     );
@@ -409,6 +415,10 @@ function FancyText:draw()
 
                     if not set then
                         set = self.pointer[w.setTo];
+                    end
+
+                    if type(set) == "function" then
+                        set = set();
                     end
 
                     otherValues[w.modificationName] = set;
