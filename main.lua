@@ -23,7 +23,7 @@ local KeySys = require("KeywordSystem") -- Keyword system for text parsing
 local Explosion = require("particleSystems.explosion") -- Explosion particle system
 
 usingMoneySystem = false
-usingNormalXpSystem = true
+usingNormalXpSystem = false
 goldEarnedFrl = 0 -- ignore, mais delete pas
 local startingItemName = nil
 
@@ -1772,7 +1772,7 @@ function love.draw()
     -- love.graphics.rectangle("fill", paddle.x, paddle.y, paddle.width * paddle.widthMult, paddle.height)
     drawBricks()
     Balls.draw(Balls)
-    drawLvlUpPopups()
+    drawPopups()
 
     -- damageRipples.draw()
 

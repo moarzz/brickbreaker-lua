@@ -515,6 +515,7 @@ function Player.gain(amount)
         Player.levelUp()
     end
     upgradesUI.tryQueue()
+    xpPopup(amount)
 end
 
 function Player.addGold(amount)

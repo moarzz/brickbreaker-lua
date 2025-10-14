@@ -239,7 +239,7 @@ local function createXpOrb(x, y, amount)
         y = y,
         bounceAmount = 2,
         amount = amount,
-        radius = amount <= 20 and mapRangeClamped(amount, 1, 20, 4, 10) or (amount <= 125 and mapRangeClamped(amount, 20, 125, 10, 18) or mapRange(amount, 125, 500, 18, 30)),
+        radius = amount <= 20 and mapRangeClamped(amount, 1, 20, 3, 5) or (amount <= 125 and mapRangeClamped(amount, 20, 125, 5, 7) or mapRangeClamped(amount, 125, 500, 7, 9)),
         speedX = math.random(-75, 75),
         speedY = 100,
         gravity = 500,
