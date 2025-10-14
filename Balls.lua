@@ -239,13 +239,22 @@ local function createXpOrb(x, y, amount)
         y = y,
         bounceAmount = 2,
         amount = amount,
-        radius = mapRangeClamped(amount, 1, 50, 5, 15),
-        speedX = math.random(-50, 50),
-        speedY = -100,
+        radius = amount <= 20 and mapRangeClamped(amount, 1, 20, 4, 10) or (amount <= 125 and mapRangeClamped(amount, 20, 125, 10, 18) or mapRange(amount, 125, 500, 18, 30)),
+        speedX = math.random(-75, 75),
+        speedY = 100,
         gravity = 500,
         lifetime = 10,
+        trail = {},
+        creationTime = gameTime,
+        timeSinceLastTrailPoint = 0
     }
     table.insert(xpOrbs, xpOrb)
+end
+
+function createXpOrbss(amount)
+    for i=1, amount do
+        createXpOrb(math.random(100, screenWidth-100), math.random(100, screenHeight-100), math.random(1, 100))
+    end
 end
 
 brickPieces = {}
@@ -1304,7 +1313,8 @@ local function cast(spellName, brick, forcedDamage)
     if spellName == "Lightning Pulse" then
         print("Casting Lightning Pulse")
         for i=1, (Player.currentCore == "Madness Core" and 2 or 1) * (Player.currentCore == "Damage Core" and 1 or (unlockedBallTypes["Lightning Pulse"].stats.amount + getStatItemsBonus("amount", unlockedBallTypes["Lightning Pulse"]) + (Player.permanentUpgrades.amount or 0))) do
-            Timer.after(i * 0.025, function()
+            Timer.after(i * 0.035, function()
+                playSoundEffect(lightningPulseSFX, 0.1, 0.85)
                 local selectedBrickIds = {}
                 local iterations = 0
                 local go = true
@@ -1333,9 +1343,8 @@ local function cast(spellName, brick, forcedDamage)
             end)
         end
         local cooldownValue = (Player.currentCore == "Madness Core" and 0.5 or 1) * (Player.currentCore == "Cooldown Core" and 2 or unlockedBallTypes["Lightning Pulse"].stats.cooldown + getStatItemsBonus("cooldown", unlockedBallTypes["Lightning Pulse"]) + (Player.permanentUpgrades.cooldown or 0))
-        local timeUntilNextCast = (1 + math.max(cooldownValue, 0))/6
+        local timeUntilNextCast = (1 + math.max(cooldownValue, 0))/5
         print("Next Lightning Pulse in: " .. timeUntilNextCast .. " seconds")
-        playSoundEffect(lightningPulseSFX, 0.5, 0.85)
         Timer.after(timeUntilNextCast, function()
             cast("Lightning Pulse")
         end)
@@ -3190,6 +3199,7 @@ local function incrediBallColorUpdate(alpha)
     
 end
 
+
 -- Modify the Balls.update function to include shadowBall updates
 function Balls.update(dt, paddle, bricks)
     if Player.levelingUp or Player.choosingUpgrade then
@@ -3653,21 +3663,65 @@ function Balls.update(dt, paddle, bricks)
 
     if not usingNormalXpSystem then
         for i=#xpOrbs, 1, -1 do
+        -- xpOrb update logic
             local orb = xpOrbs[i]
+
+            -- movement logic
             orb.y = orb.y + orb.speedY * dt
             orb.x = orb.x + orb.speedX * dt
+            local totalSpeed = math.sqrt(orb.speedX * orb.speedX + orb.speedY * orb.speedY)
+            if totalSpeed > 750 then
+                orb.speedX = orb.speedX * 750 / totalSpeed
+                orb.speedY = orb.speedY * 750 / totalSpeed
+            end
+            orb.speedY = math.min(orb.speedY + 500 * dt, 800)
             if orb.x < 0 then orb.speedX = -orb.speedX end
             if orb.x > screenWidth then orb.speedX = -orb.speedX end
             if orb.y > screenHeight then
                 if orb.bounceAmount > 0 then
                     orb.y = screenHeight
-                    orb.speedY = -orb.speedY * 0.85
+                    orb.speedY = math.min(-orb.speedY * 0.85, -500)
                     orb.bounceAmount = orb.bounceAmount - 1
                 else
                     table.remove(xpOrbs, i)
                 end
+            end 
+
+            -- attraction to paddle
+            local closestX = math.max(paddle.x, math.min(orb.x, paddle.x + paddle.width))
+            local closestY = math.max(paddle.y, math.min(orb.y, paddle.y + paddle.height))
+            
+            -- Calculate distance from orb center to closest point
+            local dx = orb.x - closestX
+            local dy = orb.y - closestY
+            
+            local distanceToPaddle = math.sqrt(dx * dx + dy * dy)
+            if distanceToPaddle < 200 then
+                local attractionStrength = mapRangeClamped(distanceToPaddle, 75, 250, 6000, 500)
+                local angle = math.atan2(dy, dx)
+                orb.speedX = orb.speedX - math.cos(angle) * attractionStrength * dt
+                orb.speedY = orb.speedY - math.sin(angle) * attractionStrength * dt
             end
-            orb.speedY = orb.speedY + 500 * dt
+            if distanceToPaddle < 2 then
+                Player.gain(orb.amount)
+                local healThisFrame = orb.amount
+                playSoundEffect(gainXpSFX, mapRange(orb.amount, 1, 100, 0.5, 0.9), mapRange(orb.amount, 1, 100, 0.8, 1))
+                    
+                table.remove(xpOrbs, i)
+            end
+
+            -- trail logic
+            table.insert(orb.trail, 1, {x = orb.x, y = orb.y, alpha = 1}) -- Add new trail point
+            orb.timeSinceLastTrailPoint = gameTime
+            if #orb.trail > 15 then -- Limit trail length
+                table.remove(orb.trail)
+            end
+            for j = #orb.trail, 1, -1 do
+                orb.trail[j].alpha = orb.trail[j].alpha - dt * 2 -- Fade out
+                if orb.trail[j].alpha <= 0 then
+                    table.remove(orb.trail, j)
+                end
+            end
         end
     end
 end
@@ -3993,9 +4047,23 @@ function Balls:draw()
 
     if not usingMoneySystem then
         for _, xpOrb in ipairs(xpOrbs) do
-            love.graphics.setColor(1, 1, 0, 1)
+            
+            for i, point in ipairs(xpOrb.trail) do
+                local offset = (gameTime - xpOrb.creationTime)
+                local ratio = i/#xpOrb.trail
+                ratio = ratio * 4
+                local radiatingSizeMult = (math.sin((ratio + offset)/4)+1) * 1.5 / 2 + 0.5
+
+                local trailRadius = xpOrb.radius * (#xpOrb.trail - i)/#xpOrb.trail
+                local color1 = {120/255, 170/255, 1, 1} -- Light blue
+                local color2 = {222/255, 82/255, 218/255, 1}
+                love.graphics.setColor(color1) -- Yellow trail with fading alpha
+                love.graphics.circle("fill", point.x, point.y, trailRadius) -- Draw trail point
+            end
+
+            --[[love.graphics.setColor(1, 1, 1, 1)
             love.graphics.circle("fill", xpOrb.x, xpOrb.y, xpOrb.radius)
-            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.setColor(1, 1, 1, 1)]]
         end
     end
 end

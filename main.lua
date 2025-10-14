@@ -127,10 +127,10 @@ function resetGame()
     paddle = {
         x = screenWidth / 2 - 100,
         y = screenHeight - 400,
-        _width = 200 + (Player.permanentUpgrades.paddleSize or 0), -- Base width + size upgrade
+        _width = 200, -- Base width + size upgrade
         widthMult = 1,
         height = 20,
-        speed = 700 + (Player.permanentUpgrades.paddleSpeed or 0),
+        speed = 1000,
         currrentSpeedX = 0,
         speedMult = 1
     }
@@ -261,6 +261,7 @@ local function loadAssets()
     lightningPulseSFX = love.audio.newSource("assets/SFX/lightningPulse.mp3", "static")
     lightningSFX = love.audio.newSource("assets/SFX/lightning.mp3", "static")
     lightBeamSFX = love.audio.newSource("assets/SFX/lightBeam.mp3", "static")
+    gainXpSFX = love.audio.newSource("assets/SFX/gainXp.mp3", "static")
 
 
     -- load shaders
@@ -278,6 +279,7 @@ local function loadAssets()
     sawBladesVFX = love.graphics.newImage("assets/sprites/VFX/sawBlades.png")
     rocketVFX = love.graphics.newImage("assets/sprites/VFX/rocket.png")
     fireVFX = love.graphics.newImage("assets/sprites/VFX/fire.png")
+    sparkleVFX = love.graphics.newImage("assets/sprites/VFX/sparkle.png")
 
     Player.loadJsonValues()
     damageRipples.load()
@@ -700,10 +702,10 @@ function love.load()
     paddle = {
         x = screenWidth / 2 - 50,
         y = screenHeight/2,
-        _width = 200 + (Player.permanentUpgrades.paddleSize or 0), -- Base width + size upgrade
+        _width = 200, -- Base width + size upgrade
         widthMult = 1,
         height = 20,    
-        speed = 700 + (Player.permanentUpgrades.paddleSpeed or 0), -- Base speed + speed upgrade
+        speed = 1000, -- Base speed + speed upgrade
         currrentSpeedX = 0,
         speedMult = 1
     }
@@ -825,6 +827,7 @@ end
 screenOffset = {x=0,y=0}
 
 local function brickPiecesUpdate(dt)
+    dt = dt * 1.75
     if not Player.levelingUp then
         for _, brickpiece in ipairs(brickPieces) do
             if not brickpiece.destroyed then
@@ -837,6 +840,7 @@ local function brickPiecesUpdate(dt)
             end
         end
     end
+    dt = dt/1.75
 end
 
 -- Generic garbage collection for dynamic object tables
@@ -1983,6 +1987,10 @@ function love.keypressed(key)
 
         if key == "7" then
             Balls.addBall("Light Beam")
+        end
+
+        if key == "8" then
+            createXpOrbss(50)
         end
 
         -- PERFORMANCE TEST ON OFF BLOCK

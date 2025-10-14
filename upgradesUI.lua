@@ -285,7 +285,7 @@ local items = {
             self.stats[thirdRandomStatName] = 2 * (thirdRandomStatName == "cooldown" and -1 or 1)
         end
     },
-    ["Permanent Upgrade"] = {
+    --[[["Permanent Upgrade"] = {
         name = "Permanent Upgrade",
         stats = {},
         description = "Permanently <randomItem> of all weapons by 1",
@@ -325,7 +325,7 @@ local items = {
                 print("Permanent bonus:", stat, value)
             end
         end
-    },
+    },]]
     ["Grow Cube"] = {
         name = "Grow Cube",
         stats = {},
@@ -625,11 +625,12 @@ local items = {
         descriptionOverwrite = true,
         rarity = "rare"
     },
-    ["Glorious Evolution"] = {
-        name = "Glorious Evolution",
+    ["Tesla Coil"] = {
+        name = "Tesla Coil",
         stats = {},
         description = "<font=bold>On level up</font=bold><font=default>\nupgrade all stats of a random weapon by 1",
         rarity = "rare",
+        imageReference = "assets/sprites/UI/itemIcons/Tesla-Coil.png",
         onLevelUp = function()
             local randomWeaponId = math.random(1, tableLength(Balls.getUnlockedBallTypes()))
             local i = 1
@@ -657,6 +658,7 @@ local items = {
     ["Archeologist Hat"] = {
         name = "Archeologist Hat",
         stats = {},
+        imageReference = "assets/sprites/UI/itemIcons/Archeologist's-Hat.png",
         description = "<font=bold>On Level Up</font=bold><font=default>\nadd a random rare or legendary item to the shop",
         rarity = "rare"
     },
@@ -692,7 +694,7 @@ local items = {
             end
         end
     },
-    ["Permanent Upgrade +"] = {
+    --[[["Permanent Upgrade +"] = {
         name = "Permanent Upgrade +",
         stats = {},
         description = "Permanently <randomItem> of all weapons by 2",
@@ -729,7 +731,7 @@ local items = {
                 permanentItemBonuses[self.randomStatName] = (permanentItemBonuses[self.randomStatName] or 0) + 2
             end
         end
-    },
+    },]]
     ["Total Anihilation"] = {
         name = "Total Anihilation",
         stats = {damage = 2, range = 2},
@@ -2233,7 +2235,7 @@ local function drawItemShop()
             end
 
             --description display when hovered
-            local buyButton = dress:Button("", {id = "bruhdmsavklsam" .. i, color = invisButtonColor}, itemX + 10, itemY + 12, windowW - 20, windowH - 24)
+            local buyButton = dress:Button("", {id = "bruhdmsavklsam" .. i .. item.name, color = invisButtonColor}, itemX + 10, itemY + 12, windowW - 20, windowH - 24)
             if buyButton.hovered and item.image then
                 love.graphics.draw(getRarityWindow(item.rarity or "common"), centerX - uiBigWindowImg:getWidth() * 0.65 * scale/2, itemY + windowH - 85, 0, 0.65 * scale, 0.55 * scale)
                 local getValue = function() return longTermInvestment.value end
@@ -2270,7 +2272,7 @@ local function drawItemShop()
             if item.image then
                 love.graphics.setColor(1,1,1,1)
                 local imgScale = scale * 0.75
-                love.graphics.draw(item.image,centerX - (item.image:getWidth()*imgScale)/2, itemY + 140 * imgScale,0,imgScale,imgScale)
+                love.graphics.draw(item.image,centerX - (item.image:getWidth()*imgScale)/2, itemY + 130 * imgScale,0,imgScale,imgScale)
             else
                 local getValue = function() return longTermInvestment.value end
                 local pointers = {
@@ -2302,7 +2304,7 @@ local function drawItemShop()
                 if (#Player.items < maxItems or item.consumable) and Player.money >= upgradePrice then
                     Player.pay(upgradePrice)
                     playSoundEffect(upgradeSFX, 0.5, 0.95)
-                    table.remove(displayedItems, index)
+                    table.remove(displayedItems, i)
                     if item.onBuy then
                         item.onBuy(item)
                         if item.consumable and hasItem("Sommelier") then
