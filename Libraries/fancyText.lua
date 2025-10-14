@@ -318,7 +318,7 @@ function FancyText:getWidth()
 end
 
 function FancyText:draw()
-    local colour = self.DEFAULT_COLOURS.black;
+    local colour = self.DEFAULT_COLOURS.white;
     local highlight = self.DEFAULT_COLOURS.clear;
 
     local otherValues = {
