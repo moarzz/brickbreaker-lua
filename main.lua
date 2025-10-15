@@ -1604,12 +1604,15 @@ end
 -- Add to love.draw()
 local old_love_draw = love.draw
 function love.draw()
+    
     love.graphics.setShader(backgroundShader)
     WindowCorrector.mergeCanvas(1);
     love.graphics.setShader()
-
+    
+    
     resetButtonLastID()
     love.graphics.setColor(1, 1, 1, 1)
+    
     
     -- Draw level progress bar at the bottom
     if currentGameState == GameState.PLAYING then
@@ -1620,19 +1623,19 @@ function love.draw()
         else
             love.graphics.rectangle("fill", 0, screenHeight - 30, screenWidth, 30)
         end
-
+        
         -- Progress bar fill
         local farmCoreMult = (Player.currentCore == "Farm Core" and 1.5 or 1)
         local progress = Player.xp / (Player.xpForNextLevel * farmCoreMult)
         love.graphics.setColor(90/255, 150/255, 0.75, 1)
         if usingMoneySystem then
             love.graphics.rectangle("fill", statsWidth, screenHeight - 30, 
-                (screenWidth - statsWidth*2) * math.min(1, math.max(0, progress)), 30)
+            (screenWidth - statsWidth*2) * math.min(1, math.max(0, progress)), 30)
         else
             love.graphics.rectangle("fill", 0, screenHeight - 30, 
-                screenWidth * math.min(1, math.max(0, progress)), 30)
+            screenWidth * math.min(1, math.max(0, progress)), 30)
         end
-
+        
         -- Level text
         love.graphics.setColor(1, 1, 1, 1)
         setFont(25)
@@ -1644,7 +1647,8 @@ function love.draw()
             love.graphics.print(levelText, 15, screenHeight - 28)
         end
     end
-
+    
+    
     if currentGameState == GameState.PAUSED then
         love.graphics.setColor(0, 0, 0, 0.6)
         love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
@@ -1658,8 +1662,10 @@ function love.draw()
         
         -- Draw menu
         drawMenu()
+        local startMem = collectgarbage("count");
         -- Draw SUIT UI elements
         suit.draw()
+        print(collectgarbage("count") - startMem);
         return
     end
     

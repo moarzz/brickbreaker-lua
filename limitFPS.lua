@@ -52,9 +52,11 @@ function love.run()
 			love.graphics.origin();
 			love.graphics.clear(love.graphics.getBackgroundColor());
 
+			-- local startData = collectgarbage("count");
 			if love.draw then
                 love.draw();
             end
+			-- print(collectgarbage("count") - startData);
 
 			love.graphics.present();
 		end
