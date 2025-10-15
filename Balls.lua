@@ -5,7 +5,7 @@ local Explosion = require("particleSystems.explosion")
 local ArcaneMissile = require("particleSystems.arcaneMissile")
 local FlameBurst = require("particleSystems.flameBurst")
 
-startingBall = "Pistol" -- The first ball that is added to the game 
+startingBall = "Machine Gun" -- The first ball that is added to the game 
 local Balls = {}
 local ballCategories = {}
 local ballList = {}
@@ -237,11 +237,11 @@ local function createXpOrb(x, y, amount)
     local xpOrb = {
         x = x,
         y = y,
-        bounceAmount = 2,
+        bounceAmount = 3,
         amount = amount,
-        radius = amount <= 20 and mapRangeClamped(amount, 1, 20, 3, 5) or (amount <= 125 and mapRangeClamped(amount, 20, 125, 5, 7) or mapRangeClamped(amount, 125, 500, 7, 9)),
+        radius = amount <= 20 and mapRangeClamped(amount, 1, 20, 4, 6) or (amount <= 125 and mapRangeClamped(amount, 20, 125, 6, 8) or mapRangeClamped(amount, 125, 500, 8, 10)),
         speedX = math.random(-75, 75),
-        speedY = 100,
+        speedY = 250,
         gravity = 500,
         lifetime = 10,
         trail = {},
@@ -312,7 +312,10 @@ local function brickDestroyed(brick)
     table.insert(brickPieces, brickPiece1)
     table.insert(brickPieces, brickPiece2)
     table.insert(brickPieces, brickPiece3)
-    if not usingNormalXpSystem then
+    if usingNormalXpSystem then
+        Player.gain(brick.maxHealth)
+        -- createXpOrb(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth)
+    else
         createXpOrb(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth)
     end
 end
@@ -453,7 +456,7 @@ function dealDamage(ball, brick, burnDamage)
     damageThisFrame = (damageThisFrame or 0) + damage
     VFX.brickHit(brick, ball, damage)
     
-    if usingNormalXpSystem then
+    if usingNormalXpSystem and false then
         Player.gain(damage)
     end
     
@@ -1171,7 +1174,7 @@ fire = function(techName)
             end)
             Timer.after(1.5 + (Player.currentCore == "Madness Core" and 0.5 or 1) * ((turretType.stats.cooldown + getStatItemsBonus("cooldown", turretType) + (Player.permanentUpgrades.cooldown or 0)) * 0.45), function()
                 -- Refill ammo after cooldown
-                turret.currentAmmo = (Player.currentCore == "Madness Core" and 2 or 1) * (turretType.stats.ammo + getStatItemsBonus("ammo", turretType) * (turretType.ammoMult or 1))
+                turret.currentAmmo = (Player.currentCore == "Madness Core" and 2 or 1) * (turretType.stats.ammo + (getStatItemsBonus("ammo", turretType) + (Player.permanentUpgrades.ammo or 0)) * (turretType.ammoMult or 1))
                 fire("Gun Turrets")
             end)
         else
@@ -1279,7 +1282,8 @@ local function cast(spellName, brick, forcedDamage)
         local cooldownValue = ((Player.currentCore == "Madness Core" and 0.5 or 1) * 8 + 4) / (unlockedBallTypes["Fireballs"].stats.fireRate + getStatItemsBonus("fireRate", unlockedBallTypes["Fireballs"]) + (Player.permanentUpgrades.fireRate or 0))
         local timeUntilNextCast = (3 + math.max(cooldownValue, 0))/4
     end
-    if spellName == "Light Beam" then        local amountValue = (Player.currentCore == "Madness Core" and 2 or 1) * (unlockedBallTypes["Light Beam"].stats.amount + getStatItemsBonus("amount", unlockedBallTypes["Light Beam"]) + (Player.permanentUpgrades.amount or 0))
+    if spellName == "Light Beam" then        
+        local amountValue = (Player.currentCore == "Madness Core" and 2 or 1) * (unlockedBallTypes["Light Beam"].stats.ammo + (getStatItemsBonus("ammo", unlockedBallTypes["Light Beam"]) + (Player.permanentUpgrades.ammo or 0)) * unlockedBallTypes["Light Beam"].ammoMult)
         for i=1, amountValue do
             Timer.after((i-1) * 0.125 + 0.05, function()
                 playSoundEffect(lightBeamSFX, 0.2, 0.6)
@@ -1458,7 +1462,7 @@ local function ballListInit()
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
-            speedMult = 2,
+            speedMult = 2.5,
             size = 1,
             rarity = "common",
             ballAmount = 1,
@@ -1591,19 +1595,19 @@ local function ballListInit()
             canBuy = function() return hasItem("Superhero t-shirt") end,
             attractionStrength = 2000
         },
-        ["Pistol"] = {
-            name = "Pistol",
+        ["Machine Gun"] = {
+            name = "Machine Gun",
             type = "gun",
             x = screenWidth / 2,
             y = screenHeight / 2,
             size = 1,
             rarity = "common",
             startingPrice = 10,
-            ammoMult = 4,
-            fireRateMult = 0.65,
+            ammoMult = 5,
+            fireRateMult = 0.45,
             description = "Fires bullets, fast fireRate",
             onBuy = function() 
-                shoot("Pistol")
+                shoot("Machine Gun")
             end,
             noAmount = true,
             currentAmmo = 10 + ((Player.permanentUpgrades.ammo or 0)) * 5,
@@ -1808,7 +1812,7 @@ local function ballListInit()
             type = "tech",
             size = 1,
             noAmount = true,
-            rarity = "rare",
+            rarity = "uncommon",
             startingPrice = 100,
             description = "Creates deadly Saw Blades that orbit around your paddle, damaging any bricks they touch",
             color = {0.7, 0.7, 0.7, 1}, -- Grey color theme
@@ -1908,7 +1912,7 @@ local function ballListInit()
             color = {1, 1, 0.5, 1}, -- Yellow color for Light Beam
             stats = {
                 damage = 2,
-                amount = 1,
+                ammo = 2,
                 cooldown = 12
             },
             onBuy = function()
@@ -2667,7 +2671,7 @@ local function techUpdate(dt)
             
             -- Deal damage if we've been on target long enough
             
-            local cooldownLength = (Player.currentCore == "Madness Core" and 0.5 or 1) * 1.25/((Player.currentCore == "Damage Core" and 1 or (laserBeam.stats.fireRate + getStatItemsBonus("fireRate", laserBeam) + (Player.permanentUpgrades.fireRate or 0))))
+            local cooldownLength = (Player.currentCore == "Madness Core" and 0.5 or 1) * 1/((Player.currentCore == "Damage Core" and 1 or (laserBeam.stats.fireRate + getStatItemsBonus("fireRate", laserBeam) + (Player.permanentUpgrades.fireRate or 0))))
             if (Player.currentCore == "Spray and Pray Core" or hasItem("Spray and Pray")) then
                 local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
                 cooldownLength = cooldownLength * sprayMult
@@ -3661,66 +3665,65 @@ function Balls.update(dt, paddle, bricks)
         end
     end
 
-    if not usingNormalXpSystem then
-        for i=#xpOrbs, 1, -1 do
-        -- xpOrb update logic
-            local orb = xpOrbs[i]
+    for i=#xpOrbs, 1, -1 do
+    -- xpOrb update logic
+        local orb = xpOrbs[i]
 
-            -- movement logic
-            orb.y = orb.y + orb.speedY * dt
-            orb.x = orb.x + orb.speedX * dt
-            local totalSpeed = math.sqrt(orb.speedX * orb.speedX + orb.speedY * orb.speedY)
-            if totalSpeed > 750 then
-                orb.speedX = orb.speedX * 750 / totalSpeed
-                orb.speedY = orb.speedY * 750 / totalSpeed
-            end
-            orb.speedY = math.min(orb.speedY + 500 * dt, 800)
-            if orb.x < 0 then orb.speedX = -orb.speedX end
-            if orb.x > screenWidth then orb.speedX = -orb.speedX end
-            if orb.y > screenHeight then
-                if orb.bounceAmount > 0 then
-                    orb.y = screenHeight
-                    orb.speedY = math.min(-orb.speedY * 0.85, -500)
-                    orb.bounceAmount = orb.bounceAmount - 1
-                else
-                    table.remove(xpOrbs, i)
-                end
-            end 
-
-            -- attraction to paddle
-            local closestX = math.max(paddle.x, math.min(orb.x, paddle.x + paddle.width))
-            local closestY = math.max(paddle.y, math.min(orb.y, paddle.y + paddle.height))
-            
-            -- Calculate distance from orb center to closest point
-            local dx = orb.x - closestX
-            local dy = orb.y - closestY
-            
-            local distanceToPaddle = math.sqrt(dx * dx + dy * dy)
-            if distanceToPaddle < 200 then
-                local attractionStrength = mapRangeClamped(distanceToPaddle, 75, 250, 6000, 500)
-                local angle = math.atan2(dy, dx)
-                orb.speedX = orb.speedX - math.cos(angle) * attractionStrength * dt
-                orb.speedY = orb.speedY - math.sin(angle) * attractionStrength * dt
-            end
-            if distanceToPaddle < 2 then
-                Player.gain(orb.amount)
-                local healThisFrame = orb.amount
-                playSoundEffect(gainXpSFX, mapRange(orb.amount, 1, 100, 0.5, 0.9), mapRange(orb.amount, 1, 100, 0.8, 1))
-                    
+        -- movement logic
+        orb.y = orb.y + orb.speedY * dt
+        orb.x = orb.x + orb.speedX * dt
+        local totalSpeed = math.sqrt(orb.speedX * orb.speedX + orb.speedY * orb.speedY)
+        local maxSpeed = 1500
+        if totalSpeed > maxSpeed then
+            orb.speedX = orb.speedX * maxSpeed / totalSpeed
+            orb.speedY = orb.speedY * maxSpeed / totalSpeed
+        end
+        -- wall bounce logic
+        if orb.x < 0 then orb.speedX = -orb.speedX end
+        if orb.x > screenWidth then orb.speedX = -orb.speedX end
+        if orb.y > screenHeight then
+            if orb.bounceAmount > 0 then
+                orb.y = screenHeight
+                orb.speedY = math.min(-orb.speedY * 0.85, -500)
+                orb.bounceAmount = orb.bounceAmount - 1
+            else
                 table.remove(xpOrbs, i)
             end
+        end
 
-            -- trail logic
+        -- attraction to paddle
+        local closestX = math.max(paddle.x, math.min(orb.x, paddle.x + paddle.width))
+        local closestY = math.max(paddle.y, math.min(orb.y, paddle.y + paddle.height))
+        
+        local dx = orb.x - closestX
+        local dy = orb.y - closestY
+        
+        local distanceToPaddle = math.sqrt(dx * dx + dy * dy)
+        print("distance to paddle: " .. distanceToPaddle)
+        local attractionStrength = mapRangeClamped(distanceToPaddle, 50, 500, 10000, 500)
+        local angle = math.atan2(dy, dx)
+        orb.speedX = orb.speedX - math.cos(angle) * attractionStrength * dt
+        orb.speedY = orb.speedY - math.sin(angle) * attractionStrength * dt
+        if distanceToPaddle < 2 then
+            Player.gain(orb.amount)
+            -- playSoundEffect(gainXpSFX, mapRange(orb.amount, 1, 100, 0.5, 0.9), mapRange(orb.amount, 1, 100, 0.8, 1))
+                
+            table.remove(xpOrbs, i)
+        end
+
+        -- trail logic
+        orb.timeSinceLastTrailPoint = orb.timeSinceLastTrailPoint or 0
+        if gameTime - orb.timeSinceLastTrailPoint > 0.05 then -- Add trail points less frequently
             table.insert(orb.trail, 1, {x = orb.x, y = orb.y, alpha = 1}) -- Add new trail point
             orb.timeSinceLastTrailPoint = gameTime
-            if #orb.trail > 15 then -- Limit trail length
-                table.remove(orb.trail)
-            end
-            for j = #orb.trail, 1, -1 do
-                orb.trail[j].alpha = orb.trail[j].alpha - dt * 2 -- Fade out
-                if orb.trail[j].alpha <= 0 then
-                    table.remove(orb.trail, j)
-                end
+        end
+        if #orb.trail > 5 then -- Reduce trail length
+            table.remove(orb.trail)
+        end
+        for j = #orb.trail, 1, -1 do
+            orb.trail[j].alpha = orb.trail[j].alpha - dt * 3 -- Fade out faster
+            if orb.trail[j].alpha <= 0 then
+                table.remove(orb.trail, j)
             end
         end
     end
@@ -3854,7 +3857,7 @@ local function techDraw()
     if unlockedBallTypes["Laser Beam"] then
         -- Draw the actual Laser Beam
         -- Calculate charge progress
-        local chargeProgress = laserBeamTimer / ((Player.currentCore == "Madness Core" and 0.5 or 1) * (1.25/((Player.currentCore == "Damage Core" and 1 or (unlockedBallTypes["Laser Beam"].stats.fireRate + getStatItemsBonus("fireRate", unlockedBallTypes["Laser Beam"]) + (Player.permanentUpgrades.fireRate or 0))))))
+        local chargeProgress = laserBeamTimer / ((Player.currentCore == "Madness Core" and 0.5 or 1) * (1/((Player.currentCore == "Damage Core" and 1 or (unlockedBallTypes["Laser Beam"].stats.fireRate + getStatItemsBonus("fireRate", unlockedBallTypes["Laser Beam"]) + (Player.permanentUpgrades.fireRate or 0))))))
         if (Player.currentCore == "Spray and Pray Core" or hasItem("Spray and Pray")) then
             local sprayMult = hasItem("Four Leafed Clover") and 2 or 1.5
             chargeProgress = math.min(1, chargeProgress * sprayMult)
@@ -4047,23 +4050,19 @@ function Balls:draw()
 
     if not usingMoneySystem then
         for _, xpOrb in ipairs(xpOrbs) do
-            
-            for i, point in ipairs(xpOrb.trail) do
-                local offset = (gameTime - xpOrb.creationTime)
-                local ratio = i/#xpOrb.trail
-                ratio = ratio * 4
-                local radiatingSizeMult = (math.sin((ratio + offset)/4)+1) * 1.5 / 2 + 0.5
+            if #xpOrb.trail > 1 then
+                for i = 1, #xpOrb.trail - 1 do
+                    local p1 = xpOrb.trail[i]
+                    local p2 = xpOrb.trail[i + 1]
+                    local t = (#xpOrb.trail - i) / #xpOrb.trail
+                    local alpha = p1.alpha * t -- Fade effect
+                    local lineWidth = xpOrb.radius * t * 1.5 -- Line width decreases with trail length
 
-                local trailRadius = xpOrb.radius * (#xpOrb.trail - i)/#xpOrb.trail
-                local color1 = {120/255, 170/255, 1, 1} -- Light blue
-                local color2 = {222/255, 82/255, 218/255, 1}
-                love.graphics.setColor(color1) -- Yellow trail with fading alpha
-                love.graphics.circle("fill", point.x, point.y, trailRadius) -- Draw trail point
+                    love.graphics.setColor(90/255, 150/255, 0.75, alpha * 0.5 + 0.5) -- Light purple color with fading alpha
+                    love.graphics.setLineWidth(lineWidth)
+                    love.graphics.line(p1.x, p1.y, p2.x, p2.y)
+                end
             end
-
-            --[[love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.circle("fill", xpOrb.x, xpOrb.y, xpOrb.radius)
-            love.graphics.setColor(1, 1, 1, 1)]]
         end
     end
 end

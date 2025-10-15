@@ -1,4 +1,4 @@
-local targetFPS = 120;
+local targetFPS = 60;
 local targetDT = 1 / targetFPS;
 
 function love.run()

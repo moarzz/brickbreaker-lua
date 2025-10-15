@@ -18,6 +18,8 @@ local upgradesUI = {}
 
 local rerollPrice = 2
 
+local queuedUpgradeAnimations = {}
+
 -- items list
 longTermInvestment = {}
 longTermInvestment.value = 1
@@ -140,7 +142,7 @@ local items = {
     ["Long Term Investment"] = {
         name = "Long Term Investment",
         stats = {},
-        description = "Gain <color=money><font=big><longTermValue>$</color=money></font=big><color=white><font=default>\nIncrease the </color=white><color=money>$</color=money><color=white> gain of every future \n</font=default><font=big>Long Term Investment</font=big><font=default> by </color=white><color=money>1$</color=money><color=white> (max </color=white><color=money>20$</color=money><color=white>)",
+        description = "Gain <color=money><font=big><longTermValue>$<color=white><font=default>\nIncrease the <color=money>$<color=white> gain of every future \n<font=big>Long Term Investment<font=default> by <color=money>1$</color=money><color=white> (max <color=money>20$<color=white>)",
         rarity = "common",
         descriptionOverwrite = true,
         imageReference = "assets/sprites/UI/itemIcons/Long-Term-Investment.png",
@@ -965,12 +967,10 @@ function getStatItemsBonus(statName, weapon)
         end
     end
 
-    print("Base bonus for " .. statName .. ": " .. totalBonus)
     if permanentItemBonuses[statName] then
         totalBonus = totalBonus + permanentItemBonuses[statName]
     end
 
-    print("Total bonus for " .. statName .. ": " .. totalBonus)
 
     return totalBonus
 end
@@ -1145,7 +1145,7 @@ local function getRarityDistributionByLevel()
     if level < 5 then
         return {common = 1, uncommon = 0, rare = 0.0, legendary = 0.0}
     elseif level < 8 then
-        return {common = 0.875, uncommon = 0.1, rare = 0.025, legendary = 0.0}
+        return {common = 0.88, uncommon = 0.1, rare = 0.02, legendary = 0.0}
     elseif level < 13 then
         return {common = 0.75, uncommon = 0.2, rare  = 0.05, legendary = 0}
     elseif level < 18 then
@@ -1159,17 +1159,17 @@ local function getRarityDistributionByLevel()
     end
 end
 
-local function getRandomWeaponOfRarity(rarity, consumable)
+local function getRandomWeaponOfRarity(rarity)
     consumable = consumable or false
     local rarityList = {}   
     if rarity == "common" then
-        rarityList = commonItems
+        rarityList = commonWeapons
     elseif rarity == "uncommon" then
-        rarityList = uncommonItems
+        rarityList = uncommonWeapons
     elseif rarity == "rare" then
-        rarityList = rareItems
+        rarityList = rareWeapons
     elseif rarity == "legendary" then
-        rarityList = legendaryItems
+        rarityList = legendaryWeapons
     end
     if #rarityList == 0 then
         print("Error: No items available for rarity " .. rarity .. " with consumable = " .. tostring(consumable))
@@ -1178,7 +1178,8 @@ local function getRandomWeaponOfRarity(rarity, consumable)
     else
         print("Choosing from " .. #rarityList .. " items of rarity " .. rarity .. " with consumable = " .. tostring(consumable))
     end
-    return items[rarityList[math.random(1, #rarityList)]]
+    local weapon = rarityList[math.random(1, #rarityList)]
+    return weapon
 end
 
 local levelUpShopType = "weapon"
@@ -1200,137 +1201,60 @@ function setLevelUpShop()
     local weightedBalls = {}  -- Store balls with their weights
     local unlockedCount = #Balls.getUnlockedBallTypes()
     print("Unlocked Count: " .. unlockedCount)
-    
-    for name, ballType in pairs(Balls.getBallList()) do
-        if (not unlockedBallNames[name]) then
-            local weight = 0
-            local ballList = Balls.getBallList()
-            
-            -- Calculate weight based on rarity and unlock count
-            if ballList[ballType.name].rarity == "common" then
-                if unlockedCount <= 2 then
-                    weight = 7  -- High weight for commons early
-                else
-                    weight = 5
-                end
-            elseif ballList[ballType.name].rarity == "uncommon" then
-                if unlockedCount == 1 then
-                    weight = 2
-                else
-                    weight = 4
-                end
-            elseif ballList[ballType.name].rarity == "rare" then
-                if unlockedCount == 1 then
-                    weight = 0   -- No rare balls with just 1 unlock
-                elseif unlockedCount == 2 then
-                    weight = 1
-                else
-                    weight = 3
-                end
-            elseif ballList[ballType.name].rarity == "legendary" then
-                weight = 10
-            else
-                weight = 7  -- Default weight for unspecified rarity
-            end
-
-            if ballType.canBuy then
-                if not ballType.canBuy() then
-                    weight = 0 -- Exclude spells from ball unlocks
-                end
-            end
-            -- Only add balls with weight > 0
-            if weight > 0 then
-                for i=1, weight do
-                    table.insert(weightedBalls, {
-                        ball = ballType,
-                        weight = weight
-                    })
-                end
-            end
-        end
-    end
-
-    --[[local rarityDistribution = getRarityDistributionByLevel()
-    local commonChance, uncommonChance, rareChance, legendaryChance = rarityDistribution.common, rarityDistribution.uncommon, rarityDistribution.rare, rarityDistribution.legendary
-    
-    local doAgain = true
-    local iterations = 0
-    local maxIterations = 100
-    local iterations = 0
-    local weaponToDisplay = nil
-    while doAgain and iterations < maxIterations do
-        local randomChance = math.random(1,100)/100
-        iterations = iterations + 1
-        doAgain = false
-        if randomChance <= commonChance then
-            weaponToDisplay = getRandomWeaponOfRarity("common")
-        elseif randomChance <= commonChance + uncommonChance then
-            weaponToDisplay = getRandomWeaponOfRarity("uncommon")
-        elseif randomChance <= commonChance + uncommonChance + rareChance then
-            weaponToDisplay = getRandomWeaponOfRarity("rare")
-        elseif randomChance <= commonChance + uncommonChance + rareChance + legendaryChance then
-            weaponToDisplay = getRandomWeaponOfRarity("legendary")
-        else
-            weaponToDisplay = getRandomWeaponOfRarity("common")
-        end
-        if iterations > 20 then
-            weaponToDisplay = getRandomWeaponOfRarity("common", false)
-        end
-        for _, displayedItem in pairs(displayedItems) do
-            if displayedItem.name == weaponToDisplay.name then
-                doAgain = true
-                break
-            end
-        end
-        for _, playerItem in ipairs(Player.items) do
-            if playerItem.name == weaponToDisplay.name then
-                doAgain = true
-                break
-            end
-        end
-    end]]
 
     for i=1, 3 do
-        local thisBallType
+        local rarityDistribution = getRarityDistributionByLevel()
+        local commonChance, uncommonChance, rareChance, legendaryChance = rarityDistribution.common, rarityDistribution.uncommon, rarityDistribution.rare, rarityDistribution.legendary
+        
         local doAgain = true
-        while doAgain do
-            local maxIterations = 100
-            local iter = 0
-            repeat
-                iter = iter + 1
-                local randomIndex = math.random(1, #weightedBalls)
-                thisBallType = weightedBalls[randomIndex].ball
-                doAgain = false
+        local iterations = 0
+        local maxIterations = 100
+        local iterations = 0
+        local weaponToDisplay = nil
+        while doAgain and iterations < maxIterations do
+            local randomChance = math.random(1,100)/100
+            iterations = iterations + 1
+            doAgain = false
+            print("Rarity chances: common=" .. tostring(commonChance) .. ", uncommon=" .. tostring(uncommonChance) .. ", rare=" .. tostring(rareChance) .. ", legendary=" .. tostring(legendaryChance))
+            if randomChance <= commonChance then
+                weaponToDisplay = getRandomWeaponOfRarity("common")
+            elseif randomChance <= commonChance + uncommonChance then
+                weaponToDisplay = getRandomWeaponOfRarity("uncommon")
+            elseif randomChance <= commonChance + uncommonChance + rareChance then
+                weaponToDisplay = getRandomWeaponOfRarity("rare")
+            elseif randomChance <= commonChance + uncommonChance + rareChance + legendaryChance then
+                weaponToDisplay = getRandomWeaponOfRarity("legendary")
+            else
+                weaponToDisplay = getRandomWeaponOfRarity("common")
+            end
 
-                if (thisBallType.rarity == "rare" or thisBallType.rarity == "legendary") and tableLength(Balls.getUnlockedBallTypes()) < 2 then
+            -- Failsafe to prevent infinite loops
+            if iterations > 80 then
+                weaponToDisplay = getRandomWeaponOfRarity("common")
+            end
+
+            -- Ensure the weapon is not already displayed or owned
+            for _, displayedWeapon in pairs(displayedUpgrades) do
+                if displayedWeapon.name == weaponToDisplay.name then
                     doAgain = true
+                    break
                 end
-
-                if thisBallType.canBuy then
-                    if not thisBallType.canBuy() then
-                        doAgain = true
-                    end
+            end
+            for _, playerWeapon in pairs(Balls.getUnlockedBallTypes()) do
+                if playerWeapon.name == weaponToDisplay.name then
+                    doAgain = true
+                    break
                 end
-
-                for _, displayedUpgrade in ipairs(displayedUpgrades) do
-                    if displayedUpgrade.name == thisBallType.name then
-                        doAgain = true
-                        break
-                    end
-                end
-            until not doAgain or iter >= maxIterations
-            if iter >= maxIterations then
-                print("Warning: Ball upgrade selection exceeded maxIterations, allowing duplicate or skipping.")
             end
         end
         table.insert(displayedUpgrades, {
-            name = thisBallType.name,
-            description = thisBallType.description,
-            type = thisBallType.type,
-            rarity = thisBallType.rarity or "common",
+            name = weaponToDisplay.name,
+            description = weaponToDisplay.description,
+            type = weaponToDisplay.type,
+            rarity = weaponToDisplay.rarity or "common",
             effect = function()
-                print("will add ball: " .. thisBallType.name)
-                Balls.addBall(thisBallType.name)
+                print("will add weapon: " .. weaponToDisplay.name)
+                Balls.addBall(weaponToDisplay.name)
             end
         })
         ::continue::
@@ -2000,6 +1924,7 @@ function drawLevelUpShop()
         setFont(24)
         dress:Label(currentUpgrade.description, {align = "center", color = {normal = {fg = {1,1,1,opacity}}}}, suit.layout:row(buttonWidth - 30, 150))
         suit.layout:row(buttonWidth - 20, 15)
+        print("Upgrade Name : " .. currentUpgrade.name)
         for statName, statValue in pairs(Balls.getBallList()[currentUpgrade.name].stats) do
             love.graphics.setColor(1,1,1,opacity)
             setFont(24)

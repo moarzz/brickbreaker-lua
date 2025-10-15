@@ -508,6 +508,7 @@ function Player.levelUp()
 end
 
 function Player.gain(amount)
+    playSoundEffect(gainXpSFX, mapRange(amount, 1, 100, 0.3, 0.6), mapRange(amount, 1, 100, 0.7, 1))
     Player.score = Player.score + amount
     Player.xp = Player.xp + amount -- XP follows score
     local farmCoreMult = (Player.currentCore == "Farm Core" and 1.5 or 1)

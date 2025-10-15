@@ -715,21 +715,22 @@ function xpPopup(value)
         y = paddle.y + paddle.height/2,
         size = 0,
         color = {0, 0.25, 1, 1},  -- RGB + Alpha
-        value = value
+        value = value,
+        creationTime = gameTime
     }
     currentPopupId = currentPopupId + 1
     local popupSizeTween = tween.new(0.1, popup, {size = 20}, tween.easing.outExpo)
     addTweenToUpdate(popupSizeTween)
-    Timer.after(0.6, function() 
-        local popupSizeTweenOut = tween.new(0.4, popup, {size = 0}, tween.easing.inExpo)
+    Timer.after(0.45, function() 
+        local popupSizeTweenOut = tween.new(0.3, popup, {size = 0}, tween.easing.inExpo)
         addTweenToUpdate(popupSizeTweenOut)
     end)
     local xVelocity = math.random(-25, 25) + mapRangeClamped(paddle.x + paddle.width/2, statsWidth, screenWidth - statsWidth, 100, -100)
-    local yVelocity = math.random(-125, -25)
-    local totalLengthTween = tween.new(1, popup, {x = popup.x + xVelocity, y = popup.y + yVelocity}, tween.easing.outExpo)
+    local yVelocity = math.random(-150, -25)
+    local totalLengthTween = tween.new(0.75, popup, {x = popup.x + xVelocity, y = popup.y + yVelocity}, tween.easing.outExpo)
     addTweenToUpdate(totalLengthTween)
     table.insert(xpTexts, popup)
-    Timer.after(1, function()
+    Timer.after(0.75, function()
         -- Remove the popup after the total length tween is complete
         for i = #lvlUpTexts, 1, -1 do
             if lvlUpTexts[i].id == popup.id then
@@ -789,6 +790,9 @@ function drawPopups()
             love.graphics.setColor(popup.color[1], popup.color[2], popup.color[3], popup.color[4] or 1)
             love.graphics.print(" XP", popup.x - getTextSize("+"..tostring(popup.value).." XP")/2 + getTextSize("+"..tostring(popup.value)), popup.y)  -- Center the text
             -- love.graphics.print("+"..tostring(popup.value).." XP", popup.x - getTextSize("+"..tostring(popup.value).." XP")/2, popup.y)  -- Center the text
+        end
+        if gameTime - popup.creationTime >= 2 then
+            table.remove(xpTexts, i)
         end
         ::continue::
     end

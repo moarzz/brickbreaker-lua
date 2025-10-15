@@ -23,7 +23,7 @@ local KeySys = require("KeywordSystem") -- Keyword system for text parsing
 local Explosion = require("particleSystems.explosion") -- Explosion particle system
 
 usingMoneySystem = false
-usingNormalXpSystem = false
+usingNormalXpSystem = true
 goldEarnedFrl = 0 -- ignore, mais delete pas
 local startingItemName = nil
 
@@ -130,7 +130,7 @@ function resetGame()
         _width = 200, -- Base width + size upgrade
         widthMult = 1,
         height = 20,
-        speed = 1000,
+        speed = 900,
         currrentSpeedX = 0,
         speedMult = 1
     }
@@ -436,7 +436,7 @@ local function generateRow(brickCount, yPos)
                         bigBrickLocations[xPos] = true
                         unavailableXpos[xPos] = true
                         unavailableXpos[xPos+1] = true
-                        local bigBrickHealth = (brickHealth + row[xPos+1])*2
+                        local bigBrickHealth = (brickHealth + row[xPos+1])*2.5
                         local brickColor = getBrickColor(bigBrickHealth, true)
                         nextRowDebuff = brickHealth + row[xPos+1] -- Set the next row debuff to the health of the big brick
                         table.insert(bricks, {
@@ -665,7 +665,7 @@ function love.load()
     -- Load and store the background music globally
     backgroundMusic = love.audio.newSource("assets/SFX/game song.mp3", "stream")
     backgroundMusic:setLooping(true)
-    backgroundMusic:setVolume(musicVolume/3)
+    backgroundMusic:setVolume(musicVolume/5)
     backgroundMusic:play()
     brickFont = love.graphics.newFont(14)    -- Get screen dimensions
     screenWidth, screenHeight = love.graphics.getDimensions()
@@ -704,8 +704,8 @@ function love.load()
         y = screenHeight/2,
         _width = 200, -- Base width + size upgrade
         widthMult = 1,
-        height = 20,    
-        speed = 1000, -- Base speed + speed upgrade
+        height = 20,
+        speed = 900, -- Base speed + speed upgrade
         currrentSpeedX = 0,
         speedMult = 1
     }
@@ -827,7 +827,7 @@ end
 screenOffset = {x=0,y=0}
 
 local function brickPiecesUpdate(dt)
-    dt = dt * 1.75
+    dt = dt * 1.5
     if not Player.levelingUp then
         for _, brickpiece in ipairs(brickPieces) do
             if not brickpiece.destroyed then
@@ -840,7 +840,7 @@ local function brickPiecesUpdate(dt)
             end
         end
     end
-    dt = dt/1.75
+    dt = dt/1.5
 end
 
 -- Generic garbage collection for dynamic object tables
@@ -867,10 +867,8 @@ levelUpShopAlpha = 0
 function levelUpShopTweenAlpha(dt)
     local tweenSpeed = mapRangeClamped(levelUpShopAlpha, 0, 1, 3, 0.25)
     if shouldTweenAlpha then
-        levelUpShopAlpha = math.min(1, levelUpShopAlpha + dt * tweenSpeed)
-        if levelUpShopAlpha >= 1 then
-            shouldTweenAlpha = false
-        end
+        levelUpShopAlpha = 1
+        shouldTweenAlpha = false
     end
 end
 
@@ -880,6 +878,7 @@ local damageCooldown = 0 -- Cooldown for damage visuals
 local healCooldown = 0
 local printDrawCalls = false
 local function gameFixedUpdate(dt)
+    dt = dt * 0.7
     -- Update mouse positions
 
     levelUpShopTweenAlpha(dt)
@@ -922,7 +921,6 @@ local function gameFixedUpdate(dt)
         local sineShaderIntensity = 0.3 -- Default base intensity
 
         dt = dt * playRate -- Adjust the delta time based on the playback rate
-        dt = dt * 0.4 -- ralenti le jeu a la bonne vitesse
         upgradesUI.update(dt) -- Update the upgrades UI
         -- Don't update game time when level up shop is open
         if Player.choosingUpgrade then
@@ -1098,7 +1096,7 @@ end
 
 local currentSelectedCoreID = 1
 local currentStartingItemID = 1
-local startingItemOrder = {"Ball", "Pistol", "Laser Beam", "Shadow Ball"}
+local startingItemOrder = {"Ball", "Machine Gun", "Laser Beam", "Shadow Ball"}
 local isSpeedCore = false
 -- Add a new function for the starting item selection screen
 local function drawStartSelect()
@@ -1142,7 +1140,7 @@ local function drawStartSelect()
     local itemDescription = "No description available for ".. item.label
     if item.label == "Ball" then
         itemDescription = "Basic ball. Very fast."
-    elseif item.label == "Pistol" then
+    elseif item.label == "Machine Gun" then
         itemDescription = "Fires bullets. \nFast fire rate."
     elseif item.label == "Laser Beam" then
         itemDescription = "Fire a thin Laser beam in front of the paddle."
@@ -1563,7 +1561,7 @@ function drawSettingsMenu()
     local musicSlider = suit.Slider(musicSliderInfo, {id = "music_slider"}, sliderX, sliderY + 40, sliderWidth, sliderHeight)
     musicVolume = musicSliderInfo.value
     if backgroundMusic then
-        backgroundMusic:setVolume(musicVolume/3) -- Adjust the volume of the background music
+        backgroundMusic:setVolume(musicVolume/5) -- Adjust the volume of the background music
     else
         print("Background music not found")
     end

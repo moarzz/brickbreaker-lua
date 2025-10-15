@@ -67,7 +67,7 @@ local function startingItemsDraw()
     menuY = menuY + 80  -- Adjust Y position for the label
 
     local unlockables = {
-        {name = "Pistol", label = "Pistol", key = "Pistol", price = 100},
+        {name = "Machine Gun", label = "Machine Gun", key = "Machine Gun", price = 100},
         {name = "Laser Beam", label = "Laser Beam", key = "Laser Beam", price = 250},
         {name = "Shadow Ball", label = "Shadow Ball", key = "Shadow Ball", price = 500}
     }
