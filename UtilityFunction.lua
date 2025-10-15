@@ -744,6 +744,7 @@ end
 function resetLvlUpPopups()
     lvlUpTexts = {}
     boostTexts = {}
+    xpTexts = {}
     currentPopupId = 1
 end
 

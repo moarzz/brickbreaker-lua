@@ -956,7 +956,7 @@ local function gameFixedUpdate(dt)
         updateGameTime(dt)
 
         -- Standard Play logic
-        if not Player.choosingUpgrade and not UtilityFunction.freeze then
+        if not Player.choosingUpgrade and not UtilityFunction.freeze and not Player.levelingUp then
             -- Paddle movement
             local moveX, moveY = 0, 0
             if love.keyboard.isDown("left") or love.keyboard.isDown("a") then
