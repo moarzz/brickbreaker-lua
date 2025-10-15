@@ -1,8 +1,10 @@
 LoveAffix = require("Libraries.loveAffix").init();
 SimpleShader = require("Libraries.simpleShader").init();
-WindowCorrector = require("Libraries.windowCorrector");
+WindowCorrector = require("Libraries.windowCorrector").init(7); -- 5 additional render canvases for shaders and draw order stuff
 
 --! these three *need* to be the first code 2 run otherwise i will eat you
+
+require("Libraries.UI"); -- ui library
 
 require("limitFPS"); -- limit the fps
 
@@ -16,7 +18,7 @@ local permanentUpgrades = require("permanentUpgrades") -- permanent upgrades UI
 local damageRipples = require("DamageRipples") -- damage ripple shader
 confetti = require("particleSystems.confetti") -- confetti particle system
 shaders = require("shaders") -- shader logic
-suit = require("Libraries.Suit") -- UI library
+--suit = require("Libraries.Suit") -- UI library --! heere balala bah bah bahbahbahbahbababa bahbababa
 tween = require("Libraries.tween") -- tweening library
 VFX = require("VFX") -- VFX library
 local KeySys = require("KeywordSystem") -- Keyword system for text parsing
@@ -35,17 +37,30 @@ local brickTextCache = {
 }
 
 -- Game states
-GameState = {
-    MENU = "menu",
-    START_SELECT = "start_select",
-    PLAYING = "playing",
-    PAUSED = "paused",
-    SETTINGS = "settings",
-    UPGRADES = "upgrades",
-    TUTORIAL = "tutorial",
-    VICTORY = "victory"
-}
-currentGameState = GameState.MENU
+require("gameState").init();
+local MainMenu = require("UIScenes/mainMenu");
+local StartMenu = require("UIScenes/startMenu");
+
+AddCallbackToState(
+    function()
+        MainMenu:activate();
+    end,
+    GameState.MENU
+);
+
+AddCallbackToState(
+    function()
+        StartMenu:activate();
+    end,
+    GameState.START_SELECT
+);
+
+AddCallbackToState(
+    function()
+        ComponentHandler.unsetActiveScene();
+    end,
+    GameState.PLAYING
+);
 
 -- Add settings variables
 musicVolume = 1
@@ -55,7 +70,7 @@ fullScreenCheckbox = love.window.getFullscreen();
 -- Add this variable to store the player's choice
 local startingChoice = nil
 
---screen dimensions
+--screen dimensions --? errm what?? -- MARK: potential issue
 statsWidth = 450 -- Width of the stats area
 screenWidth = 1020 + statsWidth
 screenHeight = 1000
@@ -102,7 +117,7 @@ function resetGame()
     brickTextCache.font = nil
     
     -- Reset game state
-    currentGameState = GameState.MENU
+    SET_STATE(GameState.MENU);
     
     -- Reset game timers
     gameStartTime = love.timer.getTime()
@@ -654,9 +669,9 @@ end
 function love.load()
     math.randomseed(os.time())
 
-    WindowCorrector.init(7); -- 5 additional render canvases for shaders and draw order stuff
+    WindowCorrector.load(); -- 5 additional render canvases for shaders and draw order stuff
 
-    dress = suit.new()
+    --dress = suit.new() --! didnt seem 2 be used at all
     loadAssets() -- Load assets
 
     KeywordSystem = KeySys.new()
@@ -730,6 +745,8 @@ function love.load()
     Player.permanentUpgradePrices = data.permanentUpgradePrices
     Player.gold = data.gold
     Player.startingMoney = data.startingMoney
+
+    resetGame();
 end
 
 function getHighestBrickY(lowestInstead)
@@ -899,11 +916,11 @@ local function gameFixedUpdate(dt)
     reduceBackgroundBrightness()
     local backgroundIntensity = Player.score <= 100 and mapRangeClamped(Player.score,1,100, 0.0, 0.15) or (Player.score <= 5000 and mapRangeClamped(Player.score, 100, 5000, 0.15, 0.5) or mapRangeClamped(Player.score, 5000, 100000, 0.5, 1.0))
 
-    if currentGameState == GameState.PAUSED then
+    if GET_STATE(GameState.PAUSED) then
         return -- Don't update game logic while paused
     end
     
-    if currentGameState == GameState.PLAYING then
+    if GET_STATE(GameState.PLAYING) then
         KeywordSystem:update() -- Update the keyword system
         -- overwrites backgroundIntensity if using debugging window
         if shouldDrawDebug then
@@ -1033,6 +1050,8 @@ local function gameFixedUpdate(dt)
 end
 
 function love.update(dt)
+    ComponentHandler.update(dt);
+
     gameFixedUpdate(dt);
 end
 
@@ -1042,6 +1061,7 @@ local buttonWidth = 400
 local buttonHeight = 75
 local buttonSpacing = 100
 function drawMenu()
+    --[[
     -- Calculate center positions
     local centerX = screenWidth / 2 - buttonWidth / 2
     local startY = screenHeight / 2 - (buttonHeight * 3 + buttonSpacing * 2) / 2
@@ -1057,28 +1077,28 @@ function drawMenu()
     local buttonID = generateNextButtonID()
     if suit.Button("Play", {id=buttonID}, centerX, startY, buttonWidth, buttonHeight).hit then
         playSoundEffect(selectSFX, 1, 0.8)
-        currentGameState = GameState.START_SELECT -- Go to selection screen
+        SET_STATE(GameState.START_SELECT); -- Go to selection screen
     end
 
     -- Tutorial button
     buttonID = generateNextButtonID()
     if suit.Button("Tutorial", {id=buttonID}, centerX, startY + buttonHeight + buttonSpacing, buttonWidth, buttonHeight).hit then
         playSoundEffect(selectSFX, 1, 0.8)
-        currentGameState = GameState.TUTORIAL
+        SET_STATE(GameState.TUTORIAL);
     end
 
     -- Settings button
     buttonID = generateNextButtonID()
     if suit.Button("Settings", {id=buttonID}, centerX, startY + (buttonHeight + buttonSpacing) * 2, buttonWidth, buttonHeight).hit then
         playSoundEffect(selectSFX, 1, 0.8)
-        currentGameState = GameState.SETTINGS
+        SET_STATE(GameState.SETTINGS);
     end
 
     -- Upgrades button
     buttonID = generateNextButtonID()
     if suit.Button("Upgrades", {id=buttonID}, centerX, startY + (buttonHeight + buttonSpacing) * 3, buttonWidth, buttonHeight).hit then
         playSoundEffect(selectSFX, 1, 0.8)
-        currentGameState = GameState.UPGRADES
+        SET_STATE(GameState.UPGRADES);
         loadGameData() -- Load game data when entering upgrades screen
     end
 
@@ -1092,6 +1112,7 @@ function drawMenu()
     local seconds = math.floor(fastestTime % 60)
     local fastestTimeString = string.format("%02d:%02d", minutes, seconds)
     -- suit.Label(fastestTimeString, {align = "center"}, 100, 150, 200, 30) -- Added position and size parameters
+    ]]
 end
 
 local currentSelectedCoreID = 1
@@ -1234,7 +1255,7 @@ local function drawStartSelect()
         startingItemName = item.name
         Player.currentCore = currentSelectedCore -- Set the selected paddle core
         resetGame()
-        currentGameState = GameState.PLAYING
+        SET_STATE(GameState.PLAYING);
         -- initializeGameState()
         Player.bricksDestroyed = 0 -- Reset bricks destroyed count
         if item.name ~= "Nothing" and Player.currentCore ~= "Speed Core" then
@@ -1431,14 +1452,14 @@ function drawPauseMenu()
     local resumeBtn = suit.Button("Resume", {id="pause_resume"}, centerX, btnY, buttonWidth, buttonHeight)
     if resumeBtn.hit then
         playSoundEffect(selectSFX, 1, 0.8)
-        currentGameState = GameState.PLAYING
+        SET_STATE(GameState.PLAYING);
     end
     btnY = btnY + buttonHeight + 30
     -- Settings button (does nothing for now)
     local settingsBtn = suit.Button("Settings", {id="pause_settings"}, centerX, btnY, buttonWidth, buttonHeight)
     if settingsBtn.hit then
         playSoundEffect(selectSFX, 1, 0.8)
-        currentGameState = GameState.SETTINGS
+        SET_STATE(GameState.SETTINGS);
     end
     btnY = btnY + buttonHeight + 30
     -- Restart button (same as play again)
@@ -1449,7 +1470,7 @@ function drawPauseMenu()
         Player.addGold(goldEarned)
         saveGameData()
         resetGame()
-        currentGameState = GameState.START_SELECT
+        SET_STATE(GameState.START_SELECT);
     end
     btnY = btnY + buttonHeight + 30
     -- Main Menu button
@@ -1459,7 +1480,7 @@ function drawPauseMenu()
         Player.addGold(goldEarned)
         saveGameData()
         resetGame()
-        currentGameState = GameState.MENU
+        SET_STATE(GameState.MENU);
     end
     btnY = btnY + buttonHeight + 30
     -- Exit Game button
@@ -1502,25 +1523,26 @@ function drawVictoryScreen()
     -- Keep Going button (new)
     if suit.Button("Keep Going", {id = "keep_going"}, startX, y, buttonW, buttonH).hit then
         playSoundEffect(selectSFX, 1, 0.8)
-        currentGameState = GameState.PLAYING  -- Set state back to playing
+        SET_STATE(GameState.PLAYING);  -- Set state back to playing
     end
 
     -- Main Menu button
     if suit.Button("Main Menu", {id = "victory_menu"}, startX + buttonW + spacing, y, buttonW, buttonH).hit then
         playSoundEffect(selectSFX, 1, 0.8)
         resetGame()
-        currentGameState = GameState.MENU
+        SET_STATE(GameState.MENU);
     end
     -- Upgrades button
     if suit.Button("Upgrades", {id = "victory_upgrades"}, startX + (buttonW + spacing) * 2, y, buttonW, buttonH).hit then
         playSoundEffect(selectSFX, 1, 0.8)
         resetGame()
-        currentGameState = GameState.UPGRADES
+        SET_STATE(GameState.UPGRADES);
         loadGameData()
     end
 
     -- Draw SUIT UI elements (buttons)
     suit.draw()
+    ComponentHandler.draw();
 
     -- Draw buttons at the bottom of the screen
     local buttonY = screenHeight - 180
@@ -1594,9 +1616,9 @@ function drawSettingsMenu()
     if backBtn.hit then
         playSoundEffect(selectSFX, 1, 0.8)
         if inGame then
-            currentGameState = GameState.PAUSED
+            SET_STATE(GameState.PAUSED);
         else
-            currentGameState = GameState.MENU
+            SET_STATE(GameState.MENU);
         end
     end
 end
@@ -1615,7 +1637,7 @@ function love.draw()
     
     
     -- Draw level progress bar at the bottom
-    if currentGameState == GameState.PLAYING then
+    if GET_STATE(GameState.PLAYING) then
         -- Progress bar background
         love.graphics.setColor(0.2, 0.2, 0.2, 0.5)
         if usingMoneySystem then
@@ -1649,67 +1671,72 @@ function love.draw()
     end
     
     
-    if currentGameState == GameState.PAUSED then
+    if GET_STATE(GameState.PAUSED) then
         love.graphics.setColor(0, 0, 0, 0.6)
         love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
         love.graphics.setColor(1, 1, 1, 1)
-        drawPauseMenu()
-        suit.draw()
+        --!drawPauseMenu()
+        --suit.draw()
+        ComponentHandler.draw();
         return
     end
     
-    if currentGameState == GameState.MENU then
+    if GET_STATE(GameState.MENU) then
         
         -- Draw menu
-        drawMenu()
+        --drawMenu() --! MARK: here is bahbalalala
         local startMem = collectgarbage("count");
         -- Draw SUIT UI elements
-        suit.draw()
+        --suit.draw()
+        ComponentHandler.draw();
         print(collectgarbage("count") - startMem);
         return
     end
     
-    if currentGameState == GameState.START_SELECT then
-        drawStartSelect()
+    if GET_STATE(GameState.START_SELECT) then
+        --!drawStartSelect()
         setFont(30)
-        if suit.Button("Back", {color = invisButtonColor}, 20, 20, uiLabelImg:getWidth()*0.8, uiLabelImg:getHeight()*0.8).hit then
-            playSoundEffect(selectSFX, 1, 0.8)
-            currentGameState = GameState.MENU
-        end
-        if suit.Button("Upgrades", {color = invisButtonColor}, screenWidth - uiLabelImg:getWidth()*0.8 - 20, 20, uiLabelImg:getWidth()*0.8, uiLabelImg:getHeight()*0.8).hit then
-            playSoundEffect(selectSFX, 1, 0.8)
-            currentGameState = GameState.UPGRADES
-        end
-        suit.draw()
+        --if suit.Button("Back", {color = invisButtonColor}, 20, 20, uiLabelImg:getWidth()*0.8, uiLabelImg:getHeight()*0.8).hit then
+        --    playSoundEffect(selectSFX, 1, 0.8)
+        --    SET_STATE(GameState.MENU);
+        --end
+        --if suit.Button("Upgrades", {color = invisButtonColor}, screenWidth - uiLabelImg:getWidth()*0.8 - 20, 20, uiLabelImg:getWidth()*0.8, uiLabelImg:getHeight()*0.8).hit then
+        --    playSoundEffect(selectSFX, 1, 0.8)
+        --    SET_STATE(GameState.UPGRADES);
+        --end
+        --suit.draw()
+        ComponentHandler.draw();
         return
     end
 
-    if currentGameState == GameState.UPGRADES then
+    if GET_STATE(GameState.UPGRADES) then
         loadGameData() -- Load game data
 
         -- Draw SUIT UI elements
-        suit.draw()
+        --suit.draw()
+        ComponentHandler.draw();
         -- Draw permanent upgrades
         permanentUpgrades.draw()
 
         setFont(30)
-        if suit.Button("Back", {color = invisButtonColor}, 20, 20, uiLabelImg:getWidth()*0.8, uiLabelImg:getHeight()*0.8).hit then
-            currentGameState = GameState.MENU
-        end
-        if suit.Button("Play", {color = invisButtonColor}, screenWidth - uiLabelImg:getWidth()*0.8 - 20, 20, uiLabelImg:getWidth()*0.8, uiLabelImg:getHeight()*0.8).hit then
-            currentGameState = GameState.START_SELECT
-        end
+        --if suit.Button("Back", {color = invisButtonColor}, 20, 20, uiLabelImg:getWidth()*0.8, uiLabelImg:getHeight()*0.8).hit then
+        --    SET_STATE(GameState.MENU);
+        --end
+        --if suit.Button("Play", {color = invisButtonColor}, screenWidth - uiLabelImg:getWidth()*0.8 - 20, 20, uiLabelImg:getWidth()*0.8, uiLabelImg:getHeight()*0.8).hit then
+        --    SET_STATE(GameState.START_SELECT);
+        --end
         return
     end
 
-    if currentGameState == GameState.VICTORY then
-        drawVictoryScreen()
+    if GET_STATE(GameState.VICTORY) then
+        --!drawVictoryScreen()
         return
     end
 
-    if currentGameState == GameState.SETTINGS then
-        drawSettingsMenu()
-        suit.draw()
+    if GET_STATE(GameState.SETTINGS) then
+        --!drawSettingsMenu()
+        --suit.draw()
+        ComponentHandler.draw();
         return
     end
 
@@ -1742,7 +1769,7 @@ function love.draw()
 
     love.graphics.push()
     --love.graphics.scale(0.5, 0.5)
-    if currentGameState == GameState.PLAYING then
+    if GET_STATE(GameState.PLAYING) then
         drawBricks() -- Draw bricks
     end
     love.graphics.pop()
@@ -1815,7 +1842,8 @@ function love.draw()
     upgradesUI.draw()
 
     -- Draw the UI elements using Suit
-    suit.draw()
+    --suit.draw()
+    ComponentHandler.draw();
     if Player.dead then
         -- draw deathOverlay
         love.graphics.setColor(0, 0, 0, deathTweenValues.overlayOpacity)
@@ -1830,7 +1858,7 @@ function love.draw()
     if Player.choosingUpgrade then
         drawLevelUpShop()
     end
-    dress:draw()    -- Draw tooltip last (on top of everything)
+    --dress:draw()    -- Draw tooltip last (on top of everything)
     KeywordSystem:drawTooltip()
     confetti:draw()
     
@@ -1899,17 +1927,17 @@ function love.keypressed(key)
     end
 
     if key == "escape" then
-        if currentGameState == GameState.PLAYING then
+        if GET_STATE(GameState.PLAYING) then
             playSoundEffect(selectSFX, 1, 0.8)
-            currentGameState = GameState.PAUSED
+            SET_STATE(GameState.PAUSED);
             return
-        elseif currentGameState == GameState.PAUSED then
+        elseif GET_STATE(GameState.PAUSED) then
             playSoundEffect(selectSFX, 1, 0.8)
-            currentGameState = GameState.PLAYING
+            SET_STATE(GameState.PLAYING);
             return
-        elseif currentGameState == GameState.START_SELECT or currentGameState == GameState.UPGRADES then
+        elseif GET_STATE(GameState.START_SELECT) or GET_STATE(GameState.UPGRADES) then
             playSoundEffect(selectSFX, 1, 0.8)
-            currentGameState = GameState.MENU
+            SET_STATE(GameState.MENU);
             return
         else
             love.event.quit()
@@ -2024,7 +2052,7 @@ function love.keypressed(key)
         end
 
         if key == "p" then
-            currentGameState = GameState.VICTORY
+            SET_STATE(GameState.VICTORY);
         end
 
         -- brickHitVFX

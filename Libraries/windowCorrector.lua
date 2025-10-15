@@ -67,7 +67,7 @@ function WindowCorrector.init(canvasCount)
     local function feignScreenHeight()
         return self.targetHeight;
     end
-    local function feignScreenDimmensions()
+    local function feignScreenDimensions()
         return self.targetWidth, self.targetHeight;
     end
     local prevFullScreen = love.window.setFullscreen;
@@ -86,7 +86,7 @@ function WindowCorrector.init(canvasCount)
     LoveAffix.makeFunctionInjectable("graphics", "setCanvas");
 
     LoveAffix.injectCodeIntoLove(
-        function(canv)
+        function(canv, ...)
             if self.isActive then
                 if canv then
                     self.errorDrawCalls = false;
@@ -94,7 +94,14 @@ function WindowCorrector.init(canvasCount)
                     self.errorDrawCalls = true;
                 end
 
-                return canv or self.canvases[1];
+                if type(canv) == "table" then -- watch out for setCanvas(setup)
+                    if not canv[1] then
+                        canv[1] = self.canvases[1];
+                        self.errorDrawCalls = true;
+                    end
+                end
+
+                return canv or self.canvases[1], ...;
             end
         end,
         "graphics",
@@ -143,11 +150,11 @@ function WindowCorrector.init(canvasCount)
     LoveAffix.injectCodeIntoLove(mousemovedInject, "mousemoved");
     LoveAffix.injectCodeIntoLove(mousepressedInject, "mousepressed");
     LoveAffix.injectCodeIntoLove(mousepressedInject, "mousereleased");
-    LoveAffix.injectCodeIntoLove(self.startDraw, "draw");
-    LoveAffix.appendCodeIntoLove(self.stopDraw, "draw");
+    -- LoveAffix.injectCodeIntoLove(self.startDraw, "draw");
+    -- LoveAffix.appendCodeIntoLove(self.stopDraw, "draw");
     LoveAffix.appendCodeIntoLove(feignScreenWidth, "graphics", "getWidth");
     LoveAffix.appendCodeIntoLove(feignScreenHeight, "graphics", "getHeight");
-    LoveAffix.appendCodeIntoLove(feignScreenDimmensions, "graphics", "getDimensions");
+    LoveAffix.appendCodeIntoLove(feignScreenDimensions, "graphics", "getDimensions");
     LoveAffix.replaceFunctionInLove(setFullscreen, "window", "setFullscreen");
 
     -- if an error occurs then dont cause a force quit for the entire application before the error screen can be drawn
@@ -167,6 +174,11 @@ function WindowCorrector.init(canvasCount)
     SimpleShader.setTargetDimensions(self.targetWidth, self.targetHeight); -- just to make sure they line up :3
 
     return self; -- allow: WindowCorrector = require("depthDrawing").init();
+end
+
+function WindowCorrector.load()
+    LoveAffix.injectCodeIntoLove(self.startDraw, "draw");
+    LoveAffix.appendCodeIntoLove(self.stopDraw, "draw");
 end
 
 function WindowCorrector.setCanvasCount(cnt)

@@ -26,7 +26,7 @@ function LoveAffix.init()
 
             -- bad practice to do this type of wording, but as only love and its tables are able to contain
             -- this metatable then this is (probably) impossible to reach, but error just in case ;3
-            print("cosmic ray detected");
+            -- print("cosmic ray detected: " .. key);
         else
             rawset(_love, key, value);
         end
