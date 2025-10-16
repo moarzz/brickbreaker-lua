@@ -1462,7 +1462,7 @@ local function ballListInit()
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
-            speedMult = 2.5,
+            speedMult = 2.25,
             size = 1,
             rarity = "common",
             ballAmount = 1,

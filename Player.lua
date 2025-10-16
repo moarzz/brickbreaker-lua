@@ -428,6 +428,7 @@ function Player.reset()
 end
 
 function Player.levelUp()
+    setMusicEffect("paused")
     resetRerollPrice()
     Player.level = Player.level + 1
     if (Player.level - 1) % 3 == 0 then

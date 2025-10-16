@@ -663,10 +663,11 @@ function love.load()
     KeywordSystem:loadKeywordImages()
 
     -- Load and store the background music globally
-    backgroundMusic = love.audio.newSource("assets/SFX/game song.mp3", "stream")
+    changeMusic("calm")
+    --[[backgroundMusic = love.audio.newSource("assets/SFX/game song.mp3", "stream")
     backgroundMusic:setLooping(true)
     backgroundMusic:setVolume(musicVolume/5)
-    backgroundMusic:play()
+    backgroundMusic:play()]]
     brickFont = love.graphics.newFont(14)    -- Get screen dimensions
     screenWidth, screenHeight = love.graphics.getDimensions()
 
@@ -855,6 +856,71 @@ local function cleanTable(tbl, isDeadFunc)
     end
 end
 
+function changeMusic(newMusicStage)
+    local ref
+    if newMusicStage == "calm" then
+        ref = "assets/SFX/inGame1.mp3"
+    elseif newMusicStage == "mid" then
+        ref = "assets/SFX/inGame2.mp3"
+    elseif newMusicStage == "intense" then
+        ref = "assets/SFX/inGame3.mp3"
+    elseif newMusicStage == "boss" then
+        ref = "assets/SFX/inGameBoss.mp3"
+    end
+    if backgroundMusic then
+        backgroundMusic:stop()
+        backgroundMusic = love.audio.newSource(ref, "stream")
+        backgroundMusic:setLooping(true)
+        backgroundMusic:setVolume(musicVolume/5)
+        backgroundMusic:play()
+    else
+        backgroundMusic = love.audio.newSource(ref, "stream")
+        backgroundMusic:setLooping(true)
+        backgroundMusic:setVolume(musicVolume/5)
+        backgroundMusic:play()
+    end
+end
+
+local pausedEffect = {
+    type = "lowpass",
+    volume = 0.6,
+    highgain = 0.1  -- Heavily cut high frequencies
+}
+
+local normalEffect = {
+    type = "lowpass",
+    volume = 1.0,
+    highgain = 1.0  -- No cut
+}
+
+local targetMusicPitch = 1
+function setMusicEffect(effect)
+    if backgroundMusic then
+        if effect == "paused" then
+            backgroundMusic:setFilter(pausedEffect)
+            targetMusicPitch = 0.825
+        elseif effect == "normal" then
+            backgroundMusic:setFilter(normalEffect)
+            targetMusicPitch = 1
+        end
+    end
+end
+
+local function updateMusicEffect(dt)
+    if backgroundMusic then
+        local currentPitch = backgroundMusic:getPitch()
+        if math.abs(currentPitch - targetMusicPitch) > 0.01 then
+            local pitchChangeRate = 0.4 -- Adjust this value to change how quickly the pitch changes
+            if currentPitch < targetMusicPitch then
+                currentPitch = math.min(currentPitch + pitchChangeRate * dt, targetMusicPitch)
+            else
+                currentPitch = math.max(currentPitch - pitchChangeRate * dt, targetMusicPitch)
+            end
+            backgroundMusic:setPitch(currentPitch)
+        end
+    end
+end
+
 local function garbageCollectDynamicObjects()
     if brickPieces then
         cleanTable(brickPieces, function(obj) return obj.destroyed or obj.dead or obj.remove or obj.toRemove end)
@@ -899,6 +965,7 @@ local function gameFixedUpdate(dt)
     reduceBackgroundBrightness()
     local backgroundIntensity = Player.score <= 100 and mapRangeClamped(Player.score,1,100, 0.0, 0.15) or (Player.score <= 5000 and mapRangeClamped(Player.score, 100, 5000, 0.15, 0.5) or mapRangeClamped(Player.score, 5000, 100000, 0.5, 1.0))
 
+    updateMusicEffect(dt)
     if currentGameState == GameState.PAUSED then
         return -- Don't update game logic while paused
     end
@@ -1430,6 +1497,9 @@ function drawPauseMenu()
     -- Resume button
     local resumeBtn = suit.Button("Resume", {id="pause_resume"}, centerX, btnY, buttonWidth, buttonHeight)
     if resumeBtn.hit then
+        if not (Player.levelingUp or Player.choosingUpgrade) then
+            setMusicEffect("normal")
+        end
         playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.PLAYING
     end
@@ -1890,14 +1960,24 @@ function love.keypressed(key)
                 Balls.adjustSpeed(ballType.name)
             end
         end
+        if Player.level == 10 then
+            changeMusic("mid")
+        elseif Player.level == 20 then
+            changeMusic("boss")
+        end
+        setMusicEffect("normal")
     end
 
     if key == "escape" then
         if currentGameState == GameState.PLAYING then
             playSoundEffect(selectSFX, 1, 0.8)
+            setMusicEffect("paused")
             currentGameState = GameState.PAUSED
             return
         elseif currentGameState == GameState.PAUSED then
+            if not (Player.levelingUp or Player.choosingUpgrade) then
+                setMusicEffect("normal")
+            end
             playSoundEffect(selectSFX, 1, 0.8)
             currentGameState = GameState.PLAYING
             return
@@ -1988,7 +2068,11 @@ function love.keypressed(key)
         end
 
         if key == "8" then
-            createXpOrbss(50)
+            setMusicEffect("paused")
+        end
+
+        if key == "9" then
+            setMusicEffect("normal")
         end
 
         -- PERFORMANCE TEST ON OFF BLOCK
