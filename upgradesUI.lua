@@ -13,7 +13,7 @@ local function getUnlockedSpells()
     return spells
 end
 
-local suit = require("Libraries.Suit") -- UI library
+--local suit = require("Libraries.Suit") -- UI library
 local upgradesUI = {}
 
 local rerollPrice = 2
@@ -2394,8 +2394,6 @@ local function drawPlayerItems()
 end
 
 function upgradesUI.draw()
-
-    
     drawPlayerStats() -- Draw the player stats table
     --[[
     drawPlayerUpgrades() -- Draw the player upgrades table

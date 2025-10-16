@@ -10,6 +10,7 @@ _G.GameState = {
     UPGRADES     = "upgrades";
     TUTORIAL     = "tutorial";
     VICTORY      = "victory";
+    SHOP         = "shop";
 };
 
 function ActiveGameState.init()

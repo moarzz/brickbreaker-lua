@@ -1266,9 +1266,7 @@ local function drawLevelUp()
 end
 
 -- Add to love.draw()
-local old_love_draw = love.draw
 function love.draw()
-    
     love.graphics.setShader(backgroundShader)
     WindowCorrector.mergeCanvas(1);
     love.graphics.setShader()
