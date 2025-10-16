@@ -273,11 +273,11 @@ Player.availableCores = {
         description = "Start at lvl 4 with 50$, 1 random common weapon and 1 random uncommon weapon",
         price = 2000
     },
-    {
+    --[[{
         name = "Economy Core",
         description = "Always gain 15$ on level up, you cannot gain money from items",
         price = 1500,
-    },
+    },]]
     {
         name = "Picky Core",
         description = "Rerolling items always costs 1$.",
@@ -297,9 +297,9 @@ Player.availableCores = {
 
 Player.coreDescriptions = {
     ["Speed Core"] = "Start at lvl 5 with 20$, 1 random common weapon and 1 random uncommon weapon",
-    ["Economy Core"] = "Always gain 12$ on level up, you cannot gain money from items",
+    -- ["Economy Core"] = "Always gain 12$ on level up, you cannot gain money from items",
     ["Collector's Core"] = "You can have up to 5 items instead of 4.\n There are only 2 items in the itemShop",
-    ["Farm Core"] = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown)\nIt takes 50% more xp for you to level up and bricks grow in health 50% faster",
+    ["Farm Core"] = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown)\nIt takes 100% more xp for you to level up and bricks grow in health 100% faster",
     ["Picky Core"] = "Rerolling items always costs 1$.\n uncommon, rare and legendary items are twice as rare",
     --["Damage Core"] = "Amount and fireRate are always 1 and damage is multiplied by 5",
     ["Madness Core"] = "Damage and cooldown are reduced by 50%.\nevery other stat is doubled. bricks go twice as fast\n(can break the game)."
@@ -509,7 +509,7 @@ function Player.levelUp()
 end
 
 function Player.gain(amount)
-    playSoundEffect(gainXpSFX, mapRange(amount, 1, 100, 0.3, 0.6), mapRange(amount, 1, 100, 0.7, 1))
+    playSoundEffect(gainXpSFX, mapRange(amount, 1, 100, 0.3, 0.5), mapRangeClamped(amount, 1, 100, 0.55, 0.85))
     Player.score = Player.score + amount
     Player.xp = Player.xp + amount -- XP follows score
     local farmCoreMult = (Player.currentCore == "Farm Core" and 1.5 or 1)

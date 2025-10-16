@@ -1462,7 +1462,7 @@ local function ballListInit()
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
-            speedMult = 2.25,
+            speedMult = 2,
             size = 1,
             rarity = "common",
             ballAmount = 1,
@@ -1990,7 +1990,7 @@ rareWeapons = {}
 legendaryWeapons = {}
 local function organiseBallList()
     for _, ballType in pairs(ballList) do
-        if ballType.rarity == "common" then
+        if ballType.rarity == "common" and ballType.name ~= "ball" then
             table.insert(commonWeapons, ballType)
         elseif ballType.rarity == "uncommon" then
             table.insert(uncommonWeapons, ballType)
@@ -2671,7 +2671,7 @@ local function techUpdate(dt)
             
             -- Deal damage if we've been on target long enough
             
-            local cooldownLength = (Player.currentCore == "Madness Core" and 0.5 or 1) * 1/((Player.currentCore == "Damage Core" and 1 or (laserBeam.stats.fireRate + getStatItemsBonus("fireRate", laserBeam) + (Player.permanentUpgrades.fireRate or 0))))
+            local cooldownLength = (Player.currentCore == "Madness Core" and 0.5 or 1) * 1.35/((Player.currentCore == "Damage Core" and 1 or (laserBeam.stats.fireRate + getStatItemsBonus("fireRate", laserBeam) + (Player.permanentUpgrades.fireRate or 0))))
             if (Player.currentCore == "Spray and Pray Core" or hasItem("Spray and Pray")) then
                 local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
                 cooldownLength = cooldownLength * sprayMult
@@ -3501,7 +3501,7 @@ function Balls.update(dt, paddle, bricks)
             table.insert(bullet.trail, mid)
         end
         table.insert(bullet.trail, {x = bullet.x, y = bullet.y})
-        local maxTrail = 35
+        local maxTrail = 15
         while #bullet.trail > maxTrail do
             table.remove(bullet.trail, 1)
         end
@@ -3857,7 +3857,7 @@ local function techDraw()
     if unlockedBallTypes["Laser Beam"] then
         -- Draw the actual Laser Beam
         -- Calculate charge progress
-        local chargeProgress = laserBeamTimer / ((Player.currentCore == "Madness Core" and 0.5 or 1) * (1/((Player.currentCore == "Damage Core" and 1 or (unlockedBallTypes["Laser Beam"].stats.fireRate + getStatItemsBonus("fireRate", unlockedBallTypes["Laser Beam"]) + (Player.permanentUpgrades.fireRate or 0))))))
+        local chargeProgress = laserBeamTimer / ((Player.currentCore == "Madness Core" and 0.5 or 1) * (1.35/((Player.currentCore == "Damage Core" and 1 or (unlockedBallTypes["Laser Beam"].stats.fireRate + getStatItemsBonus("fireRate", unlockedBallTypes["Laser Beam"]) + (Player.permanentUpgrades.fireRate or 0))))))
         if (Player.currentCore == "Spray and Pray Core" or hasItem("Spray and Pray")) then
             local sprayMult = hasItem("Four Leafed Clover") and 2 or 1.5
             chargeProgress = math.min(1, chargeProgress * sprayMult)

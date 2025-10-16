@@ -246,7 +246,6 @@ local function loadAssets()
     }
 
     -- load sounds
-    backgroundMusicSFX = love.audio.newSource("assets/SFX/game song.mp3", "static")
     brickHitSFX = love.audio.newSource("assets/SFX/brickBoop.mp3", "static")
     healSFX = love.audio.newSource("assets/SFX/heal.mp3", "static")
     paddleBoopSFX = love.audio.newSource("assets/SFX/paddleBoop.mp3", "static")
@@ -542,7 +541,7 @@ local function addMoreBricks()
             print("spawning more bricks")
             for i=1 , 10 do
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
-                currentRowPopulation = currentRowPopulation + math.floor(math.pow(math.ceil(Player.level), (Player.currentCore == "Farm Core" and 1 or 0.6)))
+                currentRowPopulation = currentRowPopulation + math.floor(math.pow(math.ceil(Player.level), (Player.currentCore == "Farm Core" and 1.2 or 0.7)))
                 if spawnBossNextRow and not bossSpawned then
                     spawnBoss()
                     bossSpawned = true
@@ -662,12 +661,9 @@ function love.load()
     KeywordSystem = KeySys.new()
     KeywordSystem:loadKeywordImages()
 
-    -- Load and store the background music globally
-    changeMusic("calm")
-    --[[backgroundMusic = love.audio.newSource("assets/SFX/game song.mp3", "stream")
-    backgroundMusic:setLooping(true)
-    backgroundMusic:setVolume(musicVolume/5)
-    backgroundMusic:play()]]
+    -- start menu music
+    changeMusic("menu")
+
     brickFont = love.graphics.newFont(14)    -- Get screen dimensions
     screenWidth, screenHeight = love.graphics.getDimensions()
 
@@ -858,7 +854,9 @@ end
 
 function changeMusic(newMusicStage)
     local ref
-    if newMusicStage == "calm" then
+    if newMusicStage == "menu" then
+        ref = "assets/SFX/inGame1.mp3"
+    elseif newMusicStage == "calm" then
         ref = "assets/SFX/inGame1.mp3"
     elseif newMusicStage == "mid" then
         ref = "assets/SFX/inGame2.mp3"
@@ -898,7 +896,7 @@ function setMusicEffect(effect)
     if backgroundMusic then
         if effect == "paused" then
             backgroundMusic:setFilter(pausedEffect)
-            targetMusicPitch = 0.825
+            targetMusicPitch = 0.8
         elseif effect == "normal" then
             backgroundMusic:setFilter(normalEffect)
             targetMusicPitch = 1
@@ -1520,6 +1518,7 @@ function drawPauseMenu()
         saveGameData()
         resetGame()
         currentGameState = GameState.START_SELECT
+        setMusicEffect("normal")
     end
     btnY = btnY + buttonHeight + 30
     -- Main Menu button
@@ -1530,6 +1529,7 @@ function drawPauseMenu()
         saveGameData()
         resetGame()
         currentGameState = GameState.MENU
+        setMusicEffect("normal")
     end
     btnY = btnY + buttonHeight + 30
     -- Exit Game button
@@ -1692,7 +1692,7 @@ function love.draw()
         end
 
         -- Progress bar fill
-        local farmCoreMult = (Player.currentCore == "Farm Core" and 1.5 or 1)
+        local farmCoreMult = (Player.currentCore == "Farm Core" and 2 or 1)
         local progress = Player.xp / (Player.xpForNextLevel * farmCoreMult)
         love.graphics.setColor(90/255, 150/255, 0.75, 1)
         if usingMoneySystem then
