@@ -40,6 +40,9 @@ local brickTextCache = {
 require("gameState").init();
 local MainMenu = require("UIScenes/mainMenu");
 local StartMenu = require("UIScenes/startMenu");
+local PauseMenu = require("UIScenes/pauseMenu");
+local VictoryMenu = require("UIScenes/victoryMenu");
+local SettingsMenu = require("UIScenes/settingsMenu");
 
 AddCallbackToState(
     function()
@@ -53,6 +56,27 @@ AddCallbackToState(
         StartMenu:activate();
     end,
     GameState.START_SELECT
+);
+
+AddCallbackToState(
+    function()
+        PauseMenu:activate();
+    end,
+    GameState.PAUSED
+);
+
+AddCallbackToState(
+    function()
+        VictoryMenu:activate();
+    end,
+    GameState.VICTORY
+);
+
+AddCallbackToState(
+    function()
+        SettingsMenu:activate();
+    end,
+    GameState.SETTINGS
 );
 
 AddCallbackToState(
@@ -1056,213 +1080,11 @@ function love.update(dt)
 end
 
 -- Menu settings
-local menuFont
 local buttonWidth = 400
 local buttonHeight = 75
 local buttonSpacing = 100
-function drawMenu()
-    --[[
-    -- Calculate center positions
-    local centerX = screenWidth / 2 - buttonWidth / 2
-    local startY = screenHeight / 2 - (buttonHeight * 3 + buttonSpacing * 2) / 2
-    
-    -- Draw title
-    setFont(48)
-    local title = "BRICK BREAKER"
-    local titleWidth = love.graphics.getFont():getWidth(title)
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.print(title, screenWidth/2 - titleWidth/2, startY - 100)
 
-    -- Play button
-    local buttonID = generateNextButtonID()
-    if suit.Button("Play", {id=buttonID}, centerX, startY, buttonWidth, buttonHeight).hit then
-        playSoundEffect(selectSFX, 1, 0.8)
-        SET_STATE(GameState.START_SELECT); -- Go to selection screen
-    end
-
-    -- Tutorial button
-    buttonID = generateNextButtonID()
-    if suit.Button("Tutorial", {id=buttonID}, centerX, startY + buttonHeight + buttonSpacing, buttonWidth, buttonHeight).hit then
-        playSoundEffect(selectSFX, 1, 0.8)
-        SET_STATE(GameState.TUTORIAL);
-    end
-
-    -- Settings button
-    buttonID = generateNextButtonID()
-    if suit.Button("Settings", {id=buttonID}, centerX, startY + (buttonHeight + buttonSpacing) * 2, buttonWidth, buttonHeight).hit then
-        playSoundEffect(selectSFX, 1, 0.8)
-        SET_STATE(GameState.SETTINGS);
-    end
-
-    -- Upgrades button
-    buttonID = generateNextButtonID()
-    if suit.Button("Upgrades", {id=buttonID}, centerX, startY + (buttonHeight + buttonSpacing) * 3, buttonWidth, buttonHeight).hit then
-        playSoundEffect(selectSFX, 1, 0.8)
-        SET_STATE(GameState.UPGRADES);
-        loadGameData() -- Load game data when entering upgrades screen
-    end
-
-    -- draw highscore
-    suit.Label("Highscore : " .. formatNumber(Player.highScore), {align = "center"}, 100, 100)
-    local fastestTime = Player.fastestTime or 1000000
-    if fastestTime > 10000 then
-        return
-    end
-    local minutes = math.floor(fastestTime / 60)
-    local seconds = math.floor(fastestTime % 60)
-    local fastestTimeString = string.format("%02d:%02d", minutes, seconds)
-    -- suit.Label(fastestTimeString, {align = "center"}, 100, 150, 200, 30) -- Added position and size parameters
-    ]]
-end
-
-local currentSelectedCoreID = 1
-local currentStartingItemID = 1
-local startingItemOrder = {"Ball", "Machine Gun", "Laser Beam", "Shadow Ball"}
-local isSpeedCore = false
 -- Add a new function for the starting item selection screen
-local function drawStartSelect()
-    local centerX = screenWidth / 2 - buttonWidth / 2
-    local startY = screenHeight / 4
-    setFont(36)
-    love.graphics.setColor(1, 1, 1, 1)
-    suit.Label("Choose your starting item", {align = "center"}, screenWidth / 2 - getTextSize("Choose your starting item") / 2, startY - 100)
-
-    -- Dynamically build the list of unlocked starting items
-    local startingItems = {}
-
-    -- build the list of starting paddle cores
-    local paddleCores = {}
-    for _, core in ipairs(Player.availableCores) do
-        local coreName = core.name -- Use core name if available, otherwise use the core itself
-        if Player.paddleCores[coreName] then
-            table.insert(paddleCores, coreName)
-        end
-    end
-
-    -- Always include Ball
-    table.insert(startingItems, {name = "Ball", id = "start_Ball", label = "Ball"})
-    if Player.unlockedStartingBalls then
-        for _, itemName in ipairs(startingItemOrder) do
-            if Player.unlockedStartingBalls[itemName] then
-                table.insert(startingItems, {name = itemName, id = "start_"..itemName:gsub(" ", "_"), label = itemName})
-            end
-        end
-    end
-
-    -- Always include Nothing
-    --table.insert(startingItems, {name = "Nothing", id = "start_Nothing", label = "Nothing"})
-
-    local btnY = startY
-    local item = startingItems[currentStartingItemID]
-    if paddleCores[currentSelectedCoreID] == "IncrediCore" then
-        item = {name = "Incrediball", label = "Incrediball"}
-    end
-    -- Show the starting item description under the label
-    local itemDescription = "No description available for ".. item.label
-    if item.label == "Ball" then
-        itemDescription = "Basic ball. Very fast."
-    elseif item.label == "Machine Gun" then
-        itemDescription = "Fires bullets. \nFast fire rate."
-    elseif item.label == "Laser Beam" then
-        itemDescription = "Fire a thin Laser beam in front of the paddle."
-    elseif item.label == "Shadow Ball" then
-        itemDescription = "Shoots shadowBalls that pass through bricks. \nVery slow fire rate."
-    elseif item.label == "Incrediball" then
-        itemDescription = "Has the effects of every other ball (except phantom ball)."
-    end
-    setFont(36)
-    local btn = suit.Label(item.label, {id = item.id}, centerX, btnY, buttonWidth, buttonHeight)
-    setFont(25)
-    suit.Label(itemDescription, {align = "center"}, centerX-100, btnY + buttonHeight + 10, 600, 60)
-    local btnBefore = suit.Button("Back", {id = "back_starting_item"}, centerX - 100 - 20, btnY, 125, buttonHeight)
-    local btnNext = suit.Button("Next", {id = "next_starting_item"}, centerX + buttonWidth + 20, btnY, 125, buttonHeight)
-    if btnNext.hit then
-        playSoundEffect(selectSFX, 1, 0.8)
-        currentStartingItemID = currentStartingItemID + 1
-        if currentStartingItemID > #startingItems then
-            currentStartingItemID = 1
-        end
-        item = startingItems[currentStartingItemID]
-        while (item.label == "1" or item.label == "2" or item.label == "3") do
-            currentStartingItemID = currentStartingItemID + 1
-            if currentStartingItemID > #startingItems then
-                currentStartingItemID = 1
-            end
-            item = startingItems[currentStartingItemID]
-        end
-    end
-    if btnBefore.hit then
-        playSoundEffect(selectSFX, 1, 0.8)
-        currentStartingItemID = currentStartingItemID - 1
-        if currentStartingItemID < 1 then
-            currentStartingItemID = #startingItems
-        end
-        item = startingItems[currentStartingItemID]
-        while (item.label == "1" or item.label == "2" or item.label == "3") do
-            currentStartingItemID = currentStartingItemID - 1
-            if currentStartingItemID < 1 then
-                currentStartingItemID = #startingItems
-            end
-            item = startingItems[currentStartingItemID]
-        end
-    end
-
-    -- logic for choosing paddle core
-    btnY = btnY + buttonHeight + 200
-    setFont(36)
-    suit.Label("Choose your paddle core", {align = "center"}, screenWidth / 2 - getTextSize("Choose your paddle core") / 2, btnY - 80)
-    local currentSelectedCore = paddleCores[currentSelectedCoreID]
-    if not currentSelectedCoreID then currentSelectedCoreID = 1 end
-    if not currentSelectedCore then currentSelectedCore = (paddleCores[currentSelectedCoreID] and paddleCores[currentSelectedCoreID].name or "Bouncy Core") end
-    local btn2 = suit.Label(currentSelectedCore, centerX, btnY, buttonWidth, buttonHeight)
-    
-    setFont(25)
-    local core = paddleCores[currentSelectedCoreID]
-    local btn2Before = suit.Button("Back", {id = "back_core"}, centerX - 100 - 20, btnY, 125, buttonHeight)
-    local btn2Next = suit.Button("Next", {id = "next_core"}, centerX + buttonWidth + 20, btnY, 125, buttonHeight)
-
-    if btn2Next.hit then
-        playSoundEffect(selectSFX, 1, 0.8)
-        currentSelectedCoreID = currentSelectedCoreID + 1
-        if currentSelectedCoreID > #paddleCores then
-            currentSelectedCoreID = 1
-        end
-        core = paddleCores[currentSelectedCoreID]
-        currentSelectedCore = core
-    end
-    if btn2Before.hit then
-        playSoundEffect(selectSFX, 1, 0.8)
-        currentSelectedCoreID = currentSelectedCoreID - 1
-        if currentSelectedCoreID < 1 then
-            currentSelectedCoreID = #paddleCores
-        end
-        core = paddleCores[currentSelectedCoreID]
-        currentSelectedCore = core.name
-    end
-
-    -- Show the currently selected core
-    setFont(25)
-    -- Draw Play button centered under everything else
-    local btnY = btnY + buttonHeight + 80
-    local coreDescription = Player.coreDescriptions[core] and Player.coreDescriptions[core] or "No description available"
-    suit.Label(coreDescription, {align = "center"}, screenWidth / 2 - 300, btnY - 50, 600, 100)
-    local playBtnY = btnY + buttonHeight + 100
-    setFont(40)
-    local playBtn = suit.Button("Play", {id = "start_play"}, screenWidth / 2 - buttonWidth / 2, playBtnY, buttonWidth, buttonHeight)
-    if playBtn.hit then
-        playSoundEffect(selectSFX, 1, 0.8)
-        startingChoice = item.name
-        startingItemName = item.name
-        Player.currentCore = currentSelectedCore -- Set the selected paddle core
-        resetGame()
-        SET_STATE(GameState.PLAYING);
-        -- initializeGameState()
-        Player.bricksDestroyed = 0 -- Reset bricks destroyed count
-        if item.name ~= "Nothing" and Player.currentCore ~= "Speed Core" then
-            Balls.addBall(item.name)
-        end
-    end
-end
 
 function drawBricks()
     -- Initialize bricks if they don't exist
@@ -1437,190 +1259,10 @@ local function drawGameTimer()
     end
 end
 
-function drawPauseMenu()
-    local centerX = screenWidth / 2 - buttonWidth / 2
-    local startY = screenHeight / 2 - (buttonHeight * 2 + buttonSpacing * 2.5) / 2
-    setFont(48)
-    love.graphics.setColor(1, 1, 1, 1)
-    local title = "Paused"
-    local titleWidth = love.graphics.getFont():getWidth(title)
-    love.graphics.print(title, screenWidth/2 - titleWidth/2, startY - 100)
-
-    setFont(36)
-    local btnY = startY
-    -- Resume button
-    local resumeBtn = suit.Button("Resume", {id="pause_resume"}, centerX, btnY, buttonWidth, buttonHeight)
-    if resumeBtn.hit then
-        playSoundEffect(selectSFX, 1, 0.8)
-        SET_STATE(GameState.PLAYING);
-    end
-    btnY = btnY + buttonHeight + 30
-    -- Settings button (does nothing for now)
-    local settingsBtn = suit.Button("Settings", {id="pause_settings"}, centerX, btnY, buttonWidth, buttonHeight)
-    if settingsBtn.hit then
-        playSoundEffect(selectSFX, 1, 0.8)
-        SET_STATE(GameState.SETTINGS);
-    end
-    btnY = btnY + buttonHeight + 30
-    -- Restart button (same as play again)
-    local restartBtn = suit.Button("Restart", {id="pause_restart"}, centerX, btnY, buttonWidth, buttonHeight)
-    local goldEarned = Player.level * math.ceil(Player.level / 5) * 5 
-    if restartBtn.hit then
-        playSoundEffect(selectSFX, 1, 0.8)
-        Player.addGold(goldEarned)
-        saveGameData()
-        resetGame()
-        SET_STATE(GameState.START_SELECT);
-    end
-    btnY = btnY + buttonHeight + 30
-    -- Main Menu button
-    local menuBtn = suit.Button("Main Menu", {id="pause_menu"}, centerX, btnY, buttonWidth, buttonHeight)
-    if menuBtn.hit then
-        playSoundEffect(selectSFX, 1, 0.8)
-        Player.addGold(goldEarned)
-        saveGameData()
-        resetGame()
-        SET_STATE(GameState.MENU);
-    end
-    btnY = btnY + buttonHeight + 30
-    -- Exit Game button
-    local exitBtn = suit.Button("Exit Game", {id="pause_exit"}, centerX, btnY, buttonWidth, buttonHeight)
-    if exitBtn.hit then
-        playSoundEffect(selectSFX, 1, 0.8)
-        Player.addGold(goldEarned)
-        saveGameData()
-        love.event.quit()
-    end
-end
-
-function drawVictoryScreen()
-    local centerX = screenWidth / 2
-    local centerY = screenHeight / 2
-    setFont(64)
-    love.graphics.setColor(1, 1, 0.5, 1)
-    love.graphics.printf("VICTORY!", 0, centerY - 200, screenWidth, "center")
-    setFont(36)
-    love.graphics.setColor(0.4, 0.7, 1.0, 1) -- Light blue for Score
-    love.graphics.printf("Score : " .. tostring(Player.score), 0, centerY - 80, screenWidth, "center")
-    love.graphics.setColor(1.0, 0.85, 0.4, 1) -- Light gold for Gold
-    love.graphics.printf("Gold earned : " .. tostring(goldEarnedFrl), 0, centerY - 30, screenWidth, "center")
-    love.graphics.setColor(1, 1, 1, 1) -- White for Time
-    love.graphics.printf("Time : " .. string.format("%02d:%02d", math.floor(gameTime / 60), math.floor(gameTime % 60)), 0, centerY + 20, screenWidth, "center")
-    love.graphics.setColor(1.0, 0.6, 0.2, 1) -- Light orange for Bricks Destroyed
-    love.graphics.printf("Bricks Destroyed : " .. tostring(Player.bricksDestroyed), 0, centerY + 70, screenWidth, "center")
-    setFont(28)
-    love.graphics.setColor(1, 1, 1, 1) -- Reset color to white
-    love.graphics.printf("Press R to restart or ESC to quit", 0, centerY + 2000, screenWidth, "center")
-
-    -- Draw Main Menu, Keep Going, and Upgrades buttons at the bottom using SUIT
-    local buttonW, buttonH = 350, 125
-    local spacing = 40  -- Reduced spacing to fit three buttons
-    local totalWidth = buttonW * 3 + spacing * 2  -- Width for three buttons
-    local startX = (screenWidth - totalWidth) / 2 
-    local y = screenHeight * 3/4
-    setFont(36)
-
-    -- Keep Going button (new)
-    if suit.Button("Keep Going", {id = "keep_going"}, startX, y, buttonW, buttonH).hit then
-        playSoundEffect(selectSFX, 1, 0.8)
-        SET_STATE(GameState.PLAYING);  -- Set state back to playing
-    end
-
-    -- Main Menu button
-    if suit.Button("Main Menu", {id = "victory_menu"}, startX + buttonW + spacing, y, buttonW, buttonH).hit then
-        playSoundEffect(selectSFX, 1, 0.8)
-        resetGame()
-        SET_STATE(GameState.MENU);
-    end
-    -- Upgrades button
-    if suit.Button("Upgrades", {id = "victory_upgrades"}, startX + (buttonW + spacing) * 2, y, buttonW, buttonH).hit then
-        playSoundEffect(selectSFX, 1, 0.8)
-        resetGame()
-        SET_STATE(GameState.UPGRADES);
-        loadGameData()
-    end
-
-    -- Draw SUIT UI elements (buttons)
-    suit.draw()
-    ComponentHandler.draw();
-
-    -- Draw buttons at the bottom of the screen
-    local buttonY = screenHeight - 180
-    local buttonW = 350
-    local buttonH = 70
-    local spacing = 60
-    local totalWidth = buttonW * 2 + spacing
-    local startX = (screenWidth - totalWidth) / 2
-end
-
 local function drawLevelUp()
     setFont(30)
     local text = Player.currentCore == "Economy Core" and "Press SPACE to finish upgrading and gain +" .. 12 .. "$\n(+1$ for every 5 unspent $, max 10)" or "Press SPACE to finish upgrading and gain +" .. 8 .. "$\n(+1$ for every 5 unspent $, max 5)"
     -- suit.Label(text, {align = "center"}, screenWidth/2 - 400, 75, 800, screenWidth/2 + 250)
-end
-
-inGame = false
--- Add a function to draw the settings menu with SUIT sliders
-function drawSettingsMenu()
-    local centerX = screenWidth / 2 - buttonWidth / 2
-    local startY = screenHeight / 2 - (buttonHeight * 2 + buttonSpacing * 2.5) / 2
-    setFont(48)
-    love.graphics.setColor(1, 1, 1, 1)
-    local title = "Settings"
-    local titleWidth = love.graphics.getFont():getWidth(title)
-    love.graphics.print(title, screenWidth/2 - titleWidth/2, startY - 100)
-
-    setFont(36)
-    local sliderWidth = 400
-    local sliderHeight = 40
-    local sliderSpacing = 80
-    local sliderX = screenWidth/2 - sliderWidth/2
-    local sliderY = startY + 60
-
-    -- Music Volume Slider
-    local musicSliderInfo = {value = musicVolume}
-    suit.Label("Music Volume", {align = "left"}, sliderX, sliderY, sliderWidth, 40)
-    local musicSlider = suit.Slider(musicSliderInfo, {id = "music_slider"}, sliderX, sliderY + 40, sliderWidth, sliderHeight)
-    musicVolume = musicSliderInfo.value
-    if backgroundMusic then
-        backgroundMusic:setVolume(musicVolume/5) -- Adjust the volume of the background music
-    else
-        print("Background music not found")
-    end
-    --print("Music Volume: " .. musicVolume)
-
-    -- SFX Volume Slider
-    local prevSfxValue = sfxVolume
-    local sfxSliderInfo = {value = sfxVolume}
-    suit.Label("SFX Volume", {align = "left"}, sliderX, sliderY + sliderSpacing, sliderWidth, 40)
-    local sfxSlider = suit.Slider(sfxSliderInfo, {id = "sfx_slider"}, sliderX, sliderY + sliderSpacing + 40, sliderWidth, sliderHeight)
-    sfxVolume = sfxSliderInfo.value
-
-    -- Track if mouse button was just released while hovering the slider
-    if prevSfxValue ~= sfxVolume and love.mouse.isDown(1) then
-        playSoundEffect(selectSFX, sfxVolume, 1, false)
-    end
-
-    local prevChecked = fullScreenCheckbox;
-    local checkboxInfo = {checked = fullScreenCheckbox};
-    suit.Label("Fullscreen", {align = "left"}, sliderX, sliderY + sliderSpacing * 2, sliderWidth, 40);
-    local fullScreenTickBox = suit.Checkbox(checkboxInfo, {id = "fullscreen_checkbox"}, sliderX, sliderY + sliderSpacing * 2 + 40, 40, 40);
-    fullScreenCheckbox = checkboxInfo.checked;
-
-    if fullScreenCheckbox ~= prevChecked then
-        love.window.setFullscreen(fullScreenCheckbox);
-    end
-
-    -- Back button
-    local backBtn = suit.Button("Back", {id="settings_back"}, sliderX, sliderY + sliderSpacing * 3 + 20, sliderWidth, buttonHeight)
-    if backBtn.hit then
-        playSoundEffect(selectSFX, 1, 0.8)
-        if inGame then
-            SET_STATE(GameState.PAUSED);
-        else
-            SET_STATE(GameState.MENU);
-        end
-    end
 end
 
 -- Add to love.draw()
