@@ -431,7 +431,7 @@ function Player.levelUp()
     setMusicEffect("paused")
     resetRerollPrice()
     Player.level = Player.level + 1
-    if (Player.level - 1) % 3 == 0 then
+    if (Player.level - 1) % 3 == 0 and tableLength(Balls.getUnlockedBallTypes()) < 6 then
         if usingMoneySystem then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.2)
         end
@@ -449,11 +449,11 @@ function Player.levelUp()
         if Player.level < 5 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 2)
         elseif Player.level < 10 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.6)
-        elseif Player.level < 15 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.5)
+        elseif Player.level < 15 then
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.45)
         elseif Player.level < 20 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.4)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.35)
         elseif Player.level < 25 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.3)
         elseif Player.level < 30 then
@@ -548,6 +548,8 @@ function Player.die()
     Player.addGold(goldEarned)
     Player.dead = true
     saveGameData()  -- Save the new high score]]
+    setTargetMusicPitch(0.45)
+    setMusicEffect("paused")
 end
 
 local brickSpeedTween

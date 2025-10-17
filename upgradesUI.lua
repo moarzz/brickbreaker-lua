@@ -344,14 +344,14 @@ local items = {
         imageReference = "assets/sprites/UI/itemIcons/Grow-Cube.png",
         rarity = "uncommon"
     },
-    ["Satanic Necklace"] = {
+    --[[["Satanic Necklace"] = {
         name = "Satanic Necklace",
         stats = {damage = 5, amount = -1, fireRate = -1, ammo = -1, cooldown = 1, speed = -1, range = -1},
         description = "+5 damage, -1 to every other stat",
         imageReference = "assets/sprites/UI/itemIcons/Satanic-Necklace.png",
         descriptionOverwrite = true,
         rarity = "uncommon"
-    },
+    },]]
     ["Degenerate Gambling"] = {
         name = "Degenerate Gambling",
         stats = {},

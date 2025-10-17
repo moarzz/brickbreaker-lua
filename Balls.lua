@@ -360,7 +360,8 @@ function dealDamage(ball, brick, burnDamage)
         end
         
         damage = math.min(ball.stats.damage, brick.health)
-        brick.health = brick.health - damage
+        damage = math.floor(damage)
+        brick.health = math.ceil(brick.health - damage)
         
         if brick.type == "big" then
             brick.color = getBrickColor(brick.health / 5, true, false)
@@ -435,7 +436,7 @@ function dealDamage(ball, brick, burnDamage)
     
     damage = math.floor(damage)
     damage = math.min(damage, brick.health)
-    brick.health = brick.health - damage
+    brick.health = math.ceil(brick.health - damage)
     
     if ball.name ~= "Gold Ball" then
         local xOffset = math.random(-brick.width * 0.25, brick.width * 0.25)
@@ -1475,6 +1476,22 @@ local function ballListInit()
             },
             canBuy = function() return false end,
         },
+        --[[["Sword"] = {
+            name = "Sword",
+            type = "tech",
+            x = screenWidth / 2,
+            y = screenHeight / 2,
+            size = 1,
+            rarity = "common",
+            startingPrice = 5,
+            description = "Strikes in front of the paddle, dealing damage in an area",
+            color = {1, 1, 1, 1}, -- White color
+            stats = {
+                speed = 150,
+                damage = 1,
+                range = 2
+            },
+        },]]
         ["Exploding Ball"] = {
             name = "Exploding Ball",
             type = "ball",
@@ -1935,8 +1952,8 @@ local function ballListInit()
             end,
             stats = {
                 cooldown = 9,
-                damage = 1,
-                amount = 1, -- Amount of Lightning Pulses
+                damage = 2,
+                amount = 2, -- Amount of Lightning Pulses
             },
         },
         ["Gun Ball Gun"] = {
@@ -2743,7 +2760,7 @@ local function techUpdate(dt)
     if unlockedBallTypes["Saw Blades"] then
         local sawBlades = unlockedBallTypes["Saw Blades"]
         local numSaws = (Player.currentCore == "Damage Core") and 1 or (((sawBlades.stats.amount or 1) + getStatItemsBonus("amount", sawBlades) + (Player.permanentUpgrades.amount or 0)) * (Player.currentCore == "Madness Core" and 2 or 1))
-        local orbitRadius = sawBlades.orbitRadius
+        local orbitRadius = sawBlades.orbitRadius * (math.sin(gameTime/2.5)/2 + 1)
         local paddleCenterX = paddle.x + paddle.width / 2
         local paddleCenterY = paddle.y + paddle.height / 2
         local speed = ((sawBlades.stats.speed or 150) + ((Player.permanentUpgrades.speed or 0) + getStatItemsBonus("speed", sawBlades)) * 50) * 50
@@ -3342,7 +3359,7 @@ function Balls.update(dt, paddle, bricks)
 
             local multX, multY = normalizeVector(ball.speedX, ball.speedY)
             local speedExtra = ((ball.name == "Magnetic Ball" or ball.name == "Incrediball") and 0.1 or 1) * (ball.speedExtra or 0)
-            local speedMult = 1.25
+            local speedMult = 1
             ball.x = ball.x + (ball.speedX + speedExtra * multX * 50) * ball.speedMult * dt * (Player.currentCore == "Madness Core" and 2 or 1) * speedMult
             ball.y = ball.y + (ball.speedY + speedExtra * multY * 50) * ball.speedMult * dt * (Player.currentCore == "Madness Core" and 2 or 1) * speedMult
 

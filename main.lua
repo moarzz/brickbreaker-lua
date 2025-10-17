@@ -279,6 +279,7 @@ local function loadAssets()
     rocketVFX = love.graphics.newImage("assets/sprites/VFX/rocket.png")
     fireVFX = love.graphics.newImage("assets/sprites/VFX/fire.png")
     sparkleVFX = love.graphics.newImage("assets/sprites/VFX/sparkle.png")
+    slashVFX = love.graphics.newImage("assets/sprites/VFX/slash.png")
 
     Player.loadJsonValues()
     damageRipples.load()
@@ -295,6 +296,7 @@ local bossSpawnSwitch = true
 local boss = nil
 local function spawnBoss()
     -- Center the boss brick at the top
+    changeMusic("boss")
     print("Spawning boss brick")
     local bossX = screenWidth / 2 - bossWidth / 2
     local bossY = -bossHeight * 2
@@ -435,7 +437,7 @@ local function generateRow(brickCount, yPos)
                         bigBrickLocations[xPos] = true
                         unavailableXpos[xPos] = true
                         unavailableXpos[xPos+1] = true
-                        local bigBrickHealth = (brickHealth + row[xPos+1])*2.5
+                        local bigBrickHealth = math.ceil((brickHealth + row[xPos+1])*2.5)
                         local brickColor = getBrickColor(bigBrickHealth, true)
                         nextRowDebuff = brickHealth + row[xPos+1] -- Set the next row debuff to the health of the big brick
                         table.insert(bricks, {
@@ -541,13 +543,13 @@ local function addMoreBricks()
             print("spawning more bricks")
             for i=1 , 10 do
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
-                currentRowPopulation = currentRowPopulation + math.floor(math.pow(math.ceil(Player.level), (Player.currentCore == "Farm Core" and 1.2 or 0.7)))
+                currentRowPopulation = currentRowPopulation + math.floor(math.pow(math.ceil(Player.level), (Player.currentCore == "Farm Core" and 1 or 0.5)))
                 if spawnBossNextRow and not bossSpawned then
                     spawnBoss()
                     bossSpawned = true
                     spawnBossNextRow = false
                     currentRowPopulation = 1000
-                elseif not (bossSpawned or spawnBossNextRow) and Player.level >= 20 then
+                elseif not (bossSpawned or spawnBossNextRow) and gameTime >= 600 then
                     spawnBossNextRow = true
                 end
             end
@@ -896,12 +898,16 @@ function setMusicEffect(effect)
     if backgroundMusic then
         if effect == "paused" then
             backgroundMusic:setFilter(pausedEffect)
-            targetMusicPitch = 0.8
+            targetMusicPitch = 0.85
         elseif effect == "normal" then
             backgroundMusic:setFilter(normalEffect)
             targetMusicPitch = 1
         end
     end
+end
+
+function setTargetMusicPitch(pitch)
+    targetMusicPitch = pitch
 end
 
 local function updateMusicEffect(dt)
@@ -1014,7 +1020,7 @@ local function gameFixedUpdate(dt)
 
         local function updateGameTime(dt)
             if not UtilityFunction.freeze and not (Player.choosingUpgrade or Player.levelingUp) then
-                gameTime = gameTime + dt * 2.25
+                gameTime = gameTime + dt / 0.7
             end
         end
         
@@ -1453,14 +1459,14 @@ end
 
 local frozenTime = 0
 local lastFreezeTime = 0
-local bossSpawnTime = 5
+local bossSpawnTime = 600
 local useTime = true
 
 local function drawGameTimer()
     if useTime then
-        local countdownTime = gameTime
-        local minutes = math.floor(gameTime / 60)
-        local seconds = math.floor(gameTime % 60)
+        local countdownTime = 600 - gameTime
+        local minutes = math.floor(countdownTime / 60)
+        local seconds = math.floor(countdownTime % 60)
         local timeString = string.format("%02d:%02d", minutes, seconds)
         
         -- Draw timer
@@ -1866,7 +1872,9 @@ function love.draw()
     
     -- Draw the game timer
     drawDamageNumbers()
-    drawGameTimer()
+    if gameTime < 600 then
+        drawGameTimer()
+    end
     if Player.levelingUp then
         love.graphics.setColor(0, 0, 0, 0.5)
         love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
@@ -1962,8 +1970,7 @@ function love.keypressed(key)
         end
         if Player.level == 10 then
             changeMusic("mid")
-        elseif Player.level == 20 then
-            changeMusic("boss")
+            
         end
         setMusicEffect("normal")
     end
@@ -2064,15 +2071,11 @@ function love.keypressed(key)
         -----------------------------------
 
         if key == "7" then
-            Balls.addBall("Light Beam")
+            Balls.addBall("Saw Blades")
         end
 
         if key == "8" then
-            setMusicEffect("paused")
-        end
-
-        if key == "9" then
-            setMusicEffect("normal")
+            createSpriteAnimation(paddle.x + paddle.width/2, paddle.y - 150, 3.5, slashVFX, 150, 150, 0.025, 0, false, 1, 0.7, -90)
         end
 
         -- PERFORMANCE TEST ON OFF BLOCK
