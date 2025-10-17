@@ -1018,122 +1018,6 @@ function upgradesUI.tryQueue()
     end
 end
 
-uiOffset = {x = 0, y = 0}
-local drawPlayerStatsHeight = 200 -- Height of the player stats section
-local function drawPlayerStats()
-    if not (Player.levelingUp and not Player.choosingUpgrade) then
-        return
-    end
-    local xOffset = -uiOffset.x
-
-    -- Initialize the layout for the stats section
-    local x, y = screenWidth/2 - uiWindowImg:getWidth()/2, screenHeight - uiWindowImg:getHeight() + 60
-    --love.graphics.draw(uiWindowImg, x, y) -- Draw the background window image
-    local padding = 10
-    x = x + 20 + xOffset
-    y = y + 40
-
-    -- Draw the "Stats" title header
-    suit.layout:reset(x, y, padding, padding) -- Reset layout with padding
-    local xx = x
-    local statsLayout = {
-        min_width = 430, -- Minimum width for the layout
-        pos = {x, y}, -- Starting position (x, y)
-        padding = {padding, padding}, -- Padding between cells
-        {"fill", 30},
-        {"fill"}
-    }
-
-    local definition = suit.layout:cols(statsLayout) -- Create a column layout for the stats
-
-    -- render money
-    local x, y, w, h = definition.cell(2)
-    local fontSize = 80 * (moneyScale.scale or 1)
-    setFont(fontSize)
-    love.graphics.setColor(1,1,1,1)
-    x,y = statsWidth/2 - getTextSize(formatNumber(Player.money))/2 - 100, 175 - love.graphics.getFont():getHeight()/2 -- Adjust position for better alignment
-    love.graphics.setColor(0,0,0,1)
-    love.graphics.print(formatNumber(Player.money) .. "$",x + 104, y +5, math.rad(1.5))
-    local moneyColor = {14/255, 202/255, 92/255,1}
-    love.graphics.setColor(moneyColor)
-    love.graphics.print(formatNumber(Player.money) .. "$",x + 100, y + 1, math.rad(1.5))
-
-    -- Popup on hover: explain interest system
-    local moneyBoxW = getTextSize(formatNumber(Player.money) .. "$")
-    local moneyBoxH = love.graphics.getFont():getHeight()
-    local mouseX, mouseY = love.mouse.getPosition()
-    local interestValue = math.floor(math.min(Player.money, Player.currentCore == "Economy Core" and 50 or 25)/5)
-    local gainValue = 5 + interestValue
-    if Player.currentCore == "Economy Core" then
-        gainValue = 12
-    end
-    local popupText = "At the end of the level up phase, gain <color=money><font=big>8$</color=money></font=big><color=white><font=default> + </font=default></color=white><font=big><color=money>1$ </color=money></font=big><color=white><font=default>for every <font=big><color=money>5$</color=money></font=big><color=white><font=default> you have, max </color=white></font=default><color=money><font=big>13$ </color=money></font=big><color=white><font=default><font=default><color=white>"
-    if Player.currentCore == "Economy Core" then
-        popupText = "At the end of the level up phase, gain <color=money><font=big>12$"
-    end
-    local pointers = {
-        default = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 20),
-        big = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 26),
-        bold = love.graphics.newFont("assets/Fonts/KenneyFutureBold.ttf", 28),
-        interest = interestValue,
-        totalInterest = gainValue
-    }
-    local popup = FancyText.new(popupText, 20, 15, 350, 20, "left", pointers.default, pointers)
-    love.graphics.setColor(1,1,1,1)
-    popup:draw()
-
-    -- render interest if player has not finished leveling up
-    local interestValue = 5 + math.floor(math.min(Player.money, Player.currentCore == "Economy Core" and 50 or 25)/5) + getItemsIncomeBonus()
-    if Player.currentCore == "Economy Core" then
-        interestValue = 12
-    end
-    if Player.levelingUp and interestValue > 0 then
-        setFont(45)
-        love.graphics.setColor(moneyColor)
-        x, y = x + 90, y - 45
-        love.graphics.print("+" .. formatNumber(interestValue) .. "$",x + 100, y + 1, math.rad(1.5))
-    end
-
-
-
-    --[[if Player.bricksDestroyed then
-        setFont(28)
-        local text = "Bricks Destroyed : " .. formatNumber(Player.bricksDestroyed)
-        love.graphics.setColor(0, 0, 0, 0.7)
-        local tw = love.graphics.getFont():getWidth(text)
-        local th = love.graphics.getFont():getHeight()
-        love.graphics.setColor(1, 0.5, 0.25, 1)
-        love.graphics.print(text, statsWidth/2 - tw/2, - th/2 + 320)
-        love.graphics.setColor(1, 1, 1, 1) -- Reset color to white
-    end]]
-
-    if Player.currentCore and Player.levelingUp and not Player.choosingUpgrade then
-        setFont(38)
-        local coreText = tostring(Player.currentCore)
-        love.graphics.setColor(0, 0, 0, 0.7)
-        local tw = love.graphics.getFont():getWidth(coreText)
-        local th = love.graphics.getFont():getHeight()
-        -- Centered under Bricks Destroyed (which is at x=40, y=40)
-        love.graphics.setColor(0.9, 0.9, 0.9, 1)
-        love.graphics.print(coreText, screenWidth/2 - tw/2, screenHeight - th - 15)
-        love.graphics.setColor(1, 1, 1, 1)
-    end
-
-    if Player.score then
-        setFont(38)
-        local text = formatNumber(Player.score) .. " pts"
-        love.graphics.setColor(0, 0, 0, 0.7)
-        local tw = love.graphics.getFont():getWidth(text)
-        local th = love.graphics.getFont():getHeight()
-        love.graphics.setColor(0.25, 0.5, 1, 1)
-        love.graphics.print(text, statsWidth/2 - th/2 - 25 + xOffset, 315 - th/2)
-        love.graphics.setColor(1, 1, 1, 1) -- Reset color to white
-    end
-    -- Add a separator line for better visual clarity
-    suit.layout:row(statsWidth, 65) -- Add spacing for the separator
-    local x,y = suit.layout:nextRow(),y
-end
-
 local function drawInterestUpgrade()
     --[[local xOffset = -uiOffset.x
     love.graphics.draw(uiWindowImg, xOffset + uiWindowImg:getWidth(), 100, 0, 0.5, 0.65)
@@ -1451,7 +1335,7 @@ local function drawPlayerUpgrades()
     end
 end
 
-local function getRarityWindow(rarity, windowType)
+--[[function getRarityWindow(rarity, windowType)
     if rarity == "common" then
         love.graphics.setColor(0, 150/255, 1)
     elseif rarity == "uncommon" then
@@ -1468,7 +1352,7 @@ local function getRarityWindow(rarity, windowType)
     else
         return uiBigWindowImg
     end
-end
+end]]
 
 unlockNewWeaponQueued = false
 local currentBallShowHeight = 0
@@ -2394,7 +2278,7 @@ local function drawPlayerItems()
 end
 
 function upgradesUI.draw()
-    drawPlayerStats() -- Draw the player stats table
+    -- drawPlayerStats() -- Draw the player stats table
     --[[
     drawPlayerUpgrades() -- Draw the player upgrades table
     ]]

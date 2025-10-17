@@ -89,6 +89,10 @@ function Scene:activate()
     if self.activateCallback then
         self:activateCallback();
     end
+
+    if self.onActivation then
+        self:onActivation();
+    end
 end
 
 function Scene:deactivate()

@@ -454,6 +454,31 @@ function getMaxFittingFontSize(text, maxFontSize, cellWidth)
     return fontSize
 end
 
+
+
+
+
+function getRarityWindow(rarity, windowType)
+    if rarity == "common" then
+        love.graphics.setColor(0, 150/255, 1)
+    elseif rarity == "uncommon" then
+        love.graphics.setColor(1, 0, 200/255)
+    elseif rarity == "rare" then
+        love.graphics.setColor(1, 0, 0)
+    elseif rarity == "legendary" then
+        love.graphics.setColor(1, 200/255, 0)
+    end
+    if windowType == "small" then
+        return uiSmallWindowImg
+    elseif windowType == "mid" then
+        return uiWindowImg
+    else
+        return uiBigWindowImg
+    end
+end
+
+
+
 --Tween functions
 Tweens = {} -- Table to store tweens
 local currentTweenID = 0 -- Initialize a variable to keep track of the current tween ID
