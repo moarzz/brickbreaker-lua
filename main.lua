@@ -4,7 +4,7 @@ WindowCorrector = require("Libraries.windowCorrector");
 
 --! these three *need* to be the first code 2 run otherwise i will eat you
 
-EventQueue = require("Libraries.eventQueue.eventQueue")
+EventQueueRef = require("Libraries.eventQueue.eventQueue")
 Events = require("Libraries.eventQueue.events")
 
 require("limitFPS"); -- limit the fps
@@ -209,7 +209,7 @@ end
 
 local function loadAssets()
 
-    EventQueue.new()
+    EventQueue = EventQueueRef.new()
     --load images
     pixelTexture = love.graphics.newImage("assets/sprites/pixel.png");
     paddleImg = love.graphics.newImage("assets/sprites/paddle.png")
@@ -967,7 +967,7 @@ function levelUpShopTweenAlpha(dt)
     end
 end
 
-
+currentlyQueuing = false
 brickKilledThisFrame = false
 local damageCooldown = 0 -- Cooldown for damage visuals
 local healCooldown = 0
@@ -1050,6 +1050,11 @@ local function gameFixedUpdate(dt)
         end
         
         updateGameTime(dt)
+        if EventQueue then 
+            if not EventQueue:isQueueFinished() then
+                EventQueue:update(dt)
+            end
+        end
 
         -- Standard Play logic
         if not Player.choosingUpgrade and not UtilityFunction.freeze and not Player.levelingUp then
@@ -2097,6 +2102,21 @@ function love.keypressed(key)
 
 
         -----------------------------------
+
+        if key == "6" then
+            EventQueue:addEventToQueue(EVENTS.gainMoney, 2, function() 
+                Player.money = Player.money + 10
+                print("money gained!")
+            end)
+            EventQueue:addEventToQueue(EVENTS.gainMoney, 0.1, function() 
+                Player.money = Player.money + 10
+                print("money gained!")
+            end)   
+            EventQueue:addEventToQueue(EVENTS.gainMoney, 2, function() 
+                Player.money = Player.money + 10
+                print("money gained!")
+            end)   
+        end
 
         if key == "7" then
             Balls.addBall("Saw Blades")

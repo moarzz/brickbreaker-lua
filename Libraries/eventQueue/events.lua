@@ -26,77 +26,63 @@ function eventLocatorMeta.contains(objToCheck, check)
 end
 
 _G.EVENTS = setmetatable({
-    empty = true; -- 'nil' for events
-
-    block = {
-        score = {
-            mult  = true;
-            bonus = true;
-            normal = true;
-            gear = true;
-        };
-        clear = {
-            mult  = true;
-            bonus = true;
-            normal = true;
-            gear = true;
-        };
-        place = {
-            mult  = true;
-            bonus = true;
-            normal = true;
-            gear = true;
-        };
-    };
-    piece = {
-        place = {
-            T = true;
-            I = true;
-            L = true;
-            J = true;
-            O = true;
-            S = true;
-            Z = true;
-        };
-        hold  = {
-            T = true;
-            I = true;
-            L = true;
-            J = true;
-            O = true;
-            S = true;
-            Z = true;
-        };
-        spin = { -- spin move placements. not rotation
-            T = true;
-            I = true;
-            L = true;
-            J = true;
-            O = true;
-            S = true;
-            Z = true;
-        };
-    };
-    line = {
-        score = {
-            single = true;
-            double = true;
-            triple = true;
-            quadrouple = true;
-        };
-        clear = {
-            single = true;
-            double = true;
-            triple = true;
-            quadrouple = true;
-        };
-        finished = true;
-    };
-    modifier = {
-        buy     = true;
-        sell    = true;
-        trigger = true;
-    };
+    gainMoney = true;
+    upgradeStat = {
+        item1 = {
+            amount = true,
+            damage = true,
+            speed = true,
+            fireRate = true,
+            range = true,
+            ammo = true,
+            cooldown = true
+        },
+        item2 = {
+            amount = true,
+            damage = true,
+            speed = true,
+            fireRate = true,
+            range = true,
+            ammo = true,
+            cooldown = true
+        },
+        item3 = {
+            amount = true,
+            damage = true,
+            speed = true,
+            fireRate = true,
+            range = true,
+            ammo = true,
+            cooldown = true
+        },
+        item4 = {
+            amount = true,
+            damage = true,
+            speed = true,
+            fireRate = true,
+            range = true,
+            ammo = true,
+            cooldown = true
+        },
+        item5 = {
+            amount = true,
+            damage = true,
+            speed = true,
+            fireRate = true,
+            range = true,
+            ammo = true,
+            cooldown = true
+        },
+        item6 = {
+            amount = true,
+            damage = true,
+            speed = true,
+            fireRate = true,
+            range = true,
+            ammo = true,
+            cooldown = true
+        },
+    }
 }, eventLocatorMeta); -- list of all possible modifier triggers
 
 _G.ANIMATION_EVENTS = setmetatable({
