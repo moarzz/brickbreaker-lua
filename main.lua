@@ -2104,15 +2104,15 @@ function love.keypressed(key)
         -----------------------------------
 
         if key == "6" then
-            EventQueue:addEventToQueue(EVENTS.gainMoney, 2, function() 
+            EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 2, function() 
                 Player.money = Player.money + 10
                 print("money gained!")
             end)
-            EventQueue:addEventToQueue(EVENTS.gainMoney, 0.1, function() 
+            EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.1, function() 
                 Player.money = Player.money + 10
                 print("money gained!")
             end)   
-            EventQueue:addEventToQueue(EVENTS.gainMoney, 2, function() 
+            EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 2, function() 
                 Player.money = Player.money + 10
                 print("money gained!")
             end)   
