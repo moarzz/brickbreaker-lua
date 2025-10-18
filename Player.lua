@@ -449,13 +449,13 @@ function Player.levelUp()
         if Player.level < 5 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 2)
         elseif Player.level < 10 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.5)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.6)
         elseif Player.level < 15 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.45)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.55)
         elseif Player.level < 20 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.35)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.45)
         elseif Player.level < 25 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.3)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.35)
         elseif Player.level < 30 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.25)
         elseif Player.level < 35 then
@@ -527,6 +527,9 @@ end
 
 newHighScore = false
 function Player.die()
+    Player.levelingUp = false
+    Player.choosingUpgrade = false
+    setMusicEffect("dead")
     inGame = false
     -- Check and update high score
     print("player die")
@@ -548,8 +551,6 @@ function Player.die()
     Player.addGold(goldEarned)
     Player.dead = true
     saveGameData()  -- Save the new high score]]
-    setTargetMusicPitch(0.45)
-    setMusicEffect("paused")
 end
 
 local brickSpeedTween

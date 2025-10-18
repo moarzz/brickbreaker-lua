@@ -4,6 +4,9 @@ WindowCorrector = require("Libraries.windowCorrector");
 
 --! these three *need* to be the first code 2 run otherwise i will eat you
 
+EventQueue = require("Libraries.eventQueue.eventQueue")
+Events = require("Libraries.eventQueue.events")
+
 require("limitFPS"); -- limit the fps
 
 UtilityFunction = require("UtilityFunction") -- utility functions
@@ -43,7 +46,8 @@ GameState = {
     SETTINGS = "settings",
     UPGRADES = "upgrades",
     TUTORIAL = "tutorial",
-    VICTORY = "victory"
+    VICTORY = "victory",
+    GAMEOVER = "gameover",
 }
 currentGameState = GameState.MENU
 
@@ -204,6 +208,8 @@ function resetGame()
 end
 
 local function loadAssets()
+
+    EventQueue.new()
     --load images
     pixelTexture = love.graphics.newImage("assets/sprites/pixel.png");
     paddleImg = love.graphics.newImage("assets/sprites/paddle.png")
@@ -287,6 +293,8 @@ end
 
 dmgVFXOn = true
 
+local targetMusicVolume = 1
+
 local canHeal = true
 local bossWidth, bossHeight = 500, 300
 local bossHealth = 10000
@@ -295,8 +303,12 @@ local bossBrickSpawnTimer
 local bossSpawnSwitch = true
 local boss = nil
 local function spawnBoss()
+    targetMusicVolume = 0
     -- Center the boss brick at the top
-    changeMusic("boss")
+    Timer.after(4, function()
+        targetMusicVolume = 1
+        changeMusic("boss")
+    end)
     print("Spawning boss brick")
     local bossX = screenWidth / 2 - bossWidth / 2
     local bossY = -bossHeight * 2
@@ -543,7 +555,7 @@ local function addMoreBricks()
             print("spawning more bricks")
             for i=1 , 10 do
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
-                currentRowPopulation = currentRowPopulation + math.floor(math.pow(math.ceil(Player.level), (Player.currentCore == "Farm Core" and 1 or 0.5)))
+                currentRowPopulation = currentRowPopulation + math.ceil(Player.level * (Player.currentCore == "Farm Core" and 1 or 0.5))
                 if spawnBossNextRow and not bossSpawned then
                     spawnBoss()
                     bossSpawned = true
@@ -854,10 +866,12 @@ local function cleanTable(tbl, isDeadFunc)
     end
 end
 
+local targetMusicPitch = 1
 function changeMusic(newMusicStage)
     local ref
     if newMusicStage == "menu" then
         ref = "assets/SFX/inGame1.mp3"
+        targetMusicPitch = 1
     elseif newMusicStage == "calm" then
         ref = "assets/SFX/inGame1.mp3"
     elseif newMusicStage == "mid" then
@@ -884,7 +898,7 @@ end
 local pausedEffect = {
     type = "lowpass",
     volume = 0.6,
-    highgain = 0.1  -- Heavily cut high frequencies
+    highgain = 0.04  -- Heavily cut high frequencies
 }
 
 local normalEffect = {
@@ -893,15 +907,17 @@ local normalEffect = {
     highgain = 1.0  -- No cut
 }
 
-local targetMusicPitch = 1
 function setMusicEffect(effect)
     if backgroundMusic then
         if effect == "paused" then
             backgroundMusic:setFilter(pausedEffect)
-            targetMusicPitch = 0.85
+            targetMusicPitch = 0.975
         elseif effect == "normal" then
             backgroundMusic:setFilter(normalEffect)
             targetMusicPitch = 1
+        elseif effect == "dead" then
+            backgroundMusic:setFilter(pausedEffect)
+            targetMusicPitch = 0.35
         end
     end
 end
@@ -921,6 +937,15 @@ local function updateMusicEffect(dt)
                 currentPitch = math.max(currentPitch - pitchChangeRate * dt, targetMusicPitch)
             end
             backgroundMusic:setPitch(currentPitch)
+        end
+
+        local currentVolume = backgroundMusic:getVolume()
+        if currentVolume ~= 0 and targetMusicVolume == 0 then
+            local volumeChangeRate = 0.06 -- Adjust this value to change how quickly the volume changes
+            if currentVolume > 0 then
+                currentVolume = math.max(currentVolume - volumeChangeRate * dt, 0)
+            end
+            backgroundMusic:setVolume(currentVolume)
         end
     end
 end
@@ -1968,9 +1993,10 @@ function love.keypressed(key)
                 Balls.adjustSpeed(ballType.name)
             end
         end
-        if Player.level == 10 then
+        if Player.level == 7 then
             changeMusic("mid")
-            
+        elseif Player.level == 13 then
+            changeMusic("intense")
         end
         setMusicEffect("normal")
     end
@@ -1978,7 +2004,9 @@ function love.keypressed(key)
     if key == "escape" then
         if currentGameState == GameState.PLAYING then
             playSoundEffect(selectSFX, 1, 0.8)
-            setMusicEffect("paused")
+            if not Player.dead then
+                setMusicEffect("paused")
+            end
             currentGameState = GameState.PAUSED
             return
         elseif currentGameState == GameState.PAUSED then
@@ -2076,6 +2104,10 @@ function love.keypressed(key)
 
         if key == "8" then
             createSpriteAnimation(paddle.x + paddle.width/2, paddle.y - 150, 3.5, slashVFX, 150, 150, 0.025, 0, false, 1, 0.7, -90)
+        end
+
+        if key == "9" then
+            spawnBoss()
         end
 
         -- PERFORMANCE TEST ON OFF BLOCK

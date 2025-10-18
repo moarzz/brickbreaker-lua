@@ -136,18 +136,21 @@ function GameOverDraw()
 
     -- Upgrades button (left)
     if dress:Button("Upgrades", {id = generateNextButtonID()}, startX, buttonY, buttonWidth, buttonHeight).hit then
+        changeMusic("menu")
         currentGameState = GameState.UPGRADES
         Player.reset()
     end
 
     -- Main Menu button (center)
     if dress:Button("Main Menu", {id = generateNextButtonID()}, startX + buttonWidth + buttonSpacing, buttonY + 75, buttonWidth, buttonHeight).hit then
+        changeMusic("menu")
         currentGameState = GameState.MENU
         Player.reset()
     end    
     
     -- Play Again button (right)
     if dress:Button("Play Again", {id = generateNextButtonID()}, startX + (buttonWidth + buttonSpacing) * 2, buttonY, buttonWidth, buttonHeight).hit then
+        changeMusic("menu")
         resetGame()
         currentGameState = GameState.START_SELECT
     end
