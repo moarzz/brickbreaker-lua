@@ -35,10 +35,7 @@ function EventQueue:update(dt)
         return;
     end
 
-    print("dt is equal to " .. dt)
-
     self.timeUntilNextDequeue = self.timeUntilNextDequeue - dt;
-    print("time until next dequeue : " .. self.timeUntilNextDequeue)
 
     if self.timeUntilNextDequeue > 0 then
         return;
