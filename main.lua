@@ -1019,6 +1019,11 @@ local function gameFixedUpdate(dt)
         dt = dt * playRate -- Adjust the delta time based on the playback rate
         upgradesUI.update(dt) -- Update the upgrades UI
         -- Don't update game time when level up shop is open
+        if EventQueue then 
+            if not EventQueue:isQueueFinished() then
+                EventQueue:update(dt)
+            end
+        end
         if Player.choosingUpgrade then
             if lastFreezeTime == 0 then
                 lastFreezeTime = love.timer.getTime()
@@ -1050,11 +1055,6 @@ local function gameFixedUpdate(dt)
         end
         
         updateGameTime(dt)
-        if EventQueue then 
-            if not EventQueue:isQueueFinished() then
-                EventQueue:update(dt)
-            end
-        end
 
         -- Standard Play logic
         if not Player.choosingUpgrade and not UtilityFunction.freeze and not Player.levelingUp then
@@ -2106,15 +2106,12 @@ function love.keypressed(key)
         if key == "6" then
             EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 2, function() 
                 Player.money = Player.money + 10
-                print("money gained!")
             end)
-            EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.1, function() 
+            EventQueue:addEventToQueue(nil, 0.1, function() 
                 Player.money = Player.money + 10
-                print("money gained!")
             end)   
             EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 2, function() 
                 Player.money = Player.money + 10
-                print("money gained!")
             end)   
         end
 

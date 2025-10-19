@@ -35,7 +35,10 @@ function EventQueue:update(dt)
         return;
     end
 
+    print("dt is equal to " .. dt)
+
     self.timeUntilNextDequeue = self.timeUntilNextDequeue - dt;
+    print("time until next dequeue : " .. self.timeUntilNextDequeue)
 
     if self.timeUntilNextDequeue > 0 then
         return;
@@ -52,7 +55,7 @@ end
 
 function EventQueue:dequeue()
     local nextQueuedEvent = table.remove(self.queue, 1);
-    self.timeUntilNextDequeue = self.timeUntilNextDequeue % nextQueuedEvent.eventLength;
+    self.timeUntilNextDequeue = self.timeUntilNextDequeue + nextQueuedEvent.eventLength;
     -- if a frame causes 2 event to try and dequeue at the same time only let one and delay the next one
 
     if nextQueuedEvent.callback then
