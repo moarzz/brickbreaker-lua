@@ -267,7 +267,6 @@ local function brickDestroyed(brick)
         bossDestroyed()
         return
     end
-    burnBricksEnd(brick.id)
     for ballName, ballType in pairs(unlockedBallTypes) do
         if ballType.onBrickDestroyed then
             ballType.onBrickDestroyed()
@@ -486,7 +485,6 @@ function dealDamage(ball, brick, burnDamage)
         brickDestroyed(brick)
         brick = nil
     elseif brick and brick.health <= 0 then
-        burnBricksEnd(brick.id)
         brickDestroyed(brick)
         brick = nil
     end
@@ -2950,16 +2948,6 @@ local function updateshadowBall(shadowBall, dt)
     end
 end
 
-local function updateBurningBricks(dt)
-    for brickID, cooldown in pairs(burningBricksCooldown) do
-        burningBricksCooldown[brickID] = cooldown - dt
-        if burningBricksCooldown[brickID] <= 0 then
-            burnBricksEnd(brickID)
-            print("Burning brick " .. brickID .. " ended")
-        end
-    end
-end
-
 -- Add near the top with other local functions
 -- Limit for active Chain Lightning sprite animations
 local MAX_CHAIN_LIGHTNING_ANIM = 50
@@ -3264,7 +3252,6 @@ function Balls.update(dt, paddle, bricks)
     updateDeadBullets(dt)
     techUpdate(dt)  
     spellsUpdate(dt)
-    updateBurningBricks(dt)
 
     -- Update particles
     --Smoke.update(dt)

@@ -428,6 +428,7 @@ function Player.reset()
 end
 
 function Player.levelUp()
+    EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.2, function() end)
     setMusicEffect("paused")
     resetRerollPrice()
     Player.level = Player.level + 1

@@ -885,12 +885,12 @@ function changeMusic(newMusicStage)
         backgroundMusic:stop()
         backgroundMusic = love.audio.newSource(ref, "stream")
         backgroundMusic:setLooping(true)
-        backgroundMusic:setVolume(musicVolume/5)
+        backgroundMusic:setVolume(musicVolume/4)
         backgroundMusic:play()
     else
         backgroundMusic = love.audio.newSource(ref, "stream")
         backgroundMusic:setLooping(true)
-        backgroundMusic:setVolume(musicVolume/5)
+        backgroundMusic:setVolume(musicVolume/4)
         backgroundMusic:play()
     end
 end
@@ -911,7 +911,7 @@ function setMusicEffect(effect)
     if backgroundMusic then
         if effect == "paused" then
             backgroundMusic:setFilter(pausedEffect)
-            targetMusicPitch = 0.975
+            targetMusicPitch = 0.97
         elseif effect == "normal" then
             backgroundMusic:setFilter(normalEffect)
             targetMusicPitch = 1
@@ -1018,9 +1018,10 @@ local function gameFixedUpdate(dt)
 
         dt = dt * playRate -- Adjust the delta time based on the playback rate
         upgradesUI.update(dt) -- Update the upgrades UI
+        updateAllTweens(dt) -- Update all tweens
         -- Don't update game time when level up shop is open
         if EventQueue then 
-            if not EventQueue:isQueueFinished() then
+            if not EventQueue:isQueueFinished() and not Player.choosingUpgrade then
                 EventQueue:update(dt)
             end
         end
@@ -1094,8 +1095,6 @@ local function gameFixedUpdate(dt)
             moveBricksDown(dt)
 
             boomUpdate(dt) -- Update explosion for damage
-
-            updateAllTweens(dt) -- Update all tweens
 
             Player.update(dt) -- Update player logic
 
@@ -1667,7 +1666,7 @@ function drawSettingsMenu()
     local musicSlider = suit.Slider(musicSliderInfo, {id = "music_slider"}, sliderX, sliderY + 40, sliderWidth, sliderHeight)
     musicVolume = musicSliderInfo.value
     if backgroundMusic then
-        backgroundMusic:setVolume(musicVolume/5) -- Adjust the volume of the background music
+        backgroundMusic:setVolume(musicVolume/4) -- Adjust the volume of the background music
     else
         print("Background music not found")
     end

@@ -77,11 +77,10 @@ local items = {
         name = "Financial Plan",
         stats = {},
         description = "<font=bold>on level up</font=bold><font=default>\ngain </font=default><font=big><color=money>4$",
-        onLevelUp = function() 
+        onLevelUp = function()
             local moneyBefore = Player.money
             if not hasItem("Abandon Greed") then
-                Player.money = Player.money + 4
-                richGetRicherUpdate(moneyBefore, Player.money)
+                gainMoneyWithAnimations(4)
             end
         end,
         imageReference = "assets/sprites/UI/itemIcons/Financial-Plan.png",
@@ -1018,6 +1017,7 @@ function upgradesUI.tryQueue()
     end
 end
 
+visualMoneyValues = {scale = 1}
 uiOffset = {x = 0, y = 0}
 local drawPlayerStatsHeight = 200 -- Height of the player stats section
 local function drawPlayerStats()
@@ -1048,7 +1048,7 @@ local function drawPlayerStats()
 
     -- render money
     local x, y, w, h = definition.cell(2)
-    local fontSize = 80 * (moneyScale.scale or 1)
+    local fontSize = 80 * visualMoneyValues.scale
     setFont(fontSize)
     love.graphics.setColor(1,1,1,1)
     x,y = statsWidth/2 - getTextSize(formatNumber(Player.money))/2 - 100, 175 - love.graphics.getFont():getHeight()/2 -- Adjust position for better alignment
@@ -2329,7 +2329,7 @@ local function drawPlayerItems()
             drawTextCenteredWithScale(item.name or "Unknown", itemX, itemY + 25 * scaleFactor, 1, itemWidth, {1,1,1,1})
 
             local function getValue()
-                return longTermInvestment.value + 1
+                return longTermInvestment.value
             end
             local pointers = {
                 default = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 18),

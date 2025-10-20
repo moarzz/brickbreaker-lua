@@ -159,6 +159,19 @@ function GameOverDraw()
     love.graphics.setColor(1, 1, 1, 1)
 end
 
+function gainMoneyWithAnimations(moneyGain)
+    EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.035, function() 
+        local inTween = tween.new(0.035, visualMoneyValues, {scale = 1.65}, tween.easing.outCirc)
+        addTweenToUpdate(inTween)
+        Player.money = Player.money + moneyGain
+        richGetRicherUpdate(moneyBefore, Player.money)
+    end)
+    EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.165, function() 
+        local outTween = tween.new(0.165, visualMoneyValues, {scale = 1}, tween.easing.inCirc)
+        addTweenToUpdate(outTween)
+    end)
+end
+
 -- Convert HSLA to RGBA
 function hslaToRgba(h, s, l, a)
     if s == 0 then
