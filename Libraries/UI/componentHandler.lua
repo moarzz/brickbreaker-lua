@@ -312,13 +312,13 @@ end
 -- draw all interactible components
 function ComponentHandler.draw()
     for i = #self.components, 1, -1 do
-        if i ~= self.activeComponent then
+        if self.components[i] ~= self.activeComponent then
             self.components[i]:draw();
         end
     end
 
     if self.activeComponent then
-        self.activeComponent:drawOutline(); -- draw the outline of all of the component's bounding boxes
+        -- self.activeComponent:drawOutline(); -- draw the outline of all of the component's bounding boxes
         self.activeComponent:draw();
     end
 

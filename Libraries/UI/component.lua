@@ -104,23 +104,4 @@ function Component:getInnerDrawFunc()
     end
 end
 
-function Component:drawOutline()
-    love.graphics.setCanvas({stencil = true}); -- make sure you can use the stencils
-
-    love.graphics.setColor(0,0,0,0.4); -- black, slightly transparent
-
-    -- draw all bounding boxes 1 pixel thicker for the stencil buffer
-    love.graphics.stencil(self:getOuterDrawFunc(), "replace", 1, false); -- final arg false to set all values in the buffer to 0 first
-    love.graphics.stencil(self:getInnerDrawFunc(), "replace", 0, true);  -- final arg true to keep all values set from the previous line
-    -- remove all bounding boxes (but not the extra pixel) from the stencil buffer
-
-    love.graphics.setStencilTest("equal", 1);
-
-    -- draw a rectangle over the entire screen, but only the outline of the bounding boxes shows because of the stencil buffer
-    love.graphics.rectangle("fill", 0,0, 1920,1080);
-
-    love.graphics.setStencilTest();
-    love.graphics.setCanvas();
-end
-
 return Component;

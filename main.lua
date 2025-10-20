@@ -1274,7 +1274,6 @@ local function drawLevelUp()
     -- suit.Label(text, {align = "center"}, screenWidth/2 - 400, 75, 800, screenWidth/2 + 250)
 end
 
--- Add to love.draw()
 function love.draw()
     love.graphics.setShader(backgroundShader)
     WindowCorrector.mergeCanvas(1);
