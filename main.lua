@@ -1556,6 +1556,9 @@ function love.keypressed(key)
         richGetRicherUpdate(moneyBefore, Player.money)
         itemsOnLevelUpEnd()
         Player.levelingUp = false
+
+        SET_STATE(GameState.PLAYING);
+
         local moneyGrowTween = tween.new(0.075, moneyScale, {scale = 2}, tween.outExpo)
         addTweenToUpdate(moneyGrowTween)
         Timer.after(0.075, function()
