@@ -1045,7 +1045,7 @@ end
 
 local function getRandomWeaponOfRarity(rarity)
     consumable = consumable or false
-    local rarityList = {}   
+    local rarityList = {}
     if rarity == "common" then
         rarityList = commonWeapons
     elseif rarity == "uncommon" then
@@ -1906,7 +1906,7 @@ function getItemFullDescription(item)
     if item.stats then
         for statName, statValue in pairs(item.stats) do
             local displayValue = statValue
-            statsDescription = statsDescription .. "<font=big><color=" .. statName ..">" .. ((statName == "cooldown" or statValue < 0) and "" or "+").. statValue .. " " .. statName .. "</color=" .. statName .. ">\n<color=white></font=big><font=default>"
+            statsDescription = statsDescription .. "<font=big><color=" .. statName ..">" .. ((statName == "cooldown" or statValue < 0) and "" or "+").. statValue .. " " .. statName .. "\n<color=white>font=default>"
         end
     end
     return statsDescription .. "\n" .. description
