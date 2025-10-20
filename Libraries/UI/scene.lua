@@ -28,13 +28,17 @@ function Scene:addElement(...)
     local args = {...};
 
     for _, v in ipairs(args) do
-        table.insert(self.elements, v);
+        if v then
+            table.insert(self.elements, v);
+        end
     end
 
     -- if scene is active then add new ui to the world
     if self.isActive then
         for _, v in ipairs(args) do
-            ComponentHandler.addComponent(v);
+            if v then
+                ComponentHandler.addComponent(v);
+            end
         end
     end
 end
@@ -52,7 +56,7 @@ function Scene:removeElement(...)
 
             for j = #self.elements, 1, -1 do
                 if self.elements[j] == v then
-                    crash = crash or ComponentHandler.removeComponent(v);
+                    crash = crash or not ComponentHandler.removeComponent(v);
                     table.remove(args, i);
                     table.remove(self.elements, j);
                 end

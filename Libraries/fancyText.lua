@@ -78,6 +78,10 @@ function FancyText:setPosition(x, y)
     self.y = y;
 end
 
+function FancyText:setTextHeight(newHeight)
+    self.textHeight = newHeight;
+end
+
 function FancyText:setText(text)
     self.text = text;
 

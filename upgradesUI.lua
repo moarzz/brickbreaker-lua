@@ -906,7 +906,7 @@ function initializeRarityItemLists()
     end
 end
 
-function getItem(itemName) 
+function getItem(itemName)
     return items[itemName]
 end
 
@@ -1145,6 +1145,7 @@ function setLevelUpShop()
     end
 end
 
+uiOffset = {x = 0, y = 0};
 addStatQueued = false -- Flag to indicate if the "add stat" button was queued
 local function drawPlayerUpgrades()
     local xOffset = -uiOffset.x
@@ -2283,8 +2284,8 @@ function upgradesUI.draw()
     drawPlayerUpgrades() -- Draw the player upgrades table
     ]]
     drawBallStats() -- Draw the ball stats table
-    drawItemShop()
-    drawPlayerItems()
+    -- drawItemShop()
+    -- drawPlayerItems()
 
     -- Draw separator lines
     --[[if usingMoneySystem then

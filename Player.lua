@@ -477,6 +477,7 @@ function Player.levelUp()
     end
     if (not usingMoneySystem) then
         Player.levelingUp = true
+        SET_STATE(GameState.SHOP);
         if (Player.level - 1) % 3 ~= 0 then
             uiOffset.x = 0
         end

@@ -38,53 +38,6 @@ local brickTextCache = {
 
 -- Game states
 require("gameState").init();
-local MainMenu = require("UIScenes/mainMenu");
-local StartMenu = require("UIScenes/startMenu");
-local PauseMenu = require("UIScenes/pauseMenu");
-local VictoryMenu = require("UIScenes/victoryMenu");
-local SettingsMenu = require("UIScenes/settingsMenu");
-
-AddCallbackToState(
-    function()
-        MainMenu:activate();
-    end,
-    GameState.MENU
-);
-
-AddCallbackToState(
-    function()
-        StartMenu:activate();
-    end,
-    GameState.START_SELECT
-);
-
-AddCallbackToState(
-    function()
-        PauseMenu:activate();
-    end,
-    GameState.PAUSED
-);
-
-AddCallbackToState(
-    function()
-        VictoryMenu:activate();
-    end,
-    GameState.VICTORY
-);
-
-AddCallbackToState(
-    function()
-        SettingsMenu:activate();
-    end,
-    GameState.SETTINGS
-);
-
-AddCallbackToState(
-    function()
-        ComponentHandler.unsetActiveScene();
-    end,
-    GameState.PLAYING
-);
 
 -- Add settings variables
 musicVolume = 1
@@ -698,6 +651,62 @@ function love.load()
     --dress = suit.new() --! didnt seem 2 be used at all
     loadAssets() -- Load assets
 
+    local MainMenu = require("UIScenes/mainMenu");
+    local StartMenu = require("UIScenes/startMenu");
+    local PauseMenu = require("UIScenes/pauseMenu");
+    local VictoryMenu = require("UIScenes/victoryMenu");
+    local SettingsMenu = require("UIScenes/settingsMenu");
+    local ShopMenu = require("UIScenes/shopMenu");
+
+    AddCallbackToState(
+        function()
+            MainMenu:activate();
+        end,
+        GameState.MENU
+    );
+
+    AddCallbackToState(
+        function()
+            StartMenu:activate();
+        end,
+        GameState.START_SELECT
+    );
+
+    AddCallbackToState(
+        function()
+            PauseMenu:activate();
+        end,
+        GameState.PAUSED
+    );
+
+    AddCallbackToState(
+        function()
+            VictoryMenu:activate();
+        end,
+        GameState.VICTORY
+    );
+
+    AddCallbackToState(
+        function()
+            SettingsMenu:activate();
+        end,
+        GameState.SETTINGS
+    );
+
+    AddCallbackToState(
+        function()
+            ShopMenu:activate();
+        end,
+        GameState.SHOP
+    );
+
+    AddCallbackToState(
+        function()
+            ComponentHandler.unsetActiveScene();
+        end,
+        GameState.PLAYING
+    );
+
     KeywordSystem = KeySys.new()
     KeywordSystem:loadKeywordImages()
 
@@ -962,7 +971,7 @@ local function gameFixedUpdate(dt)
         local sineShaderIntensity = 0.3 -- Default base intensity
 
         dt = dt * playRate -- Adjust the delta time based on the playback rate
-        upgradesUI.update(dt) -- Update the upgrades UI
+        -- upgradesUI.update(dt) -- Update the upgrades UI
         -- Don't update game time when level up shop is open
         if Player.choosingUpgrade then
             if lastFreezeTime == 0 then
@@ -1479,7 +1488,7 @@ function love.draw()
     drawAnimations()
     drawMuzzleFlashes()
 
-    upgradesUI.draw()
+    --! upgradesUI.draw()
 
     -- Draw the UI elements using Suit
     --suit.draw()
