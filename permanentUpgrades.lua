@@ -240,7 +240,7 @@ function permanentUpgrades.draw()
         local x = padding + col * (cellWidth + padding)
         local y = y + row * 200  -- Space for price, value and icon        -- Render price
         local price
-        if (Player.permanentUpgrades[upgradeName] or 0) < 2 and (not (upgradeName == "cooldown" and (Player.permanentUpgrades[upgradeName] or 0) <= -2)) then
+        if (Player.permanentUpgrades[upgradeName] or 0) < 1 and (not (upgradeName == "cooldown" and (Player.permanentUpgrades[upgradeName] or 0) <= -1)) then
             setFont(45)
             price = Player.permanentUpgradePrices[upgradeName] or 100  -- Default price if not set
             local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(price))/2
@@ -269,7 +269,7 @@ function permanentUpgrades.draw()
         local buttonID = generateNextButtonID()
         local upgradeStatButton = dress:Button("", {color = invisButtonColor, id = buttonID}, x+5, y-20, cellWidth, 200)
         
-        if upgradeStatButton.hit and ((Player.permanentUpgrades[upgradeName] or 0) < 2 and (not (upgradeName == "cooldown" and (Player.permanentUpgrades[upgradeName] or 0) <= -2))) then
+        if upgradeStatButton.hit and ((Player.permanentUpgrades[upgradeName] or 0) < 1 and (not (upgradeName == "cooldown" and (Player.permanentUpgrades[upgradeName] or 0) <= -1))) then
             if Player.gold < price then
                 print("Not enough money to upgrade " .. upgradeName)
             else

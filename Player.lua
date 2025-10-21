@@ -427,12 +427,23 @@ function Player.reset()
     Player.money = Player.startingMoney or 0
 end
 
+function Player.InterestGain()
+    local moneyGain
+    if Player.currentCore == "Economy Core" then
+        moneyGain = 12
+    else
+        moneyGain = 5 + math.floor(math.min(Player.money, 25)/5)
+    end
+    gainMoneyWithAnimations(moneyGain)
+end
+
 function Player.levelUp()
-    EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.2, function() end)
+    EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.25, function() end)
+    Player.InterestGain()
     setMusicEffect("paused")
     resetRerollPrice()
     Player.level = Player.level + 1
-    if (Player.level - 1) % 3 == 0 and tableLength(Balls.getUnlockedBallTypes()) < 6 then
+    if (Player.level) % 4 == 0 and tableLength(Balls.getUnlockedBallTypes()) < 6 then
         if usingMoneySystem then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.2)
         end

@@ -2059,12 +2059,11 @@ function Balls.initialize()
         setMaxItems(4)
     end
     Player.items = {}
-    Player.money = 0
     Player.levelingUp = false
     Player.choosingUpgrade = false
     Player.upgradePriceMultScaling = 2
     Player.xpForNextLevel = 15
-    Player.money = 10
+    Player.money = 0
     
     inGame = true
     deathTimerOver = false
@@ -2490,8 +2489,8 @@ local function brickCollisionCheck(ball)
                     local currentBallSpeed = (unlockedBallTypes[ball.name].stats.speed + getStatItemsBonus("speed", ballList[ball.name]) * 50 + (Player.permanentUpgrades.speed or 0) * 50) * (Player.currentCore == "Madness Core" and 2 or 1)
                     local normalizedSpeedX, normalizedSpeedY = normalizeVector(ball.x - (brick.x + brick.width/2), ball.y - (brick.y + brick.height/2))
                     local speed = math.sqrt(ball.speedX^2 + ball.speedY^2)
-                    local knockback = math.max((Player.currentCore == "Madness Core" and 2 or 1) * math.pow((ball.stats.speed + getStatItemsBonus("speed", ballList[ball.name]) * 50 + (Player.perks.speed or 0) * 50 + 250), 0.6), 200)
-                    knockback = math.max(math.min(knockback, 1150 - currentBallSpeed), 0)
+                    local knockback = math.max((Player.currentCore == "Madness Core" and 2 or 1) * math.pow((ball.stats.speed + getStatItemsBonus("speed", ballList[ball.name]) * 50 + 250), 0.6), 350)
+                    knockback = math.max(math.min(knockback, 1500 - currentBallSpeed), 0)
                     ball.speedX = ball.speedX + normalizedSpeedX * knockback
                     ball.speedY = ball.speedY + normalizedSpeedY * knockback
                 end

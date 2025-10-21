@@ -164,12 +164,12 @@ local pausedUpgradeNumbers = {}
 function gainMoneyWithAnimations(moneyGain)
     EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.05, function() 
         playSoundEffect(upgradeSFX, 0.6, 1, false)
-        local xMult = math.random(-100,100)/100
+        --[[local xMult = math.random(-100,100)/100
         local yMult = math.random(-100,100)/100
         local upgradeNumber = {x = statsWidth - 65 + xMult * 15, y = 150 + yMult * 15, scale = 0, value = moneyGain}
         table.insert(pausedUpgradeNumbers, upgradeNumber)
         local inNumberTween = tween.new(0.05, upgradeNumber, {scale = 22})
-        addTweenToUpdate(inNumberTween)
+        addTweenToUpdate(inNumberTween)]]
         local inTween = tween.new(0.05, visualMoneyValues, {scale = 1.75}, tween.easing.outCirc)
         addTweenToUpdate(inTween)
         Player.money = Player.money + moneyGain
@@ -181,10 +181,36 @@ function gainMoneyWithAnimations(moneyGain)
     end)
 end
 
+visualStatValues = {}
+function gainStatWithAnimation(statName, itemName)
+    EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.05, function() 
+        playSoundEffect(upgradeSFX, 0.6, 1, false)
+        --[[local xMult = math.random(-100,100)/100
+        local yMult = math.random(-100,100)/100
+        local upgradeNumber = {x = statsWidth - 65 + xMult * 15, y = 150 + yMult * 15, scale = 0, value = moneyGain}
+        table.insert(pausedUpgradeNumbers, upgradeNumber)
+        local inNumberTween = tween.new(0.05, upgradeNumber, {scale = 22})
+        addTweenToUpdate(inNumberTween)]]
+        if not visualMoneyValues[itemName] then
+            visualMoneyValues[itemName] = {}
+        end
+        if not visualMoneyValues[itemName][statName] then
+            visualMoneyValues[itemName][statName] = {scale = 1}
+        end
+        local inTween = tween.new(0.05, visualMoneyValues[itemName][statName], {scale = 1.75}, tween.easing.outCirc)
+        addTweenToUpdate(inTween)
+        richGetRicherUpdate(moneyBefore, Player.money)
+    end)
+    EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.2, function() 
+        local outTween = tween.new(0.2, visualMoneyValues[statName], {scale = 1}, tween.easing.inCirc)
+        addTweenToUpdate(outTween)
+    end)
+end
+
 
 function drawPausedUpgradeNumbers()
     for _, upgradeNumber in pairs(pausedUpgradeNumbers) do
-        setFont(upgradeNumber.scale)
+        setFont(math.max(upgradeNumber.scale, 1))
         love.graphics.print("+ " .. upgradeNumber.value, upgradeNumber.x, upgradeNumber.y)
     end
 end

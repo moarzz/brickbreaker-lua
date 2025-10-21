@@ -39,6 +39,8 @@ local items = {
             local randomStatName = statNames[randomIndex]
             self.name = itemNames[randomIndex]
             self.stats[randomStatName] = 3 * (randomStatName == "cooldown" and -1 or 1)
+            self.imageReference = "assets/sprites/UI/itemIcons/" .. randomStatName .. (randomStatName == "cooldown" and "-" or "+") .. ".png"
+            self.image = love.graphics.newImage(self.imageReference)
         end
     },
     ["Triple Trouble"] = {
@@ -76,11 +78,11 @@ local items = {
     ["Financial Plan"] = {
         name = "Financial Plan",
         stats = {},
-        description = "<font=bold>on level up</font=bold><font=default>\ngain </font=default><font=big><color=money>4$",
+        description = "<font=bold>on level up</font=bold><font=default>\ngain </font=default><font=big><color=money>3$",
         onLevelUp = function()
             local moneyBefore = Player.money
             if not hasItem("Abandon Greed") then
-                gainMoneyWithAnimations(4)
+                gainMoneyWithAnimations(3)
             end
         end,
         imageReference = "assets/sprites/UI/itemIcons/Financial-Plan.png",
@@ -89,7 +91,7 @@ local items = {
     ["Coupon Collector"] = {
         name = "Coupon Collector",
         stats = {},
-        description = "<font=bold>On Level Up</font=bold><font=default>\nGain <color=money>2$</color=money><color=white> and reduce the upgrade price of a weapon by </color=white><color=money>1$</color=money>\n\n</color=money><color=white>Items cost </color=white><color=money>1$</color=money><color=white> less",
+        description = "<font=bold>On Level Up</font=bold><font=default>\nGain <color=money>1$</color=money><color=white> and reduce the upgrade price of a weapon by </color=white><color=money>1$</color=money>\n\n</color=money><color=white>Items cost </color=white><color=money>1$</color=money><color=white> less",
         rarity = "common",
         imageReference = "assets/sprites/UI/itemIcons/Coupon-Collector.png",
         onLevelUp = function()
@@ -252,6 +254,8 @@ local items = {
             local randomStatName = statNames[randomIndex]
             self.name = itemNames[randomIndex]
             self.stats[randomStatName] = 6 * (randomStatName == "cooldown" and -1 or 1)
+            self.imageReference = "assets/sprites/UI/itemIcons/" .. randomStatName .. (randomStatName == "cooldown" and "-" or "+") .. ".png"
+            self.image = love.graphics.newImage(self.imageReference)
         end
     },
     ["Triple Trouble +"] = {
@@ -354,13 +358,13 @@ local items = {
     ["Degenerate Gambling"] = {
         name = "Degenerate Gambling",
         stats = {},
-        descriptionPointers = {gambleChance = function() return hasItem("Four Leafed Clover") and 70 or 35 end},
+        descriptionPointers = {gambleChance = function() return hasItem("Four Leafed Clover") and 40 or 20 end},
         description = "<font=bold>on level up\n<gambleChance>%</font=bold><font=default> chance to gain <font=big><color=money>25$</color=money>",
         rarity = "uncommon",
         imageReference = "assets/sprites/UI/itemIcons/Degenerate-Gambling.png",
         randomnessMult = 0.8,
         onLevelUp = function() 
-            if math.random(1,100) <= (hasItem("Four Leafed Clover") and 70 or 35) and not hasItem("Abandon Greed") then
+            if math.random(1,100) <= (hasItem("Four Leafed Clover") and 40 or 20) and not hasItem("Abandon Greed") then
                 local moneyBefore = Player.money
                 Player.money = Player.money + 20
                 richGetRicherUpdate(moneyBefore, Player.money)
@@ -541,6 +545,8 @@ local items = {
             local randomStatName = statNames[randomIndex]
             self.name = itemNames[randomIndex]
             self.stats[randomStatName] = 9 * (randomStatName == "cooldown" and -1 or 1)
+            self.imageReference = "assets/sprites/UI/itemIcons/" .. randomStatName .. (randomStatName == "cooldown" and "-" or "+") .. ".png"
+            self.image = love.graphics.newImage(self.imageReference)
         end
     },
     ["Bouncy Walls"] = {
@@ -1070,9 +1076,9 @@ local function drawPlayerStats()
     if Player.currentCore == "Economy Core" then
         gainValue = 12
     end
-    local popupText = "At the end of the level up phase, gain <color=money><font=big>5$</color=money></font=big><color=white><font=default> + </font=default></color=white><font=big><color=money>1$ </color=money></font=big><color=white><font=default>for every <font=big><color=money>5$</color=money></font=big><color=white><font=default> you have, max </color=white></font=default><color=money><font=big>13$ </color=money></font=big><color=white><font=default><font=default><color=white>"
+    local popupText = "At the start of the level up phase, gain <color=money><font=big>5$</color=money></font=big><color=white><font=default> + </font=default></color=white><font=big><color=money>1$ </color=money></font=big><color=white><font=default>for every <font=big><color=money>5$</color=money></font=big><color=white><font=default> you have, max </color=white></font=default><color=money><font=big>13$ </color=money></font=big><color=white><font=default><font=default><color=white>"
     if Player.currentCore == "Economy Core" then
-        popupText = "At the end of the level up phase, gain <color=money><font=big>12$"
+        popupText = "At the start of the level up phase, gain <color=money><font=big>12$"
     end
     local pointers = {
         default = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 20),
@@ -2135,18 +2141,15 @@ local function drawItemShop()
             itemX = centerX - windowW/2
             itemY = centerY - windowH/2
 
-            local upgradePrice = item.rarity == "common" and 8 or item.rarity == "uncommon" and 16 or item.rarity == "rare" and 24 or item.rarity == "legendary" and 32 or 8
+            local upgradePrice = item.rarity == "common" and 10 or item.rarity == "uncommon" and 20 or item.rarity == "rare" and 30 or item.rarity == "legendary" and 40
             if item.consumable then
-                upgradePrice = upgradePrice * 0.5
-                if Player.currentCore == "Picky Core" then
-                    -- upgradePrice = math.ceil(upgradePrice * 0.5)
-                end
+                upgradePrice = math.floor(upgradePrice / 2)
             end
             if hasItem("Elon's Shmuck") then
                 upgradePrice = 2
             end
             if hasItem("Coupon Collector") then
-                upgradePrice = upgradePrice - 1
+                upgradePrice = math.max(upgradePrice - 1, 0)
             end
 
             --description display when hovered
@@ -2178,7 +2181,8 @@ local function drawItemShop()
                 end
             end
 
-            local color = (tableLength(Player.items) >= maxItems and not item.consumable) and {0.6, 0.6, 0.6, 1} or {1, 1, 1, 1}
+            -- local color = (tableLength(Player.items) >= maxItems and not item.consumable) and {0.6, 0.6, 0.6, 1} or {1, 1, 1, 1}
+            local color = {1, 1, 1, 1}
             love.graphics.setColor(color)
             love.graphics.draw(getRarityWindow(item.rarity or "common"), itemX, itemY, 0, 0.75 * scale, 0.65 * scale)
             setFont(27)
@@ -2216,7 +2220,8 @@ local function drawItemShop()
 
             if buyButton.hit then
                 print("button working")
-                if (#Player.items < maxItems or item.consumable) and Player.money >= upgradePrice then
+                -- if (#Player.items < maxItems or item.consumable) and Player.money >= upgradePrice then
+                if Player.money >= upgradePrice then
                     Player.pay(upgradePrice)
                     playSoundEffect(upgradeSFX, 0.5, 0.95)
                     table.remove(displayedItems, i)
@@ -2269,54 +2274,50 @@ end
 
 local function drawPlayerItems()
     if Player.levelingUp and not Player.choosingUpgrade then
-        love.graphics.setColor(1,1,1,1)
-        
-        -- Determine scale factor based on item count
-        local itemCount = #Player.items
-        local scaleFactor = maxItems <= 4  and 0.86 or 0.69 -- Scale down when more than 3 items (increased by 15%)
-        
-        -- Scale fonts and sizes
-        local titleFontSize = math.floor(40 * scaleFactor)
-        local itemNameFontSize = math.floor(16 * scaleFactor)
-        local sellButtonFontSize = math.floor(20 * scaleFactor)
-        local moneyFontSize = math.floor(30 * scaleFactor)
-        
-        -- Scale image dimensions
-        local imgScaleX = 0.75 -- 0.9 * 1.15
-        local imgScaleY = 0.7 * scaleFactor -- 0.7 * 1.15
-        
-        -- Scale spacing and positioning
-        local baseSpacing = 10 * scaleFactor
-        local itemSpacing = (uiWindowImg:getHeight() * imgScaleY + baseSpacing)
-        
-        setFont(titleFontSize)
+
+        -- print title
+        love.graphics.setColor(1,1,1,1)               
         love.graphics.print("Items", 200 - getTextSize("Items")/2, 400)
         
-        local hoveredItem = nil -- Track which item is being hovered
-        
-        for index, item in ipairs(Player.items) do
-            local sellPrice = item.rarity == "common" and 5 or item.rarity == "uncommon" and 10 or item.rarity == "rare" and 15 or item.rarity == "legendary" and 20 or 5
-            
+        local hoveredItem = nil
+        local hoveredItemIndex = nil
+
+        for index, item in ipairs(Player.items) do            
             -- Keep original row-based positioning, just scaled
-            local itemX = 0
+            local itemWidth = 140
+            local itemHeight = 125
+            local itemX = ((index - 1) % 3) * itemWidth
             local startingY = screenHeight/2 - 85 -- Don't scale the starting Y
-            local itemY = startingY + (index - 1) * itemSpacing
+            local itemY = startingY + math.floor((index - 1)/3) * itemHeight
+
+
+            if item.image then
+                love.graphics.draw(item.image, itemX, itemY, 0, 0.5, 0.5)
+            end
             
             -- Check if mouse is hovering over this item
             local mouseX, mouseY = love.mouse.getPosition()
-            local itemWidth = uiWindowImg:getWidth() * imgScaleX
-            local itemHeight = uiWindowImg:getHeight() * imgScaleY
-            
             if mouseX >= itemX and mouseX <= itemX + itemWidth and
                mouseY >= itemY and mouseY <= itemY + itemHeight then
                 hoveredItem = item
+                hoveredItemIndex = index
             end
-            
+        end
 
-            -- edited out old logic
-            --[[love.graphics.draw(getRarityWindow(item.rarity or "common", "mid"), itemX, itemY, 0, imgScaleX, imgScaleY)
-            setFont(itemNameFontSize)
-            drawTextCenteredWithScale(item.name or "Unknown", itemX, itemY + 25 * scaleFactor, 1, itemWidth, {1,1,1,1})
+        if hoveredItem then
+            local item = hoveredItem
+            local index = hoveredItemIndex
+            local itemWidth = 140
+            local itemHeight = 125
+            local itemX = ((index - 1) % 3) * itemWidth
+            local startingY = screenHeight/2 - 85 -- Don't scale the starting Y
+            local itemY = startingY + math.floor((index - 1)/3) * itemHeight
+
+            itemX = itemX + itemWidth
+            -- Show description when hovered
+            love.graphics.draw(getRarityWindow(item.rarity or "common", "mid"), itemX, itemY, 0, 0.5, 0.75)
+            setFont(18)
+            drawTextCenteredWithScale(item.name or "Unknown", itemX + 12, itemY + 15, 1, (uiBigWindowImg:getWidth() - 20)/2, {1,1,1,1})
 
             local function getValue()
                 return longTermInvestment.value
@@ -2335,51 +2336,11 @@ local function drawPlayerItems()
             local id = "fancyText, player.items" .. index .. item.name:gsub("%s+", "_")
             local text
             text = getItemFullDescription(item) or ""
-            local fancyText = FancyText.new(text, itemX + 25 * scaleFactor, itemY + 65 * scaleFactor, itemWidth - 50 * scaleFactor, 10, "center", pointers.default, pointers)
+            local fancyText = FancyText.new(text, itemX + 15, itemY + 70, (uiBigWindowImg:getWidth() - 25)/2, 12, "center", pointers.default, pointers)
             fancyTexts[id] = fancyText
             fancyText:update()
             fancyText:draw()
-
-
-            setFont(sellButtonFontSize)
-            
-            -- Scale button dimensions and positioning
-            local buttonWidth = 120 * scaleFactor
-            local buttonHeight = 100 * scaleFactor
-            local buttonX = itemX + uiWindowImg:getWidth() * imgScaleX + 5 * scaleFactor
-            local buttonY = itemY + uiWindowImg:getHeight() * imgScaleY/2 - 50 * scaleFactor
-            
-            if hasItem("Abandon Greed") then
-                sellPrice = 0
-            end
-            if suit.Button("Sell", {id = "Player item sell " .. index, color = invisButtonColor}, buttonX, buttonY, buttonWidth, buttonHeight).hit then
-                local moneyBefore = Player.money
-                Player.money = Player.money + sellPrice
-                richGetRicherUpdate(moneyBefore, Player.money)
-                playSoundEffect(upgradeSFX, 0.5, 0.95)
-                if item.stats.amount then
-                    if item.stats.amount > 0 then
-                        Balls.amountDecrease(item.stats.amount)
-                    elseif item.stats.amount < 0 then
-                        Balls.amountIncrease(math.abs(item.stats.amount))
-                    end
-                end
-                if item.onSell then
-                    item.onSell()
-                end
-                table.remove(Player.items, index)
-            end
-            
-            -- Scale money display positioning
-            local moneyX = itemX + uiBigWindowImg:getWidth() * imgScaleX + 125 * scaleFactor
-            local moneyY = itemY + 40 * scaleFactor
-            printMoney(sellPrice, moneyX, moneyY, math.rad(4), true, moneyFontSize)]]
         end
-        
-        --[[ Draw tooltip if hovering over an item
-        if hoveredItem and hoveredItem.description then
-            drawItemTooltip(hoveredItem)
-        end]]
     end
 end
 

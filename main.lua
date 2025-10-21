@@ -241,14 +241,6 @@ local function loadAssets()
         fireRate = love.graphics.newImage("assets/sprites/UI/icons/New/fireRate.png"),
         speed = love.graphics.newImage("assets/sprites/UI/icons/New/speed.png"),
         range = love.graphics.newImage("assets/sprites/UI/icons/New/range.png"),
-        ballDamage = love.graphics.newImage("assets/sprites/UI/icons/ballDamage.png"),
-        paddleSize = love.graphics.newImage("assets/sprites/UI/icons/paddleSize.png"),
-        bulletDamage = love.graphics.newImage("assets/sprites/UI/icons/bulletDamage.png"),
-        income = love.graphics.newImage("assets/sprites/UI/icons/income.png"),
-        health = love.graphics.newImage("assets/sprites/UI/icons/health.png"),
-    }
-    itemIcons = {
-        [""] = love.graphics.newImage("assets/sprites/UI/icons/New/amount.png"),
     }
 
     -- load sounds
@@ -1793,9 +1785,11 @@ function love.draw()
 
         setFont(30)
         if suit.Button("Back", {color = invisButtonColor}, 20, 20, uiLabelImg:getWidth()*0.8, uiLabelImg:getHeight()*0.8).hit then
+            playSoundEffect(selectSFX, 1, 0.8)
             currentGameState = GameState.MENU
         end
         if suit.Button("Play", {color = invisButtonColor}, screenWidth - uiLabelImg:getWidth()*0.8 - 20, 20, uiLabelImg:getWidth()*0.8, uiLabelImg:getHeight()*0.8).hit then
+            playSoundEffect(selectSFX, 1, 0.8)
             currentGameState = GameState.START_SELECT
         end
         return
@@ -1917,6 +1911,9 @@ function love.draw()
 
     -- Draw the UI elements using Suit
     suit.draw()
+
+    drawPausedUpgradeNumbers()
+
     if Player.dead then
         -- draw deathOverlay
         love.graphics.setColor(0, 0, 0, deathTweenValues.overlayOpacity)
@@ -1967,39 +1964,17 @@ local testingMode = false
 local old_love_keypressed = love.keypressed
 moneyScale = {scale = 1}
 function love.keypressed(key)
-    if key == "space" and Player.levelingUp and (not Player.choosingUpgrade) then
-        local moneyBefore = Player.money
-        if hasItem("Abandon Greed") then
-            -- gain no money
-        else
-            if Player.currentCore == "Economy Core" then
-                Player.money = Player.money + 12
-            else
-                Player.money = Player.money + 5 + math.floor(math.min(Player.money, 25)/5)
-            end
-        end
-        richGetRicherUpdate(moneyBefore, Player.money)
+    if key == "space" and Player.levelingUp and (not Player.choosingUpgrade) and EventQueue:isQueueFinished() then
         itemsOnLevelUpEnd()
         Player.levelingUp = false
-        local moneyGrowTween = tween.new(0.075, moneyScale, {scale = 2}, tween.outExpo)
-        addTweenToUpdate(moneyGrowTween)
-        Timer.after(0.075, function()
-            local moneyBackTween = tween.new(0.2, moneyScale, {scale = 1}, tween.inExpo)
-            addTweenToUpdate(moneyBackTween)
-        end)
-        playSoundEffect(upgradeSFX, 0.6, 1, false)
-        Timer.after(0.3, function()
-            local uiRevealOutTween = tween.new(0.2, uiOffset, {x = statsWidth * 1.5}, tween.outExpo)
-            addTweenToUpdate(uiRevealOutTween)
-        end)
         for _, ballType in pairs(Balls.getUnlockedBallTypes()) do
             if ballType.type == "ball" then
                 Balls.adjustSpeed(ballType.name)
             end
         end
-        if Player.level == 7 then
+        if Player.level == 8 then
             changeMusic("mid")
-        elseif Player.level == 13 then
+        elseif Player.level == 16 then
             changeMusic("intense")
         end
         setMusicEffect("normal")
@@ -2103,15 +2078,7 @@ function love.keypressed(key)
         -----------------------------------
 
         if key == "6" then
-            EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 2, function() 
-                Player.money = Player.money + 10
-            end)
-            EventQueue:addEventToQueue(nil, 0.1, function() 
-                Player.money = Player.money + 10
-            end)   
-            EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 2, function() 
-                Player.money = Player.money + 10
-            end)   
+
         end
 
         if key == "7" then
