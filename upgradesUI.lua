@@ -1058,6 +1058,9 @@ local function drawPlayerStats()
     love.graphics.setColor(moneyColor)
     love.graphics.print(formatNumber(Player.money) .. "$",x + 100, y + 1, math.rad(1.5))
 
+    setFont(80)
+    x,y = statsWidth/2 - getTextSize(formatNumber(Player.money))/2 - 100, 175 - love.graphics.getFont():getHeight()/2
+
     -- Popup on hover: explain interest system
     local moneyBoxW = getTextSize(formatNumber(Player.money) .. "$")
     local moneyBoxH = love.graphics.getFont():getHeight()
@@ -1067,7 +1070,7 @@ local function drawPlayerStats()
     if Player.currentCore == "Economy Core" then
         gainValue = 12
     end
-    local popupText = "At the end of the level up phase, gain <color=money><font=big>8$</color=money></font=big><color=white><font=default> + </font=default></color=white><font=big><color=money>1$ </color=money></font=big><color=white><font=default>for every <font=big><color=money>5$</color=money></font=big><color=white><font=default> you have, max </color=white></font=default><color=money><font=big>13$ </color=money></font=big><color=white><font=default><font=default><color=white>"
+    local popupText = "At the end of the level up phase, gain <color=money><font=big>5$</color=money></font=big><color=white><font=default> + </font=default></color=white><font=big><color=money>1$ </color=money></font=big><color=white><font=default>for every <font=big><color=money>5$</color=money></font=big><color=white><font=default> you have, max </color=white></font=default><color=money><font=big>13$ </color=money></font=big><color=white><font=default><font=default><color=white>"
     if Player.currentCore == "Economy Core" then
         popupText = "At the end of the level up phase, gain <color=money><font=big>12$"
     end
@@ -1093,19 +1096,6 @@ local function drawPlayerStats()
         x, y = x + 90, y - 45
         love.graphics.print("+" .. formatNumber(interestValue) .. "$",x + 100, y + 1, math.rad(1.5))
     end
-
-
-
-    --[[if Player.bricksDestroyed then
-        setFont(28)
-        local text = "Bricks Destroyed : " .. formatNumber(Player.bricksDestroyed)
-        love.graphics.setColor(0, 0, 0, 0.7)
-        local tw = love.graphics.getFont():getWidth(text)
-        local th = love.graphics.getFont():getHeight()
-        love.graphics.setColor(1, 0.5, 0.25, 1)
-        love.graphics.print(text, statsWidth/2 - tw/2, - th/2 + 320)
-        love.graphics.setColor(1, 1, 1, 1) -- Reset color to white
-    end]]
 
     if Player.currentCore and Player.levelingUp and not Player.choosingUpgrade then
         setFont(38)
@@ -2322,10 +2312,10 @@ local function drawPlayerItems()
                 hoveredItem = item
             end
             
-            love.graphics.draw(getRarityWindow(item.rarity or "common", "mid"), itemX, itemY, 0, imgScaleX, imgScaleY)
+
+            -- edited out old logic
+            --[[love.graphics.draw(getRarityWindow(item.rarity or "common", "mid"), itemX, itemY, 0, imgScaleX, imgScaleY)
             setFont(itemNameFontSize)
-            setFont(itemNameFontSize)
-            setFont(15)
             drawTextCenteredWithScale(item.name or "Unknown", itemX, itemY + 25 * scaleFactor, 1, itemWidth, {1,1,1,1})
 
             local function getValue()
@@ -2383,7 +2373,7 @@ local function drawPlayerItems()
             -- Scale money display positioning
             local moneyX = itemX + uiBigWindowImg:getWidth() * imgScaleX + 125 * scaleFactor
             local moneyY = itemY + 40 * scaleFactor
-            printMoney(sellPrice, moneyX, moneyY, math.rad(4), true, moneyFontSize)
+            printMoney(sellPrice, moneyX, moneyY, math.rad(4), true, moneyFontSize)]]
         end
         
         --[[ Draw tooltip if hovering over an item

@@ -159,17 +159,34 @@ function GameOverDraw()
     love.graphics.setColor(1, 1, 1, 1)
 end
 
+local pausedUpgradeNumbers = {}
+
 function gainMoneyWithAnimations(moneyGain)
-    EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.035, function() 
-        local inTween = tween.new(0.035, visualMoneyValues, {scale = 1.65}, tween.easing.outCirc)
+    EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.05, function() 
+        playSoundEffect(upgradeSFX, 0.6, 1, false)
+        local xMult = math.random(-100,100)/100
+        local yMult = math.random(-100,100)/100
+        local upgradeNumber = {x = statsWidth - 65 + xMult * 15, y = 150 + yMult * 15, scale = 0, value = moneyGain}
+        table.insert(pausedUpgradeNumbers, upgradeNumber)
+        local inNumberTween = tween.new(0.05, upgradeNumber, {scale = 22})
+        addTweenToUpdate(inNumberTween)
+        local inTween = tween.new(0.05, visualMoneyValues, {scale = 1.75}, tween.easing.outCirc)
         addTweenToUpdate(inTween)
         Player.money = Player.money + moneyGain
         richGetRicherUpdate(moneyBefore, Player.money)
     end)
-    EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.165, function() 
-        local outTween = tween.new(0.165, visualMoneyValues, {scale = 1}, tween.easing.inCirc)
+    EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.2, function() 
+        local outTween = tween.new(0.2, visualMoneyValues, {scale = 1}, tween.easing.inCirc)
         addTweenToUpdate(outTween)
     end)
+end
+
+
+function drawPausedUpgradeNumbers()
+    for _, upgradeNumber in pairs(pausedUpgradeNumbers) do
+        setFont(upgradeNumber.scale)
+        love.graphics.print("+ " .. upgradeNumber.value, upgradeNumber.x, upgradeNumber.y)
+    end
 end
 
 -- Convert HSLA to RGBA
