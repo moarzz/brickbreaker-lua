@@ -79,10 +79,10 @@ local items = {
         name = "Financial Plan",
         stats = {},
         description = "<font=bold>on level up</font=bold><font=default>\ngain </font=default><font=big><color=money>3$",
-        onLevelUp = function()
+        onLevelUp = function(self)
             local moneyBefore = Player.money
             if not hasItem("Abandon Greed") then
-                gainMoneyWithAnimations(3)
+                gainMoneyWithAnimations(3, self.name)
             end
         end,
         imageReference = "assets/sprites/UI/itemIcons/Financial-Plan.png",
@@ -94,16 +94,15 @@ local items = {
         description = "<font=bold>On Level Up</font=bold><font=default>\nGain <color=money>1$</color=money><color=white> and reduce the upgrade price of a weapon by </color=white><color=money>1$</color=money>\n\n</color=money><color=white>Items cost </color=white><color=money>1$</color=money><color=white> less",
         rarity = "common",
         imageReference = "assets/sprites/UI/itemIcons/Coupon-Collector.png",
-        onLevelUp = function()
+        onLevelUp = function(self)
             if not hasItem("Abandon Greed") then
-                Player.money = Player.money + 2
-                richGetRicherUpdate(Player.money - 2, Player.money)
+                gainMoneyWithAnimations(1, self.name)
             end
             local randomWeaponId = math.random(1, tableLength(Balls.getUnlockedBallTypes()))
             local i = 1 
             for weaponId, weapon in pairs(Balls.getUnlockedBallTypes()) do
                 if i == randomWeaponId then
-                    weapon.price = math.max(weapon.price - 1, 0)
+                    reducePriceWithAnimations(1, weapon.name, self.name)
                     break
                 end
                 i = i + 1
@@ -136,6 +135,7 @@ local items = {
     ["Homing Bullets"] = {
         name = "Homing Bullets",
         stats = {fireRate = 1, ammo = 1, cooldown = -1},
+        unique = true,
         description = "Bullets will home in on the nearest brick",
         imageReference = "assets/sprites/UI/itemIcons/Homing-Bullets.png",
         rarity = "common"
@@ -160,6 +160,7 @@ local items = {
     ["Huge Paddle"] = {
         name = "Huge Paddle",
         stats = {amount = 1},
+        unique = true,
         descriptionPointers = {paddleWidth = function() return hasItem("Four Leafed Clover") and 100 or 50 end},
         description = "paddle width is increased by <font=bold><paddleWidth>%</font=bold><font=default>",
         imageReference = "assets/sprites/UI/itemIcons/Huge-Paddle.png",
@@ -168,6 +169,7 @@ local items = {
     ["Loaded Dices"] = {
         name = "Loaded Dices",
         stats = {},
+        unique = true,
         description = "rerollPrice starts at <color=money>0$</color=money>",
         imageReference = "assets/sprites/UI/itemIcons/Loaded-Dices.png",
         rarity = "common",
@@ -205,6 +207,8 @@ local items = {
             end
             local statToUpgrade = statList[math.random(1, #statList)]
 
+            gainStatWithAnimation(statToUpgrade, selectedWeapon.name)
+            --[[
             if statToUpgrade == "cooldown" then
                 selectedWeapon.stats.cooldown = math.max(1, (selectedWeapon.stats.cooldown or 1) - 1)
             elseif statToUpgrade == "speed" then
@@ -216,7 +220,7 @@ local items = {
                 selectedWeapon.ammo = (selectedWeapon.ammo or 0) + selectedWeapon.ammoMult
             else
                 selectedWeapon.stats[statToUpgrade] = (selectedWeapon.stats[statToUpgrade] or 0) + 1
-            end
+            end]]
             
             print("Upgraded " .. selectedWeapon.name .. "'s " .. statToUpgrade .. " by 1!")
         end
@@ -358,29 +362,29 @@ local items = {
     ["Degenerate Gambling"] = {
         name = "Degenerate Gambling",
         stats = {},
-        descriptionPointers = {gambleChance = function() return hasItem("Four Leafed Clover") and 40 or 20 end},
-        description = "<font=bold>on level up\n<gambleChance>%</font=bold><font=default> chance to gain <font=big><color=money>25$</color=money>",
+        descriptionPointers = {gambleChance = function() return hasItem("Four Leafed Clover") and 50 or 25 end},
+        description = "<font=bold>on level up\n<gambleChance>%</font=bold><font=default> chance to gain <font=big><color=money>20$</color=money>",
         rarity = "uncommon",
         imageReference = "assets/sprites/UI/itemIcons/Degenerate-Gambling.png",
         randomnessMult = 0.8,
-        onLevelUp = function() 
-            if math.random(1,100) <= (hasItem("Four Leafed Clover") and 40 or 20) and not hasItem("Abandon Greed") then
+        onLevelUp = function(self) 
+            if math.random(1,100) <= (hasItem("Four Leafed Clover") and 50 or 25) and not hasItem("Abandon Greed") then
                 local moneyBefore = Player.money
-                Player.money = Player.money + 20
-                richGetRicherUpdate(moneyBefore, Player.money)
+                gainMoneyWithAnimations(20, self.name)
             end
         end
     },
     ["Swiss Army Knife"] = {
         name = "Swiss Army Knife",
         stats = {fireRate = 1, speed = 1, cooldown = -1, size = 1, amount = 1, range = 1, ammo = 1},
-        description = "Increases all stats of your weapons by 1 (except <color=damage>damage</color=damage><color=white>)",
+        description = "Increases all stats of your weapons by 1 (except <color=damage>damage</color=damage><color=white>) and reduce cooldown by 1",
         descriptionOverwrite = true,
         imageReference = "assets/sprites/UI/itemIcons/Swiss-Army-Knife.png",
         rarity = "uncommon"
     },
     ["Paddle Defense System"] = {
         name = "Paddle Defense System",
+        unique = true,
         stats = {speed = 2},
         -- descriptionPointers = {paddleDefenseChance = function() return hasItem("Four Leafed Clover") and 100 or 50 end},
         description = "<font=bold>On ball bounce with paddle\n</font=bold><font=default>shoot a bullet that deals <color=damage>damage</color=damage><color=white> equal to that ball's </color=white><color=damage>damage",
@@ -390,6 +394,7 @@ local items = {
     ["Spray and Pray"] = {
         name = "Spray and Pray",
         stats = {fireRate = 2},
+        unique = true,
         descriptionPointers = {fireRateMult = function() return hasItem("Four Leafed Clover") and 70 or 35 end},
         description = "fireRate items shoot <font=bold><fireRateMult>%</font=bold><font=default> faster but are a lot less accurate",
         rarity = "uncommon",
@@ -417,6 +422,7 @@ local items = {
     ["Sudden Mitosis"] = {
         name = "Sudden Mitosis",
         stats = {},
+        unique = true,
         descriptionPointers = {mitosisChance = function() return hasItem("Four Leafed Clover") and 20 or 10 end},
         description = "<font=bold>When a bullet is shot\n<mitosisChance>%</font=bold><font=default> chance to spawn a small ball that lasts 8 seconds",
         rarity = "uncommon",
@@ -482,6 +488,7 @@ local items = {
     ["Assassin's Dagger"] = {
         name = "Assassin's Dagger",
         stats = {damage = 2},
+        unique = true,
         descriptionPointers = {critChance = function() return hasItem("Four Leafed Clover") and 70 or 35 end},
         description = "Damage has a <font=bold><critChance>%</font=bold><font=default> chance to be doubled",
         rarity = "uncommon",
@@ -490,6 +497,7 @@ local items = {
     ["Tesla Bullets"] = {
         name = "Tesla Bullets",
         stats = {fireRate = 2},
+        unique = true,
         descriptionPointers = {teslaChance = function() return hasItem("Four Leafed Clover") and 50 or 25 end},
         description = "<font=bold>On Bullet Hit\n<teslaChance>%</font=bold><font=default> chance to start an electric current that jumps to 3 nearby bricks. Dealing the bullet's <color=damage>damage</color>",
         rarity = "uncommon",
@@ -507,6 +515,7 @@ local items = {
     ["Split Shooter"] = {
         name = "Split Shooter",
         stats = {ammo = 2},
+        unique = true,
         descriptionPointers = {splitChance = function() return hasItem("Four Leafed Clover") and 50 or 25 end},
         description = "Bullets have a <font=bold><splitChance>%</font=bold><font=default> chance to split into 2 after being shot",
         rarity = "uncommon",
@@ -519,9 +528,10 @@ local items = {
         descriptionOverwrite = true,
         imageReference = "assets/sprites/UI/itemIcons/Recession.png",
         rarity = "uncommon",
-        onLevelUp = function() 
+        onLevelUp = function(self) 
             for _, weaponType in pairs(Balls.getUnlockedBallTypes()) do
-                weaponType.price = math.max(weaponType.price - 1, 0)
+                reducePriceWithAnimations(1, weaponType.name, self.name)
+                -- weaponType.price = math.max(weaponType.price - 1, 0)
             end
         end
     },
@@ -552,6 +562,7 @@ local items = {
     ["Bouncy Walls"] = {
         name = "Bouncy Walls",
         stats = {amount = 2, speed = 2},
+        unique = true,
         description = "Balls gain a temporary boost of speed after bouncing off walls",
         rarity = "rare",
         imageReference = "assets/sprites/UI/itemIcons/Bouncy-Walls.png",
@@ -559,6 +570,7 @@ local items = {
     ["Sommelier"] = {
         name = "Sommelier",
         stats = {},
+        unique = true,
         description = "<font=big>Consumable Items</font=big><font=default> trigger twice",
         imageReference = "assets/sprites/UI/itemIcons/Sommelier.png",
         rarity = "rare"
@@ -566,6 +578,7 @@ local items = {
     ["Arcane Missiles"] = {
         name = "Arcane Missiles",
         stats = {},
+        unique = true,
         -- descriptionPointers = {arcaneChance = function() return hasItem("Four Leafed Clover") and 100 or 50 end},
         description = "<font=bold>On ball bounce with Brick</font=bold>\n<font=default>shoot an arcane missile of that ball's <color=damage>damage",
         imageReference = "assets/sprites/UI/itemIcons/Arcane-Missiles.png", 
@@ -574,6 +587,7 @@ local items = {
     ["Investment Guru"] = {
         name = "Investment Guru",
         stats = {},
+        unique = true,
         imageReference = "assets/sprites/UI/itemIcons/Investment-Guru.png",
         description = "<font=bold>On level up</font=bold><font=default>\nadd a </font=default><font=bold>Long Term Investment</font=bold><font=default> in the shop",
         rarity = "rare"
@@ -581,6 +595,7 @@ local items = {
     ["Birthday Hat"] = {
         name = "Birthday Hat",
         stats = {},
+        unique = true,
         description = "<font=bold>on Level up</font><font=default> effects are doubled",
         imageReference = "assets/sprites/UI/itemIcons/Birthday-Hat.png",
         rarity = "rare"
@@ -620,6 +635,7 @@ local items = {
     ["Phantom Bullets"] = {
         name = "Phantom Bullets",
         stats = {},
+        unique = true,
         description = "Bullets only lose 1 dmg when they pass through bricks\nBullets start with half damage",
         imageReference = "assets/sprites/UI/itemIcons/Phantom-Bullets.png",
         rarity = "rare"
@@ -627,7 +643,7 @@ local items = {
     ["Jack Of All Trades"] = {
         name = "Jack Of All Trades",
         stats = {speed = 2, cooldown = -2, amount = 2, range = 2, fireRate = 2, ammo = 2},
-        description = "Increases all stats of your weapons by 2 (except damage), but decreases cooldown by 2",
+        description = "Increases all stats of your weapons by 2 (except damage) and decreases cooldown by 2",
         imageReference = "assets/sprites/UI/itemIcons/Jack-Of-All-Trades.png",
         descriptionOverwrite = true,
         rarity = "rare"
@@ -642,8 +658,17 @@ local items = {
             local randomWeaponId = math.random(1, tableLength(Balls.getUnlockedBallTypes()))
             local i = 1
             for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
+                local statNames = {}
+                for statName, statValue in pairs(weapon.stats) do
+                    statNames[statName] = statValue
+                end
+                if weapon.type == "ball" and (not statNames["amount"]) then
+                    statNames["amount"] = 0
+                end
                 if i == randomWeaponId then
-                    for statname, statValue in pairs(weapon.stats) do
+                    for statName, statValue in pairs(statNames) do
+                        gainStatWithAnimation(statName, weapon.name)
+                        --[[
                         if statname == "cooldown" then
                             weapon.stats.cooldown = math.max(0, (weapon.stats.cooldown or 1) - 1)
                         elseif statname == "speed" then
@@ -656,7 +681,7 @@ local items = {
                             weapon.currentAmmo = weapon.currentAmmo + weapon.ammoMult
                         else
                             weapon.stats[statname] = (weapon.stats[statname] or 0) + 1
-                        end
+                        end]]
                     end
                 end
             end
@@ -742,6 +767,7 @@ local items = {
     ["Total Anihilation"] = {
         name = "Total Anihilation",
         stats = {damage = 2, range = 2},
+        unique = true,
         description = "Explosions cause 4 smaller explosions to happen nearby",
         rarity = "rare NOT READY"
     },
@@ -755,6 +781,7 @@ local items = {
     ["Brickbreaker"] = {
         name = "Brickbreaker",
         stats = {},
+        unique = true,
         descriptionPointers = {killChance = function() return hasItem("Four Leafed Clover") and 20 or 10 end, bigKillChance = function() return hasItem("Four Leafed Clover") and 10 or 5 end},
         description = "Every damage you deal has a <font=bold><killChance>%</font=bold><font=default> chance of instantly killing the brick (<font=bold><bigKillChance>%</font=bold><font=default> for big bricks, <font=bold>0%</font=bold><font=default> for boss)",
         rarity = "legendary",
@@ -762,6 +789,7 @@ local items = {
     ["Elon's Shmuck"] = {
         name = "Elon's Shmuck",
         stats = {},
+        unique = true,
         description = "Items and rerolls cost 2$",
         rarity = "legendary"
     },
@@ -875,6 +903,25 @@ function initializeRarityItemLists()
     legendaryItemsConsumable = {}
     testItems = {}
     for itemName, itemData in pairs(items) do
+        if not itemData.descriptionPointers then
+            itemData.descriptionPointers = {}
+        end
+
+        -- add default pointer values for fancy text if the item doesn't have them already
+        local getValue = function() return longTermInvestment.value end
+        if not itemData.descriptionPointers["default"] then
+            itemData.descriptionPointers["default"] = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 18)
+        end
+        if not itemData.descriptionPointers["big"] then
+            itemData.descriptionPointers["big"] = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 23)
+        end
+        if not itemData.descriptionPointers["bold"] then
+            itemData.descriptionPointers["bold"] = love.graphics.newFont("assets/Fonts/KenneyFutureBold.ttf", 25)
+        end
+        if not itemData.descriptionPointers["longTermValue"] then
+            itemData.descriptionPointers["longTermValue"] = getValue
+        end
+
         if itemData.imageReference then
             itemData.image = love.graphics.newImage(itemData.imageReference)
         end
@@ -883,25 +930,33 @@ function initializeRarityItemLists()
             if consumable then
                 table.insert(commonItemsConsumable, itemName)
             else
-                table.insert(commonItems, itemName)
+                for i=1, 3 do
+                    table.insert(commonItems, itemName)
+                end
             end
         elseif itemData.rarity == "uncommon" then
             if consumable then
                 table.insert(uncommonItemsConsumable, itemName)
             else
-                table.insert(uncommonItems, itemName)
+                for i=1, 3 do
+                    table.insert(uncommonItems, itemName)
+                end
             end
         elseif itemData.rarity == "rare" then
             if consumable then
                 table.insert(rareItemsConsumable, itemName)
             else
-                table.insert(rareItems, itemName)
+                for i=1, 3 do
+                    table.insert(rareItems, itemName)
+                end
             end
         elseif itemData.rarity == "legendary" then
             if consumable then
                 table.insert(legendaryItemsConsumable, itemName)
             else
-                table.insert(legendaryItems, itemName)
+                for i=1, 3 do
+                    table.insert(legendaryItems, itemName)
+                end
             end
         elseif itemData.rarity == "test" then
             table.insert(testItems, itemName)
@@ -934,7 +989,7 @@ function getItemsIncomeBonus()
     return incomeBonus
 end
 
-function getStatItemsBonus(statName, weapon)
+function getStatItemBonusNoDouble(statName, weapon)
     local totalBonus = 0
     if #Player.items < 1 then return (permanentItemBonuses[statName] or 0) end
     
@@ -972,11 +1027,84 @@ function getStatItemsBonus(statName, weapon)
         end
     end
 
-    if permanentItemBonuses[statName] then
-        totalBonus = totalBonus + permanentItemBonuses[statName]
+    return totalBonus
+end
+
+statDoubled = nil
+accelerationOn = false
+function getStatItemsBonus(statName, weapon)
+    if statDoubled ~= nil then
+        print("current stat doubled : " .. statDoubled)
+    end
+    if accelerationOn then
+        print("acceleration is on")
+    end
+    local totalBonus = 0
+    if #Player.items < 1 and not (statDoubled == statName or ((statName == "fireRate" or statName == "speed") and accelerationOn)) then return (permanentItemBonuses[statName] or 0) end
+    
+    -- Calculate the actual item bonus
+    for itemName, item in pairs(Player.items) do
+        if item.stats[statName] then
+            if item.statsCondition then
+                if item.statsCondition(weapon) then
+                    totalBonus = totalBonus + item.stats[statName]
+                end
+            else
+                totalBonus = totalBonus + item.stats[statName]
+            end
+        end
+    end
+    
+    -- Apply minimum value logic only if weapon is provided
+    if weapon then
+        local weaponStatValue = 0
+        if statName == "amount" and not weapon.noAmount then
+            weaponStatValue = weapon.ballAmount
+        elseif weapon.stats[statName] then
+            weaponStatValue = weapon.stats[statName]
+        end
+        
+        -- Calculate what the total would be with current bonus
+        local permanentBonus = Player.permanentUpgrades[statName] or 0
+        local currentStatValue = weaponStatValue + permanentBonus + totalBonus
+        
+        -- If the total would be less than 1, adjust the bonus to make it exactly 1
+        local targetValue = statName == "speed" and 50 or 1
+        targetValue = statName == "cooldown" and 0 or 1
+        if currentStatValue < targetValue then
+            totalBonus = targetValue - weaponStatValue - permanentBonus
+        end
     end
 
+    if statDoubled == statName or ((statName == "fireRate" or statName == "speed") and accelerationOn) then
+        print("totalBonus before doubling for " .. weapon.name .. " " .. statName .." : " .. totalBonus)
+    end
 
+    -- logic for doubling powerups. Kind of bootleg that its here, should be in getStat but its too late to go back now
+    if statDoubled == statName or ((statName == "fireRate" or statName == "speed") and accelerationOn) then
+        if weapon then
+            -- Get the base weapon stat value
+            local weaponStatValue = 0
+            if statName == "amount" and not weapon.noAmount then
+                weaponStatValue = weapon.ballAmount
+            elseif weapon.stats[statName] then
+                weaponStatValue = weapon.stats[statName]
+            end
+            if statName == "speed" then
+                weaponStatValue = weaponStatValue / 50
+            end
+            
+            -- Get permanent upgrades
+            local permanentBonus = Player.permanentUpgrades[statName] or 0
+            
+            -- Current total WITH item bonuses: weaponStatValue + permanentBonus + totalBonus
+            totalBonus = totalBonus + weaponStatValue + permanentBonus
+        end
+    end
+
+    if statDoubled == statName or ((statName == "fireRate" or statName == "speed") and accelerationOn) then
+        print("totalBonus after doubling : " .. totalBonus)
+    end
     return totalBonus
 end
 
@@ -1026,6 +1154,13 @@ end
 visualMoneyValues = {scale = 1}
 uiOffset = {x = 0, y = 0}
 local drawPlayerStatsHeight = 200 -- Height of the player stats section
+local playerStatsPointers = {
+    default = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 20),
+    big = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 26),
+    bold = love.graphics.newFont("assets/Fonts/KenneyFutureBold.ttf", 28),
+    interest = interestValue,
+    totalInterest = gainValue
+}
 local function drawPlayerStats()
     if not (Player.levelingUp and not Player.choosingUpgrade) then
         return
@@ -1071,30 +1206,23 @@ local function drawPlayerStats()
     local moneyBoxW = getTextSize(formatNumber(Player.money) .. "$")
     local moneyBoxH = love.graphics.getFont():getHeight()
     local mouseX, mouseY = love.mouse.getPosition()
-    local interestValue = math.floor(math.min(Player.money, Player.currentCore == "Economy Core" and 50 or 25)/5)
-    local gainValue = 5 + interestValue
+    local interestValue = 0--math.floor(math.min(Player.money, Player.currentCore == "Economy Core" and 50 or 25)/5)
+    local gainValue = 6
     if Player.currentCore == "Economy Core" then
         gainValue = 12
     end
-    local popupText = "At the start of the level up phase, gain <color=money><font=big>5$</color=money></font=big><color=white><font=default> + </font=default></color=white><font=big><color=money>1$ </color=money></font=big><color=white><font=default>for every <font=big><color=money>5$</color=money></font=big><color=white><font=default> you have, max </color=white></font=default><color=money><font=big>13$ </color=money></font=big><color=white><font=default><font=default><color=white>"
+    local popupText = "At the start of the level up phase, gain <color=money><font=big>" .. gainValue .. "$"-- </color=money></font=big><color=white><font=default> + </font=default></color=white><font=big><color=money>1$ </color=money></font=big><color=white><font=default>for every <font=big><color=money>5$</color=money></font=big><color=white><font=default> you have, max </color=white></font=default><color=money><font=big>10$ </color=money></font=big><color=white><font=default><font=default><color=white>"
     if Player.currentCore == "Economy Core" then
-        popupText = "At the start of the level up phase, gain <color=money><font=big>12$"
+        popupText = "At the start of the level up phase, gain <color=money><font=big>8$"
     end
-    local pointers = {
-        default = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 20),
-        big = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 26),
-        bold = love.graphics.newFont("assets/Fonts/KenneyFutureBold.ttf", 28),
-        interest = interestValue,
-        totalInterest = gainValue
-    }
-    local popup = FancyText.new(popupText, 20, 15, 350, 20, "left", pointers.default, pointers)
+    local popup = FancyText.new(popupText, 20, 15, 350, 20, "left", playerStatsPointers.default, playerStatsPointers)
     love.graphics.setColor(1,1,1,1)
     popup:draw()
 
     -- render interest if player has not finished leveling up
-    local interestValue = 5 + math.floor(math.min(Player.money, Player.currentCore == "Economy Core" and 50 or 25)/5) + getItemsIncomeBonus()
+    local interestValue = 6 -- + math.floor(math.min(Player.money, Player.currentCore == "Economy Core" and 50 or 25)/5) + getItemsIncomeBonus()
     if Player.currentCore == "Economy Core" then
-        interestValue = 12
+        interestValue = 8
     end
     if Player.levelingUp and interestValue > 0 then
         setFont(45)
@@ -1532,18 +1660,9 @@ local function drawBallStats()
         setFont(20)
         local typeColor = {normal = {fg = {0.6,0.6,0.6,1}}}
         local labelY = y + uiLabelImg:getHeight()/2
+        local bruhY = labelY
         -- suit.Label(ballType.type or "Unk type", {color = typeColor, align = "center"}, currentX + statsWidth/2-50-7, labelY, 100, 50)
         -- drawTextCenteredWithScale(ballType.type or "Unk type", currentX + statsWidth/2-50-7, labelY, 1, 100, {0.6,0.6,0.6,1})
-
-        -- price label
-        setFont(50)
-        local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(math.ceil(ballType.price)))/2
-        love.graphics.setColor(0,0,0,1)
-        love.graphics.print(formatNumber(math.ceil(ballType.price)) .. "$",currentX + statsWidth/2 + 104 +moneyOffsetX, labelY+4, math.rad(5))
-        local moneyColor = Player.money >= math.ceil(ballType.price) and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
-        love.graphics.setColor(moneyColor)
-        love.graphics.print(formatNumber(math.ceil(ballType.price)) .. "$",currentX + statsWidth/2 + 100 +moneyOffsetX, labelY, math.rad(5))
-        love.graphics.setColor(1,1,1,1)
 
         -- damageDealt label (top right, mirroring price)
         local damageDealt = ballType.damageDealt or 0
@@ -1617,8 +1736,7 @@ local function drawBallStats()
 
                 local cellWidth = (430-10*rowCount)/rowCount
                 
-                -- draw value
-                setFont(35)
+                -- draw value calculations
                 suit.layout:padding(0, 0)
                 -- Add permanent upgrades to the display value
                 local permanentUpgradeValue = Player.permanentUpgrades[statName] or 0
@@ -1653,10 +1771,19 @@ local function drawBallStats()
                         value = value * 2 -- Double speed for Madness Core
                     end
                 end
+                -- draw stat value
+                local scaleMult = 1
+                if visualStatValues[ballType.name] then
+                    if visualStatValues[ballType.name][statName] then
+                        scaleMult = visualStatValues[ballType.name][statName].scale or 1
+                    end
+                end
+                setFont(35 * scaleMult)
+                local centeredLabelY = labelY - love.graphics.getFont():getHeight()/2 + 25
                 if (Player.currentCore == "Phantom Core" and ballType.type == "gun" and statName == "damage") or (Player.currentCore == "Madness Core" and (statName == "damage" or statName == "cooldown")) then
-                    drawTextCenteredWithScale(tostring(string.format("%.1f", value)), statsX, labelY-15, 1, cellWidth)
+                    drawTextCenteredWithScale(tostring(string.format("%.1f", value)), statsX, centeredLabelY-15, 1, cellWidth)
                 else
-                    drawTextCenteredWithScale(tostring(value), statsX, labelY-15, 1, cellWidth)
+                    drawTextCenteredWithScale(tostring(value), statsX, centeredLabelY-15, 1, cellWidth)
                 end
 
                 -- draw stat icon
@@ -1763,6 +1890,23 @@ local function drawBallStats()
         end
         suit.layout:row(statsWidth, 20) -- Add spacing for the separator
         
+        -- price label
+        local sizeMult
+        if visualUpgradePriceValues[ballType.name] then
+            sizeMult = visualUpgradePriceValues[ballType.name].scale 
+        else
+            sizeMult = 1
+        end
+        setFont(math.ceil(50) * sizeMult)
+        local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(math.ceil(ballType.price)))/2
+        labelY = bruhY - love.graphics.getFont():getHeight()/2 + 25
+        love.graphics.setColor(0,0,0,1)
+        love.graphics.print(formatNumber(math.ceil(ballType.price)) .. "$",currentX + statsWidth/2 + 104 +moneyOffsetX, labelY+4, math.rad(5))
+        local moneyColor = Player.money >= math.ceil(ballType.price) and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
+        love.graphics.setColor(moneyColor)
+        love.graphics.print(formatNumber(math.ceil(ballType.price)) .. "$",currentX + statsWidth/2 + 100 +moneyOffsetX, labelY, math.rad(5))
+        love.graphics.setColor(1,1,1,1)
+
         -- upgrade button
         local buttonId = ballType.name .. "_upgradeButton"
         local upgradeStatButton = dress:Button("", {color = invisButtonColor, id = buttonId}, currentX + 10, y + 15, getRarityWindow("common"):getWidth() - 30, getRarityWindow("common"):getHeight()/2 - 30)
@@ -1920,7 +2064,6 @@ function drawLevelUpShop()
         setFont(24)
         dress:Label(currentUpgrade.description, {align = "center", color = {normal = {fg = {1,1,1,opacity}}}}, suit.layout:row(buttonWidth - 30, 150))
         suit.layout:row(buttonWidth - 20, 15)
-        print("Upgrade Name : " .. currentUpgrade.name)
         for statName, statValue in pairs(Balls.getBallList()[currentUpgrade.name].stats) do
             love.graphics.setColor(1,1,1,opacity)
             setFont(24)
@@ -1954,13 +2097,13 @@ function drawLevelUpShop()
     local buttonID = "reroll_button" -- Unique ID for the reroll button
     suit.layout:reset(x, y, 10, 10) -- Reset layout for the reroll button
     setFont(30)
-    if Player.rerolls > 0 then
+    --[[if Player.rerolls > 0 then
         if suit.Button("Reroll", {id = buttonID, align = "center"}, suit.layout:row(w,h)).hit then
             Player.rerolls = Player.rerolls - 1
             local isBallShop = levelUpShopType == "ball"
             setLevelUpShop(isBallShop) -- Reroll the upgrades
         end
-    end
+    end]]
 
 end
 
@@ -2026,7 +2169,7 @@ end
 function setItemShop(forcedItems)
     forcedItems = forcedItems or {}
     displayedItems = {}
-    for i=1, Player.currentCore == "Collector's Core" and 2 or 3 do
+    for i=1, Player.currentCore == "Collector's Core" and 3 or 3 do
         local itemToDisplay = nil
         if forcedItems[i] then
             itemToDisplay = forcedItems[i]
@@ -2080,7 +2223,7 @@ function setItemShop(forcedItems)
                 end
             end
             for _, playerItem in ipairs(Player.items) do
-                if playerItem.name == itemToDisplay.name then
+                if playerItem.name == itemToDisplay.name and playerItem.unique == true then
                     doAgain = true
                     break
                 end
@@ -2125,6 +2268,7 @@ function resetRerollPrice()
     end
 end
 
+local currentItemId = 0
 local function drawItemShop()
     if Player.levelingUp and not Player.choosingUpgrade then
         setFont(60)
@@ -2141,7 +2285,7 @@ local function drawItemShop()
             itemX = centerX - windowW/2
             itemY = centerY - windowH/2
 
-            local upgradePrice = item.rarity == "common" and 10 or item.rarity == "uncommon" and 20 or item.rarity == "rare" and 30 or item.rarity == "legendary" and 40
+            local upgradePrice = item.rarity == "common" and 10 or item.rarity == "uncommon" and 20 or item.rarity == "rare" and 30 or item.rarity == "legendary" and 40 or 0
             if item.consumable then
                 upgradePrice = math.floor(upgradePrice / 2)
             end
@@ -2156,25 +2300,13 @@ local function drawItemShop()
             local buyButton = dress:Button("", {id = "bruhdmsavklsam" .. i .. item.name, color = invisButtonColor}, itemX + 10, itemY + 12, windowW - 20, windowH - 24)
             if buyButton.hovered and item.image then
                 love.graphics.draw(getRarityWindow(item.rarity or "common"), centerX - uiBigWindowImg:getWidth() * 0.65 * scale/2, itemY + windowH - 85, 0, 0.65 * scale, 0.55 * scale)
-                local getValue = function() return longTermInvestment.value end
-                local pointers = {
-                    default = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 18),
-                    big = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 23),
-                    bold = love.graphics.newFont("assets/Fonts/KenneyFutureBold.ttf", 25),
-                    longTermValue = getValue
-                }
-                if item.descriptionPointers then
-                    for valueName, functionPointer in pairs(item.descriptionPointers) do
-                        pointers[valueName] = functionPointer
-                    end
-                end
                 local id = "fancyText" .. i .. item.name:gsub("%s+", "_")
                 if fancyTexts[id] then
                     fancyTexts[id]:update()
                     fancyTexts[id]:draw()
                 else
                     local text = getItemFullDescription(item) or ""
-                    local fancyText = FancyText.new(text, centerX - uiBigWindowImg:getWidth() * 0.55 * scale/2, itemY + windowH, uiBigWindowImg:getWidth() * 0.55 * scale, 17, "center", pointers.default, pointers)
+                    local fancyText = FancyText.new(text, centerX - uiBigWindowImg:getWidth() * 0.55 * scale/2, itemY + windowH, uiBigWindowImg:getWidth() * 0.55 * scale, 17, "center", item.descriptionPointers.default, item.descriptionPointers)
                     fancyTexts[id] = fancyText
                     fancyText:update()
                     fancyText:draw()
@@ -2193,7 +2325,7 @@ local function drawItemShop()
                 local imgScale = scale * 0.75
                 love.graphics.draw(item.image,centerX - (item.image:getWidth()*imgScale)/2, itemY + 130 * imgScale,0,imgScale,imgScale)
             else
-                local getValue = function() return longTermInvestment.value end
+                --[[local getValue = function() return longTermInvestment.value end
                 local pointers = {
                     default = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 18),
                     big = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 23),
@@ -2204,14 +2336,14 @@ local function drawItemShop()
                     for valueName, functionPointer in pairs(item.descriptionPointers) do
                         pointers[valueName] = functionPointer
                     end
-                end
+                end]]
                 local id = "fancyText" .. i .. item.name:gsub("%s+", "_")
                 if fancyTexts[id] then
                     fancyTexts[id]:update()
                     fancyTexts[id]:draw()
                 else
                     local text = getItemFullDescription(item) or ""
-                    local fancyText = FancyText.new(text, itemX + 25 * scale, itemY + 110 * scale, windowW - 50 * scale, 20, "center", pointers.default, pointers)
+                    local fancyText = FancyText.new(text, itemX + 25 * scale, itemY + 110 * scale, windowW - 50 * scale, 20, "center", item.descriptionPointers.default, item.descriptionPointers)
                     fancyTexts[id] = fancyText
                     fancyText:update()
                     fancyText:draw()
@@ -2233,6 +2365,8 @@ local function drawItemShop()
                     end
                     if not item.consumable then
                         table.insert(Player.items, item)
+                        Player.items[#Player.items].id = item.name .. tostring(currentItemId)
+                        currentItemId = currentItemId + 1
                     end
                     if item.stats.amount then
                         Balls.amountIncrease(item.stats.amount)
@@ -2243,6 +2377,17 @@ local function drawItemShop()
                         end
                     end
                     
+                    local itemList = item.rarity == "common" and commonItems or item.rarity == "uncommon" and uncommonItems or item.rarity == "rare" and rareItems or item.rarity == "legendary" and legendaryItems or {}
+                    local indexToRemove = nil
+                    for index, itemName in ipairs(itemList) do
+                        if itemName == item.name then
+                            indexToRemove = index
+                            break
+                        end
+                    end
+                    if indexToRemove then
+                        table.remove(itemList, indexToRemove)
+                    end
                 end
             end
             local moneyXoffset = item.consumable and -65 or 0
@@ -2292,7 +2437,12 @@ local function drawPlayerItems()
 
 
             if item.image then
-                love.graphics.draw(item.image, itemX, itemY, 0, 0.5, 0.5)
+                local imgScaleMult = 1
+                if visualItemValues[item.name] then
+                    local imgScaleMult = visualItemValues[item.name]
+                end
+                local xOffset, yOffset = -(imgScaleMult-1) * itemWidth * 0.25, -(imgScaleMult-1) * itemHeight * 0.25
+                love.graphics.draw(item.image, itemX + xOffset, itemY + yOffset, 0, 0.5 * imgScaleMult, 0.5 * imgScaleMult)
             end
             
             -- Check if mouse is hovering over this item
@@ -2322,7 +2472,7 @@ local function drawPlayerItems()
             local function getValue()
                 return longTermInvestment.value
             end
-            local pointers = {
+            --[[local pointers = {
                 default = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 18),
                 big = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 23),
                 bold = love.graphics.newFont("assets/Fonts/KenneyFutureBold.ttf", 25),
@@ -2332,11 +2482,11 @@ local function drawPlayerItems()
                 for pointerName, pointerFunc in pairs(item.descriptionPointers) do
                     pointers[pointerName] = pointerFunc
                 end
-            end
+            end]]
             local id = "fancyText, player.items" .. index .. item.name:gsub("%s+", "_")
             local text
             text = getItemFullDescription(item) or ""
-            local fancyText = FancyText.new(text, itemX + 15, itemY + 70, (uiBigWindowImg:getWidth() - 25)/2, 12, "center", pointers.default, pointers)
+            local fancyText = FancyText.new(text, itemX + 15, itemY + 70, (uiBigWindowImg:getWidth() - 25)/2, 12, "center", item.descriptionPointers.default, item.descriptionPointers)
             fancyTexts[id] = fancyText
             fancyText:update()
             fancyText:draw()

@@ -135,7 +135,7 @@ function GameOverDraw()
     local buttonY = screenHeight / 2 + 200
 
     -- Upgrades button (left)
-    if dress:Button("Upgrades", {id = generateNextButtonID()}, startX, buttonY, buttonWidth, buttonHeight).hit then
+    if dress:Button("Shop", {id = generateNextButtonID()}, startX, buttonY, buttonWidth, buttonHeight).hit then
         changeMusic("menu")
         currentGameState = GameState.UPGRADES
         Player.reset()
@@ -159,10 +159,44 @@ function GameOverDraw()
     love.graphics.setColor(1, 1, 1, 1)
 end
 
+local moneyPopups = {}
+function createMoneyPopup(value, x, y)
+    local popup = {
+        x = paddle.x + paddle.width/2,
+        y = paddle.y + paddle.height/2,
+        value = value,
+        scale = 0,
+    }
+    table.insert(moneyPopups, popup)
+end
+
+visualItemValues = {}
+function itemTriggerAnimation(itemName)
+    local item = nil
+    for _, itemm in pairs(Balls.getUnlockedBallTypes()) do
+        if itemm.name == itemName then
+            item = itemm
+        end
+    end
+    if item == nil then return end
+    if not visualItemValues[itemName] then
+        print("itemId : " .. itemName)
+        visualItemValues[itemName] = {scale = 1}
+    end
+    local inTween = tween.new(0.05, visualItemValues[itemName], {scale = 1.7}, tween.easing.outCirc)
+    addTweenToUpdate(inTween)
+    Timer.after(0.05, function()
+        local outTween = tween.new(0.175, visualItemValues[itemName], {scale = 1}, tween.easing.inCirc)
+        addTweenToUpdate(outTween)
+    end)
+end
 local pausedUpgradeNumbers = {}
 
-function gainMoneyWithAnimations(moneyGain)
+function gainMoneyWithAnimations(moneyGain, itemName)
     EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.05, function() 
+        if itemId ~= nil then
+            itemTriggerAnimation(itemName)
+        end
         playSoundEffect(upgradeSFX, 0.6, 1, false)
         --[[local xMult = math.random(-100,100)/100
         local yMult = math.random(-100,100)/100
@@ -170,39 +204,87 @@ function gainMoneyWithAnimations(moneyGain)
         table.insert(pausedUpgradeNumbers, upgradeNumber)
         local inNumberTween = tween.new(0.05, upgradeNumber, {scale = 22})
         addTweenToUpdate(inNumberTween)]]
-        local inTween = tween.new(0.05, visualMoneyValues, {scale = 1.75}, tween.easing.outCirc)
+        local inTween = tween.new(0.05, visualMoneyValues, {scale = 1.7}, tween.easing.outCirc)
         addTweenToUpdate(inTween)
         Player.money = Player.money + moneyGain
         richGetRicherUpdate(moneyBefore, Player.money)
     end)
-    EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.2, function() 
-        local outTween = tween.new(0.2, visualMoneyValues, {scale = 1}, tween.easing.inCirc)
+    EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.175, function() 
+        local outTween = tween.new(0.175, visualMoneyValues, {scale = 1}, tween.easing.inCirc)
+        addTweenToUpdate(outTween)
+    end)
+end
+
+visualUpgradePriceValues = {}
+function reducePriceWithAnimations(reductionAmount, weaponName, itemName)  -- Accept weapon object
+    local weapon
+    for _, weaponn in pairs(Balls.getUnlockedBallTypes()) do
+        if weaponn.name == weaponName then
+            weapon = weaponn
+        end
+    end
+    if weapon == nil then return end
+    EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.05, function() 
+        playSoundEffect(upgradeSFX, 0.6, 1, false)
+        if itemId ~= nil then
+            itemTriggerAnimation(itemName)
+        end
+        
+        if not visualUpgradePriceValues[weapon.name] then
+            visualUpgradePriceValues[weapon.name] = {scale = 1}
+        end
+        
+        local inTween = tween.new(0.05, visualUpgradePriceValues[weaponName], {scale = 1.7}, tween.easing.outCirc)
+        addTweenToUpdate(inTween)
+        
+        -- Directly modify the weapon object
+        weapon.price = math.max(weapon.price - reductionAmount, 0)
+    end)
+    EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.175, function() 
+        local outTween = tween.new(0.175, visualUpgradePriceValues[weaponName], {scale = 1}, tween.easing.inCirc)
         addTweenToUpdate(outTween)
     end)
 end
 
 visualStatValues = {}
-function gainStatWithAnimation(statName, itemName)
+function gainStatWithAnimation(statName, weaponName, itemId)
     EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.05, function() 
+        if itemId ~= nil then
+            itemTriggerAnimation(itemId)
+        end
         playSoundEffect(upgradeSFX, 0.6, 1, false)
+
+        -- vieille logic pour draw un +1 number
         --[[local xMult = math.random(-100,100)/100
         local yMult = math.random(-100,100)/100
         local upgradeNumber = {x = statsWidth - 65 + xMult * 15, y = 150 + yMult * 15, scale = 0, value = moneyGain}
         table.insert(pausedUpgradeNumbers, upgradeNumber)
         local inNumberTween = tween.new(0.05, upgradeNumber, {scale = 22})
         addTweenToUpdate(inNumberTween)]]
-        if not visualMoneyValues[itemName] then
-            visualMoneyValues[itemName] = {}
+        if not visualStatValues[weaponName] then
+            visualStatValues[weaponName] = {}
         end
-        if not visualMoneyValues[itemName][statName] then
-            visualMoneyValues[itemName][statName] = {scale = 1}
+        if not visualStatValues[weaponName][statName] then
+            visualStatValues[weaponName][statName] = {scale = 1}
         end
-        local inTween = tween.new(0.05, visualMoneyValues[itemName][statName], {scale = 1.75}, tween.easing.outCirc)
+        local inTween = tween.new(0.05, visualStatValues[weaponName][statName], {scale = 1.6}, tween.easing.outCirc)
         addTweenToUpdate(inTween)
-        richGetRicherUpdate(moneyBefore, Player.money)
+        local selectedWeapon = Balls.getUnlockedBallTypes()[weaponName]
+        if statName == "cooldown" then
+            selectedWeapon.stats.cooldown = math.max(1, (selectedWeapon.stats.cooldown or 1) - 1)
+        elseif statName == "speed" then
+            selectedWeapon.stats.speed = (selectedWeapon.stats.speed or 0) + 50
+        elseif statName == "amount" and selectedWeapon.type == "ball" then
+            selectedWeapon.ballAmount = (selectedWeapon.ballAmount or 1) + 1
+            Balls.addBall(selectedWeapon.name, true)
+        elseif statName == "ammo" then
+            selectedWeapon.stats.ammo = (selectedWeapon.stats.ammo or 0) + selectedWeapon.ammoMult or 1
+        else
+            selectedWeapon.stats[statName] = (selectedWeapon.stats[statName] or 0) + 1
+        end
     end)
-    EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.2, function() 
-        local outTween = tween.new(0.2, visualMoneyValues[statName], {scale = 1}, tween.easing.inCirc)
+    EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.175, function() 
+        local outTween = tween.new(0.175, visualStatValues[weaponName][statName], {scale = 1}, tween.easing.inCirc)
         addTweenToUpdate(outTween)
     end)
 end
@@ -712,7 +794,7 @@ local xpTexts = {}
 local currentPopupId = 1
 function lvlUpPopup()
     playSoundEffect(lvlUpSFX, 0.55, 1, false)
-    --[[local popup = {
+    local popup = {
         id = currentPopupId,
         x = paddle.x + paddle.width/2,
         y = paddle.y + paddle.height/2,
@@ -761,7 +843,7 @@ function lvlUpPopup()
                 break
             end
         end
-    end)]]
+    end)
 end
 
 function xpPopup(value)
@@ -807,6 +889,15 @@ function resetLvlUpPopups()
     currentPopupId = 1
 end
 
+powerupPopup = {startTime = 0, type = nil, scale = 0, angle = 0}
+
+function powerupUpdate(dt)
+    if powerupPopup.type ~= nil then
+        local elapsed = gameTime - powerupPopup.startTime
+        local angle = math.sin(elapsed * math.pi) * 15  -- Rotate at a rate of pi radians per second
+        powerupPopup.angle = angle
+    end
+end
 function drawPopups()
     for i = #lvlUpTexts, 1, -1 do
         local popup = lvlUpTexts[i]
@@ -855,6 +946,15 @@ function drawPopups()
             table.remove(xpTexts, i)
         end
         ::continue::
+    end
+    for i = #moneyPopups, 1, -1 do
+        local popup = moneyPopups[i]
+    end
+    if powerupPopup and powerupPopup.type ~= nil and powerupPopup.scale ~= 0 then
+        love.graphics.setColor(1, 1, 1, 1) -- Reset color to white after drawing popups
+        local img = powerupImgs[powerupPopup.type]
+        local scale = powerupPopup.scale
+        drawImageCentered(img, screenWidth - 250, 180, 280 * scale, 250 * scale, powerupPopup.angle or 0)
     end
     love.graphics.setColor(1, 1, 1, 1) -- Reset color to white after drawing popups
 end

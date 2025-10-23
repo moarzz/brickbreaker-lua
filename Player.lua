@@ -258,120 +258,70 @@ Player.upgradePaddle = {
 }
 
 Player.availableCores = {
-    {
+    { -- deprecated
         name = "Collector's Core",
         description = "You can have up to 5 items instead of 4.\n -1 to every stat",
         price = 0
     },
+    --[[{
+        name = "Size Core",
+        description = "gain 10% paddle size per level",
+        price = 0,
+        startingItem = "ball",
+    },
+    {
+        name = "Spray and Pray Core",
+        description = "gain +1 fireRate for every 5 Player level",
+        price = 250,
+        startingItem = "Machine Gun"
+    },
+    {
+        name = "Fast Study Core",
+        description = "gain +2% experience gain per Player Level",
+        price = 500,
+        startingItem = "Shadow Ball"
+    },
+    {
+        name = "Hacker Core",
+        description = "Weapons start with an upgradePrice of 0",
+        price = 750,
+        startingItem = "Laser Beam"
+    },
+    {
+        name = "Capitalist core",
+        description = "instead of gaining normal interest, you gain $ equal to the Player's level when you level up (max 15)",
+        price = 1000,
+        startingItem = "Rocket Launcher"
+    },]]
     {
         name = "Farm Core",
-        description = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown).\nIt takes 50% more xp for you to level up",
-        price = 500,
+        description = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown).\nIt takes 100% more xp for you to level up",
+        price = 1000,
     },
     {
         name = "Speed Core",
         description = "Start at lvl 4 with 50$, 1 random common weapon and 1 random uncommon weapon",
         price = 2000
     },
-    --[[{
+    {
         name = "Economy Core",
         description = "Always gain 15$ on level up, you cannot gain money from items",
         price = 1500,
-    },]]
-    {
-        name = "Picky Core",
-        description = "Rerolling items always costs 1$.",
-        price = 2000
     },
-    {
+    --[[{
         name = "Madness Core",
         description = "Damage is divided by 2. Cooldown is halved. Every other stat is doubled.",
         price = 5000,
-    },
-    --[[{   
-        name = "Damage Core",
-        description = "amount and fireRate are always 1 and damage is multiplied by 5",
-        price = 2000,
     },]]
 }
 
 Player.coreDescriptions = {
+    -- ["Size Core"] = "gain 10% paddle size per level",
     ["Speed Core"] = "Start at lvl 5 with 20$, 1 random common weapon and 1 random uncommon weapon",
-    -- ["Economy Core"] = "Always gain 12$ on level up, you cannot gain money from items",
+    ["Economy Core"] = "Always gain 12$ on level up, you cannot gain money from items",
     ["Collector's Core"] = "You can have up to 5 items instead of 4.\n There are only 2 items in the itemShop",
     ["Farm Core"] = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown)\nIt takes 100% more xp for you to level up and bricks grow in health 100% faster",
-    ["Picky Core"] = "Rerolling items always costs 1$.\n uncommon, rare and legendary items are twice as rare",
-    --["Damage Core"] = "Amount and fireRate are always 1 and damage is multiplied by 5",
-    ["Madness Core"] = "Damage and cooldown are reduced by 50%.\nevery other stat is doubled. bricks go twice as fast\n(can break the game)."
-    
-}
-
-Player.perkUpgrades = {
-    superSpeed = function()
-        Player.bonuses.speed = (Player.bonuses.speed or 0) * 2
-    end,
-    
-    cellularDivision = function()
-        Player.bonuses.amount = (Player.bonuses.amount or 0) * 2
-        Player.bonuses.damage = (Player.bonuses.damage or 0) / 2
-        Balls.amountIncrease()
-    end,
-    
-    warriorSpirit = function()
-        Player.bonuses.damage = (Player.bonuses.damage or 0) * 2
-        Player.bonuses.speed = (Player.bonuses.speed or 0) / 2
-    end,
-    
-    bulletStorm = function()
-        Player.perks.bulletStorm = true
-        print("bullet storm perk unlocked!")
-    end,
-    
-    burningBullets = function()
-        print("got explosive bullet.")
-        Player.perks.burningBullets = true
-    end,
-
-    timeKeeper = function()
-        Player.perks.timeKeeper = true
-    end,
-    
-    speedBounce = function()
-        Player.perks.speedBounce = true
-    end,
-
-    techSupremacy = function() 
-        Player.perks.techSupremacy = true
-    end,
-
-    shreddingFlames = function()
-        Player.perks.shreddingFlames = true
-    end,
-    
-    popBounce = function()
-        Player.perks.popBounce = true
-    end,
-    
-    brickBreaker = function()
-        Player.perks.brickBreaker = true
-    end,
-    
-    paddleSquared = function()
-        Player.perks.paddleSquared = true
-    end,
-    
-    multishot = function()
-        Player.perks.multishot = true
-        print("multishot perk unlocked!")
-    end,
-    
-    magneticField = function()
-        Player.perks.magneticField = true
-    end,
-    
-    chainReaction = function()
-        Player.perks.chainReaction = true
-    end
+    --["Madness Core"] = "Damage and cooldown are reduced by 50%.\nevery other stat is doubled. bricks go twice as fast\n(can break the game)."
 }
 
 function Player.addBonus(name)
@@ -383,20 +333,6 @@ function Player.addBonus(name)
         Player.bonusPrice[name] = 5
     end
     print("added bonus : ".. name ..  ", #Player.bonuses : " .. tableLength(Player.bonuses))
-end
-
-function Player.addPerk(name)
-    -- Add the perk to the player's perks table if it doesn't exist
-    if not Player.perks[name] then
-        Player.perks[name] = true
-        -- Call the perk's upgrade function if it exists
-        if Player.perkUpgrades[name] then
-            Player.perkUpgrades[name]()
-        end
-        print("Added perk: " .. name)
-    else
-        print("Player already has perk: " .. name)
-    end
 end
 
 function Player.reset()
@@ -430,9 +366,9 @@ end
 function Player.InterestGain()
     local moneyGain
     if Player.currentCore == "Economy Core" then
-        moneyGain = 12
+        moneyGain = 9
     else
-        moneyGain = 5 + math.floor(math.min(Player.money, 25)/5)
+        moneyGain = 6 --+ math.floor(math.min(Player.money, 25)/5)
     end
     gainMoneyWithAnimations(moneyGain)
 end
@@ -452,9 +388,6 @@ function Player.levelUp()
         Player.choosingUpgrade = true -- Set the flag to indicate leveling up
     end
     Player.xp = 0
-    if Player.level % 2 == 0 then
-        Player.upgradePaddle["paddleSize"]()
-    end
     if usingMoneySystem then
         Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.25)
     else
@@ -520,8 +453,10 @@ function Player.levelUp()
     end
 end
 
+local lastPopupTime = 0
+local cumulatedXp = 0
 function Player.gain(amount)
-    playSoundEffect(gainXpSFX, mapRange(amount, 1, 100, 0.3, 0.5), mapRangeClamped(amount, 1, 100, 0.55, 0.85))
+    
     Player.score = Player.score + amount
     Player.xp = Player.xp + amount -- XP follows score
     local farmCoreMult = (Player.currentCore == "Farm Core" and 1.5 or 1)
@@ -529,7 +464,15 @@ function Player.gain(amount)
         Player.levelUp()
     end
     upgradesUI.tryQueue()
-    xpPopup(amount)
+    -- xpPopup
+    playSoundEffect(gainXpSFX, mapRange(amount, 1, 100, 0.3, 0.5), math.min(mapRange(amount, 1, 100, 0.55, 0.85), 1))
+    if gameTime - lastPopupTime > 0.1 then
+        xpPopup(amount + cumulatedXp)
+        lastPopupTime = gameTime
+        cumulatedXp = 0
+    else
+        cumulatedXp = (cumulatedXp or 0) + amount
+    end
 end
 
 function Player.addGold(amount)

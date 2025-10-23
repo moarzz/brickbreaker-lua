@@ -232,29 +232,46 @@ function totalUpgrade()
     end
 end
 
-local xpOrbs = {}
-local function createXpOrb(x, y, amount)
-    local xpOrb = {
+local powerups = {}
+local powerupColors = {
+    freeze = {},
+    moneyBag = {},
+    nuke = {},
+    doubleSpeed = {},
+    doubleAmount = {},
+    doubleDamage = {},
+    doubleRange = {},
+    doubleFireRate = {},
+    
+}
+local function createPowerup(x, y, amount, type)
+    local powerup = {
         x = x,
         y = y,
+        type = type,
         bounceAmount = 3,
         amount = amount,
         radius = amount <= 20 and mapRangeClamped(amount, 1, 20, 4, 6) or (amount <= 125 and mapRangeClamped(amount, 20, 125, 6, 8) or mapRangeClamped(amount, 125, 500, 8, 10)),
         speedX = math.random(-75, 75),
-        speedY = 250,
-        gravity = 500,
+        speedY = -150,
+        gravity = 400,
         lifetime = 10,
         trail = {},
         creationTime = gameTime,
         timeSinceLastTrailPoint = 0
     }
-    table.insert(xpOrbs, xpOrb)
+    table.insert(powerups, powerup)
 end
 
-function createXpOrbss(amount)
+function createPowerupss(amount)
     for i=1, amount do
-        createXpOrb(math.random(100, screenWidth-100), math.random(100, screenHeight-100), math.random(1, 100))
+        createPowerup(math.random(100, screenWidth-100), math.random(100, screenHeight-100), math.random(1, 100))
     end
+end
+
+local function getRandomPowerupType()
+    local powerupTypes = {"moneyBag", "nuke", "acceleration", "doubleDamage"}
+    return powerupTypes[math.random(#powerupTypes)] 
 end
 
 brickPieces = {}
@@ -311,11 +328,11 @@ local function brickDestroyed(brick)
     table.insert(brickPieces, brickPiece1)
     table.insert(brickPieces, brickPiece2)
     table.insert(brickPieces, brickPiece3)
-    if usingNormalXpSystem then
-        Player.gain(brick.maxHealth)
-        -- createXpOrb(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth)
-    else
-        createXpOrb(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth)
+
+    Player.gain(brick.maxHealth)
+    if brick.type == "gold" then
+        local type = getRandomPowerupType()
+        createPowerup(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth, type)
     end
 end
 
@@ -1047,8 +1064,7 @@ fire = function(techName)
     end     
     if techName == "Atomic Bomb" then
         for _, brick in ipairs(bricks) do
-           -- print("brick health : " .. brick.health .. " - brick.y : " .. brick.y .. "brick.height : " .. brick.height)
-            if (brick.health > 0 )and (brick.y + brick.height > 0) then
+            if (brick.health > 0) and (brick.y + brick.height > 0) then
                 dealDamage(unlockedBallTypes["Atomic Bomb"], brick) -- Deal damage to all bricks
             end
         end
@@ -2088,6 +2104,7 @@ function Balls.initialize()
     Player.newWeaponLevelRequirement = 5
     uiOffset.x = usingMoneySystem and 0 or statsWidth * 1.5
     organiseBallList()
+    resetGoldBricksValues()
     permanentItemBonuses = {}
 end
 
@@ -2152,6 +2169,12 @@ end
 function getStat(ballTypeName, statName)
     if unlockedBallTypes[ballTypeName] then
         return (unlockedBallTypes[ballTypeName].stats[statName] or 0) + getStatItemsBonus(statName, ballList[ballTypeName]) + (Player.permanentUpgrades[statName] or 0)
+    else return 0 end
+end
+
+function getStatNoDoubling(ballTypeName, statName)
+    if unlockedBallTypes[ballTypeName] then
+        return (unlockedBallTypes[ballTypeName].stats[statName] or 0) + getStatItemBonusNoDouble(statName, ballList[ballTypeName]) + (Player.permanentUpgrades[statName] or 0)
     else return 0 end
 end
 
@@ -2576,13 +2599,14 @@ local function paddleCollisionCheck(ball, paddle)
         ball.speedY = -ball.speedY
         local hitPosition = (ball.x - (paddle.x - ball.radius)) / (paddle.width + ball.radius * 2)
         -- Calculate total speed by adding all bonuses first
-        local speedBase = ball.stats.speed + getStatItemsBonus("speed", ballList[ball.name]) * 50 + (Player.permanentUpgrades.speed or 0) * 50
-        local ballSpeed = speedBase * (Player.currentCore == "Madness Core" and 2 or 1)
+        local ballSpeed = getStat(ball.name, "speed")
         ball.speedX = (hitPosition - 0.5) * 2 * math.abs(ballSpeed * 0.99)
         local speedYSquared = math.max(0, ballSpeed^2 - ball.speedX^2)
         ball.speedY = math.sqrt(speedYSquared) * (ball.speedY > 0 and 1 or -1)
         
         ball.speedExtra = math.min((ball.speedExtra or 1) + 5, 12)
+
+        Balls.adjustSpeed(ball.name)
         
         for _, ballType in pairs(unlockedBallTypes) do
             if ballType.onPaddleBounce then
@@ -3207,6 +3231,53 @@ local function incrediBallColorUpdate(alpha)
     
 end
 
+local function powerupPickup(powerup)
+    playSoundEffect(lvlUpSFX, 0.55, 1, false)   
+    powerupPopup.type = powerup.type
+    powerupPopup.startTime = gameTime
+    local inTween = tween.new(0.15, powerupPopup, {scale = 1}, tween.easing.outCirc)
+    addTweenToUpdate(inTween)
+    print("powerup type : " .. powerup.type)
+    if powerup.type == "moneyBag" then
+        Player.money = Player.money + math.random(1,5)
+    elseif powerup.type == "nuke" then
+        for _, brick in ipairs(bricks) do
+            if (brick.health > 0) and (brick.y + brick.height > 0) then
+                dealDamage({stats = {damage = math.ceil(Player.level * 2.35)}}, brick) -- Deal damage to all bricks
+            end
+        end
+    elseif powerup.type == "freeze" then
+        brickFreeze = true
+        brickFreezeTime = gameTime
+    elseif powerup.type == "acceleration" then
+        accelerationOn = true
+        for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
+            if weapon.type == "ball" then
+                Balls.adjustSpeed(weapon.name)
+            end
+        end
+        Timer.after(12, function() 
+            local outTween = tween.new(0.15, powerupPopup, {scale = 0}, tween.easing.inCirc)
+            addTweenToUpdate(outTween)
+            Timer.after(0.15, function()
+                powerupPopup.type = nil
+            end)
+            accelerationOn = false
+        end)
+    elseif powerup.type == "doubleDamage" then
+        statDoubled = "damage"
+        Timer.after(12, function() 
+            local outTween = tween.new(0.15, powerupPopup, {scale = 0}, tween.easing.inCirc)
+            addTweenToUpdate(outTween)
+            Timer.after(0.15, function()
+                powerupPopup.type = nil
+            end)
+            if statDoubled == "damage" then
+                statDoubled = nil
+            end
+        end)
+    end      
+end
 
 -- Modify the Balls.update function to include shadowBall updates
 function Balls.update(dt, paddle, bricks)
@@ -3668,15 +3739,15 @@ function Balls.update(dt, paddle, bricks)
         end
     end
 
-    for i=#xpOrbs, 1, -1 do
-    -- xpOrb update logic
-        local orb = xpOrbs[i]
+    for i=#powerups, 1, -1 do
+        -- powerup update logic
+        local orb = powerups[i]
 
         -- movement logic
         orb.y = orb.y + orb.speedY * dt
         orb.x = orb.x + orb.speedX * dt
         local totalSpeed = math.sqrt(orb.speedX * orb.speedX + orb.speedY * orb.speedY)
-        local maxSpeed = 1500
+        local maxSpeed = 500
         if totalSpeed > maxSpeed then
             orb.speedX = orb.speedX * maxSpeed / totalSpeed
             orb.speedY = orb.speedY * maxSpeed / totalSpeed
@@ -3690,7 +3761,7 @@ function Balls.update(dt, paddle, bricks)
                 orb.speedY = math.min(-orb.speedY * 0.85, -500)
                 orb.bounceAmount = orb.bounceAmount - 1
             else
-                table.remove(xpOrbs, i)
+                table.remove(powerups, i)
             end
         end
 
@@ -3708,10 +3779,11 @@ function Balls.update(dt, paddle, bricks)
         orb.speedX = orb.speedX - math.cos(angle) * attractionStrength * dt
         orb.speedY = orb.speedY - math.sin(angle) * attractionStrength * dt
         if distanceToPaddle < 2 then
-            Player.gain(orb.amount)
-            -- playSoundEffect(gainXpSFX, mapRange(orb.amount, 1, 100, 0.5, 0.9), mapRange(orb.amount, 1, 100, 0.8, 1))
+            -- xp orb pickup
+            
+            powerupPickup(orb)
                 
-            table.remove(xpOrbs, i)
+            table.remove(powerups, i)
         end
 
         -- trail logic
@@ -4052,19 +4124,24 @@ function Balls:draw()
     end
 
     if not usingMoneySystem then
-        for _, xpOrb in ipairs(xpOrbs) do
-            if #xpOrb.trail > 1 then
-                for i = 1, #xpOrb.trail - 1 do
-                    local p1 = xpOrb.trail[i]
-                    local p2 = xpOrb.trail[i + 1]
-                    local t = (#xpOrb.trail - i) / #xpOrb.trail
-                    local alpha = p1.alpha * t -- Fade effect
-                    local lineWidth = xpOrb.radius * t * 1.5 -- Line width decreases with trail length
 
-                    love.graphics.setColor(90/255, 150/255, 0.75, alpha * 0.5 + 0.5) -- Light purple color with fading alpha
-                    love.graphics.setLineWidth(lineWidth)
-                    love.graphics.line(p1.x, p1.y, p2.x, p2.y)
+        -- draw powerups
+        for _, powerup in ipairs(powerups) do
+            if #powerup.trail > 1 then
+                -- draw trail
+                for i = 1, #powerup.trail do
+                    local p = powerup.trail[i]
+                    local t = (#powerup.trail > 1) and ((i - 1) / (#powerup.trail - 1)) or 0
+                    local alpha = (p.alpha or 1) * (1 - t) * 0.9 + 0.05
+                    local radius = powerup.radius * (0.6 * (1 - t) + 0.15)
+
+                    love.graphics.setColor(90/255, 150/255, 0.75, alpha)
+                    love.graphics.circle("fill", p.x, p.y, radius)
                 end
+
+                -- draw powerup image
+                love.graphics.setColor(1,1,1,1)
+                drawImageCentered(powerupImgs[powerup.type], powerup.x, powerup.y, 70, 62)
             end
         end
     end

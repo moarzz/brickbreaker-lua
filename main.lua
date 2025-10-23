@@ -44,7 +44,7 @@ GameState = {
     PLAYING = "playing",
     PAUSED = "paused",
     SETTINGS = "settings",
-    UPGRADES = "upgrades",
+    UPGRADES = "Shop",
     TUTORIAL = "tutorial",
     VICTORY = "victory",
     GAMEOVER = "gameover",
@@ -131,7 +131,7 @@ function resetGame()
     paddle = {
         x = screenWidth / 2 - 100,
         y = screenHeight - 400,
-        _width = 200, -- Base width + size upgrade
+        _width = 300, -- Base width + size upgrade
         widthMult = 1,
         height = 20,
         speed = 900,
@@ -216,6 +216,7 @@ local function loadAssets()
     auraImg = love.graphics.newImage("assets/sprites/aura.png")
     healImg = love.graphics.newImage("assets/sprites/heal.png")
     brickImg = love.graphics.newImage("assets/sprites/brick.png")
+    goldBrickImg = love.graphics.newImage("assets/sprites/goldBrick.png")
     heartImg = love.graphics.newImage("assets/sprites/heart.png") -- Heart image for health
     muzzleFlashImg = love.graphics.newImage("assets/sprites/muzzleFlash.png")
     rocketImg = love.graphics.newImage("assets/sprites/rocket.png")
@@ -231,7 +232,6 @@ local function loadAssets()
     uiWindowImg = love.graphics.newImage("assets/sprites/UI/window.png")
     uiBigWindowImg = love.graphics.newImage("assets/sprites/UI/windowTall.png")
     lightBeamImg = love.graphics.newImage("assets/sprites/lightBeam.png")
-
     --Icons
     iconsImg = {
         amount = love.graphics.newImage("assets/sprites/UI/icons/New/amount.png"),
@@ -241,6 +241,17 @@ local function loadAssets()
         fireRate = love.graphics.newImage("assets/sprites/UI/icons/New/fireRate.png"),
         speed = love.graphics.newImage("assets/sprites/UI/icons/New/speed.png"),
         range = love.graphics.newImage("assets/sprites/UI/icons/New/range.png"),
+    }
+    --powerups
+    powerupImgs = {
+        moneyBag = love.graphics.newImage("assets/sprites/powerups/moneyBag.png"),
+        freeze = love.graphics.newImage("assets/sprites/powerups/freeze.png"),
+        nuke = love.graphics.newImage("assets/sprites/powerups/nuke.png"),
+        doubleAmount = love.graphics.newImage("assets/sprites/powerups/doubleAmount.png"),
+        doubleSpeed = love.graphics.newImage("assets/sprites/powerups/doubleSpeed.png"),
+        doubleFireRate = love.graphics.newImage("assets/sprites/powerups/doubleFireRate.png"),
+        doubleDamage = love.graphics.newImage("assets/sprites/powerups/doubleDamage.png"),
+        acceleration = love.graphics.newImage("assets/sprites/powerups/acceleration.png")
     }
 
     -- load sounds
@@ -373,6 +384,11 @@ local function spawnBoss()
             end
         end
     end)
+end
+
+local totalGoldBricksGeneratedThisRun = 0
+function resetGoldBricksValues()
+    totalGoldBricksGeneratedThisRun = 0
 end
 
 local healBricks = {}
@@ -511,6 +527,29 @@ local function generateRow(brickCount, yPos)
                     if canHeal then
                         Timer.after(1.75 + math.random(1,175)/100, function() healSelf(healBrick) end)
                     end
+                elseif math.random(1, 100) < 20 and (totalGoldBricksGeneratedThisRun < math.floor((gameTime+15)/5)) then
+                    totalGoldBricksGeneratedThisRun = totalGoldBricksGeneratedThisRun + 1
+                    local goldBrick = {
+                        type = "gold",
+                        id = brickId,
+                        x = startLocation + (xPos - 1) * (brickWidth + brickSpacing) + 5 + rowOffset + rowXOffset,
+                        y = yPos,
+                        drawOffsetX = 0,
+                        drawOffsetY = 0,
+                        drawOffsetRot = 0,
+                        drawScale = 1,
+                        width = brickWidth,
+                        height = brickHeight,
+                        destroyed = false,
+                        health = math.ceil(brickHealth/2) * 4,
+                        maxHealth = math.ceil(brickHealth/2),
+                        color = {1, 1, 1, 1},
+                        hitLastFrame = false,
+                        lastHitVfxTime = 0,
+                        lastSparkleTime = 0
+                    }
+                    table.insert(bricks, goldBrick)
+                    brickId = brickId + 1
                 else
                     local brickColor = getBrickColor(brickHealth)
                     table.insert(bricks, {
@@ -705,7 +744,7 @@ function love.load()
     paddle = {
         x = screenWidth / 2 - 50,
         y = screenHeight/2,
-        _width = 200, -- Base width + size upgrade
+        _width = 300, -- Base width + size upgrade
         widthMult = 1,
         height = 20,
         speed = 900, -- Base speed + speed upgrade
@@ -754,9 +793,19 @@ function getHighestBrickY(lowestInstead)
     return highestY
 end
 
+brickFreeze = false
+brickFreezeTime = gameTime
 function getBrickSpeedByTime()
     -- Scale speed from 0.5 to 3 over 30 minutes
-    return mapRange(gameTime, 0, 2000, 0.5, 3) * (Player.currentCore == "Madness Core" and 2 or 1)
+    local returnValue = mapRange(gameTime, 0, 2000, 0.5, 3) * (Player.currentCore == "Madness Core" and 2 or 1)
+    if brickFreeze == true then
+        if gameTime - brickFreezeTime > 10 then
+            brickFreeze = false
+        else
+            return 0
+        end
+    end
+    return returnValue
 end
 
 currentBrickSpeed = 1
@@ -791,30 +840,23 @@ local function moveBricksDown(dt)
     
     local currentTime = love.timer.getTime()
     local isInHitState = (currentTime - Player.lastHitTime) < 2.0 -- Check if within 2 seconds of hit
-    
-    if isInHitState then
-        -- Use constant speed of -300 during hit state
-        for _, brick in ipairs(bricks) do
-            if not brick.destroyed then
-                if brick.type == "boss" then
-                    -- Boss bricks do NOT get pushed back when player is hit
-                    -- Do nothing
-                else
-                    brick.y = brick.y - 300 * dt
+    -- Normal speed calculation
+    currentBrickSpeed = (currentBrickSpeed == getBrickSpeedByTime() and currentBrickSpeed or (getBrickSpeedMult() < currentBrickSpeed and math.max(currentBrickSpeed - dt * 2, getBrickSpeedMult()) or math.min(currentBrickSpeed + dt * 2, getBrickSpeedMult())))
+    local speedMult = currentBrickSpeed -- Get the combined speed multiplier
+    for _, brick in ipairs(bricks) do
+        if not brick.destroyed and brick.health > 0 then
+            if brick.type == "gold" then
+                if brick.lastSparkleTime then
+                    if gameTime - brick.lastSparkleTime >= 0.5 then
+                        createSpriteAnimation(brick.x + math.random(0, 100)/100 * brick.width, brick.y + brick.height/4 + math.random(0, 75)/100 * brick.height, 0.35, sparkleVFX, 89, 166, 0.0425, 0, false, 1, 1, 0)
+                        brick.lastSparkleTime = gameTime
+                    end
                 end
             end
-        end
-    else
-        -- Normal speed calculation
-        currentBrickSpeed = (currentBrickSpeed == getBrickSpeedByTime() and currentBrickSpeed or (getBrickSpeedMult() < currentBrickSpeed and math.max(currentBrickSpeed - dt * 2, getBrickSpeedMult()) or math.min(currentBrickSpeed + dt * 2, getBrickSpeedMult())))
-        local speedMult = currentBrickSpeed -- Get the combined speed multiplier
-        for _, brick in ipairs(bricks) do
-            if not brick.destroyed then
-                if brick.type == "boss" then
-                    brick.y = brick.y + brickSpeed.value * dt * speedMult * mapRangeClamped(brick.y, - boss.height * 1.5, -boss.height, 5, 0.5)
-                else
-                    brick.y = brick.y + brickSpeed.value * dt * speedMult * (brick.speedMult or 1)
-                end
+            if brick.type == "boss" then
+                brick.y = brick.y + brickSpeed.value * dt * speedMult * mapRangeClamped(brick.y, - boss.height * 1.5, -boss.height, 5, 0.5)
+            else
+                brick.y = brick.y + brickSpeed.value * dt * speedMult * (brick.speedMult or 1)
             end
         end
     end
@@ -1168,7 +1210,7 @@ function drawMenu()
 
     -- Upgrades button
     buttonID = generateNextButtonID()
-    if suit.Button("Upgrades", {id=buttonID}, centerX, startY + (buttonHeight + buttonSpacing) * 3, buttonWidth, buttonHeight).hit then
+    if suit.Button("Shop", {id=buttonID}, centerX, startY + (buttonHeight + buttonSpacing) * 3, buttonWidth, buttonHeight).hit then
         playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.UPGRADES
         loadGameData() -- Load game data when entering upgrades screen
@@ -1361,8 +1403,13 @@ function drawBricks()
             local centerY = brick.y + brick.height / 2 + brick.drawOffsetY
             
             -- Draw brick
-            love.graphics.setColor(color)
-            love.graphics.draw(brickImg, centerX, centerY, brick.drawOffsetRot, scaleX, scaleY, brickImg:getWidth() / 2, brickImg:getHeight() / 2)
+            if brick.type == "gold" then
+                love.graphics.setColor(1,1,1,1)
+                love.graphics.draw(goldBrickImg, centerX, centerY, brick.drawOffsetRot, scaleX, scaleY, brickImg:getWidth() / 2, brickImg:getHeight() / 2)
+            else
+                love.graphics.setColor(color)
+                love.graphics.draw(brickImg, centerX, centerY, brick.drawOffsetRot, scaleX, scaleY, brickImg:getWidth() / 2, brickImg:getHeight() / 2)
+            end
             
             -- Draw health text (black outline)
             local text = tostring(brick.health)
@@ -1609,7 +1656,7 @@ function drawVictoryScreen()
         currentGameState = GameState.MENU
     end
     -- Upgrades button
-    if suit.Button("Upgrades", {id = "victory_upgrades"}, startX + (buttonW + spacing) * 2, y, buttonW, buttonH).hit then
+    if suit.Button("Shop", {id = "victory_upgrades"}, startX + (buttonW + spacing) * 2, y, buttonW, buttonH).hit then
         playSoundEffect(selectSFX, 1, 0.8)
         resetGame()
         currentGameState = GameState.UPGRADES
@@ -1626,12 +1673,6 @@ function drawVictoryScreen()
     local spacing = 60
     local totalWidth = buttonW * 2 + spacing
     local startX = (screenWidth - totalWidth) / 2
-end
-
-local function drawLevelUp()
-    setFont(30)
-    local text = Player.currentCore == "Economy Core" and "Press SPACE to finish upgrading and gain +" .. 12 .. "$\n(+1$ for every 5 unspent $, max 10)" or "Press SPACE to finish upgrading and gain +" .. 8 .. "$\n(+1$ for every 5 unspent $, max 5)"
-    -- suit.Label(text, {align = "center"}, screenWidth/2 - 400, 75, 800, screenWidth/2 + 250)
 end
 
 inGame = false
@@ -1767,7 +1808,7 @@ function love.draw()
             playSoundEffect(selectSFX, 1, 0.8)
             currentGameState = GameState.MENU
         end
-        if suit.Button("Upgrades", {color = invisButtonColor}, screenWidth - uiLabelImg:getWidth()*0.8 - 20, 20, uiLabelImg:getWidth()*0.8, uiLabelImg:getHeight()*0.8).hit then
+        if suit.Button("Shop", {color = invisButtonColor}, screenWidth - uiLabelImg:getWidth()*0.8 - 20, 20, uiLabelImg:getWidth()*0.8, uiLabelImg:getHeight()*0.8).hit then
             playSoundEffect(selectSFX, 1, 0.8)
             currentGameState = GameState.UPGRADES
         end
@@ -1922,15 +1963,17 @@ function love.draw()
             GameOverDraw()
         end
     end
-    if Player.levelingUp and not Player.choosingUpgrade and not usingMoneySystem then
-        drawLevelUp()
-    end
     if Player.choosingUpgrade then
         drawLevelUpShop()
     end
     dress:draw()    -- Draw tooltip last (on top of everything)
     KeywordSystem:drawTooltip()
     confetti:draw()
+
+    -- draw borders for when the game is in windowed mode
+    love.graphics.setColor(0, 0, 0, 0.7)
+    love.graphics.rectangle("fill", -1000, -1000, 1000, 4000)
+    love.graphics.rectangle("fill", screenWidth, -1000, 1000, 4000)
     
     WindowCorrector.startDrawingToCanvas(gameCanvas);
     --love.graphics.setCanvas(gameCanvas)
@@ -2078,7 +2121,12 @@ function love.keypressed(key)
         -----------------------------------
 
         if key == "6" then
-
+            accelerationOn = not false
+            for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
+                if weapon.type == "ball" then
+                    Balls.adjustSpeed(weapon.name)
+                end
+            end
         end
 
         if key == "7" then
