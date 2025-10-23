@@ -2288,7 +2288,7 @@ local function drawItemShop()
             itemX = centerX - windowW/2
             itemY = centerY - windowH/2
 
-            local upgradePrice = item.rarity == "common" and 8 or item.rarity == "uncommon" and 12 or item.rarity == "rare" and 16 or item.rarity == "legendary" and 20 or 0
+            local upgradePrice = item.rarity == "common" and 10 or item.rarity == "uncommon" and 15 or item.rarity == "rare" and 20 or item.rarity == "legendary" and 25 or 0
             if item.consumable then
                 upgradePrice = math.floor(upgradePrice / 2)
             end

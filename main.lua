@@ -529,7 +529,7 @@ local function generateRow(brickCount, yPos)
                     if canHeal then
                         Timer.after(1.75 + math.random(1,175)/100, function() healSelf(healBrick) end)
                     end
-                elseif math.random(1, 100) < 20 and (totalGoldBricksGeneratedThisRun < math.floor((gameTime+10)/75)) then
+                elseif math.random(1, 100) < 20 and (totalGoldBricksGeneratedThisRun < math.floor((gameTime+20)/70)) then
                     totalGoldBricksGeneratedThisRun = totalGoldBricksGeneratedThisRun + 1
                     local goldBrick = {
                         type = "gold",

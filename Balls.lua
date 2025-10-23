@@ -1259,7 +1259,7 @@ local function cast(spellName, brick, forcedDamage)
     if spellName == "Shadow Ball" then
         local angle = (Player.currentCore == "Spray and Pray Core" or hasItem("Spray and Pray")) and (math.random() * 0.5 + 0.25) * math.pi or (math.random() * 0.2 + 0.4) * math.pi
         local speed = 350
-        local range = (Player.currentCore == "Madness Core" and 2 or 1) * (unlockedBallTypes["Shadow Ball"].stats.range + getStatItemsBonus("range", unlockedBallTypes["Shadow Ball"]) + (Player.permanentUpgrades.range or 0))
+        local range = 1.5 +((Player.currentCore == "Madness Core" and 2 or 1) * (unlockedBallTypes["Shadow Ball"].stats.range + getStatItemsBonus("range", unlockedBallTypes["Shadow Ball"]) + (Player.permanentUpgrades.range or 0))) * 0.5
         local shadowBall = {
             name = "Shadow Ball",
             x = paddle.x + paddle.width / 2 + paddle.width * ((angle/math.pi)-0.5)* -0.5,
