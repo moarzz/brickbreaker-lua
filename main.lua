@@ -369,10 +369,12 @@ local function spawnBoss()
     end)
     local bossHealTimer = Timer.every(2, function()
         if boss.y >= -bossHeight + 150 and canHeal then
+
+            --[[ self heal
             local healValue = math.floor(mapRange(boss.health, 1, 5000, 1, 50))
             boss.health = boss.health + healValue
             healThisFrame = healThisFrame + healValue
-            healNumber(healValue, boss.x + boss.width/2, math.max(10, boss.y + boss.height/2))
+            healNumber(healValue, boss.x + boss.width/2, math.max(10, boss.y + boss.height/2))]]
             for _, brick in ipairs(bricks) do
                 if brick.type ~= "boss" then
                     local healAmount = math.ceil(brick.health/(brick.type == "big" and 160 or 80))

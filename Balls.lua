@@ -912,6 +912,9 @@ local function shoot(gunName, ball)
             gun.currentAmmo = (gun.stats.ammo + getStatItemsBonus("ammo", gun) * (gun.ammoMult or 1)) * (Player.currentCore == "Madness Core" and 2 or 1)
 
             local cooldownValue = (Player.currentCore == "Madness Core" and 0.5 or 1) * (Player.currentCore == "Cooldown Core" and 2 or gun.stats.cooldown + getStatItemsBonus("cooldown", gun) + (Player.permanentUpgrades.cooldown or 0)) * 0.5
+            if accelerationOn then
+                cooldownValue = cooldownValue * 0.5
+            end
             Timer.after(cooldownValue, function() shoot(gunName) end)
             --cooldownVFX(gun.stats.cooldown * 2, paddle.x + paddle.width / 2, paddle.y)
         end
@@ -1110,6 +1113,9 @@ fire = function(techName)
             -- Reset ammo and set cooldown
             if unlockedBallTypes["Rocket Launcher"].currentAmmo <= 0 then
                 local cooldownValue = (Player.currentCore == "Cooldown Core" and 2 or unlockedBallTypes["Rocket Launcher"].stats.cooldown + getStatItemsBonus("cooldown", unlockedBallTypes["Rocket Launcher"]) + (Player.permanentUpgrades.cooldown or 0)) * 0.75 * (Player.currentCore == "Madness Core" and 0.5 or 1)
+                if accelerationOn then
+                    cooldownValue = cooldownValue * 0.5
+                end
                 Timer.after(math.max(cooldownValue, (Player.currentCore == "Madness Core" and 0.5 or 1) * 6/(Player.currentCore == "Damage Core" and 1 or (unlockedBallTypes["Rocket Launcher"].stats.fireRate + getStatItemsBonus("fireRate", unlockedBallTypes["Rocket Launcher"]) + (Player.permanentUpgrades.fireRate or 0)))), function()
                     unlockedBallTypes["Rocket Launcher"].currentAmmo = (Player.currentCore == "Madness Core" and 2 or 1) * unlockedBallTypes["Rocket Launcher"].stats.ammo + (getStatItemsBonus("ammo", unlockedBallTypes["Rocket Launcher"]) * (unlockedBallTypes["Rocket Launcher"].ammoMult or 1))
                     fire("Rocket Launcher")
@@ -1148,6 +1154,9 @@ fire = function(techName)
                     Timer.cancel(ammoDepletionTimer)
                     -- Refill ammo after cooldown
                     local cooldownValue = (Player.currentCore == "Madness Core" and 0.5 or 1) * (flamethrower.stats.cooldown + getStatItemsBonus("cooldown", flamethrower) + (Player.permanentUpgrades.cooldown or 0))
+                    if accelerationOn then
+                        cooldownValue = cooldownValue * 0.5
+                    end
                     Timer.after(cooldownValue * 0.6, function()
                         flamethrower.currentAmmo = (Player.currentCore == "Madness Core" and 2 or 1) * (flamethrower.stats.ammo + getStatItemsBonus("ammo", flamethrower))
                         fire("Flamethrower")
@@ -1187,7 +1196,11 @@ fire = function(techName)
             Timer.after(1 + math.random(0, 100) / 100, function()
                 turretShoot(turret)
             end)
-            Timer.after(1.5 + (Player.currentCore == "Madness Core" and 0.5 or 1) * ((turretType.stats.cooldown + getStatItemsBonus("cooldown", turretType) + (Player.permanentUpgrades.cooldown or 0)) * 0.45), function()
+            local cooldownValue = 1.5 + (Player.currentCore == "Madness Core" and 0.5 or 1) * ((turretType.stats.cooldown + getStatItemsBonus("cooldown", turretType) + (Player.permanentUpgrades.cooldown or 0)) * 0.45)
+            if accelerationOn then
+                cooldownValue = cooldownValue * 0.5
+            end
+            Timer.after(cooldownValue, function()
                 -- Refill ammo after cooldown
                 turret.currentAmmo = (Player.currentCore == "Madness Core" and 2 or 1) * (turretType.stats.ammo + (getStatItemsBonus("ammo", turretType) + (Player.permanentUpgrades.ammo or 0)) * (turretType.ammoMult or 1))
                 fire("Gun Turrets")
@@ -1298,12 +1311,12 @@ local function cast(spellName, brick, forcedDamage)
         local timeUntilNextCast = (3 + math.max(cooldownValue, 0))/4
     end
     if spellName == "Light Beam" then        
-        local amountValue = (Player.currentCore == "Madness Core" and 2 or 1) * (unlockedBallTypes["Light Beam"].stats.ammo + (getStatItemsBonus("ammo", unlockedBallTypes["Light Beam"]) + (Player.permanentUpgrades.ammo or 0)) * unlockedBallTypes["Light Beam"].ammoMult)
-        for i=1, amountValue do
-            Timer.after((i-1) * 0.125 + 0.05, function()
+        local ammoValue = (Player.currentCore == "Madness Core" and 2 or 1) * (unlockedBallTypes["Light Beam"].stats.ammo + (getStatItemsBonus("ammo", unlockedBallTypes["Light Beam"]) + (Player.permanentUpgrades.ammo or 0)))
+        for i=1, ammoValue do
+            Timer.after((i-1) * 0.2 + 0.05, function()
                 playSoundEffect(lightBeamSFX, 0.2, 0.6)
             end)
-            Timer.after(i * 0.125, function()
+            Timer.after(i * 0.2, function()
                 local angle = math.pi + math.random(-10, 10)/100 * math.pi
                 local lightBeam = {
                     angle = angle,
@@ -1324,8 +1337,11 @@ local function cast(spellName, brick, forcedDamage)
                     addTweenToUpdate(tweenEnd)
                 end)
             end)        end
-        local cooldownValue = (Player.currentCore == "Madness Core" and 0.5 or 1) * 1 * (Player.currentCore == "Cooldown Core" and 2 or unlockedBallTypes["Light Beam"].stats.cooldown + getStatItemsBonus("cooldown", unlockedBallTypes["Light Beam"]) + (Player.permanentUpgrades.cooldown or 0))
-        Timer.after(0.125 * amountValue + cooldownValue, function()
+        local cooldownValue = (Player.currentCore == "Madness Core" and 0.5 or 1) * 1.5 * (Player.currentCore == "Cooldown Core" and 2 or unlockedBallTypes["Light Beam"].stats.cooldown + getStatItemsBonus("cooldown", unlockedBallTypes["Light Beam"]) + (Player.permanentUpgrades.cooldown or 0))
+        if accelerationOn then
+            cooldownValue = cooldownValue * 0.5
+        end
+        Timer.after(0.2 * ammoValue + cooldownValue, function()
             cast("Light Beam")
         end)
     end
@@ -1362,6 +1378,9 @@ local function cast(spellName, brick, forcedDamage)
             end)
         end
         local cooldownValue = (Player.currentCore == "Madness Core" and 0.5 or 1) * (Player.currentCore == "Cooldown Core" and 2 or unlockedBallTypes["Lightning Pulse"].stats.cooldown + getStatItemsBonus("cooldown", unlockedBallTypes["Lightning Pulse"]) + (Player.permanentUpgrades.cooldown or 0))
+        if accelerationOn then
+            cooldownValue = cooldownValue * 0.5
+        end
         local timeUntilNextCast = (1 + math.max(cooldownValue, 0))/5
         print("Next Lightning Pulse in: " .. timeUntilNextCast .. " seconds")
         Timer.after(timeUntilNextCast, function()
@@ -1835,7 +1854,7 @@ local function ballListInit()
                 ammo = 4,
                 cooldown = 11,
                 fireRate = 1,
-                range = 2
+                range = 3
             }
         },
         ["Saw Blades"] = {
@@ -2692,6 +2711,9 @@ local function techUpdate(dt)
         if unlockedBallTypes["Laser"].charging then
             unlockedBallTypes["Laser"].currentChargeTime = unlockedBallTypes["Laser"].currentChargeTime + dt
             local cooldownValue = Player.currentCore == "Cooldown Core" and 2 or (Player.currentCore == "Madness Core" and 0.5 or 1) * math.max((unlockedBallTypes["Laser"].stats.cooldown + getStatItemsBonus("cooldown", unlockedBallTypes["Laser"]) + (Player.permanentUpgrades.cooldown or 0)) + 2, 1)
+            if accelerationOn then
+                cooldownValue = cooldownValue * 0.5
+            end
             if unlockedBallTypes["Laser"].currentChargeTime >= (cooldownValue) then
                 unlockedBallTypes["Laser"].charging = false
                 unlockedBallTypes["Laser"].currentChargeTime = 0
@@ -3367,7 +3389,7 @@ function Balls.update(dt, paddle, bricks)
         if bricksInEllipse(rocket.x, rocket.y, 20, 60) then
             playSoundEffect(explosionSFX, 0.5, 1, false, true)
             -- Explosion damage
-            local scale = (unlockedBallTypes["Rocket Launcher"].stats.range + getStatItemsBonus("range", unlockedBallTypes["Rocket Launcher"]) + (Player.permanentUpgrades.range or 0)) * (Player.currentCore == "Madness Core" and 2 or 1)
+            local scale = 2 + ((unlockedBallTypes["Rocket Launcher"].stats.range + getStatItemsBonus("range", unlockedBallTypes["Rocket Launcher"]) + (Player.permanentUpgrades.range or 0)) * (Player.currentCore == "Madness Core" and 2 or 1)) * 0.5
             local explosionX, explosionY = rocket.x - math.sin(math.rad(rocket.angle)) * rocket.radius, rocket.y - math.cos(math.rad(rocket.angle)) * rocket.radius
             local touchingBricks = getBricksInCircle((explosionX), (explosionY), scale*25)
             for _, hitBrick in ipairs(touchingBricks) do
@@ -3931,7 +3953,11 @@ local function techDraw()
 
         -- draw charging bars
         if unlockedBallTypes["Laser"].charging then
-            local chargeProgress = unlockedBallTypes["Laser"].currentChargeTime / (((Player.currentCore == "Cooldown Core" and 2 or math.max((unlockedBallTypes["Laser"].stats.cooldown + getStatItemsBonus("cooldown", unlockedBallTypes["Laser"]) + (Player.permanentUpgrades.cooldown or 0)) + 2, 1))) * (Player.currentCore == "Madness Core" and 0.5 or 1))
+            local cooldownValue = (((Player.currentCore == "Cooldown Core" and 2 or math.max((unlockedBallTypes["Laser"].stats.cooldown + getStatItemsBonus("cooldown", unlockedBallTypes["Laser"]) + (Player.permanentUpgrades.cooldown or 0)) + 2, 1))) * (Player.currentCore == "Madness Core" and 0.5 or 1))
+            if accelerationOn then
+                cooldownValue = cooldownValue * 0.5
+            end
+            local chargeProgress = unlockedBallTypes["Laser"].currentChargeTime / cooldownValue
             local opacityMult = mapRangeClamped(chargeProgress, 0.6, 1, 0, 0.75)
             love.graphics.setColor(0.85, 0.85, 0.85, opacityMult)
             love.graphics.rectangle("fill", paddle.x, 0, 1, paddle.y)

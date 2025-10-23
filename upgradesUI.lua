@@ -499,7 +499,7 @@ local items = {
         stats = {fireRate = 2},
         unique = true,
         descriptionPointers = {teslaChance = function() return hasItem("Four Leafed Clover") and 50 or 25 end},
-        description = "<font=bold>On Bullet Hit\n<teslaChance>%</font=bold><font=default> chance to start an electric current that jumps to 3 nearby bricks. Dealing the bullet's <color=damage>damage</color>",
+        description = "<font=bold>On Bullet Hit\n<teslaChance>%</font=bold><font=default> chance to start an electric current that jumps to 3 nearby bricks. Dealing the bullet's <color=damage>damage",
         rarity = "uncommon",
         imageReference = "assets/sprites/UI/itemIcons/Tesla-Bullets.png",
     },
@@ -831,7 +831,7 @@ local items = {
         consumable = true,
         onBuy = function()
             for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
-                if not weapon.noAmount and weapon.type == "ball" then
+                if not weapon.noAmount and weakpon.type == "ball" then
                     weapon.ballAmount = weapon.ballAmount + 1
                     Balls.addBall(weapon.name, true)
                 end
@@ -893,6 +893,7 @@ local legendaryItemsConsumable = {}
 local testItems = {}
 
 function initializeRarityItemLists()
+    local amountOfCopies = 5
     commonItems = {}
     commonItemsConsumable = {}
     uncommonItems = {}
@@ -930,7 +931,7 @@ function initializeRarityItemLists()
             if consumable then
                 table.insert(commonItemsConsumable, itemName)
             else
-                for i=1, 3 do
+                for i=1, amountOfCopies do
                     table.insert(commonItems, itemName)
                 end
             end
@@ -938,7 +939,7 @@ function initializeRarityItemLists()
             if consumable then
                 table.insert(uncommonItemsConsumable, itemName)
             else
-                for i=1, 3 do
+                for i=1, amountOfCopies do
                     table.insert(uncommonItems, itemName)
                 end
             end
@@ -946,7 +947,7 @@ function initializeRarityItemLists()
             if consumable then
                 table.insert(rareItemsConsumable, itemName)
             else
-                for i=1, 3 do
+                for i=1, amountOfCopies do
                     table.insert(rareItems, itemName)
                 end
             end
@@ -954,7 +955,7 @@ function initializeRarityItemLists()
             if consumable then
                 table.insert(legendaryItemsConsumable, itemName)
             else
-                for i=1, 3 do
+                for i=1, amountOfCopies do
                     table.insert(legendaryItems, itemName)
                 end
             end
@@ -2287,7 +2288,7 @@ local function drawItemShop()
             itemX = centerX - windowW/2
             itemY = centerY - windowH/2
 
-            local upgradePrice = item.rarity == "common" and 10 or item.rarity == "uncommon" and 20 or item.rarity == "rare" and 30 or item.rarity == "legendary" and 40 or 0
+            local upgradePrice = item.rarity == "common" and 8 or item.rarity == "uncommon" and 12 or item.rarity == "rare" and 16 or item.rarity == "legendary" and 20 or 0
             if item.consumable then
                 upgradePrice = math.floor(upgradePrice / 2)
             end

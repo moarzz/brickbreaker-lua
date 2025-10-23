@@ -394,13 +394,13 @@ function Player.levelUp()
         if Player.level < 5 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 2)
         elseif Player.level < 10 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.6)
-        elseif Player.level < 15 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.55)
+        elseif Player.level < 15 then
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.5)
         elseif Player.level < 20 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.45)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.4)
         elseif Player.level < 25 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.35)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.3)
         elseif Player.level < 30 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.25)
         elseif Player.level < 35 then

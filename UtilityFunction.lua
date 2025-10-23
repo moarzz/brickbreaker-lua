@@ -911,7 +911,7 @@ moneyBagValues = {
         self.currentXp = self.currentXp + xpAmount
         if self.currentXp >= self.xpForNextDollar then
             self.currentXp = self.currentXp - self.xpForNextDollar
-            self.xpForNextDollar = self.xpForNextDollar * 2
+            self.xpForNextDollar = self.xpForNextDollar * 1.25  
             self.moneyGained = self.moneyGained + 1
             Player.money = Player.money + 1
             -- moneyPopup(1)
