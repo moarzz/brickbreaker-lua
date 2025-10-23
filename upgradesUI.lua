@@ -542,6 +542,14 @@ local items = {
         imageReference = "assets/sprites/UI/itemIcons/Four-Leafed-Clover.png",
         rarity = "uncommon"
     },
+    ["Bouncy Walls"] = {
+        name = "Bouncy Walls",
+        stats = {amount = 1, speed = 1},
+        unique = true,
+        description = "Balls gain a temporary boost of speed after bouncing off walls",
+        rarity = "uncommon",
+        imageReference = "assets/sprites/UI/itemIcons/Bouncy-Walls.png",
+    },
     ["+9 buff"] = {
         name = "+9 buff",
         rarity = "rare",
@@ -558,14 +566,6 @@ local items = {
             self.imageReference = "assets/sprites/UI/itemIcons/" .. randomStatName .. (randomStatName == "cooldown" and "-" or "+") .. ".png"
             self.image = love.graphics.newImage(self.imageReference)
         end
-    },
-    ["Bouncy Walls"] = {
-        name = "Bouncy Walls",
-        stats = {amount = 2, speed = 2},
-        unique = true,
-        description = "Balls gain a temporary boost of speed after bouncing off walls",
-        rarity = "rare",
-        imageReference = "assets/sprites/UI/itemIcons/Bouncy-Walls.png",
     },
     ["Sommelier"] = {
         name = "Sommelier",
