@@ -898,6 +898,31 @@ function powerupUpdate(dt)
         powerupPopup.angle = angle
     end
 end
+
+moneyBagValues = {
+    moneyGained = 0,
+    xpForNextDollar = 10, 
+    currentXp = 0, 
+    active = false,
+    gainXp = function(xpAmount, self) 
+        if not self.active then
+            return
+        end
+        self.currentXp = self.currentXp + xpAmount
+        if self.currentXp >= self.xpForNextDollar then
+            self.currentXp = self.currentXp - self.xpForNextDollar
+            self.xpForNextDollar = self.xpForNextDollar * 2
+            self.moneyGained = self.moneyGained + 1
+            Player.money = Player.money + 1
+            -- moneyPopup(1)
+        end
+    end,
+    reset = function(self)
+        self.xpForNextDollar = math.max(math.ceil(Player.xpForNextLevel/5), 5)
+        self.currentXp = 0
+        self.active = true
+    end
+}
 function drawPopups()
     for i = #lvlUpTexts, 1, -1 do
         local popup = lvlUpTexts[i]
@@ -954,7 +979,25 @@ function drawPopups()
         love.graphics.setColor(1, 1, 1, 1) -- Reset color to white after drawing popups
         local img = powerupImgs[powerupPopup.type]
         local scale = powerupPopup.scale
-        drawImageCentered(img, screenWidth - 250, 180, 280 * scale, 250 * scale, powerupPopup.angle or 0)
+        drawImageCentered(img, screenWidth - 350, 215, 280 * scale, 250 * scale, powerupPopup.angle or 0)
+        if powerupPopup.type == "moneyBag" then
+            if moneyBagValues.active then
+                love.graphics.setColor(0,1,0,1)
+                local barX = 1650
+                local barY = 135
+                local barWidth = 25
+                local barHeight = 140
+                local fillWidth = mapRangeClamped(moneyBagValues.currentXp, 0, moneyBagValues.xpForNextDollar, 0, 90)
+                love.graphics.rectangle("fill", barX, barY + barHeight - fillWidth, barWidth, fillWidth)
+                love.graphics.setColor(1,1,1,1)
+                love.graphics.rectangle("line", barX, barY, barWidth, barHeight)
+
+                setFont(65)
+                love.graphics.setColor(0,1,0,1)
+                love.graphics.print(moneyBagValues.moneyGained .. "$", barX + 40, barY + barHeight/2 - 35)
+            end
+
+        end
     end
     love.graphics.setColor(1, 1, 1, 1) -- Reset color to white after drawing popups
 end

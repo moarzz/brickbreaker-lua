@@ -459,6 +459,7 @@ function Player.gain(amount)
     
     Player.score = Player.score + amount
     Player.xp = Player.xp + amount -- XP follows score
+    moneyBagValues.gainXp(amount, moneyBagValues)
     local farmCoreMult = (Player.currentCore == "Farm Core" and 1.5 or 1)
     if Player.xp >= (Player.xpForNextLevel * farmCoreMult) then
         Player.levelUp()

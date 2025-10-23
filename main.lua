@@ -527,7 +527,7 @@ local function generateRow(brickCount, yPos)
                     if canHeal then
                         Timer.after(1.75 + math.random(1,175)/100, function() healSelf(healBrick) end)
                     end
-                elseif math.random(1, 100) < 20 and (totalGoldBricksGeneratedThisRun < math.floor((gameTime+15)/5)) then
+                elseif math.random(1, 100) < 20 and (totalGoldBricksGeneratedThisRun < math.floor((gameTime+10)/75)) then
                     totalGoldBricksGeneratedThisRun = totalGoldBricksGeneratedThisRun + 1
                     local goldBrick = {
                         type = "gold",
@@ -586,7 +586,7 @@ local function addMoreBricks()
             print("spawning more bricks")
             for i=1 , 10 do
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
-                currentRowPopulation = currentRowPopulation + math.ceil(Player.level * (Player.currentCore == "Farm Core" and 1 or 0.5))
+                currentRowPopulation = currentRowPopulation + math.ceil(Player.level * (Player.currentCore == "Farm Core" and 1 or 0.5) + 1)
                 if spawnBossNextRow and not bossSpawned then
                     spawnBoss()
                     bossSpawned = true
@@ -2119,6 +2119,13 @@ function love.keypressed(key)
 
 
         -----------------------------------
+
+        if key == "5" then
+            local powerup = {
+                type = "moneyBag",        
+            }
+            powerupPickup(powerup)
+        end
 
         if key == "6" then
             accelerationOn = not false

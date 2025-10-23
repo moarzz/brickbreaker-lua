@@ -3231,24 +3231,42 @@ local function incrediBallColorUpdate(alpha)
     
 end
 
-local function powerupPickup(powerup)
+function powerupPickup(powerup)
     playSoundEffect(lvlUpSFX, 0.55, 1, false)   
     powerupPopup.type = powerup.type
     powerupPopup.startTime = gameTime
-    local inTween = tween.new(0.15, powerupPopup, {scale = 1}, tween.easing.outCirc)
-    addTweenToUpdate(inTween)
+    if powerup.type ~= "nuke" then
+        local inTween = tween.new(0.15, powerupPopup, {scale = 1}, tween.easing.outCirc)
+        addTweenToUpdate(inTween)
+    end
     print("powerup type : " .. powerup.type)
     if powerup.type == "moneyBag" then
-        Player.money = Player.money + math.random(1,5)
+        moneyBagValues.reset(moneyBagValues)
+        Timer.after(15, function()
+            local outTween = tween.new(0.25, powerupPopup, {scale = 0}, tween.easing.inCirc)
+            addTweenToUpdate(outTween)
+            Timer.after(0.25, function()
+                powerupPopup.type = nil
+                moneyBagValues.active = false
+            end)
+        end)
     elseif powerup.type == "nuke" then
         for _, brick in ipairs(bricks) do
             if (brick.health > 0) and (brick.y + brick.height > 0) then
-                dealDamage({stats = {damage = math.ceil(Player.level * 2.35)}}, brick) -- Deal damage to all bricks
+                dealDamage({stats = {damage = math.ceil(Player.level)}}, brick) -- Deal damage to all bricks
             end
         end
     elseif powerup.type == "freeze" then
         brickFreeze = true
         brickFreezeTime = gameTime
+        Timer.after(6, function() 
+            local outTween = tween.new(0.15, powerupPopup, {scale = 0}, tween.easing.inCirc)
+            addTweenToUpdate(outTween)
+            Timer.after(0.15, function()
+                powerupPopup.type = nil
+            end)
+            accelerationOn = false
+        end)
     elseif powerup.type == "acceleration" then
         accelerationOn = true
         for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
@@ -3266,7 +3284,7 @@ local function powerupPickup(powerup)
         end)
     elseif powerup.type == "doubleDamage" then
         statDoubled = "damage"
-        Timer.after(12, function() 
+        Timer.after(8, function() 
             local outTween = tween.new(0.15, powerupPopup, {scale = 0}, tween.easing.inCirc)
             addTweenToUpdate(outTween)
             Timer.after(0.15, function()
@@ -4142,6 +4160,7 @@ function Balls:draw()
                 -- draw powerup image
                 love.graphics.setColor(1,1,1,1)
                 drawImageCentered(powerupImgs[powerup.type], powerup.x, powerup.y, 70, 62)
+                
             end
         end
     end

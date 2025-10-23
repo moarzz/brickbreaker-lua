@@ -1077,7 +1077,9 @@ function getStatItemsBonus(statName, weapon)
     end
 
     if statDoubled == statName or ((statName == "fireRate" or statName == "speed") and accelerationOn) then
-        print("totalBonus before doubling for " .. weapon.name .. " " .. statName .." : " .. totalBonus)
+        if weapon then
+            print("totalBonus before doubling for " .. (weapon.name or "") .. " " .. statName .." : " .. totalBonus)
+        end
     end
 
     -- logic for doubling powerups. Kind of bootleg that its here, should be in getStat but its too late to go back now
