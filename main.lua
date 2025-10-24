@@ -94,6 +94,21 @@ local mt = {
 }
 
 function resetGame()
+    for i = #Tweens, 1, -1 do
+        removeTween(Tweens[i].id)
+    end
+    
+    -- Clear event queue
+    if EventQueue and EventQueue.clear then
+        EventQueue:clear()
+    end
+    
+    -- Reset visual states
+    visualMoneyValues = {scale = 1}
+    visualItemValues = {}
+    visualUpgradePriceValues = {}
+    visualStatValues = {}
+    
     -- Stop any confetti effect
     stopConfetti()
     Timer.clear()
@@ -1173,8 +1188,14 @@ local function gameFixedUpdate(dt)
     end    
 end
 
+local gcTimer = 0
 function love.update(dt)
-    collectgarbage("count")
+    gcTimer = gcTimer + dt
+    if gcTimer > 10 then
+        collectgarbage("collect")
+        gcTimer = 0
+    end
+    print("Memory (KB): " .. collectgarbage("count"))
     gameFixedUpdate(dt);
 end
 

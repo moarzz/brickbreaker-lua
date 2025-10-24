@@ -41,18 +41,26 @@ function EventQueue:update(dt)
         return;
     end
 
-    while self.timeUntilNextDequeue <= 0 do
+    -- safety: don't dequeue infinitely many events in one frame
+    local maxDequeuePerUpdate = 64
+    local dequeued = 0
+
+    while self.timeUntilNextDequeue <= 0 and dequeued < maxDequeuePerUpdate do
         if self:isQueueEmpty() then
             return;
         end
 
         self:dequeue();
+        dequeued = dequeued + 1
     end
 end
 
 function EventQueue:dequeue()
     local nextQueuedEvent = table.remove(self.queue, 1);
-    self.timeUntilNextDequeue = self.timeUntilNextDequeue + nextQueuedEvent.eventLength;
+    if not nextQueuedEvent then
+        return
+    end
+    self.timeUntilNextDequeue = self.timeUntilNextDequeue + (nextQueuedEvent.eventLength or 0);
     -- if a frame causes 2 event to try and dequeue at the same time only let one and delay the next one
 
     if nextQueuedEvent.callback then
@@ -62,6 +70,11 @@ function EventQueue:dequeue()
             nextQueuedEvent.callback:trigger();
         end
     end
+end
+
+function EventQueue:clear()
+    self.queue = {}
+    self.timeUntilNextDequeue = 0
 end
 
 function EventQueue:isQueueEmpty()

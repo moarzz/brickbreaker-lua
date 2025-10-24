@@ -193,22 +193,26 @@ end
 local pausedUpgradeNumbers = {}
 
 function gainMoneyWithAnimations(moneyGain, itemName)
+    -- Store only what we need for the animation
+    local moneyBefore = Player.money
+    
+    -- First event: Show animation and add money
     EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.05, function() 
-        if itemId ~= nil then
+        if itemName then -- Changed from itemId to itemName check
             itemTriggerAnimation(itemName)
         end
         playSoundEffect(upgradeSFX, 0.6, 1, false)
-        --[[local xMult = math.random(-100,100)/100
-        local yMult = math.random(-100,100)/100
-        local upgradeNumber = {x = statsWidth - 65 + xMult * 15, y = 150 + yMult * 15, scale = 0, value = moneyGain}
-        table.insert(pausedUpgradeNumbers, upgradeNumber)
-        local inNumberTween = tween.new(0.05, upgradeNumber, {scale = 22})
-        addTweenToUpdate(inNumberTween)]]
+        
+        -- Create and add tween without capturing outer scope variables
         local inTween = tween.new(0.05, visualMoneyValues, {scale = 1.7}, tween.easing.outCirc)
         addTweenToUpdate(inTween)
+        
+        -- Update money
         Player.money = Player.money + moneyGain
         richGetRicherUpdate(moneyBefore, Player.money)
     end)
+    
+    -- Second event: Reset scale
     EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.175, function() 
         local outTween = tween.new(0.175, visualMoneyValues, {scale = 1}, tween.easing.inCirc)
         addTweenToUpdate(outTween)
@@ -396,6 +400,7 @@ end -- Missing 'end' added here
 
 -- fancyTexts lol completely lost
 fancyTexts = {}
+fancytextLastUpdate = {}
 
 function clearFancyTexts()
     for k, ft in pairs(fancyTexts) do
@@ -523,10 +528,17 @@ function drawTextWithOutline(text, x, y, font, textColor, outlineColor, outlineT
     love.graphics.setColor(1, 1, 1, 1)
 end
 
+local fpsFont = nil -- Cache FPS font
+
 function drawFPS()
     local fps = love.timer.getFPS() -- Get the current FPS
-    local font = love.graphics.newFont(14) -- Set a small font for the FPS display
-    love.graphics.setFont(font)
+    
+    -- Create font once and cache it
+    if not fpsFont then
+        fpsFont = love.graphics.newFont(14)
+    end
+    
+    love.graphics.setFont(fpsFont)
     love.graphics.setColor(0, 1, 0, 1) -- Green color for the FPS text
     love.graphics.print("FPS: " .. fps, screenWidth - 100, 10) -- Draw FPS at the top-right corner
     love.graphics.setColor(1, 1, 1, 1) -- Reset color to white
@@ -723,10 +735,12 @@ end
 
 local animationID = 1
 animations = {}
+local quadCache = {} -- Add quad cache
 
 function resetAnimations()
     animations = {} -- Reset the animations table
     animationID = 1 -- Reset the animation ID counter
+    -- Don't clear quadCache as we want to reuse quads
 end
 
 function createSpriteAnimation(x, y, scale, spritesheet, frameWidth, frameHeight, frameTime, skipFrames, looping, scaleX, scaleY, angle, color, isFire, brickId, lastFrame)
@@ -758,12 +772,22 @@ function createSpriteAnimation(x, y, scale, spritesheet, frameWidth, frameHeight
     -- Calculate the number of frames in the spritesheet
     local sheetWidth = spritesheet:getWidth()
     local sheetHeight = spritesheet:getHeight()
-
-    for y = 0, sheetHeight - frameHeight, frameHeight do
-        for x = 0, sheetWidth - frameWidth, frameWidth do
-            table.insert(animation.quads, love.graphics.newQuad(x, y, frameWidth, frameHeight, sheetWidth, sheetHeight))
+    
+    -- Create cache key based on spritesheet dimensions and frame size
+    local cacheKey = string.format("%dx%d_%dx%d", sheetWidth, sheetHeight, frameWidth, frameHeight)
+    
+    -- Use cached quads if available, otherwise create new ones
+    if not quadCache[cacheKey] then
+        quadCache[cacheKey] = {}
+        for y = 0, sheetHeight - frameHeight, frameHeight do
+            for x = 0, sheetWidth - frameWidth, frameWidth do
+                table.insert(quadCache[cacheKey], love.graphics.newQuad(x, y, frameWidth, frameHeight, sheetWidth, sheetHeight))
+            end
         end
     end
+    
+    -- Use the cached quads
+    animation.quads = quadCache[cacheKey]
     if animation.lastFrame == nil then
         animation.lastFrame = #animation.quads
     end
@@ -889,6 +913,29 @@ function xpPopup(value)
 end
 
 function resetLvlUpPopups()
+    -- Clear all popups and their associated tweens
+    for _, popup in ipairs(lvlUpTexts) do
+        for _, tween in ipairs(Tweens) do
+            if tween.subject == popup then
+                removeTween(tween.id)
+            end
+        end
+    end
+    for _, popup in ipairs(boostTexts) do
+        for _, tween in ipairs(Tweens) do
+            if tween.subject == popup then
+                removeTween(tween.id)
+            end
+        end
+    end
+    for _, popup in ipairs(xpTexts) do
+        for _, tween in ipairs(Tweens) do
+            if tween.subject == popup then
+                removeTween(tween.id)
+            end
+        end
+    end
+    
     lvlUpTexts = {}
     boostTexts = {}
     xpTexts = {}
@@ -1233,14 +1280,21 @@ end
 local damageNumbers = {} -- Table to store damage numbers
 local damageNumberFont = nil -- Cache the font
 local textObjects = {} -- Cache Text objects by damage value
+local lastCleanupTime = 0
+local CLEANUP_INTERVAL = 5 -- Cleanup unused text objects every 5 seconds
 
 function resetDamageNumbers()
     damageNumbers = {} -- Reset the damage numbers table
-    -- Clear text object cache
+    cleanupTextObjects() -- Clean up all text objects
+end
+
+function cleanupTextObjects()
+    -- Release text objects and clear cache
     for _, text in pairs(textObjects) do
         text:release()
     end
     textObjects = {}
+    lastCleanupTime = love.timer.getTime()
 end
 
 local damageNumberId = 1
@@ -1405,6 +1459,12 @@ function drawDamageNumbers()
         damageNumberFont = love.graphics.newFont("assets/Fonts/KenneyBlocks.ttf", 60)
     end
     love.graphics.setFont(damageNumberFont)
+
+    -- Check if we need to clean up text objects
+    local currentTime = love.timer.getTime()
+    if currentTime - lastCleanupTime > CLEANUP_INTERVAL then
+        cleanupTextObjects()
+    end
 
     -- Group numbers by fontSize (rounded to 0.1) to minimize state changes
     local fontGroups = {}

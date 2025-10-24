@@ -2361,7 +2361,12 @@ local function drawItemShop()
                     local text = getItemFullDescription(item) or ""
                     local fancyText = FancyText.new(text, centerX - uiBigWindowImg:getWidth() * 0.55 * scale/2, itemY + windowH, uiBigWindowImg:getWidth() * 0.55 * scale, 17, "center", item.descriptionPointers.default, item.descriptionPointers)
                     fancyTexts[id] = fancyText
-                    fancyText:update()
+                    if not fancytextLastUpdate[id] then
+                        fancytextLastUpdate[id] = love.timer.getTime()
+                    elseif love.timer.getTime() - fancytextLastUpdate[id] > 0.5 then
+                        fancyText:update()
+                        fancytextLastUpdate[id] = love.timer.getTime()
+                    end
                     fancyText:draw()
                 end
             end
@@ -2398,7 +2403,12 @@ local function drawItemShop()
                     local text = getItemFullDescription(item) or ""
                     local fancyText = FancyText.new(text, itemX + 25 * scale, itemY + 110 * scale, windowW - 50 * scale, 20, "center", item.descriptionPointers.default, item.descriptionPointers)
                     fancyTexts[id] = fancyText
-                    fancyText:update()
+                    if not fancytextLastUpdate[id] then
+                        fancytextLastUpdate[id] = love.timer.getTime()
+                    elseif love.timer.getTime() - fancytextLastUpdate[id] > 0.5 then
+                        fancyText:update()
+                        fancytextLastUpdate[id] = love.timer.getTime()
+                    end
                     fancyText:draw()
                 end
             end
@@ -2557,7 +2567,12 @@ local function drawPlayerItems()
                 text = getItemFullDescription(item) or ""
                 local fancyText = FancyText.new(text, itemX + 15, itemY + 70, (uiBigWindowImg:getWidth() - 25)/2, 12, "center", item.descriptionPointers.default, item.descriptionPointers)
                 fancyTexts[id] = fancyText
-                fancyText:update()
+                if not fancytextLastUpdate[id] then
+                    fancytextLastUpdate[id] = love.timer.getTime()
+                elseif love.timer.getTime() - fancytextLastUpdate[id] > 0.5 then
+                    fancyText:update()
+                    fancytextLastUpdate[id] = love.timer.getTime()
+                end
                 fancyText:draw()
             end
         end

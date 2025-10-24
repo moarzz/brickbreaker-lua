@@ -41,10 +41,15 @@ local function updateTimerHandle(handle, dt)
 		handle.during(dt, math.max(handle.limit - handle.time, 0))
 
 		while handle.time >= handle.limit and handle.count > 0 do
-			if handle.after(handle.after) == false then
-				handle.count = 0
-				break
-			end
+				local ok = true
+				if handle.after then
+					-- call the 'after' callback; treat explicit 'false' return as cancel
+					ok = (handle.after() ~= false)
+				end
+				if not ok then
+					handle.count = 0
+					break
+				end
 			handle.time = handle.time - handle.limit
 			handle.count = handle.count - 1
 		end
