@@ -368,7 +368,7 @@ function Player.InterestGain()
     if Player.currentCore == "Economy Core" then
         moneyGain = 9
     else
-        moneyGain = 6 --+ math.floor(math.min(Player.money, 25)/5)
+        moneyGain = 5 --+ math.floor(math.min(Player.money, 25)/5)
     end
     gainMoneyWithAnimations(moneyGain)
 end

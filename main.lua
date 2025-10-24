@@ -96,6 +96,11 @@ local mt = {
 function resetGame()
     -- Stop any confetti effect
     stopConfetti()
+    Timer.clear()
+    if EventQueue and EventQueue.clear then EventQueue:clear() end
+    if fancyTexts then
+        for k,_ in pairs(fancyTexts) do fancyTexts[k] = nil end
+    end
     
     -- Clear text cache
     for _, text in pairs(brickTextCache.objects) do
@@ -1169,6 +1174,7 @@ local function gameFixedUpdate(dt)
 end
 
 function love.update(dt)
+    collectgarbage("count")
     gameFixedUpdate(dt);
 end
 

@@ -34,7 +34,7 @@ local items = {
         onInShop = function(self)
             self.stats = {} 
             local statNames = {"damage", "speed", "amount", "ammo", "fireRate", "cooldown", "range"}
-            local itemNames = {"Running Shoes", "2 for 1 Meal Ticket", "Extended Magazine", "Fast Hands", "Duct Tape", "Fake Pregnancy Belly"}
+            local itemNames = {"Boiling Rage","Running Shoes", "2 for 1 Meal Ticket", "Extended Magazine", "Fast Hands", "Duct Tape", "Fake Pregnancy Belly"}
             local randomIndex = math.random(1,6)
             local randomStatName = statNames[randomIndex]
             self.name = itemNames[randomIndex]
@@ -585,7 +585,7 @@ local items = {
         onInShop = function(self) 
             self.stats = {}
             local statNames = {"speed", "amount", "ammo", "fireRate", "cooldown", "range"}
-            local itemNames = {"Running Shoes ++", "2 for 1 Meal Ticket ++", "Extended Magazine ++", "Fast Hands ++", "Duct Tape ++", "Fake Pregnancy Belly ++"}
+            local itemNames = {"Boiling Rage ++", "Running Shoes ++", "2 for 1 Meal Ticket ++", "Extended Magazine ++", "Fast Hands ++", "Duct Tape ++", "Fake Pregnancy Belly ++"}
             local randomIndex = math.random(1,6)
             local randomStatName = statNames[randomIndex]
             local value = randomStatName == "damage" and 6 or 9
@@ -712,6 +712,7 @@ local items = {
                         end]]
                     end
                 end
+                i = i + 1
             end
         end
     },
@@ -920,8 +921,15 @@ local legendaryItems = {}
 local legendaryItemsConsumable = {}
 local testItems = {}
 
+local _shared_item_fonts = _shared_item_fonts or {
+    default = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 18),
+    big = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 23),
+    bold = love.graphics.newFont("assets/Fonts/KenneyFutureBold.ttf", 25),
+}
+
+local _shared_item_images = _shared_item_images or {}
+
 function initializeRarityItemLists()
-    local amountOfCopies = 5
     commonItems = {}
     commonItemsConsumable = {}
     uncommonItems = {}
@@ -954,12 +962,22 @@ function initializeRarityItemLists()
         if itemData.imageReference then
             itemData.image = love.graphics.newImage(itemData.imageReference)
         end
+
+        -- only create image once and reuse it
+        if itemData.imageReference and not _shared_item_images[itemData.imageReference] then
+            _shared_item_images[itemData.imageReference] = love.graphics.newImage(itemData.imageReference)
+        end
+        if itemData.imageReference then
+            itemData.image = _shared_item_images[itemData.imageReference]
+        end
+
+
         local consumable = itemData.consumable or false
         if itemData.rarity == "common" then
             if consumable then
                 table.insert(commonItemsConsumable, itemName)
             else
-                for i=1, amountOfCopies do
+                for i=1, 3 do
                     table.insert(commonItems, itemName)
                 end
             end
@@ -967,7 +985,7 @@ function initializeRarityItemLists()
             if consumable then
                 table.insert(uncommonItemsConsumable, itemName)
             else
-                for i=1, amountOfCopies do
+                for i=1, 2 do
                     table.insert(uncommonItems, itemName)
                 end
             end
@@ -975,7 +993,7 @@ function initializeRarityItemLists()
             if consumable then
                 table.insert(rareItemsConsumable, itemName)
             else
-                for i=1, amountOfCopies do
+                for i=1, 1 do
                     table.insert(rareItems, itemName)
                 end
             end
@@ -983,9 +1001,7 @@ function initializeRarityItemLists()
             if consumable then
                 table.insert(legendaryItemsConsumable, itemName)
             else
-                for i=1, amountOfCopies do
-                    table.insert(legendaryItems, itemName)
-                end
+                table.insert(legendaryItems, itemName)
             end
         elseif itemData.rarity == "test" then
             table.insert(testItems, itemName)
@@ -1239,7 +1255,7 @@ local function drawPlayerStats()
     local moneyBoxH = love.graphics.getFont():getHeight()
     local mouseX, mouseY = love.mouse.getPosition()
     local interestValue = 0--math.floor(math.min(Player.money, Player.currentCore == "Economy Core" and 50 or 25)/5)
-    local gainValue = 6
+    local gainValue = 5
     if Player.currentCore == "Economy Core" then
         gainValue = 12
     end
@@ -1254,7 +1270,7 @@ local function drawPlayerStats()
     popupFancyText:draw()
 
     -- render interest if player has not finished leveling up
-    local interestValue = 6 -- + math.floor(math.min(Player.money, Player.currentCore == "Economy Core" and 50 or 25)/5) + getItemsIncomeBonus()
+    local interestValue = 5 -- + math.floor(math.min(Player.money, Player.currentCore == "Economy Core" and 50 or 25)/5) + getItemsIncomeBonus()
     if Player.currentCore == "Economy Core" then
         interestValue = 8
     end
@@ -2201,6 +2217,7 @@ local function getItemFullDescription(item)
 end
 
 function setItemShop(forcedItems)
+    clearFancyTexts()
     forcedItems = forcedItems or {}
     displayedItems = {}
     for i=1, Player.currentCore == "Collector's Core" and 3 or 3 do
@@ -2402,8 +2419,16 @@ local function drawItemShop()
                     if not item.consumable then
                         local itemToInsert = {}
                         for k, v in pairs(item) do
+                        if k == "stats" then
+                            -- Deep copy the stats table
+                            itemToInsert[k] = {}
+                            for statName, statValue in pairs(v) do
+                                itemToInsert[k][statName] = statValue
+                            end
+                        else
                             itemToInsert[k] = v
                         end
+                    end
                         table.insert(Player.items, itemToInsert)
                         Player.items[#Player.items].id = itemToInsert.name .. tostring(currentItemId)
                         currentItemId = currentItemId + 1

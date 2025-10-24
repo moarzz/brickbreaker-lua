@@ -397,8 +397,14 @@ end -- Missing 'end' added here
 -- fancyTexts lol completely lost
 fancyTexts = {}
 
-
-
+function clearFancyTexts()
+    for k, ft in pairs(fancyTexts) do
+        if ft and ft.rawText then
+            -- optional: if FancyText exposes a release method do it here
+        end
+        fancyTexts[k] = nil
+    end
+end
 
 
 

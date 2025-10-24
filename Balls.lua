@@ -1874,7 +1874,7 @@ local function ballListInit()
             sawPositions = {}, -- Will store current positions of saws
             sawAnimations = {}, -- Will store animation IDs
             currentAngle = 0, -- Current rotation angle
-            orbitRadius = 260,
+            orbitRadius = 225,
             damageCooldowns = {}, -- Add this line to track cooldowns per saw per brick
         },
         ["Gun Turrets"] = {
