@@ -400,7 +400,6 @@ end -- Missing 'end' added here
 
 -- fancyTexts lol completely lost
 fancyTexts = {}
-fancytextLastUpdate = {}
 
 function clearFancyTexts()
     for k, ft in pairs(fancyTexts) do

@@ -1,3 +1,7 @@
+local path = (...); -- path to this library
+
+local PointerConverter = require(path .. ".pointerConverter");
+
 local FancyText = {};
 FancyText.__index = FancyText;
 
@@ -5,43 +9,69 @@ FancyText.font = PIXEL_FONT_128 or love.graphics.getFont()
 FancyText.fontHeight = FancyText.font:getHeight()
 FancyText.defaultFont = FancyText.font
 
+-- some default colours usable by all fancyTexts
 FancyText.DEFAULT_COLOURS = {
-    ["money"] = {14/255, 202/255, 92/255, 1};
-    ["negMoney"] = {164/255, 14/255, 14/255,1};
-    ["damage"] = {1,0,0};
-    ["cooldown"] = {1, 218/255, 0};
-    ["ammo"] = {72/255, 1, 0};
-    ["fireRate"] = {0, 1, 149/255};
-    ["amount"] = {0, 144/255, 1};
-    ["range"] = {95/255, 00.1, 1};
-    ["speed"] = {1, 0, 218/255};
-    ["rainbow"] = {1,0,0}; -- special case that is handled in the draw function
-    ["rainbow_slow"] = {1,0,0}; -- special case that is handled in the draw function
-    ["rainbow_fast"] = {1,0,0}; -- special case that is handled in the draw function
+    ["money"]          = {14/255, 202/255, 92/255};
+    ["negMoney"]       = {164/255, 14/255, 14/255};
+    ["damage"]         = {1,0,0};
+    ["cooldown"]       = {1, 218/255, 0};
+    ["ammo"]           = {72/255, 1, 0};
+    ["fireRate"]       = {0, 1, 149/255};
+    ["amount"]         = {0, 144/255, 1};
+    ["range"]          = {95/255, 0.1, 1};
+    ["speed"]          = {1, 0, 218/255};
+    ["rainbow"]        = {1,0,0}; -- special case that is handled in the draw function
+    ["rainbow_slow"]   = {1,0,0}; -- special case that is handled in the draw function
+    ["rainbow_fast"]   = {1,0,0}; -- special case that is handled in the draw function
     ["rainbow_insane"] = {1,0,0}; -- special case that is handled in the draw function
-    ["red"] = {1,0,0};
-    ["green"] = {0,1,0};
-    ["blue"] = {0,0,1};
-    ["cyan"] = {0,1,1};
-    ["magenta"] = {1,0,1};
-    ["yellow"] = {1,1,0};
-    ["white"] = {1,1,1};
-    ["black"] = {0,0,0};
-    ["pink"] = {1,0,0.5};
-    ["orange"] = {1,0.5,0};
-    ["purple"] = {0.5,0,1};
-    ["white_"] = {0.9,0.9,0.9};
-    ["black_"] = {0.1,0.1,0.1};
-    ["gray"] = {0.5,0.5,0.5};
-    ["grey"] = {0.5,0.5,0.5};
-    ["clear"] = {1,1,1,0};
+    ["red"]            = {1,0,0};
+    ["green"]          = {0,1,0};
+    ["blue"]           = {0,0,1};
+    ["cyan"]           = {0,1,1};
+    ["magenta"]        = {1,0,1};
+    ["yellow"]         = {1,1,0};
+    ["white"]          = {1,1,1};
+    ["black"]          = {0,0,0};
+    ["pink"]           = {1,0,0.5};
+    ["orange"]         = {1,0.5,0};
+    ["purple"]         = {0.5,0,1};
+    ["white_"]         = {0.9,0.9,0.9};
+    ["black_"]         = {0.1,0.1,0.1};
+    ["gray"]           = {0.5,0.5,0.5};
+    ["grey"]           = {0.5,0.5,0.5};
+    ["clear"]          = {1,1,1,0};
     -- for easier usage. <highlight=off> / <highlight=none> looks more like its being disabled than <highlight=clear>
     ["none"] = {1,1,1,0};
-    ["off"] = {1,1,1,0};
+    ["off"]  = {1,1,1,0};
 };
+
+-- some pointer values useable by all fancyTexts; this is checked after the local table allowing object specific redefining
+FancyText.GLOBAL_POINTER = { -- "goat" NOT as in 'greatest of all time' (tho that 2 ;3c), I'm literally just a caprine
+    ["goat"] = "Milo:3_Silli_Denote"; -- omygah thas me! :3c (man I am so cul)
+    ["bah"]  = "bahbahbahbahbah";
+};
+
+PointerConverter.convertToPointer(
+    FancyText.GLOBAL_POINTER,
+    function()
+        FancyText.updateCheck = (FancyText.updateCheck + 1) % FancyText.arbitraryModulo;
+    end
+);
+
+FancyText.updateCheck = 0; -- value that changes 2 keep all other fancyText objects synced w/ the global pointer
+FancyText.arbitraryModulo = 100000; -- mod the updateCheck by this value 2 prevent value desyncing from happening ig
+-- arbitrary modulo isnt a gud idea btw, I just don't know what'll happen at huge numbers and I don't wanna test it
+-- its very unlikely that any global pointers will increase exactly that many times in-between any fancyText object draw calls
+
+function FancyText.setGlobalItem(item, value)
+    FancyText.GLOBAL_POINTER[item] = value;
+end
 
 function FancyText.new(text, x, y, width, textHeight, alignment, font, dataReference)
     local instance = setmetatable({}, FancyText);
+
+    instance.updateQueued = false;
+    instance.updateChecker = FancyText.updateCheck;
 
     instance.x = x;
     instance.y = y;
@@ -55,6 +85,7 @@ function FancyText.new(text, x, y, width, textHeight, alignment, font, dataRefer
     instance.lines = nil; -- gets redefined in FancyText:alignText()
 
     instance.pointer = dataReference or {};
+    PointerConverter.convertToPointer(instance.pointer, FancyText.queueUpdate, instance);
 
     instance.font = font or FancyText.defaultFont;
     instance.fontHeight = font and font:getHeight() or FancyText.fontHeight;
@@ -63,7 +94,7 @@ function FancyText.new(text, x, y, width, textHeight, alignment, font, dataRefer
 
     instance.height = 0; -- needs to be calculated
 
-    instance:alignText();
+    instance:queueUpdate();
 
     return instance;
 end
@@ -79,20 +110,28 @@ function FancyText:setPosition(x, y)
 end
 
 function FancyText:setText(text)
+    if text == self.text then
+        return; -- text didnt change any
+    end
+
     self.text = text;
 
-    self:alignText();
+    self:queueUpdate();
 end
 
-function FancyText:setPointer(pointer)
+--[[function FancyText:setPointer(pointer)
     self.pointer = pointer;
 
-    self:alignText();
+    self:queueUpdate();
+end]]
+
+function FancyText:queueUpdate()
+    self.updateQueued = true;
 end
 
-function FancyText:update()
-    self:alignText();
-end
+--[[function FancyText:update()
+    -- self:alignText();
+end]]
 
 function FancyText:alignText()
     local realText = self.text;
@@ -318,6 +357,12 @@ function FancyText:getWidth()
 end
 
 function FancyText:draw()
+    if self.updateQueued or self.updateChecker ~= FancyText.updateCheck then
+        self:alignText();
+        self.updateChecker = FancyText.updateCheck;
+        self.updateQueued = false;
+    end
+
     local colour = self.DEFAULT_COLOURS.white;
     local highlight = self.DEFAULT_COLOURS.clear;
 
@@ -378,11 +423,11 @@ function FancyText:draw()
                 x = x + curFont:getWidth(toDraw) * scale;
 
                 if w.modificationName == "colour" or w.modificationName == "color" then
-                    colour = self.DEFAULT_COLOURS[w.setTo];
+                    colour = self.DEFAULT_COLOURS[w.setTo] or self.pointer[w.setTo] or FancyText.GLOBAL_POINTER[w.setTo];
                 elseif w.modificationName == "highlight" then
-                    highlight = self.DEFAULT_COLOURS[w.setTo];
+                    highlight = self.DEFAULT_COLOURS[w.setTo] or self.pointer[w.setTo] or FancyText.GLOBAL_POINTER[w.setTo];
                 elseif w.modificationName == "font" then
-                    curFont = self.pointer[w.setTo];
+                    curFont = self.pointer[w.setTo] or FancyText.GLOBAL_POINTER[w.setTo];
 
                     if not curFont then
                         if w.setTo == "default" then
@@ -394,7 +439,7 @@ function FancyText:draw()
                 elseif w.modificationName == "image" then
                     love.graphics.setColor(1,1,1,1); -- white; temporarily
 
-                    local img = self.pointer[w.setTo];
+                    local img = self.pointer[w.setTo] or FancyText.GLOBAL_POINTER[w.setTo];
                     local newWidth  = otherValues.imageWidth  or (img:getWidth()  * otherValues.imageScale * otherValues.imageScaleX);
                     local newHeight = otherValues.imageHeight or (img:getHeight() * otherValues.imageScale * otherValues.imageScaleY);
 
@@ -414,7 +459,7 @@ function FancyText:draw()
                     local set = tonumber(w.setTo);
 
                     if not set then
-                        set = self.pointer[w.setTo];
+                        set = self.pointer[w.setTo] or FancyText.GLOBAL_POINTER[w.setTo];
                     end
 
                     if type(set) == "function" then

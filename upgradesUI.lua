@@ -162,7 +162,7 @@ local items = {
         name = "Huge Paddle",
         stats = {amount = 1},
         unique = true,
-        descriptionPointers = {paddleWidth = function() return hasItem("Four Leafed Clover") and 100 or 50 end},
+        descriptionPointers = {paddleWidth = function() return hasItem("Four Leafed Clover") and 100 or 50 end},--!MARK: HERE
         description = "paddle width is increased by <font=bold><paddleWidth>%</font=bold><font=default>",
         imageReference = "assets/sprites/UI/itemIcons/Huge-Paddle.png",
         rarity = "common"
@@ -389,7 +389,7 @@ local items = {
     ["Degenerate Gambling"] = {
         name = "Degenerate Gambling",
         stats = {},
-        descriptionPointers = {gambleChance = function() return hasItem("Four Leafed Clover") and 50 or 25 end},
+        descriptionPointers = {gambleChance = function() return hasItem("Four Leafed Clover") and 50 or 25 end}, --!MARK: HERE
         description = "<font=bold>on level up\n<gambleChance>%</font=bold><font=default> chance to gain <font=big><color=money>20$</color=money>",
         rarity = "uncommon",
         imageReference = "assets/sprites/UI/itemIcons/Degenerate-Gambling.png",
@@ -422,7 +422,7 @@ local items = {
         name = "Spray and Pray",
         stats = {fireRate = 2},
         unique = true,
-        descriptionPointers = {fireRateMult = function() return hasItem("Four Leafed Clover") and 70 or 35 end},
+        descriptionPointers = {fireRateMult = function() return hasItem("Four Leafed Clover") and 70 or 35 end}, --!MARK: HERE
         description = "fireRate items shoot <font=bold><fireRateMult>%</font=bold><font=default> faster but are a lot less accurate",
         rarity = "uncommon",
         imageReference = "assets/sprites/UI/itemIcons/Spray-and-Pray.png",
@@ -450,7 +450,7 @@ local items = {
         name = "Sudden Mitosis",
         stats = {},
         unique = true,
-        descriptionPointers = {mitosisChance = function() return hasItem("Four Leafed Clover") and 20 or 10 end},
+        descriptionPointers = {mitosisChance = function() return hasItem("Four Leafed Clover") and 20 or 10 end}, --!MARK: HERE
         description = "<font=bold>When a bullet is shot\n<mitosisChance>%</font=bold><font=default> chance to spawn a small ball that lasts 8 seconds",
         rarity = "uncommon",
         imageReference = "assets/sprites/UI/itemIcons/Sudden-Mitosis.png",
@@ -516,7 +516,7 @@ local items = {
         name = "Assassin's Dagger",
         stats = {damage = 2},
         unique = true,
-        descriptionPointers = {critChance = function() return hasItem("Four Leafed Clover") and 70 or 35 end},
+        descriptionPointers = {critChance = function() return hasItem("Four Leafed Clover") and 70 or 35 end}, --!MARK: HERE
         description = "Damage has a <font=bold><critChance>%</font=bold><font=default> chance to be doubled",
         rarity = "uncommon",
         imageReference = "assets/sprites/UI/itemIcons/Assassin's-Dagger.png",
@@ -525,7 +525,7 @@ local items = {
         name = "Tesla Bullets",
         stats = {fireRate = 2},
         unique = true,
-        descriptionPointers = {teslaChance = function() return hasItem("Four Leafed Clover") and 50 or 25 end},
+        descriptionPointers = {teslaChance = function() return hasItem("Four Leafed Clover") and 50 or 25 end}, --!MARK: HERE
         description = "<font=bold>On Bullet Hit\n<teslaChance>%</font=bold><font=default> chance to start an electric current that jumps to 3 nearby bricks. Dealing the bullet's <color=damage>damage",
         rarity = "uncommon",
         imageReference = "assets/sprites/UI/itemIcons/Tesla-Bullets.png",
@@ -543,7 +543,7 @@ local items = {
         name = "Split Shooter",
         stats = {ammo = 2},
         unique = true,
-        descriptionPointers = {splitChance = function() return hasItem("Four Leafed Clover") and 50 or 25 end},
+        descriptionPointers = {splitChance = function() return hasItem("Four Leafed Clover") and 50 or 25 end}, --!MARK: HERE
         description = "Bullets have a <font=bold><splitChance>%</font=bold><font=default> chance to split into 2 after being shot",
         rarity = "uncommon",
         imageReference = "assets/sprites/UI/itemIcons/Split-Shooter.png",
@@ -811,7 +811,7 @@ local items = {
         name = "Brickbreaker",
         stats = {},
         unique = true,
-        descriptionPointers = {killChance = function() return hasItem("Four Leafed Clover") and 20 or 10 end, bigKillChance = function() return hasItem("Four Leafed Clover") and 10 or 5 end},
+        descriptionPointers = {killChance = function() return hasItem("Four Leafed Clover") and 20 or 10 end, bigKillChance = function() return hasItem("Four Leafed Clover") and 10 or 5 end}, --!MARK: HERE
         description = "Every damage you deal has a <font=bold><killChance>%</font=bold><font=default> chance of instantly killing the brick (<font=bold><bigKillChance>%</font=bold><font=default> for big bricks, <font=bold>0%</font=bold><font=default> for boss)",
         rarity = "legendary",
     },
@@ -825,7 +825,7 @@ local items = {
     ["Nirvana"] = {
         name = "Nirvana",
         stats = {},
-        descriptionPointers = {nirvanaChance = function() return hasItem("Four Leafed Clover") and 100 or 50 end},
+        descriptionPointers = {nirvanaChance = function() return hasItem("Four Leafed Clover") and 100 or 50 end}, --!MARK: HERE
         description = "<font=bold>on level up\n<nirvanaChance>%</font=bold><font=default> chance to increase every stat of all your weapons by 1",
         rarity = "legendary",
         levelRequired = 2,
@@ -1205,8 +1205,8 @@ local playerStatsPointers = {
     default = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 20),
     big = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 26),
     bold = love.graphics.newFont("assets/Fonts/KenneyFutureBold.ttf", 28),
-    interest = interestValue,
-    totalInterest = gainValue
+    -- interest = interestValue,
+    -- totalInterest = gainValue
 }
 local popupFancyText = nil
 local function drawPlayerStats()
@@ -1263,8 +1263,10 @@ local function drawPlayerStats()
     if Player.currentCore == "Economy Core" then
         popupText = "At the start of the level up phase, gain <color=money><font=big>8$"
     end
-    if popupFancyText == nil or popupFancyText.rawText ~= popupText then
+    if popupFancyText == nil then
         popupFancyText = FancyText.new(popupText, 20, 15, 350, 20, "left", playerStatsPointers.default, playerStatsPointers)
+    else
+        popupFancyText:setText(popupText);
     end
     love.graphics.setColor(1,1,1,1)
     popupFancyText:draw()
@@ -2355,18 +2357,13 @@ local function drawItemShop()
                 love.graphics.draw(getRarityWindow(item.rarity or "common"), centerX - uiBigWindowImg:getWidth() * 0.65 * scale/2, itemY + windowH - 85, 0, 0.65 * scale, 0.55 * scale)
                 local id = "fancyText" .. i .. item.name:gsub("%s+", "_")
                 if fancyTexts[id] then
-                    fancyTexts[id]:update()
+                    -- fancyTexts[id]:update()
                     fancyTexts[id]:draw()
                 else
                     local text = getItemFullDescription(item) or ""
                     local fancyText = FancyText.new(text, centerX - uiBigWindowImg:getWidth() * 0.55 * scale/2, itemY + windowH, uiBigWindowImg:getWidth() * 0.55 * scale, 17, "center", item.descriptionPointers.default, item.descriptionPointers)
                     fancyTexts[id] = fancyText
-                    if not fancytextLastUpdate[id] then
-                        fancytextLastUpdate[id] = love.timer.getTime()
-                    elseif love.timer.getTime() - fancytextLastUpdate[id] > 0.5 then
-                        fancyText:update()
-                        fancytextLastUpdate[id] = love.timer.getTime()
-                    end
+
                     fancyText:draw()
                 end
             end
@@ -2397,18 +2394,13 @@ local function drawItemShop()
                 end]]
                 local id = "fancyText" .. i .. item.name:gsub("%s+", "_")
                 if fancyTexts[id] then
-                    fancyTexts[id]:update()
+                    -- fancyTexts[id]:update()
                     fancyTexts[id]:draw()
                 else
                     local text = getItemFullDescription(item) or ""
                     local fancyText = FancyText.new(text, itemX + 25 * scale, itemY + 110 * scale, windowW - 50 * scale, 20, "center", item.descriptionPointers.default, item.descriptionPointers)
                     fancyTexts[id] = fancyText
-                    if not fancytextLastUpdate[id] then
-                        fancytextLastUpdate[id] = love.timer.getTime()
-                    elseif love.timer.getTime() - fancytextLastUpdate[id] > 0.5 then
-                        fancyText:update()
-                        fancytextLastUpdate[id] = love.timer.getTime()
-                    end
+
                     fancyText:draw()
                 end
             end
@@ -2560,19 +2552,14 @@ local function drawPlayerItems()
             end]]
             local id = "fancyText, player.items" .. index .. item.name:gsub("%s+", "_") .. (item.id or "")
             if fancyTexts[id] then
-                fancyTexts[id]:update()
+                -- fancyTexts[id]:update()
                 fancyTexts[id]:draw()
             else
                 local text
                 text = getItemFullDescription(item) or ""
                 local fancyText = FancyText.new(text, itemX + 15, itemY + 70, (uiBigWindowImg:getWidth() - 25)/2, 12, "center", item.descriptionPointers.default, item.descriptionPointers)
                 fancyTexts[id] = fancyText
-                if not fancytextLastUpdate[id] then
-                    fancytextLastUpdate[id] = love.timer.getTime()
-                elseif love.timer.getTime() - fancytextLastUpdate[id] > 0.5 then
-                    fancyText:update()
-                    fancytextLastUpdate[id] = love.timer.getTime()
-                end
+
                 fancyText:draw()
             end
         end

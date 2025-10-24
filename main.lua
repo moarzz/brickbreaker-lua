@@ -293,7 +293,7 @@ local function loadAssets()
 
 
     -- load shaders
-    backgroundShader = love.graphics.newShader("background", "Shaders/background.glsl")
+    -- backgroundShader = love.graphics.newShader("background", "Shaders/background.glsl")
     glowShader = love.graphics.newShader("glow", "Shaders/glow.glsl")
 
     -- load spriteSheets
@@ -888,7 +888,7 @@ local function reduceBackgroundBrightness()
     -- Reduce background brightness over time, faster at higher intensities
     local reductionRate = 0.01 * (backgroundIntensity * 2) -- Scales from 0.01 to 0.03 based on intensity
     backgroundIntensity = math.max(0, backgroundIntensity - reductionRate)
-    backgroundShader:send("intensity", backgroundIntensity)
+    -- backgroundShader:send("intensity", backgroundIntensity)
 end
 
 screenOffset = {x=0,y=0}
@@ -1044,9 +1044,9 @@ local function gameFixedUpdate(dt)
     end
     
     --send info to background shader
-    backgroundShader:send("time", love.timer.getTime())                   
-    backgroundShader:send("resolution", {screenWidth, screenHeight})
-    backgroundShader:send("brightness", backgroundIntensity)
+    -- backgroundShader:send("time", love.timer.getTime())                   
+    -- backgroundShader:send("resolution", {screenWidth, screenHeight})
+    -- backgroundShader:send("brightness", backgroundIntensity)
     reduceBackgroundBrightness()
     local backgroundIntensity = Player.score <= 100 and mapRangeClamped(Player.score,1,100, 0.0, 0.15) or (Player.score <= 5000 and mapRangeClamped(Player.score, 100, 5000, 0.15, 0.5) or mapRangeClamped(Player.score, 5000, 100000, 0.5, 1.0))
 
@@ -1069,7 +1069,7 @@ local function gameFixedUpdate(dt)
         brickPiecesUpdate(dt) -- Update brick pieces
         -- Garbage collect dynamic objects
         garbageCollectDynamicObjects()
-        backgroundShader:send("intensity", backgroundIntensity)
+        -- backgroundShader:send("intensity", backgroundIntensity)
         local sineShaderIntensity = 0.3 -- Default base intensity
 
         dt = dt * playRate -- Adjust the delta time based on the playback rate
@@ -1771,9 +1771,9 @@ end
 -- Add to love.draw()
 local old_love_draw = love.draw
 function love.draw()
-    love.graphics.setShader(backgroundShader)
-    WindowCorrector.mergeCanvas(1);
-    love.graphics.setShader()
+    -- love.graphics.setShader(backgroundShader)
+    -- WindowCorrector.mergeCanvas(1);
+    -- love.graphics.setShader()
 
     resetButtonLastID()
     love.graphics.setColor(1, 1, 1, 1)
