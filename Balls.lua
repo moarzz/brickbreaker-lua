@@ -2214,15 +2214,15 @@ function Balls.addBall(ballName, singleBall)
         print("isNewBall: " .. tostring(isNewBall))
         local upgradePrice
         if ballTemplate.rarity == "common" then
-            upgradePrice = 5
+            upgradePrice = 3
         elseif ballTemplate.rarity == "uncommon" then
-            upgradePrice = 7
+            upgradePrice = 5
         elseif ballTemplate.rarity == "rare" then
-            upgradePrice = 9
+            upgradePrice = 7
         elseif ballTemplate.rarity == "legendary" then
-            upgradePrice = 11
+            upgradePrice = 9
         else
-            upgradePrice = 1
+            upgradePrice = 3
         end
         if isNewBall then
             local newBallType = {

@@ -33,12 +33,13 @@ local items = {
         description = "",
         onInShop = function(self)
             self.stats = {} 
-            local statNames = {"speed", "amount", "ammo", "fireRate", "cooldown", "range"}
+            local statNames = {"damage", "speed", "amount", "ammo", "fireRate", "cooldown", "range"}
             local itemNames = {"Running Shoes", "2 for 1 Meal Ticket", "Extended Magazine", "Fast Hands", "Duct Tape", "Fake Pregnancy Belly"}
             local randomIndex = math.random(1,6)
             local randomStatName = statNames[randomIndex]
             self.name = itemNames[randomIndex]
-            self.stats[randomStatName] = 3 * (randomStatName == "cooldown" and -1 or 1)
+            local value = randomStatName == "damage" and 2 or 3
+            self.stats[randomStatName] = value * (randomStatName == "cooldown" and -1 or 1)
             self.imageReference = "assets/sprites/UI/itemIcons/" .. randomStatName .. (randomStatName == "cooldown" and "-" or "+") .. ".png"
             self.image = love.graphics.newImage(self.imageReference)
         end
@@ -228,12 +229,11 @@ local items = {
     ["Power Drill"] = {
         name = "Power Drill",
         stats = {},
-        description = "When you buy this, reduce the upgrade price of a random weapon by 3 (min 0)",
-        priceDiff = -1,
+        description = "Choose a random weapon\n upgrade a random one of its stats twice",
         rarity = "common",
         imageReference = "assets/sprites/UI/itemIcons/Power-Drill.png",
         onBuy = function() 
-            local randomWeaponId = math.random(1, tableLength(Balls.getUnlockedBallTypes()))
+            --[[local randomWeaponId = math.random(1, tableLength(Balls.getUnlockedBallTypes()))
             local i = 1
             for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
                 if i == randomWeaponId then
@@ -241,6 +241,32 @@ local items = {
                     break
                 end
                 i = i + 1
+            end]]   
+            local unlockedWeapons = Balls.getUnlockedBallTypes()
+            if tableLength(unlockedWeapons) == 0 then return end
+            
+            -- Select a random weapon
+            local randomWeaponIndex = math.random(1, tableLength(unlockedWeapons))
+            local selectedWeapon
+            for i = 1, 2 do
+                local i = 1
+                for _, weapon in pairs(unlockedWeapons) do
+                    if i == randomWeaponIndex then
+                        selectedWeapon = weapon
+                        break
+                    end
+                    i = i + 1
+                end
+                
+                if not selectedWeapon then return end
+                        
+                local statList = {}
+                for statName, _ in pairs(selectedWeapon.stats) do
+                    table.insert(statList, statName)
+                end
+                local statToUpgrade = statList[math.random(1, #statList)]
+
+                gainStatWithAnimation(statToUpgrade, selectedWeapon.name)
             end
         end,
         consumable = true
@@ -252,12 +278,13 @@ local items = {
         description = "",
         onInShop = function(self)
             self.stats = {}
-            local statNames = {"speed", "amount", "ammo", "fireRate", "cooldown", "range"}
-            local itemNames = {"Running Shoes +", "2 for 1 Meal Ticket +", "Extended Magazine +", "Fast Hands +", "Duct Tape +", "Fake Pregnancy Belly +"}
+            local statNames = {"damage", "speed", "amount", "ammo", "fireRate", "cooldown", "range"}
+            local itemNames = {"Boiling Rage +","Running Shoes +", "2 for 1 Meal Ticket +", "Extended Magazine +", "Fast Hands +", "Duct Tape +", "Fake Pregnancy Belly +"}
             local randomIndex = math.random(1,6)
             local randomStatName = statNames[randomIndex]
+            local value = randomStatName == "damage" and 4 or 6
             self.name = itemNames[randomIndex]
-            self.stats[randomStatName] = 6 * (randomStatName == "cooldown" and -1 or 1)
+            self.stats[randomStatName] = value * (randomStatName == "cooldown" and -1 or 1)
             self.imageReference = "assets/sprites/UI/itemIcons/" .. randomStatName .. (randomStatName == "cooldown" and "-" or "+") .. ".png"
             self.image = love.graphics.newImage(self.imageReference)
         end
@@ -561,8 +588,9 @@ local items = {
             local itemNames = {"Running Shoes ++", "2 for 1 Meal Ticket ++", "Extended Magazine ++", "Fast Hands ++", "Duct Tape ++", "Fake Pregnancy Belly ++"}
             local randomIndex = math.random(1,6)
             local randomStatName = statNames[randomIndex]
+            local value = randomStatName == "damage" and 6 or 9
             self.name = itemNames[randomIndex]
-            self.stats[randomStatName] = 9 * (randomStatName == "cooldown" and -1 or 1)
+            self.stats[randomStatName] = value * (randomStatName == "cooldown" and -1 or 1)
             self.imageReference = "assets/sprites/UI/itemIcons/" .. randomStatName .. (randomStatName == "cooldown" and "-" or "+") .. ".png"
             self.image = love.graphics.newImage(self.imageReference)
         end
@@ -598,7 +626,7 @@ local items = {
         unique = true,
         description = "<font=bold>on Level up</font><font=default> effects are doubled",
         imageReference = "assets/sprites/UI/itemIcons/Birthday-Hat.png",
-        rarity = "rare"
+        rarity = "legendary"
     },
     ["Triple Trouble ++"] = {
         name = "Triple Trouble ++",
@@ -1164,6 +1192,7 @@ local playerStatsPointers = {
     interest = interestValue,
     totalInterest = gainValue
 }
+local popupFancyText = nil
 local function drawPlayerStats()
     if not (Player.levelingUp and not Player.choosingUpgrade) then
         return
@@ -1218,9 +1247,11 @@ local function drawPlayerStats()
     if Player.currentCore == "Economy Core" then
         popupText = "At the start of the level up phase, gain <color=money><font=big>8$"
     end
-    local popup = FancyText.new(popupText, 20, 15, 350, 20, "left", playerStatsPointers.default, playerStatsPointers)
+    if popupFancyText == nil or popupFancyText.rawText ~= popupText then
+        popupFancyText = FancyText.new(popupText, 20, 15, 350, 20, "left", playerStatsPointers.default, playerStatsPointers)
+    end
     love.graphics.setColor(1,1,1,1)
-    popup:draw()
+    popupFancyText:draw()
 
     -- render interest if player has not finished leveling up
     local interestValue = 6 -- + math.floor(math.min(Player.money, Player.currentCore == "Economy Core" and 50 or 25)/5) + getItemsIncomeBonus()
@@ -2239,12 +2270,14 @@ function setItemShop(forcedItems)
             if itemToDisplay.onInShop then
                 itemToDisplay.onInShop(itemToDisplay)
             end
+            getItemFullDescription(itemToDisplay)
             displayedItems[i] = items[testItems[i]]
         else
             if itemToDisplay then
                 if itemToDisplay.onInShop then
                     itemToDisplay.onInShop(itemToDisplay)
                 end
+                getItemFullDescription(itemToDisplay)
                 displayedItems[i] = itemToDisplay
             else
                 print("Error: No item found in setItemShop()")
@@ -2367,8 +2400,12 @@ local function drawItemShop()
                         end
                     end
                     if not item.consumable then
-                        table.insert(Player.items, item)
-                        Player.items[#Player.items].id = item.name .. tostring(currentItemId)
+                        local itemToInsert = {}
+                        for k, v in pairs(item) do
+                            itemToInsert[k] = v
+                        end
+                        table.insert(Player.items, itemToInsert)
+                        Player.items[#Player.items].id = itemToInsert.name .. tostring(currentItemId)
                         currentItemId = currentItemId + 1
                     end
                     if item.stats.amount then
@@ -2486,13 +2523,18 @@ local function drawPlayerItems()
                     pointers[pointerName] = pointerFunc
                 end
             end]]
-            local id = "fancyText, player.items" .. index .. item.name:gsub("%s+", "_")
-            local text
-            text = getItemFullDescription(item) or ""
-            local fancyText = FancyText.new(text, itemX + 15, itemY + 70, (uiBigWindowImg:getWidth() - 25)/2, 12, "center", item.descriptionPointers.default, item.descriptionPointers)
-            fancyTexts[id] = fancyText
-            fancyText:update()
-            fancyText:draw()
+            local id = "fancyText, player.items" .. index .. item.name:gsub("%s+", "_") .. (item.id or "")
+            if fancyTexts[id] then
+                fancyTexts[id]:update()
+                fancyTexts[id]:draw()
+            else
+                local text
+                text = getItemFullDescription(item) or ""
+                local fancyText = FancyText.new(text, itemX + 15, itemY + 70, (uiBigWindowImg:getWidth() - 25)/2, 12, "center", item.descriptionPointers.default, item.descriptionPointers)
+                fancyTexts[id] = fancyText
+                fancyText:update()
+                fancyText:draw()
+            end
         end
     end
 end
