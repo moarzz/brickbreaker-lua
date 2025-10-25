@@ -15,6 +15,7 @@ function love.run()
     love.timer.step();
 
 	local dt = 0;
+	local addd = 0;
 
 	-- Main loop time.
 	return function()
@@ -38,7 +39,11 @@ function love.run()
 
 		-- Call update and draw
 		if love.update and dt >= targetDT then
+			local preUpdateTime = love.timer.getTime(); -- microsecond accurate
             love.update(targetDT);
+			local postUpdateTime = love.timer.getTime();
+
+			addd = addd + dt;
 
             if dt >= targetDT * 2 then
                 print("lag");
@@ -46,18 +51,26 @@ function love.run()
 
             dt = dt % targetDT; -- if lag lasts multiple frames then just eat the lag
             -- we dont want a spiral of lag frames
+
+			if love.graphics and love.graphics.isActive() then
+				love.graphics.origin();
+				love.graphics.clear(love.graphics.getBackgroundColor());
+
+				local preDrawTime = love.timer.getTime();
+				if love.draw then
+					love.draw();
+				end
+				local postDrawTime = love.timer.getTime();
+
+				if addd > 0.5 then
+					print("update time : " .. tostring((postUpdateTime - preUpdateTime) * 10000));
+					print("drawing time: " .. tostring((postDrawTime - preDrawTime) * 10000));
+					addd = 0;
+				end
+
+				love.graphics.present();
+			end
         end
-
-		if love.graphics and love.graphics.isActive() then
-			love.graphics.origin();
-			love.graphics.clear(love.graphics.getBackgroundColor());
-
-			if love.draw then
-                love.draw();
-            end
-
-			love.graphics.present();
-		end
 
         love.timer.sleep(0.001);
 	end

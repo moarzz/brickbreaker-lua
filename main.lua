@@ -1225,13 +1225,8 @@ end
 local gcTimer = 0
 local memLeakCheckTimer = 0
 function love.update(dt)
-    gcTimer = gcTimer + dt
-    if gcTimer > 10 then
-        collectgarbage("collect")
-        gcTimer = 0
-    end
+    gcTimer = gcTimer + dt;
     
-    print("Memory (KB): " .. collectgarbage("count"))
     BackgroundShader.update(dt);
     gameFixedUpdate(dt);
 end
@@ -1805,9 +1800,7 @@ function drawSettingsMenu()
     end
 end
 
--- Add to love.draw()
-local old_love_draw = love.draw
-function love.draw()
+local function fullDraw()
     BackgroundShader.draw();
 
     resetButtonLastID()
@@ -2062,6 +2055,19 @@ function love.draw()
     love.graphics.setShader()
     love.graphics.setColor(1, 1, 1, 1)
     setFont(20)
+end
+
+function love.draw()
+    fullDraw();
+
+    if gcTimer > 0.5 then
+        -- collectgarbage("collect")
+        -- print("Memory (KB): " .. collectgarbage("count"))
+        -- local drawStats = love.graphics.getStats();
+        -- print("draw calls :" .. tostring(drawStats.drawcalls));
+        -- print("texture mem:" .. tostring(drawStats.texturememory));
+        gcTimer = 0
+    end
 end
 
 damageNumbersOn = true
