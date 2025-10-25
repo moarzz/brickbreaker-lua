@@ -99,6 +99,11 @@ function resetGame()
         removeTween(Tweens[i].id)
     end
     
+    resetLocalUtilityTable()
+
+    -- Utility function values reset
+    resetTextPopups()
+
     -- Clear event queue
     if EventQueue and EventQueue.clear then
         EventQueue:clear()
@@ -1184,13 +1189,48 @@ local function gameFixedUpdate(dt)
     end    
 end
 
+local function memLeakCheck(dt)
+    if memLeakCheckTimer > 5 then
+        memLeakCheckTimer = 0
+
+        -- print header
+        print("")
+        print("----- Memory Leak Check -----")
+
+        -- print current memory usage
+        print("Memory (MB): " .. collectgarbage("count")/1024)
+
+        local brickPieceAmount = #brickPieces
+        local brickAmount = #bricks
+        local brickTextCacheAmount = tableLength(brickTextCache.objects)
+        local visualValuesAmount = tableLength(visualItemValues) + tableLength(visualUpgradePriceValues) + tableLength(visualStatValues)
+        local tweenAmount = #Tweens
+        local damageNumbersAmount = getDamageNumbersLength()
+        local textObjectsAmount = getTextObjectsLength()
+        local spriteBatchesAmount = getSpriteBatchesLength()
+        local animationAmount = #animations
+        local quadCacheAmount = getQuadCacheLength()
+        local explosionAmount = #explosions
+        local fontTableAmount = getFontTableLength()
+
+        print("#Bricks: " .. brickAmount .."- #Brick Pieces: " .. brickPieceAmount .. " - #Brick Text Cache: " .. brickTextCacheAmount)
+        print("#Tweens: " .. tweenAmount .. " - #Visual Values: " .. visualValuesAmount)
+        print("#Damage Numbers: " .. damageNumbersAmount .. " - #Text Objects: " .. textObjectsAmount)
+        print("#Animations: " .. animationAmount .. " - #Sprite Batches: " .. spriteBatchesAmount .. " - #Quad Cache: " .. quadCacheAmount)
+        print("#Explosions: " .. explosionAmount)
+        print("#Font Table: " .. fontTableAmount)
+    end
+end
+
 local gcTimer = 0
+local memLeakCheckTimer = 0
 function love.update(dt)
     gcTimer = gcTimer + dt
     if gcTimer > 10 then
         collectgarbage("collect")
         gcTimer = 0
     end
+    
     print("Memory (KB): " .. collectgarbage("count"))
     BackgroundShader.update(dt);
     gameFixedUpdate(dt);

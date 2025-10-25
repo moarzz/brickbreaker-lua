@@ -51,7 +51,6 @@ function restartGame()
     UtilityFunction.freeze = false
 end
 
-SFXs = {}
 function playSoundEffect(soundEffect, volume, pitch, loop, clone)
     if soundEffect ~= backgroundMusicSFX then
         volume = (sfxVolume or 1) * (volume or 1) * 0.5 -- Adjust volume based on global sfxVolume
@@ -356,6 +355,9 @@ function getKeysAsList(list)
 end
 
 local Fonts = {}
+function getFontTableLength()
+    return #Fonts
+end
 function setFont(...)
     local args = {...}
     local fontSize = 12 -- Default font size
@@ -737,10 +739,14 @@ end
 local animationID = 1
 animations = {}
 local quadCache = {} -- Add quad cache
+function getQuadCacheLength()
+    return #quadCache
+end
 
 function resetAnimations()
     animations = {} -- Reset the animations table
     animationID = 1 -- Reset the animation ID counter
+    quadCache = {}
     -- Don't clear quadCache as we want to reuse quads
 end
 
@@ -822,6 +828,11 @@ end
 local lvlUpTexts = {}
 local boostTexts = {}
 local xpTexts = {}
+function resetTextPopups()
+    lvlUpTexts = {}
+    boostTexts = {}
+    xpTexts = {}
+end
 local currentPopupId = 1
 function lvlUpPopup()
     playSoundEffect(lvlUpSFX, 0.55, 1, false)
@@ -1075,6 +1086,9 @@ end
 
 -- Store animations grouped by spritesheet
 local spriteBatches = {}
+function getSpriteBatchesLength()
+    return #spriteBatches
+end
 
 -- Update function for the animation
 function updateAnimations(dt)
@@ -1286,6 +1300,18 @@ local damageNumberFont = nil -- Cache the font
 local textObjects = {} -- Cache Text objects by damage value
 local lastCleanupTime = 0
 local CLEANUP_INTERVAL = 5 -- Cleanup unused text objects every 5 seconds
+
+function getDamageNumbersLength()
+    return #damageNumbers
+end
+function getTextObjectsLength()
+    return #textObjects
+end
+function resetLocalUtilityTable()
+    damageNumbers = {}
+    textObjects = {}
+    lastCleanupTime = 0
+end
 
 function resetDamageNumbers()
     damageNumbers = {} -- Reset the damage numbers table
