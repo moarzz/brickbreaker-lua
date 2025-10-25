@@ -2086,7 +2086,7 @@ end
 
 -- calls ballListInit and adds a ball to it
 function Balls.initialize()
-    initializeRarityItemLists()
+    -- initializeRarityItemLists()
     longTermInvestment.value = 2
     if Player.currentCore == "Collector's Core" then
         setMaxItems(5)

@@ -82,7 +82,17 @@ _G.EVENTS = setmetatable({
             ammo = true,
             cooldown = true
         },
-    }
+    },
+    item = {
+        purchase = {
+            FourLeafedClover = true;
+        };
+
+        sell = {
+            FourLeafedClover = true;
+        }
+    };
+    levelUp = true;
 }, eventLocatorMeta); -- list of all possible modifier triggers
 
 _G.ANIMATION_EVENTS = setmetatable({

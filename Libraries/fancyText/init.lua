@@ -5,9 +5,9 @@ local PointerConverter = require(path .. ".pointerConverter");
 local FancyText = {};
 FancyText.__index = FancyText;
 
-FancyText.font = PIXEL_FONT_128 or love.graphics.getFont()
-FancyText.fontHeight = FancyText.font:getHeight()
-FancyText.defaultFont = FancyText.font
+FancyText.font = PIXEL_FONT_128 or love.graphics.getFont();
+FancyText.fontHeight = FancyText.font:getHeight();
+FancyText.defaultFont = FancyText.font;
 
 -- some default colours usable by all fancyTexts
 FancyText.DEFAULT_COLOURS = {
@@ -65,6 +65,12 @@ FancyText.arbitraryModulo = 100000; -- mod the updateCheck by this value 2 preve
 
 function FancyText.setGlobalItem(item, value)
     FancyText.GLOBAL_POINTER[item] = value;
+end
+
+function FancyText.setDefaultFont(newDefaultFont)
+    FancyText.font = newDefaultFont;
+    FancyText.fontHeight = newDefaultFont:getHeight();
+    FancyText.defaultFont = newDefaultFont;
 end
 
 function FancyText.new(text, x, y, width, textHeight, alignment, font, dataReference)
@@ -141,7 +147,8 @@ function FancyText:alignText()
             if string.find(strToReplace, "=") then
                 return nil; -- dont alter the string (yet)
             else -- otherwise its a key to the pointer table
-                local ret = self.pointer[string.sub(strToReplace,2,-2)];
+                local valName = string.sub(strToReplace, 2,-2);
+                local ret = self.pointer[valName] or self.GLOBAL_POINTER[valName];
 
                 if type(ret) == "function" then
                     ret = ret();
@@ -228,7 +235,8 @@ function FancyText:alignText()
 
                 widthOfStr = widthOfStr + curFont:getWidth(previousFontText) * scale; -- add the width of the previous text to the width of the current line
 
-                curFont = self.pointer[(string.match(modif, "^font=(.*)$"))];
+                local fontName = string.match(modif, "^font=(.*)$");
+                curFont = self.pointer[fontName] or self.GLOBAL_POINTER[fontName];
 
                 if not curFont then
                     if (string.match(modif, "^font=(.*)$")) == "default" then
@@ -245,7 +253,8 @@ function FancyText:alignText()
 
                 widthOfStr = widthOfStr + curFont:getWidth(previousFontText) * scale; -- add the width of the previous text to the width of the current line
 
-                local drawImage = self.pointer[(string.match(modif, "^image=(.*)$"))]; -- get the image we want to draw
+                local imgName = string.match(modif, "^image=(.*)$");
+                local drawImage = self.pointer[imgName] or self.GLOBAL_POINTER[imgName]; -- get the image we want to draw
 
                 assert(drawImage and drawImage:type() == "Image", "tried to draw a non image object");
 

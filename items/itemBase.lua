@@ -58,8 +58,8 @@ function eventMeta:__newindex(key, val)
 end
 
 function ItemBase:__newindex(key, val)
-    assert(type(key) == "string", "cannot use numbered indices variable in modifier");
-    assert(string.find(key, "|") == nil, "cannot make a variable in a modifier that contains the character '|'");
+    assert(type(key) == "string", "cannot use numbered indices variable in item");
+    assert(string.find(key, "|") == nil, "cannot make a variable in an item that contains the character '|'");
 
     rawset(self, key, val);
 end
@@ -76,102 +76,111 @@ function ItemBase.new()
     return instance;
 end
 
--- seperated from the .new() function to make all variables exist in the highest level of the modifier
+-- seperated from the .new() function to make all variables exist in the highest level of the item
 function ItemBase:init()
-    assert(self.name ~= nil, "name must be set before creating instance of a modifier");
-    assert(self.rarity ~= nil, "rarity must be set before creating instance of a modifier");
+    assert(self.name ~= nil, "'name' must be set before creating instance of an item");
+    assert(self.rarity ~= nil, "'rarity' must be set before creating instance of an item");
+    -- assert(self.consumable ~= nil, "'consumable' must be set before creating instance of an item");
+    -- assert(self.image ~= nil, "'image' must be set before creating instance of an item");
 
-    self.card = Card.new(0,0, 100,100);
-    self.card:setTexture(self.texture or self.defaultTexture);
+    -- self.card = Card.new(0,0, 100,100);
+    -- self.card:setTexture(self.texture or self.defaultTexture);
 
-    self.triggerLen = 0;
-    self.triggerType = "hard";
+    -- self.triggerLen = 0;
+    -- self.triggerType = "hard";
 
     self.rarity = self.rarity; -- set the highest table to first available rarity
     self.name = self.name; -- set highest table to first available name
 
-    self.text = self.text or "<highlight=red><colour=white>ERROR<highlight=clear><colour=black> text not set for this modifier";
-    self.fancyTextTextBox = FancyText.new(self.text, -960,-540, 350, 40, "center", self);
-    self.fancyTextNameBox = FancyText.new(self.name, -960,-540, 200000, 40, "left", self); --! really large max width: not good fix later
-    self.textBox = Box.new(-972,-552, 374, self.fancyTextTextBox:getHeight() + 24, 18, "filled");
-    self.nameBox = Box.new(-960 - self.fancyTextNameBox:getWidth() / 2 + 88,-604, self.fancyTextNameBox:getWidth() + 24, 64, 18, "filled");
+    self.description = self.description or "<highlight=red><colour=white>ERROR<highlight=clear><colour=black> text not set for this item";
+
+    self.stats = {}; -- stats
+
+    -- self.fancyTextTextBox = FancyText.new(self.text, -960,-540, 350, 40, "center", self);
+    -- self.fancyTextNameBox = FancyText.new(self.name, -960,-540, 200000, 40, "left", self); --! really large max width: not good fix later
+    -- self.textBox = Box.new(-972,-552, 374, self.fancyTextTextBox:getHeight() + 24, 18, "filled");
+    -- self.nameBox = Box.new(-960 - self.fancyTextNameBox:getWidth() / 2 + 88,-604, self.fancyTextNameBox:getWidth() + 24, 64, 18, "filled");
 
     return self;
 end
 
-function ItemBase:checkBoundingBox(x, y)
-    return self.card:isPointInside(x, y);
+function ItemBase:purchase()
+    print("purchase function not set for this item: " .. self.name);
 end
 
-function ItemBase:grab()
-    self.card:grab();
-end
-function ItemBase:unGrab()
-    self.card:unGrab();
-end
-function ItemBase:getDrawingPosition()
-    return self.card:getDrawingPosition();
-end
+-- function ItemBase:checkBoundingBox(x, y)
+    -- return self.card:isPointInside(x, y);
+-- end
 
-function ItemBase:setText(text)
-    self.text = text;
+-- function ItemBase:grab()
+    -- self.card:grab();
+-- end
+-- function ItemBase:unGrab()
+    -- self.card:unGrab();
+-- end
+-- function ItemBase:getDrawingPosition()
+    -- return self.card:getDrawingPosition();
+-- end
 
-    self.fancyTextTextBox:setText(text);
-    self.textBox:setHeight(self.fancyTextTextBox:getHeight() + 24);
+function ItemBase:setDescription(description)
+    self.description = description;
+
+    -- self.fancyTextTextBox:setText(text);
+    -- self.textBox:setHeight(self.fancyTextTextBox:getHeight() + 24);
 end
-function ItemBase:setPosition(x, y)
-    self.card:setPosition(x, y);
-
-    if x - 350 > -860 then
-        self.fancyTextTextBox:setPosition(x - 362, y);
-        self.textBox:setPosition(x - 374, y - 12);
-    else
-        self.fancyTextTextBox:setPosition(x + 112, y);
-        self.textBox:setPosition(x + 100, y - 12);
-    end
-
-    self.fancyTextNameBox:setPosition(x - self.fancyTextNameBox:getWidth() / 2 + 50, y - 52);
-    self.nameBox:setPosition(x - self.fancyTextNameBox:getWidth() / 2 + 38, y - 64);
-end
-function ItemBase:setImmediatePosition(x, y)
-    self.card:teleport(x, y);
-
-    if x - 350 > -860 then
-        self.fancyTextTextBox:setPosition(x - 362, y);
-        self.textBox:setPosition(x - 374, y - 12);
-    else
-        self.fancyTextTextBox:setPosition(x + 112, y);
-        self.textBox:setPosition(x + 100, y - 12);
-    end
-
-    self.fancyTextNameBox:setPosition(x - self.fancyTextNameBox:getWidth() / 2 + 50, y - 52);
-    self.nameBox:setPosition(x - self.fancyTextNameBox:getWidth() / 2 + 38, y - 64);
-end
+-- function ItemBase:setPosition(x, y)
+    -- self.card:setPosition(x, y);
+-- 
+    -- if x - 350 > -860 then
+        -- self.fancyTextTextBox:setPosition(x - 362, y);
+        -- self.textBox:setPosition(x - 374, y - 12);
+    -- else
+        -- self.fancyTextTextBox:setPosition(x + 112, y);
+        -- self.textBox:setPosition(x + 100, y - 12);
+    -- end
+-- 
+    -- self.fancyTextNameBox:setPosition(x - self.fancyTextNameBox:getWidth() / 2 + 50, y - 52);
+    -- self.nameBox:setPosition(x - self.fancyTextNameBox:getWidth() / 2 + 38, y - 64);
+-- end
+-- function ItemBase:setImmediatePosition(x, y)
+    -- self.card:teleport(x, y);
+-- 
+    -- if x - 350 > -860 then
+        -- self.fancyTextTextBox:setPosition(x - 362, y);
+        -- self.textBox:setPosition(x - 374, y - 12);
+    -- else
+        -- self.fancyTextTextBox:setPosition(x + 112, y);
+        -- self.textBox:setPosition(x + 100, y - 12);
+    -- end
+-- 
+    -- self.fancyTextNameBox:setPosition(x - self.fancyTextNameBox:getWidth() / 2 + 50, y - 52);
+    -- self.nameBox:setPosition(x - self.fancyTextNameBox:getWidth() / 2 + 38, y - 64);
+-- end
 function ItemBase:setName(name)
     self.name = name;
 
-    self.fancyTextNameBox:setText(name);
+    -- self.fancyTextNameBox:setText(name);
 end
 function ItemBase:getName()
     return self.name;
 end
 -- animation
-function ItemBase:trigger(triggerType)
-    triggerType = triggerType or "hard";
+-- function ItemBase:trigger(triggerType)
+    -- triggerType = triggerType or "hard";
+-- 
+    -- if triggerType == "hard" then
+        -- self.triggerType = "hard";
+    -- elseif triggerType == "soft" then
+        -- self.triggerType = "soft";
+    -- else
+        -- error("tried to animate item with invalid animation (only 'soft' and 'hard' allowed)");
+    -- end
+-- 
+    -- self.triggerLen = self.triggerAnimLen;
+    -- --// self.triggerLen = self.triggerAnimLen;
+-- end
 
-    if triggerType == "hard" then
-        self.triggerType = "hard";
-    elseif triggerType == "soft" then
-        self.triggerType = "soft";
-    else
-        error("tried to animate modifier with invalid animation (only 'soft' and 'hard' allowed)");
-    end
-
-    self.triggerLen = self.triggerAnimLen;
-    --// self.triggerLen = self.triggerAnimLen;
-end
-
-function ItemBase:draw(dt)
+--[[function ItemBase:draw(dt)
     dt = dt or love.timer.getDelta();
 
     love.graphics.setColor(1,1,1); -- white
@@ -193,7 +202,7 @@ function ItemBase:draw(dt)
 
     local mx, my = love.mouse.getPosition();
 
-    -- currently hovering over the modifier. so draw the text aswell
+    -- currently hovering over the item. so draw the text aswell
     if Game.modifierRoster.grabbingModifier == nil and not self.card:isGrabbed() and self:checkBoundingBox(mx, my) then
         self.fancyTextTextBox:update();
 
@@ -215,7 +224,7 @@ function ItemBase:draw(dt)
     DepthTester.startDrawingAtDepth();
     self.card:draw(0,0, animRot);
     DepthTester.stopDrawingAtDepth(depth);
-end
+end]]
 
 function ItemBase:getDataAsString()
     local ret = "v0.1\n"; -- version
@@ -239,10 +248,10 @@ end
 
 function ItemBase:loadFromData(str)
     local version, data = string.match(str, "^(v[%d.]*)\n(.*)$");
-    assert(version and data, "save data corrupted, error from modifier");
+    assert(version and data, "save data corrupted, error from item");
 
     if version ~= "v0.1" then
-        error("invalid version for modifier");
+        error("invalid version for item");
     end
 
     while string.len(data) > 3 do -- at least 3 "|"s
