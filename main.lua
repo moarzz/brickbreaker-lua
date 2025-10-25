@@ -1189,38 +1189,61 @@ local function gameFixedUpdate(dt)
     end    
 end
 
+local memLeakCheckTimer = 0
+local memLeakLog = ""  -- holds the entire log in memory
+
 local function memLeakCheck(dt)
+    memLeakCheckTimer = memLeakCheckTimer + dt
     if memLeakCheckTimer > 5 then
         memLeakCheckTimer = 0
+        print("Memory Leak Check. Writing output to memoryCheckLog.txt")
 
-        -- print header
-        print("")
-        print("----- Memory Leak Check -----")
+        local stats = love.graphics.getStats()
 
-        -- print current memory usage
-        print("Memory (MB): " .. collectgarbage("count")/1024)
+        -- Build log entry
+        local logText = "\n----- Memory Leak Check (" .. os.date("%Y-%m-%d %H:%M:%S") .. ") -----\n"
+        logText = logText .. string.format("Memory Usage: %.2f MB\n", collectgarbage("count") / 1024)
+        logText = logText .. string.format("Draw Calls: %d\n", stats.drawcalls or 0)
+        logText = logText .. string.format("Draws Batched: %d\n", stats.drawcallsbatched or 0)
 
-        local brickPieceAmount = #brickPieces
-        local brickAmount = #bricks
-        local brickTextCacheAmount = tableLength(brickTextCache.objects)
-        local visualValuesAmount = tableLength(visualItemValues) + tableLength(visualUpgradePriceValues) + tableLength(visualStatValues)
-        local tweenAmount = #Tweens
-        local damageNumbersAmount = getDamageNumbersLength()
-        local textObjectsAmount = getTextObjectsLength()
-        local spriteBatchesAmount = getSpriteBatchesLength()
-        local animationAmount = #animations
-        local quadCacheAmount = getQuadCacheLength()
-        local explosionAmount = #explosions
-        local fontTableAmount = getFontTableLength()
+        -- Gather data safely
+        local brickPieceAmount, brickAmount, brickTextCacheAmount = 0, 0, 0
+        if bricks then
+            brickPieceAmount = #brickPieces or 0
+            brickAmount = #bricks or 0
+            brickTextCacheAmount = tableLength(brickTextCache.objects) or 0
+        end
 
-        print("#Bricks: " .. brickAmount .."- #Brick Pieces: " .. brickPieceAmount .. " - #Brick Text Cache: " .. brickTextCacheAmount)
-        print("#Tweens: " .. tweenAmount .. " - #Visual Values: " .. visualValuesAmount)
-        print("#Damage Numbers: " .. damageNumbersAmount .. " - #Text Objects: " .. textObjectsAmount)
-        print("#Animations: " .. animationAmount .. " - #Sprite Batches: " .. spriteBatchesAmount .. " - #Quad Cache: " .. quadCacheAmount)
-        print("#Explosions: " .. explosionAmount)
-        print("#Font Table: " .. fontTableAmount)
+        local visualValuesAmount = (tableLength(visualItemValues) + tableLength(visualUpgradePriceValues) + tableLength(visualStatValues)) or 0
+        local tweenAmount = (Tweens and #Tweens) or 0
+        local damageNumbersAmount = getDamageNumbersLength() or 0
+        local textObjectsAmount = getTextObjectsLength() or 0
+        local spriteBatchesAmount = getSpriteBatchesLength() or 0
+        local animationAmount = (animations and #animations) or 0
+        local quadCacheAmount = getQuadCacheLength() or 0
+        local explosionAmount = (explosions and #explosions) or 0
+        local fontTableAmount = getFontTableLength() or 0
+
+        -- Add formatted info
+        logText = logText .. string.format("#Bricks: %d - #Brick Pieces: %d - #Brick Text Cache: %d\n", brickAmount, brickPieceAmount, brickTextCacheAmount)
+        logText = logText .. string.format("#Tweens: %d - #Visual Values: %d\n", tweenAmount, visualValuesAmount)
+        logText = logText .. string.format("#Damage Numbers: %d - #Text Objects: %d\n", damageNumbersAmount, textObjectsAmount)
+        logText = logText .. string.format("#Animations: %d - #Sprite Batches: %d - #Quad Cache: %d\n", animationAmount, spriteBatchesAmount, quadCacheAmount)
+        logText = logText .. string.format("#Explosions: %d\n", explosionAmount)
+        logText = logText .. string.format("#Font Table: %d\n", fontTableAmount)
+
+        -- Add this entry to the full log
+        memLeakLog = memLeakLog .. logText
+
+        -- Write entire log to file (overwrites old content)
+        love.filesystem.write("memoryCheckLog.txt", memLeakLog)
+
+        -- (Optional) print where it's being written
+        print(logText)
+        print("Log saved to: " .. love.filesystem.getSaveDirectory() .. "/memoryCheckLog.txt")
     end
 end
+
 
 local gcTimer = 0
 local memLeakCheckTimer = 0
@@ -1231,9 +1254,10 @@ function love.update(dt)
         gcTimer = 0
     end
     
-    print("Memory (KB): " .. collectgarbage("count"))
+    -- print("Memory (KB): " .. collectgarbage("count"))
     BackgroundShader.update(dt);
     gameFixedUpdate(dt);
+    memLeakCheck(dt)
 end
 
 -- Menu settings

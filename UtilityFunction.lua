@@ -479,6 +479,7 @@ function isBrickInRange(brick, x, y, range)
 end
 
 function tableLength(tbl)
+    if tbl == nil then return 0 end
     local count = 0
     for _ in pairs(tbl) do
         count = count + 1
