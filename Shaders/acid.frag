@@ -26,8 +26,6 @@ vec4 effect(vec4 colour, Image tex, vec2 textureCoords, vec2 screenCoords)
 {
     vec2 uv = (screenCoords * 2.0 - love_ScreenSize.xy) / min(love_ScreenSize.x, love_ScreenSize.y);
 
-    float scaleMult = 0.35 + intensity * 0.4; // Adjust the scale multiplier based on intensity
-
     uv *= rot(sin(time / 17.4) * 1.1);
     uv += vec2(sin(time / 4.4), sin(time / 5.8 + 0.2)) * 0.08;
 
@@ -48,7 +46,7 @@ vec4 effect(vec4 colour, Image tex, vec2 textureCoords, vec2 screenCoords)
         finalColor += col * d;
     }
 
-    finalColor = sqrt(finalColor * 4.0) / 10.0;
+    finalColor = sqrt(finalColor * 4.0) / (10.0 - 3.0 * intensity) + vec3(0.1) * brightness;
         
     return vec4(finalColor, 1.0);
 }

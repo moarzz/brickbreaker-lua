@@ -118,7 +118,7 @@ function VFX.flipDrawDebug()
 end
 function VFX.draw()
     --drawBrickParticles()
-    if shouldDrawDebug then 
+    if shouldDrawDebug then
         drawDebug()
     end
 end

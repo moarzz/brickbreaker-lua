@@ -24,6 +24,7 @@ tween = require("Libraries.tween") -- tweening library
 VFX = require("VFX") -- VFX library
 local KeySys = require("KeywordSystem") -- Keyword system for text parsing
 local Explosion = require("particleSystems.explosion") -- Explosion particle system
+BackgroundShader = require("backgroundShader");
 
 usingMoneySystem = false
 usingNormalXpSystem = true
@@ -926,16 +927,21 @@ local targetMusicPitch = 1
 function changeMusic(newMusicStage)
     local ref
     if newMusicStage == "menu" then
-        ref = "assets/SFX/inGame1.mp3"
-        targetMusicPitch = 1
+        ref = "assets/SFX/inGame1.mp3";
+        targetMusicPitch = 1;
+        BackgroundShader.changeShader(1); -- vexel
     elseif newMusicStage == "calm" then
-        ref = "assets/SFX/inGame1.mp3"
+        ref = "assets/SFX/inGame1.mp3";
+        BackgroundShader.changeShader(1); -- vexel
     elseif newMusicStage == "mid" then
-        ref = "assets/SFX/inGame2.mp3"
+        ref = "assets/SFX/inGame2.mp3";
+        BackgroundShader.changeShader(2); -- acid
     elseif newMusicStage == "intense" then
-        ref = "assets/SFX/inGame3.mp3"
+        ref = "assets/SFX/inGame3.mp3";
+        BackgroundShader.changeShader(1); -- vexel
     elseif newMusicStage == "boss" then
-        ref = "assets/SFX/inGameBoss.mp3"
+        ref = "assets/SFX/inGameBoss.mp3";
+        BackgroundShader.changeShader(3); -- vexel
     end
     if backgroundMusic then
         backgroundMusic:stop()
@@ -1029,8 +1035,10 @@ local damageCooldown = 0 -- Cooldown for damage visuals
 local healCooldown = 0
 local printDrawCalls = false
 local function gameFixedUpdate(dt)
-    dt = dt * 0.7
+    -- dt = dt * 0.7
     -- Update mouse positions
+
+    BackgroundShader.update(dt);
 
     levelUpShopTweenAlpha(dt)
     local stats = love.graphics.getStats()
@@ -1047,8 +1055,8 @@ local function gameFixedUpdate(dt)
     -- backgroundShader:send("time", love.timer.getTime())                   
     -- backgroundShader:send("resolution", {screenWidth, screenHeight})
     -- backgroundShader:send("brightness", backgroundIntensity)
-    reduceBackgroundBrightness()
-    local backgroundIntensity = Player.score <= 100 and mapRangeClamped(Player.score,1,100, 0.0, 0.15) or (Player.score <= 5000 and mapRangeClamped(Player.score, 100, 5000, 0.15, 0.5) or mapRangeClamped(Player.score, 5000, 100000, 0.5, 1.0))
+    -- reduceBackgroundBrightness()
+    -- local backgroundIntensity = Player.score <= 100 and mapRangeClamped(Player.score,1,100, 0.0, 0.15) or (Player.score <= 5000 and mapRangeClamped(Player.score, 100, 5000, 0.15, 0.5) or mapRangeClamped(Player.score, 5000, 100000, 0.5, 1.0))
 
     updateMusicEffect(dt)
     if currentGameState == GameState.PAUSED then
@@ -1058,9 +1066,9 @@ local function gameFixedUpdate(dt)
     if currentGameState == GameState.PLAYING then
         KeywordSystem:update() -- Update the keyword system
         -- overwrites backgroundIntensity if using debugging window
-        if shouldDrawDebug then
-            backgroundIntensity = VFX.backgroundIntensityOverwrite 
-        end
+        -- if shouldDrawDebug then
+            -- backgroundIntensity = VFX.backgroundIntensityOverwrite 
+        -- end
 
         if currentScreenShakeIntensity > 0 then
             screenShakeIntensityDeprecation(dt)
@@ -1774,6 +1782,7 @@ function love.draw()
     -- love.graphics.setShader(backgroundShader)
     -- WindowCorrector.mergeCanvas(1);
     -- love.graphics.setShader()
+    BackgroundShader.draw();
 
     resetButtonLastID()
     love.graphics.setColor(1, 1, 1, 1)

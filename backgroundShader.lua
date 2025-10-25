@@ -10,9 +10,9 @@ function BackgroundShader.init()
     self.brightness = 0;
 
     self.shaders = {
-        love.graphics.newShader("vexel.frag");
-        love.graphics.newShader("acid.frag");
-        love.graphics.newShader("hexagons.frag");
+        love.graphics.newShader("vexel", "Shaders/vexel.frag");
+        love.graphics.newShader("acid", "Shaders/acid.frag");
+        love.graphics.newShader("hexagons", "Shaders/hexagons.frag");
     };
 
     self.indices = {
@@ -21,7 +21,7 @@ function BackgroundShader.init()
         ["hexagons"] = 3;
     };
 
-    self.fadeInOutShader = love.graphics.newShader("fadeInOut.frag");
+    self.fadeInOutShader = love.graphics.newShader("fadeInOut", "Shaders/fadeInOut.frag");
 
     self.activeShader = 1; -- index to the current shader
     self.prevActiveShader = 0; -- index to the previous shader (for fading)
@@ -33,9 +33,33 @@ end
 function BackgroundShader.update(dt)
     self.time = self.time + dt;
 
+    -- gotta love the non dt based timing functions
+    local reductionRate = 0.01 * (self.brightness * 2); -- Scales from 0.01 to 0.03 based on intensity
+    self.setBrightness(math.max(0, self.brightness - reductionRate));
+
+    self.setIntensity(Player.score <= 100 and mapRangeClamped(Player.score,1,100, 0.0, 0.15) or (Player.score <= 5000 and mapRangeClamped(Player.score, 100, 5000, 0.15, 0.5) or mapRangeClamped(Player.score, 5000, 100000, 0.5, 1.0)));
+
     if self.fadePerun < 1 then
         self.fadePerun = math.min(1, self.fadePerun + dt / self.timePerFade);
     end
+end
+
+function BackgroundShader.changeShader(toShader)
+    if self.fadePerun < 1 then
+        return;
+    end
+
+    if toShader == self.activeShader then
+        return;
+    end
+
+    if toShader < 1 or toShader > 3 then
+        return;
+    end
+
+    self.prevActiveShader = self.activeShader;
+    self.activeShader = toShader;
+    self.fadePerun = 0;
 end
 
 function BackgroundShader.setIntensity(newIntensity)
@@ -96,4 +120,5 @@ function BackgroundShader.draw()
     end
 end
 
+BackgroundShader.init();
 return BackgroundShader;

@@ -27,7 +27,7 @@ vec4 effect(vec4 colour, Image tex, vec2 textureCoords, vec2 screenCoords)
     for(i = 0.0; i < 50.0; i++)
     {
         // Compute raymarch point from raymarch distance and ray direction
-        vec3 p = z * normalize(vec3((I - love_ScreenSize.xy * 0.5) * 2.0, love_ScreenSize.y));
+        vec3 p = z * normalize(vec3((I - vec2(1920.0, 1080.0) * 0.5) * 2.0, 1080.0));
         vec3 v;
         
         // Scroll forward and change depth colour offset

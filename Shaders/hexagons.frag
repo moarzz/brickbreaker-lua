@@ -1,4 +1,6 @@
 uniform number time = 0.0;
+uniform float intensity;
+uniform float brightness;
 
 uniform number exponentMult = 0.5;
 
@@ -116,7 +118,9 @@ vec4 effect(vec4 colour, Image tex, vec2 textureCoords, vec2 screenCoords)
 
 	col = ac * 0.02;
 
-	col *= 1.0 - t * (0.02 + 0.02 * sin(time));
+	col *= 1.0 - t * (0.02 + 0.02 * sin(time)) - 0.3 * intensity;
+
+	col += vec3(0.1) * brightness;
 
 
 	return vec4(col, 1.0);

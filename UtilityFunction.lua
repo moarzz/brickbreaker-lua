@@ -1208,7 +1208,8 @@ function screenFlash(duration, intensity)
     -- Create a tween for the flash effect
     local easing = tween.easing.outSine
     local delay = duration / 8
-    backgroundIntensity = math.max(intensity, 0.25)
+    -- backgroundIntensity = math.max(intensity, 0.25)
+    BackgroundShader.setBrightness(math.max(intensity, 0.25));
 
     local flashTween = tween.new(duration, backgroundColor, {r = 0, g = 0, b = 0, a = 0}, tween.easing.inSine)
     addTweenToUpdate(flashTween)
@@ -1229,9 +1230,10 @@ function damageScreenVisuals(duration, intensity, direction)
     --screen flash logic
     local flashIntensity = mapRangeClamped(intensity, 0, 10, 0, 1)
     local flashColor = {flashIntensity, flashIntensity, flashIntensity, flashIntensity} -- Red color for the flash effect
-    if flashIntensity > backgroundIntensity then
+    if flashIntensity > BackgroundShader.brightness then
         local color = flashColor
-        backgroundIntensity = flashIntensity
+        BackgroundShader.setBrightness(flashIntensity);
+        -- backgroundIntensity = flashIntensity
         --screenFlash(0.25, flashColor)
     end
 
