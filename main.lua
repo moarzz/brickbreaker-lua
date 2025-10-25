@@ -1250,10 +1250,6 @@ local memLeakCheckTimer = 0
 function love.update(dt)
     gcTimer = gcTimer + dt;
     
-<<<<<<< HEAD
-=======
-    -- print("Memory (KB): " .. collectgarbage("count"))
->>>>>>> 4c7cb00e65e19e960547dd90257db7754bb6d6b8
     BackgroundShader.update(dt);
     gameFixedUpdate(dt);
     memLeakCheck(dt)
