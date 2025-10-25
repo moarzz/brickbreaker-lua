@@ -27,39 +27,6 @@ permanentItemBonuses = {}
 
 local Items = require("items");
 
--- local items = 
-
-
-
-function richGetRicherUpdate(moneyBefore, moneyAfter)
-    if hasItem("Rich Get Richer") then
-        local diff = math.floor(moneyAfter/20) - math.floor(moneyBefore/20)
-        if diff ~= 0 then
-            getItem("Rich Get Richer").stats.amount = getItem("Rich Get Richer").stats.amount + diff
-            getItem("Rich Get Richer").stats.fireRate = getItem("Rich Get Richer").stats.fireRate + diff
-            if diff > 0 then
-                Balls.amountIncrease(diff)
-            else
-                Balls.amountDecrease(math.abs(diff))
-            end
-            if Player.items["Rich Get Richer"] then
-                Player.items["Rich Get Richer"].stats.amount = math.floor(Player.money/20)
-                Player.items["Rich Get Richer"].stats.fireRate = math.floor(Player.money/20)
-            end
-        end
-    end
-end
-
---[[
-local commonItems = {}
-local commonItemsConsumable = {}
-local uncommonItems = {}
-local uncommonItemsConsumable = {}
-local rareItems = {}
-local rareItemsConsumable = {}
-local legendaryItems = {}
-local legendaryItemsConsumable = {}
-local testItems = {}]]
 
 local _shared_item_fonts = _shared_item_fonts or {
     default = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 18),
@@ -68,89 +35,6 @@ local _shared_item_fonts = _shared_item_fonts or {
 }
 
 local _shared_item_images = _shared_item_images or {}
-
---[[
-function initializeRarityItemLists()
-    commonItems = {}
-    commonItemsConsumable = {}
-    uncommonItems = {}
-    uncommonItemsConsumable = {}
-    rareItems = {}
-    rareItemsConsumable = {}
-    legendaryItems = {}
-    legendaryItemsConsumable = {}
-    testItems = {}
-    for itemName, itemData in pairs(items) do
-        if not itemData.descriptionPointers then
-            itemData.descriptionPointers = {}
-        end
-
-        -- add default pointer values for fancy text if the item doesn't have them already
-        local getValue = function() return longTermInvestment.value end
-        if not itemData.descriptionPointers["default"] then
-            itemData.descriptionPointers["default"] = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 18)
-        end
-        if not itemData.descriptionPointers["big"] then
-            itemData.descriptionPointers["big"] = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 23)
-        end
-        if not itemData.descriptionPointers["bold"] then
-            itemData.descriptionPointers["bold"] = love.graphics.newFont("assets/Fonts/KenneyFutureBold.ttf", 25)
-        end
-        if not itemData.descriptionPointers["longTermValue"] then
-            itemData.descriptionPointers["longTermValue"] = getValue
-        end
-
-        if itemData.imageReference then
-            itemData.image = love.graphics.newImage(itemData.imageReference)
-        end
-
-        -- only create image once and reuse it
-        if itemData.imageReference and not _shared_item_images[itemData.imageReference] then
-            _shared_item_images[itemData.imageReference] = love.graphics.newImage(itemData.imageReference)
-        end
-        if itemData.imageReference then
-            itemData.image = _shared_item_images[itemData.imageReference]
-        end
-
-
-        local consumable = itemData.consumable or false
-        if itemData.rarity == "common" then
-            if consumable then
-                table.insert(commonItemsConsumable, itemName)
-            else
-                for i=1, 3 do
-                    table.insert(commonItems, itemName)
-                end
-            end
-        elseif itemData.rarity == "uncommon" then
-            if consumable then
-                table.insert(uncommonItemsConsumable, itemName)
-            else
-                for i=1, 2 do
-                    table.insert(uncommonItems, itemName)
-                end
-            end
-        elseif itemData.rarity == "rare" then
-            if consumable then
-                table.insert(rareItemsConsumable, itemName)
-            else
-                for i=1, 1 do
-                    table.insert(rareItems, itemName)
-                end
-            end
-        elseif itemData.rarity == "legendary" then
-            if consumable then
-                table.insert(legendaryItemsConsumable, itemName)
-            else
-                table.insert(legendaryItems, itemName)
-            end
-        elseif itemData.rarity == "test" then
-            table.insert(testItems, itemName)
-        else
-            print("Warning: Item '" .. tostring(itemName) .. "' has unknown rarity '" .. tostring(itemData.rarity) .. "'")
-        end
-    end
-end]]
 
 function getItem(itemName) 
     return Items.getItemByName(itemName);
@@ -227,7 +111,9 @@ function getStatItemsBonus(statName, weapon)
         print("acceleration is on")
     end
     local totalBonus = 0
-    if #Player.items < 1 and not (statDoubled == statName or ((statName == "fireRate" or statName == "speed") and accelerationOn)) then return (permanentItemBonuses[statName] or 0) end
+    if #Player.items < 1 and not (statDoubled == statName or ((statName == "fireRate" or statName == "speed") and accelerationOn)) then
+        return (permanentItemBonuses[statName] or 0);
+    end
     
     -- Calculate the actual item bonus
     for itemName, item in pairs(Player.items) do
@@ -382,18 +268,18 @@ local function drawPlayerStats()
     local fontSize = 80 * visualMoneyValues.scale
     setFont(fontSize)
     love.graphics.setColor(1,1,1,1)
-    x,y = statsWidth/2 - getTextSize(formatNumber(Player.money))/2 - 100, 175 - love.graphics.getFont():getHeight()/2 -- Adjust position for better alignment
+    x,y = statsWidth/2 - getTextSize(formatNumber(Player.getMoney()))/2 - 100, 175 - love.graphics.getFont():getHeight()/2 -- Adjust position for better alignment
     love.graphics.setColor(0,0,0,1)
-    love.graphics.print(formatNumber(Player.money) .. "$",x + 104, y +5, math.rad(1.5))
+    love.graphics.print(formatNumber(Player.getMoney()) .. "$",x + 104, y +5, math.rad(1.5))
     local moneyColor = {14/255, 202/255, 92/255,1}
     love.graphics.setColor(moneyColor)
-    love.graphics.print(formatNumber(Player.money) .. "$",x + 100, y + 1, math.rad(1.5))
+    love.graphics.print(formatNumber(Player.getMoney()) .. "$",x + 100, y + 1, math.rad(1.5))
 
     setFont(80)
-    x,y = statsWidth/2 - getTextSize(formatNumber(Player.money))/2 - 100, 175 - love.graphics.getFont():getHeight()/2
+    x,y = statsWidth/2 - getTextSize(formatNumber(Player.getMoney()))/2 - 100, 175 - love.graphics.getFont():getHeight()/2
 
     -- Popup on hover: explain interest system
-    local moneyBoxW = getTextSize(formatNumber(Player.money) .. "$")
+    local moneyBoxW = getTextSize(formatNumber(Player.getMoney()) .. "$")
     local moneyBoxH = love.graphics.getFont():getHeight()
     local mouseX, mouseY = love.mouse.getPosition()
     local interestValue = 0--math.floor(math.min(Player.money, Player.currentCore == "Economy Core" and 50 or 25)/5)
@@ -636,7 +522,7 @@ local function drawPlayerUpgrades()
             local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(math.ceil(Player.bonusPrice[bonusName]))) / 2
             love.graphics.setColor(0,0,0,1)
             love.graphics.print(formatNumber(math.ceil(Player.bonusPrice[bonusName])) .. "$", x + 104 + moneyOffsetX, y+4, math.rad(5))
-            local moneyColor = Player.money >= Player.bonusPrice[bonusName] and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
+            local moneyColor = Player.getMoney() >= Player.bonusPrice[bonusName] and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
             love.graphics.setColor(moneyColor)
             love.graphics.print(formatNumber(math.ceil(Player.bonusPrice[bonusName])) .. "$", x + 100 + moneyOffsetX, y, math.rad(5))
             love.graphics.setColor(1,1,1,1)
@@ -675,8 +561,8 @@ local function drawPlayerUpgrades()
                     upgradeQueued = true
                 end
             end
-            if upgradeStatButton.hit or (upgradeQueued and Player.money >= math.ceil(Player.bonusPrice[bonusName])) and (usingMoneySystem or Player.levelingUp) then
-                if Player.money < math.ceil(Player.bonusPrice[bonusName]) then
+            if upgradeStatButton.hit or (upgradeQueued and Player.getMoney() >= math.ceil(Player.bonusPrice[bonusName])) and (usingMoneySystem or Player.levelingUp) then
+                if Player.getMoney() < math.ceil(Player.bonusPrice[bonusName]) then
                     if usingMoneySystem then
                         print("Not enough money to upgrade " .. bonusName)
                         table.insert(Player.queuedUpgrades, bonusName)
@@ -1096,7 +982,7 @@ local function drawBallStats()
         labelY = bruhY - love.graphics.getFont():getHeight()/2 + 25
         love.graphics.setColor(0,0,0,1)
         love.graphics.print(formatNumber(math.ceil(ballType.price)) .. "$",currentX + statsWidth/2 + 104 +moneyOffsetX, labelY+4, math.rad(5))
-        local moneyColor = Player.money >= math.ceil(ballType.price) and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
+        local moneyColor = Player.getMoney() >= math.ceil(ballType.price) and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
         love.graphics.setColor(moneyColor)
         love.graphics.print(formatNumber(math.ceil(ballType.price)) .. "$",currentX + statsWidth/2 + 100 +moneyOffsetX, labelY, math.rad(5))
         love.graphics.setColor(1,1,1,1)
@@ -1105,7 +991,7 @@ local function drawBallStats()
         local buttonId = ballType.name .. "_upgradeButton"
         local upgradeStatButton = dress:Button("", {color = invisButtonColor, id = buttonId}, currentX + 10, y + 15, getRarityWindow("common"):getWidth() - 30, getRarityWindow("common"):getHeight()/2 - 30)
         if upgradeStatButton.hit then
-            if Player.money < math.ceil(ballType.price) then
+            if Player.getMoney() < math.ceil(ballType.price) then
                 -- does nothing
             else
                 playSoundEffect(upgradeSFX, 0.5, 0.95, false)
@@ -1301,45 +1187,6 @@ function drawLevelUpShop()
 
 end
 
-function getRandomItemOfRarity(rarity, consumable)
-    --[[consumable = consumable or false
-    local rarityList = {}   
-    if rarity == "common" then
-        if consumable then
-            rarityList = commonItemsConsumable
-        else
-            rarityList = commonItems
-        end
-    elseif rarity == "uncommon" then
-        if consumable then
-            rarityList = uncommonItemsConsumable
-        else
-            rarityList = uncommonItems
-        end
-    elseif rarity == "rare" then
-        if consumable then
-            rarityList = rareItemsConsumable
-        else
-            rarityList = rareItems
-        end
-    elseif rarity == "legendary" then
-        if consumable then
-            rarityList = legendaryItemsConsumable
-        else
-            rarityList = legendaryItems
-        end
-    end
-    if #rarityList == 0 then
-        print("Error: No items available for rarity " .. rarity .. " with consumable = " .. tostring(consumable))
-        local item = getRandomItemOfRarity("common", false)
-        return item
-    else
-        print("Choosing from " .. #rarityList .. " items of rarity " .. rarity .. " with consumable = " .. tostring(consumable))
-    end
-    return items[rarityList[math.random(1, #rarityList)] ]
-    ]]
-end
-
 local displayedItems = {}
 local function getItemFullDescription(item)
     local description
@@ -1384,74 +1231,7 @@ function setItemShop(forcedItems)
         end
 
         displayedItems[i] = Items.getRandomItem().new();
-        --[[
-        -- calculate wanted rarity and choose an available item of that rarity
-        local rarityDistribution = getRarityDistributionByLevel()
-        local commonChance, uncommonChance, rareChance, legendaryChance = rarityDistribution.common, rarityDistribution.uncommon, rarityDistribution.rare, rarityDistribution.legendary
-        if Player.currentCore == "Picky Core" then
-            commonChance = commonChance + (1 - commonChance)/2
-            uncommonChance, rareChance, legendaryChance = uncommonChance/2, rareChance/2, legendaryChance/2
-        end
 
-        local doAgain = true
-        local iterations = 0
-        local maxIterations = 100
-        local iterations = 0
-        while doAgain and iterations < maxIterations do
-            local randomChance = math.random(1,100)/100
-            local isConsumable = math.random(1,100) <= 15 -- 15% chance to be a consumable
-            iterations = iterations + 1
-            doAgain = false
-            if randomChance <= commonChance then
-                itemToDisplay = getRandomItemOfRarity("common", isConsumable)
-            elseif randomChance <= commonChance + uncommonChance then
-                itemToDisplay = getRandomItemOfRarity("uncommon", isConsumable)
-            elseif randomChance <= commonChance + uncommonChance + rareChance then
-                itemToDisplay = getRandomItemOfRarity("rare", isConsumable)
-            elseif randomChance <= commonChance + uncommonChance + rareChance + legendaryChance then
-                itemToDisplay = getRandomItemOfRarity("legendary", isConsumable)
-            else
-                itemToDisplay = getRandomItemOfRarity("common", isConsumable)
-            end
-            if iterations > 20 then
-                itemToDisplay = getRandomItemOfRarity("common", false)
-            end
-            for _, displayedItem in pairs(displayedItems) do
-                if displayedItem.name == itemToDisplay.name then
-                    doAgain = true
-                    break
-                end
-            end
-            for _, playerItem in ipairs(Player.items) do
-                if playerItem.name == itemToDisplay.name and playerItem.unique == true then
-                    doAgain = true
-                    break
-                end
-            end
-        end
-        if iterations >= maxIterations then
-            print("Warning: setItemShop exceeded maxIterations, skipping slot or allowing duplicate.")
-        end
-        if testItems[i] and not forcedItems[i] then
-            -- if itemToDisplay.onInShop then
-                -- itemToDisplay.onInShop(itemToDisplay)
-            -- end
-
-            getItemFullDescription(itemToDisplay)
-            displayedItems[i] = items[testItems[i] ].new();
-        else
-            if itemToDisplay then
-                -- if itemToDisplay.onInShop then
-                    -- itemToDisplay.onInShop(itemToDisplay)
-                -- end
-                getItemFullDescription(itemToDisplay)
-                displayedItems[i] = itemToDisplay.new();
-            else
-                print("Error: No item found in setItemShop()")
-            end
-
-        end
-        ]]
         ::continue::
     end
 end
@@ -1557,32 +1337,20 @@ local function drawItemShop()
             if buyButton.hit then
                 print("button working")
                 -- if (#Player.items < maxItems or item.consumable) and Player.money >= upgradePrice then
-                if Player.money >= upgradePrice then
+                if Player.getMoney() >= upgradePrice then
                     Player.pay(upgradePrice)
                     playSoundEffect(upgradeSFX, 0.5, 0.95)
                     table.remove(displayedItems, i)
 
-                    item:purchase();
+                    item:buy();
                     if item.consumable and hasItem("Sommelier") then
-                        item:purchase(); -- buy again
+                        item:buy(); -- buy again
                     end
 
                     if not item.consumable then
-                        local itemToInsert = {}
-                        for k, v in pairs(item) do
-                            if k == "stats" then
-                                -- Deep copy the stats table
-                                itemToInsert[k] = {}
-                                for statName, statValue in pairs(v) do
-                                    itemToInsert[k][statName] = statValue
-                                end
-                            else
-                                itemToInsert[k] = v
-                            end
-                        end
-                        table.insert(Player.items, itemToInsert)
-                        Player.items[#Player.items].id = itemToInsert.name .. tostring(currentItemId)
-                        currentItemId = currentItemId + 1
+                        table.insert(Player.items, item);
+                        Player.items[#Player.items].id = item.name .. tostring(currentItemId);
+                        currentItemId = currentItemId + 1;
                     end
                     if item.stats.amount then
                         Balls.amountIncrease(item.stats.amount)
@@ -1608,7 +1376,7 @@ local function drawItemShop()
             end
             local moneyXoffset = item.consumable and -65 or 0
             local moneyYoffset = item.consumable and -25 or 0
-            printMoney(upgradePrice, itemX + uiBigWindowImg:getWidth() * 0.75 - 40 - getTextSize(upgradePrice .. "$")/2 + moneyXoffset, itemY + uiBigWindowImg:getHeight() * 0.65/2 - 85 + moneyYoffset, math.rad(4), Player.money >= upgradePrice, 50)
+            printMoney(upgradePrice, itemX + uiBigWindowImg:getWidth() * 0.75 - 40 - getTextSize(upgradePrice .. "$")/2 + moneyXoffset, itemY + uiBigWindowImg:getHeight() * 0.65/2 - 85 + moneyYoffset, math.rad(4), Player.getMoney() >= upgradePrice, 50)
 
             i = i + 1
         end
@@ -1619,7 +1387,7 @@ local function drawItemShop()
             actualRerollPrice = 2
         end
         if suit.Button("Reroll", {id = "reroll_items", color = invisButtonColor}, screenWidth - 260, 50 + uiBigWindowImg:getHeight() * 0.65/2 - 57, uiLabelImg:getWidth() - 30, uiLabelImg:getHeight() - 6).hit then
-            if Player.money >= actualRerollPrice then
+            if Player.getMoney() >= actualRerollPrice then
                 Player.pay(actualRerollPrice)
                 playSoundEffect(upgradeSFX, 0.5, 0.95)
                 setItemShop()
@@ -1629,7 +1397,7 @@ local function drawItemShop()
                 
             end
         end
-        printMoney(actualRerollPrice, screenWidth - 40 - getTextSize(actualRerollPrice .. "$")/2, 30 + uiBigWindowImg:getHeight() * 0.65/2 - 60, math.rad(4), Player.money >= actualRerollPrice, 40)
+        printMoney(actualRerollPrice, screenWidth - 40 - getTextSize(actualRerollPrice .. "$")/2, 30 + uiBigWindowImg:getHeight() * 0.65/2 - 60, math.rad(4), Player.getMoney() >= actualRerollPrice, 40)
     end
 end
 

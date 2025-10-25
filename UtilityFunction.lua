@@ -24,7 +24,8 @@ end
 
 function restartGame()
     -- Reset Player
-    Player.money = 0
+    -- Player.money = 0
+    Player.setMoney(0);
     Player.lives = 1
     Player.dead = false
     Player.bonuses = {
@@ -192,12 +193,12 @@ function itemTriggerAnimation(itemName)
 end
 local pausedUpgradeNumbers = {}
 
-function gainMoneyWithAnimations(moneyGain, itemName)
+--[[function gainMoneyWithAnimations(moneyGain, itemName)
     -- Store only what we need for the animation
-    local moneyBefore = Player.money
+    local moneyBefore = Player.getMoney();
     
     -- First event: Show animation and add money
-    EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.05, function() 
+    EventQueue:addEventToQueue(EVENT_POINTERS.money_gain, 0.05, function() 
         if itemName then -- Changed from itemId to itemName check
             itemTriggerAnimation(itemName)
         end
@@ -208,16 +209,17 @@ function gainMoneyWithAnimations(moneyGain, itemName)
         addTweenToUpdate(inTween)
         
         -- Update money
-        Player.money = Player.money + moneyGain
-        richGetRicherUpdate(moneyBefore, Player.money)
+        Player.changeMoney(moneyGain);
+        -- Player.money = Player.money + moneyGain;
+        -- richGetRicherUpdate(moneyBefore, Player.money)
     end)
     
     -- Second event: Reset scale
-    EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.175, function() 
+    EventQueue:addEventToQueue(EVENT_POINTERS.empty, 0.175, function()
         local outTween = tween.new(0.175, visualMoneyValues, {scale = 1}, tween.easing.inCirc)
         addTweenToUpdate(outTween)
     end)
-end
+end]]
 
 visualUpgradePriceValues = {}
 function reducePriceWithAnimations(reductionAmount, weaponName, itemName)  -- Accept weapon object
@@ -228,7 +230,7 @@ function reducePriceWithAnimations(reductionAmount, weaponName, itemName)  -- Ac
         end
     end
     if weapon == nil then return end
-    EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.05, function() 
+    EventQueue:addEventToQueue(EVENT_POINTERS.empty, 0.05, function() 
         playSoundEffect(upgradeSFX, 0.6, 1, false)
         if itemId ~= nil then
             itemTriggerAnimation(itemName)
@@ -244,7 +246,7 @@ function reducePriceWithAnimations(reductionAmount, weaponName, itemName)  -- Ac
         -- Directly modify the weapon object
         weapon.price = math.max(weapon.price - reductionAmount, 0)
     end)
-    EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.175, function() 
+    EventQueue:addEventToQueue(EVENT_POINTERS.empty, 0.175, function() 
         local outTween = tween.new(0.175, visualUpgradePriceValues[weaponName], {scale = 1}, tween.easing.inCirc)
         addTweenToUpdate(outTween)
     end)
@@ -252,7 +254,7 @@ end
 
 visualStatValues = {}
 function gainStatWithAnimation(statName, weaponName, itemId)
-    EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.05, function() 
+    EventQueue:addEventToQueue(EVENT_POINTERS.empty, 0.05, function() 
         if itemId ~= nil then
             itemTriggerAnimation(itemId)
         end
@@ -287,7 +289,7 @@ function gainStatWithAnimation(statName, weaponName, itemId)
             selectedWeapon.stats[statName] = (selectedWeapon.stats[statName] or 0) + 1
         end
     end)
-    EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.175, function() 
+    EventQueue:addEventToQueue(EVENT_POINTERS.empty, 0.175, function() 
         local outTween = tween.new(0.175, visualStatValues[weaponName][statName], {scale = 1}, tween.easing.inCirc)
         addTweenToUpdate(outTween)
     end)
@@ -965,7 +967,8 @@ moneyBagValues = {
             self.currentXp = self.currentXp - self.xpForNextDollar
             self.xpForNextDollar = self.xpForNextDollar * 1.25  
             self.moneyGained = self.moneyGained + 1
-            Player.money = Player.money + 1
+            Player.changeMoney(1);
+            -- Player.money = Player.money + 1
             -- moneyPopup(1)
         end
     end,

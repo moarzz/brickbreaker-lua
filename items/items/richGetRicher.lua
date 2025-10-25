@@ -7,21 +7,15 @@ RichGetRicher.rarity = "uncommon";
 function RichGetRicher.new()
     local instance = setmetatable({}, RichGetRicher):init();
 
-    local bonus = math.floor(Player.money / 20);
+    local bonus = math.floor(Player.getMoney() / 20);
     instance.stats.amount = bonus;
     instance.stats.fireRate = bonus;
 
     return instance;
 end
 
-function RichGetRicher.events:item_purchase() -- update whenever money moves
-    local bonus = math.floor(Player.money / 20);
-    instance.stats.amount = bonus;
-    instance.stats.fireRate = bonus;
-end
-
-function RichGetRicher.events:gainMoney() -- update whenever money moves
-    local bonus = math.floor(Player.money / 20);
+function RichGetRicher.events:money() -- update whenever money moves
+    local bonus = math.floor(Player.getMoney() / 20);
     instance.stats.amount = bonus;
     instance.stats.fireRate = bonus;
 end

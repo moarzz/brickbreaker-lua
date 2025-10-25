@@ -91,6 +91,13 @@ function Items.parseItem(file)
     assert(obj.name and obj.name ~= "", "items MUST be named");
     assert(string.find(obj.name, "[\n|]") == nil, "item names cannot contain the characters: '|' or '\\n'");
 
+    local filteredName = string.gsub(obj.name, "[^%a+]", ""); -- remove everything other the letters (or pluses)
+    filteredName = string.gsub(filteredName, "%+", "Plus"); -- kinda jank tbh
+    assert(EVENTS.item.purchase[filteredName], "tried to create item that does not have a 'purchase' event: " .. filteredName);
+    assert(EVENTS.item.sell[filteredName], "tried to create item that does not have a 'sell' event: " .. filteredName);
+
+    obj.filteredName = filteredName; -- for calling events internally
+
     if obj.consumable then
         self.consumableIndices[obj.name] = {
             index = #self.allConsumables[obj.rarity];

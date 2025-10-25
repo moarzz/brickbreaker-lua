@@ -1038,8 +1038,6 @@ local function gameFixedUpdate(dt)
     -- dt = dt * 0.7
     -- Update mouse positions
 
-    BackgroundShader.update(dt);
-
     levelUpShopTweenAlpha(dt)
     local stats = love.graphics.getStats()
     if printDrawCalls then
@@ -1050,25 +1048,20 @@ local function gameFixedUpdate(dt)
     if confettiSystem then
         confettiSystem:update(dt)
     end
-    
-    --send info to background shader
-    -- backgroundShader:send("time", love.timer.getTime())                   
-    -- backgroundShader:send("resolution", {screenWidth, screenHeight})
-    -- backgroundShader:send("brightness", backgroundIntensity)
-    -- reduceBackgroundBrightness()
-    -- local backgroundIntensity = Player.score <= 100 and mapRangeClamped(Player.score,1,100, 0.0, 0.15) or (Player.score <= 5000 and mapRangeClamped(Player.score, 100, 5000, 0.15, 0.5) or mapRangeClamped(Player.score, 5000, 100000, 0.5, 1.0))
 
     updateMusicEffect(dt)
     if currentGameState == GameState.PAUSED then
         return -- Don't update game logic while paused
     end
+
+    if not EventQueue:isQueueFinished() then
+        EventQueue:update(dt);
+
+        return;
+    end
     
     if currentGameState == GameState.PLAYING then
         KeywordSystem:update() -- Update the keyword system
-        -- overwrites backgroundIntensity if using debugging window
-        -- if shouldDrawDebug then
-            -- backgroundIntensity = VFX.backgroundIntensityOverwrite 
-        -- end
 
         if currentScreenShakeIntensity > 0 then
             screenShakeIntensityDeprecation(dt)
@@ -1083,12 +1076,7 @@ local function gameFixedUpdate(dt)
         dt = dt * playRate -- Adjust the delta time based on the playback rate
         upgradesUI.update(dt) -- Update the upgrades UI
         updateAllTweens(dt) -- Update all tweens
-        -- Don't update game time when level up shop is open
-        if EventQueue then 
-            if not EventQueue:isQueueFinished() and not Player.choosingUpgrade then
-                EventQueue:update(dt)
-            end
-        end
+
         if Player.choosingUpgrade then
             if lastFreezeTime == 0 then
                 lastFreezeTime = love.timer.getTime()
@@ -1204,6 +1192,7 @@ function love.update(dt)
         gcTimer = 0
     end
     print("Memory (KB): " .. collectgarbage("count"))
+    BackgroundShader.update(dt);
     gameFixedUpdate(dt);
 end
 
@@ -1779,9 +1768,6 @@ end
 -- Add to love.draw()
 local old_love_draw = love.draw
 function love.draw()
-    -- love.graphics.setShader(backgroundShader)
-    -- WindowCorrector.mergeCanvas(1);
-    -- love.graphics.setShader()
     BackgroundShader.draw();
 
     resetButtonLastID()
@@ -2236,14 +2222,18 @@ function love.keypressed(key)
 
         --money manipulation
         if key == "m" then
-            local moneyBefore = Player.money
-            Player.money = Player.money < 10 and 10 or Player.money * 10
-            richGetRicherUpdate(moneyBefore, Player.money)
+            -- local moneyBefore = Player.money
+            Player.changeMoney(10); -- gain 10 money
+            -- gainMoneyWithAnimations(10);
+            -- Player.money = Player.money < 10 and 10 or Player.money * 10
+            -- richGetRicherUpdate(moneyBefore, Player.money)
         end
         if key == "n" then
-            local moneyBefore = Player.money
-            Player.money = 0
-            richGetRicherUpdate(moneyBefore, Player.money)
+            -- local moneyBefore = Player.money
+
+            Player.setMoney(0);
+            -- Player.money = 0
+            -- richGetRicherUpdate(moneyBefore, Player.money)
         end
 
         --time manipulation

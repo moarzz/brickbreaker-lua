@@ -1,4 +1,3 @@
--- local upgradesUI = require("upgradesUI")
 local json = require("Libraries/dkjson")
 local love = love
 
@@ -38,7 +37,7 @@ function loadGameData()
             end
         end
     else
-        data.fastestTime = 100000000000
+        data.fastestTime = 100000000000; --! this is a thing that is in the code of this game; yes
     end
     -- Update Player object directly
     Player.highScore = data.highScore
@@ -72,7 +71,7 @@ end
 
 local defaultPermanentUpgrades = {speed = 0, damage = 0, cooldown = 0, amount = 0, fireRate = 0, ammo = 0, range = 0}
 Player = {
-    money = 0,
+    hiddenMoney = 0;
     startingMoney = 0,
     gold = 0,
     rerolls = 0,
@@ -169,7 +168,7 @@ end
 local gameData = loadGameData()
 function Player.loadJsonValues()
     Player.startingMoney = gameData.startingMoney or 0
-    Player.money = gameData.startingMoney or 0
+    Player.hiddenMoney = gameData.startingMoney or 0;
     Player.gold = gameData.gold or 0
     Player.highScore = gameData.highScore or 0
     Player.fastestTime = gameData.fastestTime or 10000
@@ -181,7 +180,7 @@ function Player.loadJsonValues()
     end
 end
 
-local money = 0
+-- local money = 0
 damageThisFrame = 0
 
 Player.bonusOrder = {}
@@ -343,7 +342,7 @@ function Player.reset()
     end
     Player.startingMoney = gameData.startingMoney or 0
     Player.score = 0
-    Player.money = gameData.startingMoney or 0
+    Player.hiddenMoney = gameData.startingMoney or 0;
     Player.gold = gameData.gold or 0
     Player.goldEarned = 0
     Player.lives = 1
@@ -360,7 +359,6 @@ function Player.reset()
 
     Player.choosingUpgrade = false
     Player.dead = false
-    Player.money = Player.startingMoney or 0
 end
 
 function Player.InterestGain()
@@ -370,11 +368,13 @@ function Player.InterestGain()
     else
         moneyGain = 5 --+ math.floor(math.min(Player.money, 25)/5)
     end
-    gainMoneyWithAnimations(moneyGain)
+
+    Player.changeMoney(moneyGain);
 end
 
 function Player.levelUp()
-    EventQueue:addEventToQueue(EVENT_POINTERS.gainMoney, 0.25, function() end)
+    EventQueue:addEventToQueue(EVENT_POINTERS.levelUp, 0.25);
+
     Player.InterestGain()
     setMusicEffect("paused")
     resetRerollPrice()
@@ -427,27 +427,20 @@ function Player.levelUp()
             uiOffset.x = 0
         end
     end
-    for _, item in pairs(Player.items) do
-        if item.onLevelUp then
-            item.onLevelUp(item)
-            if hasItem("Birthday Hat") then
-                item.onLevelUp(item) -- Trigger a second time if the player has the Birthday Hat
-            end 
-        end
-    end
+
     if hasItem("Investment Guru") then
         if hasItem("Birthday Hat") then
             setItemShop({getItem("Long Term Investment"), getItem("Long Term Investment")})
         else
             setItemShop({getItem("Long Term Investment")})
         end
-    elseif hasItem("Archeologist Hat") then
-        local rarity = math.random(1,100) <= 75 and "rare" or "legendary"
-        if hasItem("Birthday Hat") then
-            setItemShop({getRandomItemOfRarity(rarity, math.random(1,100) <= 20), getRandomItemOfRarity(rarity, math.random(1,100) <= 20)})
-        else
-            setItemShop({getRandomItemOfRarity(rarity, math.random(1,100) <= 20)})
-        end
+    -- elseif hasItem("Archeologist Hat") then
+        -- local rarity = math.random(1,100) <= 75 and "rare" or "legendary"
+        -- if hasItem("Birthday Hat") then
+            -- setItemShop({getRandomItemOfRarity(rarity, math.random(1,100) <= 20), getRandomItemOfRarity(rarity, math.random(1,100) <= 20)})
+        -- else
+            -- setItemShop({getRandomItemOfRarity(rarity, math.random(1,100) <= 20)})
+        -- end
     else
         setItemShop()
     end
@@ -546,17 +539,44 @@ function Player.update(dt)
     checkForHit()
 end
 
-function Player.pay(amount)
-    if Player.money >= amount then
-        local moneyBefore = Player.money
-        Player.money = Player.money - amount
-        richGetRicherUpdate(moneyBefore, Player.money)
+function Player.changeMoney(amnt)
+    if amnt > 0 then
+        EventQueue:addEventToQueue(
+            EVENT_POINTERS.money_gain,
+            0.2,
+            function()
+                Player.shiftMoneyValue(amnt);
+            end
+        );
     else
-        local moneyBefore = Player.money
-        Player.money = Player.money - amount
-        richGetRicherUpdate(moneyBefore, Player.money)
-        print("Player tried to pay ".. amount.."but didn't have enough money : "..Player.money)
+        EventQueue:addEventToQueue(
+            EVENT_POINTERS.money_lose,
+            0.2,
+            function()
+                Player.shiftMoneyValue(amnt);
+            end
+        );
     end
+end
+
+function Player.shiftMoneyValue(amnt)
+    Player.hiddenMoney = Player.hiddenMoney + amnt;
+
+    if Player.hiddenMoney < 0 then
+        print("player spent more money then they had");
+    end
+end
+
+function Player.setMoney(amnt)
+    Player.hiddenMoney = amnt;
+end
+
+function Player.getMoney()
+    return Player.hiddenMoney;
+end
+
+function Player.pay(amount)
+    Player.changeMoney(-amount);
 end
 
 function Player:save()
@@ -585,7 +605,7 @@ function Player:load()
         
         if data then
             self.startingMoney = data.startingMoney or 0
-            self.money = self.startingMoney
+            self.hiddenMoney = self.startingMoney;
             self.gold = data.gold or 0
 
               -- Load permanent upgrades

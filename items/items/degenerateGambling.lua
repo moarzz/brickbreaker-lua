@@ -30,7 +30,8 @@ function DegenerateGambling.events:levelUp()
     end
 
     if math.random(1,100) <= (self.descriptionPointers.gambleChance) then
-        gainMoneyWithAnimations(20, self.name);
+        Player.changeMoney(20);
+        -- gainMoneyWithAnimations(20, self.name);
     end
 end
 

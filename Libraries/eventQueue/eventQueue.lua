@@ -42,8 +42,11 @@ function EventQueue:update(dt)
     end
 
     -- safety: don't dequeue infinitely many events in one frame
-    local maxDequeuePerUpdate = 64
-    local dequeued = 0
+    --* Milo:3 formally disagrees w/ this, she intentionally allowed recursion since it would be an issue either way
+    --* and having the while loop go infinitely would be a more noticeable effect. and sometimes a shit tonne
+    --* of dequeues in a single frame is wanted (so as a comprimize she changed 'maxDequeuePerUpdate' from 64 to 1024)
+    local maxDequeuePerUpdate = 1024;
+    local dequeued = 0;
 
     while self.timeUntilNextDequeue <= 0 and dequeued < maxDequeuePerUpdate do
         if self:isQueueEmpty() then
@@ -51,16 +54,17 @@ function EventQueue:update(dt)
         end
 
         self:dequeue();
-        dequeued = dequeued + 1
+        dequeued = dequeued + 1;
     end
 end
 
 function EventQueue:dequeue()
     local nextQueuedEvent = table.remove(self.queue, 1);
     if not nextQueuedEvent then
-        return
+        return;
     end
-    self.timeUntilNextDequeue = self.timeUntilNextDequeue + (nextQueuedEvent.eventLength or 0);
+
+    self.timeUntilNextDequeue = self.timeUntilNextDequeue + nextQueuedEvent.eventLength;
     -- if a frame causes 2 event to try and dequeue at the same time only let one and delay the next one
 
     if nextQueuedEvent.callback then
@@ -70,11 +74,32 @@ function EventQueue:dequeue()
             nextQueuedEvent.callback:trigger();
         end
     end
+
+    if nextQueuedEvent.event == EVENT_POINTERS.empty then
+        return;
+    end
+
+    -- trigger all items in the roster
+    for _, item in pairs(Player.items) do
+        local construct = "";
+
+        for str, _ in string.gmatch(nextQueuedEvent.event .. "_", "(.-)_") do
+            construct = construct .. str;
+
+            if type(item.events[construct]) == "function" then
+                item.events[construct](item);
+            end
+
+            construct = construct .. "_";
+        end
+    end
 end
 
+--* Milo:3 disagrees w/ this function out of prinicple that the event queue should be use din a manner of togglability
+--* and that code should not be running while the eventQueue is dequeueing (or just make a new eventQueue object)
 function EventQueue:clear()
-    self.queue = {}
-    self.timeUntilNextDequeue = 0
+    self.queue = {};
+    self.timeUntilNextDequeue = 0;
 end
 
 function EventQueue:isQueueEmpty()

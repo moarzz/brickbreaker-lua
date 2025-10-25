@@ -1,3 +1,5 @@
+--! this item does not work atm
+
 local BirthdayHat = ItemBase.new();
 BirthdayHat.__index = BirthdayHat;
 BirthdayHat.name = "Birthday Hat";

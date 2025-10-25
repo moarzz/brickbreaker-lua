@@ -2056,7 +2056,8 @@ local commonWeapons = {}
 local uncommonWeapons = {}
 local addBallsQueued = false
 local function speedCoreInitialize()
-    Player.money = 50
+    Player.setMoney(50);
+    -- Player.money = 50
     Player.level = 4
     commonWeapons = {}
     uncommonWeapons = {}
@@ -2098,7 +2099,8 @@ function Balls.initialize()
     Player.choosingUpgrade = false
     Player.upgradePriceMultScaling = 2
     Player.xpForNextLevel = 15
-    Player.money = 0
+    Player.setMoney(0);
+    -- Player.money = 0
     
     inGame = true
     deathTimerOver = false
