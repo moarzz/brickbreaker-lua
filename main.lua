@@ -1064,7 +1064,7 @@ local function gameFixedUpdate(dt)
     if not EventQueue:isQueueFinished() then
         EventQueue:update(dt);
 
-        return;
+        -- return; -- bugs atm
     end
     
     if currentGameState == GameState.PLAYING then

@@ -432,7 +432,7 @@ function FancyText:draw()
                 x = x + curFont:getWidth(toDraw) * scale;
 
                 if w.modificationName == "colour" or w.modificationName == "color" then
-                    colour = self.DEFAULT_COLOURS[w.setTo] or self.pointer[w.setTo] or FancyText.GLOBAL_POINTER[w.setTo];
+                    colour = self.DEFAULT_COLOURS[w.setTo] or self.pointer[w.setTo] or FancyText.GLOBAL_POINTER[w.setTo] or self.DEFAULT_COLOURS.white;
                 elseif w.modificationName == "highlight" then
                     highlight = self.DEFAULT_COLOURS[w.setTo] or self.pointer[w.setTo] or FancyText.GLOBAL_POINTER[w.setTo];
                 elseif w.modificationName == "font" then
