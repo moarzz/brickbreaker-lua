@@ -3,6 +3,7 @@ TeslaBullets.__index = TeslaBullets;
 TeslaBullets.name = "Tesla Bullets";
 TeslaBullets.description = "<font=bold>On Bullet Hit\n<teslaChance>%<font=default> chance to start an electric current that jumps to 3 nearby bricks. Dealing the bullet's <color=damage>damage";
 TeslaBullets.rarity = "uncommon";
+TeslaBullets.imageReference = "assets/sprites/UI/itemIcons/Tesla-Bullets.png";
 
 TeslaBullets.unique = true; -- does smthn ig
 

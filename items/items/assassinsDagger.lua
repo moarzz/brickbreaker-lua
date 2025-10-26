@@ -3,8 +3,10 @@ AssassinsDagger.__index = AssassinsDagger;
 AssassinsDagger.name = "Assassin's Dagger";
 AssassinsDagger.description = "Damage has a <font=bold><critChance>%<font=default> chance to be doubled";
 AssassinsDagger.rarity = "uncommon";
+AssassinsDagger.imageReference = "assets/sprites/UI/itemIcons/Assassin's-Dagger.png";
 
 AssassinsDagger.unique = true; -- does smthn ig
+
 
 function AssassinsDagger.new()
     local instance = setmetatable({}, AssassinsDagger):init();

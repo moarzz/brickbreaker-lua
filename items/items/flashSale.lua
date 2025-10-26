@@ -3,6 +3,7 @@ FlashSale.__index = FlashSale;
 FlashSale.name = "Flash Sale";
 FlashSale.description = "Reduce the upgrade price of all of your items by 2 (min 0)";
 FlashSale.rarity = "uncommon";
+FlashSale.imageReference = "assets/sprites/UI/itemIcons/Flash-Sale.png";
 
 FlashSale.consumable = true; -- does smthn ig
 

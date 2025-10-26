@@ -3,6 +3,7 @@ DegenerateGambling.__index = DegenerateGambling;
 DegenerateGambling.name = "Degenerate Gambling";
 DegenerateGambling.description = "<font=bold>on level up\n<gambleChance>%<font=default> chance to gain <font=big><color=money>20$";
 DegenerateGambling.rarity = "uncommon";
+DegenerateGambling.imageReference = "assets/sprites/UI/itemIcons/Degenerate-Gambling.png";
 
 DegenerateGambling.randomnessMult = 0.8; -- does smthn ig
 

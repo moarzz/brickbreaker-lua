@@ -3,6 +3,7 @@ Mechanic.__index = Mechanic;
 Mechanic.name = "Mechanic";
 Mechanic.description = "<font=bold>on level up<font=default>\nupgrade a random stat from a random weapon";
 Mechanic.rarity = "common";
+Mechanic.imageReference = "assets/sprites/UI/itemIcons/Mechanic.png";
 
 function Mechanic.new()
     local instance = setmetatable({}, Mechanic):init();

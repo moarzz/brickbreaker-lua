@@ -2080,11 +2080,13 @@ local function fullDraw()
     drawAnimations()
     drawMuzzleFlashes()
 
+
     upgradesUI.draw()
 
     -- Draw the UI elements using Suit
     suit.draw()
 
+    -- why is this not being displayed in front of Player.money???????
     drawMoneyPopups()
 
     drawPausedUpgradeNumbers()

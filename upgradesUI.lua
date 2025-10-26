@@ -18,6 +18,10 @@ local upgradesUI = {}
 
 local rerollPrice = 2
 
+function setRerollPrice(price)
+    rerollPrice = price
+end
+
 local queuedUpgradeAnimations = {}
 
 -- items list
@@ -1246,7 +1250,7 @@ end
 function resetRerollPrice()
     if Player.currentCore == "Picky Core" then
         rerollPrice = 2
-    elseif hasItem("Loaded Dices") then
+    elseif hasItem("Loaded Dice") then
         rerollPrice = 0
     else
         rerollPrice = 2

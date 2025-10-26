@@ -3,6 +3,7 @@ CouponCollector.__index = CouponCollector;
 CouponCollector.name = "Coupon Collector";
 CouponCollector.description = "<font=bold>On Level Up <font=default>Gain <color=money>1$<color=white> and reduce the upgrade price of a weapon by <color=money>1$\n\n<color=white>Items cost <color=money>1$<color=white> less";
 CouponCollector.rarity = "common";
+CouponCollector.imageReference = "assets/sprites/UI/itemIcons/Coupon-Collector.png";
 
 function CouponCollector.new()
     local instance = setmetatable({}, CouponCollector):init();

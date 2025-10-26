@@ -3,6 +3,7 @@ SplitShooter.__index = SplitShooter;
 SplitShooter.name = "Split Shooter";
 SplitShooter.description = "Bullets have a <font=bold><splitChance>%<font=default> chance to split into 2 after being shot";
 SplitShooter.rarity = "uncommon";
+SplitShooter.imageReference = "assets/sprites/UI/itemIcons/Split-Shooter.png";
 
 SplitShooter.unique = true; -- does smthn ig
 
