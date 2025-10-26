@@ -119,6 +119,26 @@ function Items.parseItem(file)
     end
 end
 
+function Items.updateRarityOdds()
+    local level = Player.level;
+
+    if level < 5 then
+        Items.setRarityOdds(1, 0, 0.0, 0.0);
+    elseif level < 8 then
+        Items.setRarityOdds(0.88, 0.1, 0.02, 0.0);
+    elseif level < 13 then
+        Items.setRarityOdds(0.75, 0.2, 0.05, 0);
+    elseif level < 18 then
+        Items.setRarityOdds(0.625, 0.3, 0.075, 0);
+    elseif level < 22 then
+        Items.setRarityOdds(0.53, 0.35, 0.1, 0.02);
+    elseif level < 26 then
+        Items.setRarityOdds(0.485, 0.35, 0.125, 0.04);
+    else
+        Items.setRarityOdds(0.4, 0.39, 0.15, 0.06);
+    end
+end
+
 function Items.setRarityOdds(common, uncommon, rare, legendary)
     self.rarityOdds = {
         ["common"]    =                               common;
@@ -165,6 +185,7 @@ function Items.getRandomItem(allowVisible)
     local dif = 1;
     -- print(randRarity);
 
+    Items.updateRarityOdds(); -- inneficient but i wanna go 2 bed
     for k, v in pairs(self.rarityOdds) do
         if randRarity < v and v - randRarity < dif then -- if the random number is less then a rarity: it is possible 2 be chosen. choose the largest rarity that fits this
             dif = v - randRarity;
