@@ -3,7 +3,7 @@ FinancialPlan.__index = FinancialPlan;
 FinancialPlan.name = "Financial Plan";
 FinancialPlan.description = "<font=bold>on level up<font=default>\ngain <font=big><color=money>3$";
 FinancialPlan.rarity = "common";
-FinancialPlan.imageReference = "assets/sprites/UI/itemIcons/Financial-Plan.png";
+FinancialPlan.imageReference = "assets/sprites/UI/ItemIcons/Financial-Plan.png";
 
 function FinancialPlan.new()
     local instance = setmetatable({}, FinancialPlan):init();

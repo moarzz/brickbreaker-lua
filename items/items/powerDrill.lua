@@ -3,7 +3,7 @@ PowerDrill.__index = PowerDrill;
 PowerDrill.name = "Power Drill";
 PowerDrill.description = "Choose a random weapon\n randomly upgrade two of its stats";
 PowerDrill.rarity = "common";
-PowerDrill.imageReference = "assets/sprites/UI/itemIcons/Power-Drill.png";
+PowerDrill.imageReference = "assets/sprites/UI/ItemIcons/Power-Drill.png";
 
 PowerDrill.consumable = true; -- does smthn ig
 

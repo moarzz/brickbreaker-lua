@@ -3,7 +3,7 @@ Sommelier.__index = Sommelier;
 Sommelier.name = "Sommelier";
 Sommelier.description = "<font=big>Consumable Items<font=default> trigger twice";
 Sommelier.rarity = "rare";
-Sommelier.imageReference = "assets/sprites/UI/itemIcons/Sommelier.png";
+Sommelier.imageReference = "assets/sprites/UI/ItemIcons/Sommelier.png";
 
 Sommelier.unique = true; -- does smthn ig
 

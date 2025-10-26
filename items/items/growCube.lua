@@ -3,7 +3,7 @@ GrowCube.__index = GrowCube;
 GrowCube.name = "Grow Cube";
 GrowCube.description = "<font=bold>On Level Up<font=default>this Item gains +1 to a random stat";
 GrowCube.rarity = "uncommon";
-GrowCube.imageReference = "assets/sprites/UI/itemIcons/Grow-Cube.png";
+GrowCube.imageReference = "assets/sprites/UI/ItemIcons/Grow-Cube.png";
 
 function GrowCube.new()
     local instance = setmetatable({}, GrowCube):init();

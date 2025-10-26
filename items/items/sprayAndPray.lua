@@ -3,7 +3,7 @@ SprayAndPray.__index = SprayAndPray;
 SprayAndPray.name = "Spray and Pray";
 SprayAndPray.description = "fireRate items shoot <font=bold><fireRateMult>%<font=default> faster but are a lot less accurate";
 SprayAndPray.rarity = "uncommon";
-SprayAndPray.imageReference = "assets/sprites/UI/itemIcons/Spray-and-Pray.png";
+SprayAndPray.imageReference = "assets/sprites/UI/ItemIcons/Spray-and-Pray.png";
 
 SprayAndPray.unique = true; -- does smthn ig
 

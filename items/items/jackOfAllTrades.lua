@@ -3,7 +3,7 @@ JackOfAllTrades.__index = JackOfAllTrades;
 JackOfAllTrades.name = "Jack Of All Trades";
 JackOfAllTrades.description = "Increases all stats of your weapons by 2 (except damage) and decreases cooldown by 2";
 JackOfAllTrades.rarity = "rare";
-JackOfAllTrades.imageReference = "assets/sprites/UI/itemIcons/Jack-Of-All-Trades.png";
+JackOfAllTrades.imageReference = "assets/sprites/UI/ItemIcons/Jack-Of-All-Trades.png";
 
 JackOfAllTrades.descriptionOverwrite = true; -- does smthn ig
 

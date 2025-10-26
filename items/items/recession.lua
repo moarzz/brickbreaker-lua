@@ -3,7 +3,7 @@ Recession.__index = Recession;
 Recession.name = "Recession";
 Recession.description = "<font=bold>On Level Up<font=default>\nreduce the upgrade price of all your items by 1 (min 0)";
 Recession.rarity = "uncommon";
-Recession.imageReference = "assets/sprites/UI/itemIcons/Recession.png";
+Recession.imageReference = "assets/sprites/UI/ItemIcons/Recession.png";
 
 Recession.descriptionOverwrite = true; -- does smthn ig
 

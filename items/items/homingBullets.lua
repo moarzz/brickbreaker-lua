@@ -3,7 +3,7 @@ HomingBullets.__index = HomingBullets;
 HomingBullets.name = "Homing Bullets";
 HomingBullets.description = "Bullets will home in on the nearest brick";
 HomingBullets.rarity = "common";
-HomingBullets.imageReference = "assets/sprites/UI/itemIcons/Homing-Bullets.png";
+HomingBullets.imageReference = "assets/sprites/UI/ItemIcons/Homing-Bullets.png";
 
 HomingBullets.unique = true; -- does smthn ig
 
