@@ -3,7 +3,7 @@ PhantomBullets.__index = PhantomBullets;
 PhantomBullets.name = "Phantom Bullets";
 PhantomBullets.description = "Bullets only lose 1 dmg when they pass through bricks\nBullets start with half damage";
 PhantomBullets.rarity = "rare";
-PhantomBullets.imageReference = "assets/sprites/UI/itemIcons/Phantom-Bullets.png";
+PhantomBullets.imageReference = "assets/sprites/UI/ItemIcons/Phantom-Bullets.png";
 
 PhantomBullets.unique = true; -- does smthn ig
 

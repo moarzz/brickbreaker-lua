@@ -30,7 +30,9 @@ function PlusNineBuff.new()
     local randStat = itemStats[itemVersion];
 
     instance.name = itemNames[itemVersion];
-    instance.stats[randStat] = randStat == "cooldown" and -9 or 9;
+    instance.stats[randStat] = randStat == "cooldown" and -9 or (randStat == "damage" and 6 or 9);
+    instance.imageReference = "assets/sprites/UI/ItemIcons/" .. randStat .. (randStat == "cooldown" and "-.png" or "+.png")
+    instance.image = love.graphics.newImage(instance.imageReference);
 
     return instance;
 end

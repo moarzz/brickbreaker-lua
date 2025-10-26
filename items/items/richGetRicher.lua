@@ -3,7 +3,7 @@ RichGetRicher.__index = RichGetRicher;
 RichGetRicher.name = "Rich Get Richer";
 RichGetRicher.description = "+1 for every <color=money><font=big>20$<color=white><font=default> you have";
 RichGetRicher.rarity = "uncommon";
-RichGetRicher.imageReference = "assets/sprites/UI/itemIcons/Rich-Get-Richer.png";
+RichGetRicher.imageReference = "assets/sprites/UI/ItemIcons/Rich-Get-Richer.png";
 
 function RichGetRicher.new()
     local instance = setmetatable({}, RichGetRicher):init();

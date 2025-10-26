@@ -3,7 +3,7 @@ TeslaCoil.__index = TeslaCoil;
 TeslaCoil.name = "Tesla Coil";
 TeslaCoil.description = "<font=bold>On level up<font=default>\nupgrade all stats of a random weapon by 1";
 TeslaCoil.rarity = "rare";
-TeslaCoil.imageReference = "assets/sprites/UI/itemIcons/Tesla-Coil.png";
+TeslaCoil.imageReference = "assets/sprites/UI/ItemIcons/Tesla-Coil.png";
 
 function TeslaCoil.new()
     local instance = setmetatable({}, TeslaCoil):init();
