@@ -32,7 +32,7 @@ function PlusThreeBuff.new()
 
     instance.name = itemNames[itemVersion];
     instance.stats[randStat] = randStat == "cooldown" and -3 or (randStat == "damage" and 2 or 3);
-    instance.imageReference = "assets/sprites/UI/ItemIcons/" .. randStat .. "+.png"
+    instance.imageReference = "assets/sprites/UI/ItemIcons/" .. randStat .. (randStat == "cooldown" and "-.png" or "+.png")
     instance.image = love.graphics.newImage(instance.imageReference);
 
     return instance;

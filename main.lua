@@ -945,7 +945,7 @@ function changeMusic(newMusicStage)
         BackgroundShader.changeShader(2); -- acid
     elseif newMusicStage == "intense" then
         ref = "assets/SFX/inGame3.mp3";
-        BackgroundShader.changeShader(1); -- vexel
+        BackgroundShader.changeShader(3); -- vexel
     elseif newMusicStage == "boss" then
         ref = "assets/SFX/inGameBoss.mp3";
         BackgroundShader.changeShader(3); -- vexel
