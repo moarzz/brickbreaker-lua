@@ -373,7 +373,7 @@ function Player.InterestGain()
 end
 
 function Player.levelUp()
-    -- EventQueue:addEventToQueue(EVENT_POINTERS.levelUp, 0.15);
+    EventQueue:addEventToQueue(EVENT_POINTERS.levelUp, 0.15);
 
     Player.InterestGain()
     setMusicEffect("paused")
