@@ -1491,8 +1491,8 @@ function drawBricks()
         else -- brick is not gold
             brickBatch:setColor(brick.color or defColour);
             brickBatch:add(
-                brick.x,
-                brick.y,
+                brick.x + brick.drawOffsetX,
+                brick.y + brick.drawOffsetY,
                 0,
                 brick.width / brickWidth,
                 brick.height / brickHeight
@@ -1516,8 +1516,8 @@ function drawBricks()
             local text = tostring(brick.health);
             love.graphics.print(
                 text,
-                brick.x + brick.width / 2,
-                brick.y + brick.height / 2,
+                brick.x + brick.width / 2 + brick.drawOffsetX,
+                brick.y + brick.height / 2 + brick.drawOffsetY,
                 0,
                 1,
                 1,
