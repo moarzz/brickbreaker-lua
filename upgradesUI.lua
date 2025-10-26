@@ -1218,7 +1218,7 @@ function setItemShop(forcedItems)
     forcedItems = forcedItems or {}
 
     for i, v in ipairs(displayedItems) do -- when rolling past an item let it be roled into again
-        Items.removeVisibleItem(v.name);
+        Items.removeVisibleItem(v.filteredName);
     end
 
     displayedItems = {}
@@ -1243,7 +1243,7 @@ function setItemShop(forcedItems)
         displayedItems[i] = Items.getRandomItem().new();
         
         ::continue::
-        Items.addVisibleItem(displayedItems[i].name);
+        Items.addVisibleItem(displayedItems[i].filteredName);
     end
 end
 

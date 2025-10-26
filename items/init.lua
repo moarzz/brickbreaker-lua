@@ -99,12 +99,12 @@ function Items.parseItem(file)
     obj.filteredName = filteredName; -- for calling events internally
 
     if obj.consumable then
-        self.consumableIndices[obj.name] = {
+        self.consumableIndices[filteredName] = {
             index = #self.allConsumables[obj.rarity];
             rarity = obj.rarity;
         };
     else
-        self.itemIndices[obj.name] = {
+        self.itemIndices[filteredName] = {
             index = #self.allItems[obj.rarity];
             rarity = obj.rarity;
         };
@@ -154,14 +154,35 @@ end
 function Items.getItemByName(name)
     local index = self.itemIndices[name];
 
-    if index == nil then
-        index = self.consumableIndices[name];
-        assert(index ~= nil, "tried to get item using an invalid name");
+    if index then
+        return self.allItems[index.rarity][index.index];
+    end
 
+    -- can be a consumable
+    index = self.consumableIndices[name];
+
+    if index then
         return self.allConsumables[index.rarity][index.index];
     end
 
-    return self.allItems[index.rarity][index.index];
+    -- might be a name instead of a filteredName
+    for rarity, v in pairs(self.allItems) do
+        for i, w in ipairs(v) do
+            if w.name == name then
+                return w;
+            end
+        end
+    end
+
+    for rarity, v in pairs(self.allConsumables) do
+        for i, w in ipairs(v) do
+            if w.name == name then
+                return w;
+            end
+        end
+    end
+
+    error("tried to get item using an invalid name");
 end
 
 --* does NOT set returned item as visible
@@ -242,28 +263,72 @@ end
 function Items.addVisibleItem(name) -- makes an item un-attainable in the shop (calling twice needs 2 'removeVisibleItem' calls 2 make visible again)
     local index = self.itemIndices[name];
 
-    if not index then
-        index = self.consumableIndices[name];
-        assert(index, "couldnt add visible to non existent item: " .. name);
-
-        self.consumablesVisible[index.rarity][index.index] = self.consumablesVisible[index.rarity][index.index] + 1;
-        return
+    if index then
+        self.itemsVisible[index.rarity][index.index] = self.itemsVisible[index.rarity][index.index] + 1;
+        return;
     end
 
-    self.itemsVisible[index.rarity][index.index] = self.itemsVisible[index.rarity][index.index] + 1;
+    index = self.consumableIndices[name];
+
+    if index then
+        self.consumablesVisible[index.rarity][index.index] = self.consumablesVisible[index.rarity][index.index] + 1;
+        return;
+    end
+
+    for rarity, v in pairs(self.allItems) do
+        for i, w in ipairs(v) do
+            if w.name == name then
+                self.itemsVisible[rarity][i] = self.itemsVisible[rarity][i] + 1;
+                return;
+            end
+        end
+    end
+
+    for rarity, v in pairs(self.allConsumables) do
+        for i, w in ipairs(v) do
+            if w.name == name then
+                self.consumablesVisible[rarity][i] = self.consumablesVisible[rarity][i] + 1;
+                return;
+            end
+        end
+    end
+
+    error("couldnt add visible to non existent item: " .. name);
 end
 function Items.removeVisibleItem(name) -- makes an invisible item visible again (calling twice needs 2 'addVisibleItem' calls 2 make invisible again)
     local index = self.itemIndices[name];
 
-    if not index then
-        index = self.consumableIndices[name];
-        assert(index, "couldnt remove visible to non existent item: " .. name);
-
-        self.consumablesVisible[index.rarity][index.index] = self.consumablesVisible[index.rarity][index.index] - 1;
-        return
+    if index then
+        self.itemsVisible[index.rarity][index.index] = self.itemsVisible[index.rarity][index.index] - 1;
+        return;
     end
 
-    self.itemsVisible[index.rarity][index.index] = self.itemsVisible[index.rarity][index.index] - 1;
+    index = self.consumableIndices[name];
+
+    if index then
+        self.consumablesVisible[index.rarity][index.index] = self.consumablesVisible[index.rarity][index.index] - 1;
+        return;
+    end
+
+    for rarity, v in pairs(self.allItems) do
+        for i, w in ipairs(v) do
+            if w.name == name then
+                self.itemsVisible[rarity][i] = self.itemsVisible[rarity][i] - 1;
+                return;
+            end
+        end
+    end
+
+    for rarity, v in pairs(self.allConsumables) do
+        for i, w in ipairs(v) do
+            if w.name == name then
+                self.consumablesVisible[rarity][i] = self.consumablesVisible[rarity][i] - 1;
+                return;
+            end
+        end
+    end
+
+    error("couldnt remove visible to non existent item: " .. name);
 end
 
 self.load(); -- load on require();
