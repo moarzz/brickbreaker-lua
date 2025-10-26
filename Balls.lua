@@ -348,7 +348,8 @@ end
 
 
 
-local ballTrailLength = 35   -- Length of the ball trail
+-- reduce trail length to make draw cheaper (was 35)
+local ballTrailLength = 20   -- Length of the ball trail
 local bullets = {}
 local deadBullets = {}
 local laserBeamBrick
@@ -4110,12 +4111,42 @@ function Balls:draw()
                 sizeBoost = ((unlockedBallTypes["Spring Ball"].stats.range or 50) + getStatItemsBonus("range", unlockedBallTypes["Spring Ball"]) + (Player.permanentUpgrades.range or 0))/2
             end
             if not ball.dead and ball.name ~= "Phantom Ball" then
-                for i = 1, #ball.trail do
-                    local p = ball.trail[i]
-                    local t = i / ballTrailLength
-                    local trailRadius = ball.radius * ball.drawSizeBoost * sizeBoost * (ball.drawSizeMult or 1) * math.pow(t,1.25) -- Starts at 0, grows to ball.radius
-                    love.graphics.setColor(ballColor[1], ballColor[2], ballColor[3], math.pow(t,4)) -- Fade the trail
-                    love.graphics.circle("fill", p.x, p.y, trailRadius)
+                local trail = ball.trail or {}
+                local trailLen = #trail
+                -- cheap offscreen cull (skip full trail draw if ball offscreen)
+                local bx, by, br = ball.x, ball.y, ball.radius or 10
+                if bx + br >= -64 and bx - br <= (screenWidth + 64) and by + br >= -64 and by - br <= (screenHeight + 64) and trailLen > 1 then
+                    -- sample the trail to at most sampleMax segments (reduces draw calls)
+                    local sampleMax = 8
+                    local step = math.max(1, math.floor(trailLen / sampleMax))
+
+                    -- cache locals for speed
+                    local r, g, b = ballColor[1], ballColor[2], ballColor[3]
+                    local invTrailLen = 1 / math.max(1, ballTrailLength)
+
+                    -- cache ball radius and size calculations
+                    local startRadius = math.max(1, (ball.radius or 10) * (ball.drawSizeBoost or 1))
+                    local minRadius = startRadius * 0.15
+
+                    -- Draw circles from oldest to newest for proper layering
+                    for i = trailLen - 1, 1, -step do
+                        local p = trail[i]
+                        if p then
+                            -- segment position (1 = near ball, 0 = tail)
+                            local segmentPos = (i / math.max(1, trailLen))
+                            local segmentPosSq = segmentPos * segmentPos
+
+                            -- compute radius that tapers from ball radius -> small
+                            local segRadius = minRadius + (startRadius - minRadius) * segmentPos
+
+                            -- alpha that eases out towards tail with quadratic falloff
+                            local alpha = math.max(0.04, segmentPosSq * (p.alpha or 1))
+                            love.graphics.setColor(r, g, b, alpha)
+                            love.graphics.circle("fill", p.x, p.y, segRadius)
+                        end
+                    end
+
+                    love.graphics.setColor(1,1,1,1)
                 end
             end
 

@@ -1042,7 +1042,7 @@ local damageCooldown = 0 -- Cooldown for damage visuals
 local healCooldown = 0
 local printDrawCalls = false
 local function gameFixedUpdate(dt)
-    -- dt = dt * 0.7
+    dt = dt * 0.7
     -- Update mouse positions
 
     levelUpShopTweenAlpha(dt)
@@ -1483,11 +1483,12 @@ function drawBricks()
     
     local brickWidth, brickHeight = brickImg:getDimensions();
     local defColour = {1,1,1,1};
+    local goldBricksToDraw = {};
     for _, brick in ipairs(bricks) do
         if brick.destroyed then
             --? dont draw a brick if its been destroyed
         elseif brick.type == "gold" then
-            print("Milo:3 didn't handle gold bricks being drawn");
+            table.insert(goldBricksToDraw, brick);
         else -- brick is not gold
             brickBatch:setColor(brick.color or defColour);
             brickBatch:add(
@@ -1501,17 +1502,31 @@ function drawBricks()
     end
     
     love.graphics.draw(brickBatch);
+
+    for _, brick in ipairs(goldBricksToDraw) do
+        love.graphics.setColor(1,1,1,1);
+        love.graphics.draw(
+            goldBrickImg,
+            brick.x + (brick.drawOffsetX or 0),
+            brick.y + (brick.drawOffsetY or 0),
+            0,
+            brick.width / brickWidth,
+            brick.height / brickHeight
+        );
+    end
     
     setFont(18);
     love.graphics.setColor(1,1,1); -- white
 
     local texHeight = love.graphics.getFont():getHeight() / 2;
 
+    local goldBricktextToDraw = {};
+
     for _, brick in ipairs(bricks) do
         if brick.destroyed then
             --? dont draw a brick if its been destroyed
         elseif brick.type == "gold" then
-            print("Milo:3 didn't handle gold bricks being drawn");
+            -- print("Milo:3 didn't handle gold bricks being drawn");
         else -- brick is not gold
             local text = tostring(brick.health);
             love.graphics.print(
@@ -1528,7 +1543,7 @@ function drawBricks()
     end
 
     -- Draw all bricks (except boss)
-    --[[for _, brick in ipairs(bricks) do
+    for _, brick in ipairs(goldBricksToDraw) do
         if (not brick.type or brick.type ~= "boss") and not brick.destroyed and brick.y + brick.height > screenTop - 10 and brick.y < screenBottom + 10 then
             local type = brick.type or "small"
             local color = brick.color or {1, 1, 1, 1}
@@ -1556,7 +1571,7 @@ function drawBricks()
             love.graphics.setColor(1, 1, 1)
             love.graphics.print(text, centerX, centerY, 0, 1, 1, love.graphics.getFont():getWidth(text) / 2, love.graphics.getFont():getHeight() / 2)
         end
-    end]]
+    end
 
     -- Reset color
     love.graphics.setColor(1, 1, 1, 1)
