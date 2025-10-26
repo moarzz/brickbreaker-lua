@@ -304,12 +304,12 @@ local function drawPlayerStats()
     if Player.currentCore == "Economy Core" then
         interestValue = 8
     end
-    if Player.levelingUp and interestValue > 0 then
+    --[[if Player.levelingUp and interestValue > 0 then
         setFont(45)
         love.graphics.setColor(moneyColor)
         x, y = x + 90, y - 45
         love.graphics.print("+" .. formatNumber(interestValue) .. "$",x + 100, y + 1, math.rad(1.5))
-    end
+    end]]
 
     if Player.currentCore and Player.levelingUp and not Player.choosingUpgrade then
         setFont(38)
@@ -1098,6 +1098,7 @@ end
 
 function drawLevelUpShop()
     -- Initialize layout for the buttons
+    love.graphics.setColor(1,1,1,1)
     local buttonWidth = (love.graphics.getWidth() - 300) / 3 - 60
     local buttonHeight = love.graphics.getHeight() - 500
     local buttonY = screenHeight/2 - buttonHeight/2 + 25
@@ -1329,6 +1330,8 @@ local function drawItemShop()
                     local text = getItemFullDescription(item) or ""
                     local fancyText = FancyText.new(text, itemX + 25 * scale, itemY + 110 * scale, windowW - 50 * scale, 20, "center", item.descriptionPointers.default, item.descriptionPointers)
                     fancyTexts[id] = fancyText
+
+                    print("fancytext drawing : " .. id)
 
                     fancyText:draw()
                 end

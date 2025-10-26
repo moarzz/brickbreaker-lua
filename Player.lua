@@ -373,7 +373,7 @@ function Player.InterestGain()
 end
 
 function Player.levelUp()
-    EventQueue:addEventToQueue(EVENT_POINTERS.levelUp, 0.25);
+    -- EventQueue:addEventToQueue(EVENT_POINTERS.levelUp, 0.15);
 
     Player.InterestGain()
     setMusicEffect("paused")
@@ -541,22 +541,24 @@ end
 
 function Player.changeMoney(amnt)
     if amnt > 0 then
-        EventQueue:addEventToQueue(
+        gainMoneyWithAnimations(amnt)
+        --[[EventQueue:addEventToQueue(
             EVENT_POINTERS.money_gain,
             0.2,
             function()
                 Player.shiftMoneyValue(amnt);
                 createMoneyPopup(amnt, 200, 200);
+                gainMoneyWithAnimations(amnt)
             end
-        );
+        );]]
     else
-        EventQueue:addEventToQueue(
-            EVENT_POINTERS.money_lose,
-            0.2,
-            function()
+        --EventQueue:addEventToQueue(
+            --EVENT_POINTERS.money_lose,
+            --0.2,
+            --function()
                 Player.shiftMoneyValue(amnt);
-            end
-        );
+            --end
+        --);
     end
 end
 

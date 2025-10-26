@@ -249,33 +249,29 @@ function itemTriggerAnimation(itemName)
 end
 local pausedUpgradeNumbers = {}
 
---[[function gainMoneyWithAnimations(moneyGain, itemName)
-    -- Store only what we need for the animation
-    local moneyBefore = Player.getMoney();
+function gainMoneyWithAnimations(moneyGain, itemName)
     
+    EventQueue:addEventToQueue(EVENT_POINTERS.money_gain, 0.25, function() end)
     -- First event: Show animation and add money
-    EventQueue:addEventToQueue(EVENT_POINTERS.money_gain, 0.05, function() 
-        if itemName then -- Changed from itemId to itemName check
-            itemTriggerAnimation(itemName)
-        end
-        playSoundEffect(upgradeSFX, 0.6, 1, false)
-        
-        -- Create and add tween without capturing outer scope variables
-        local inTween = tween.new(0.05, visualMoneyValues, {scale = 1.7}, tween.easing.outCirc)
-        addTweenToUpdate(inTween)
-        
-        -- Update money
-        Player.changeMoney(moneyGain);
-        -- Player.money = Player.money + moneyGain;
-        -- richGetRicherUpdate(moneyBefore, Player.money)
-    end)
+    if itemName then -- Changed from itemId to itemName check
+        itemTriggerAnimation(itemName)
+    end
+    playSoundEffect(upgradeSFX, 0.6, 1, false)
     
-    -- Second event: Reset scale
-    EventQueue:addEventToQueue(EVENT_POINTERS.empty, 0.175, function()
-        local outTween = tween.new(0.175, visualMoneyValues, {scale = 1}, tween.easing.inCirc)
+    -- Create and add tween without capturing outer scope variables
+    local inTween = tween.new(0.065, visualMoneyValues, {scale = 1.7}, tween.easing.outCirc)
+    addTweenToUpdate(inTween)
+    
+    -- Update money
+    createMoneyPopup(moneyGain, 200, 200);
+
+    -- reset Scale tween
+    GlobalTimer:after(0.065, function() 
+        Player.shiftMoneyValue(moneyGain);
+        local outTween = tween.new(0.2, visualMoneyValues, {scale = 1}, tween.easing.inCirc)
         addTweenToUpdate(outTween)
     end)
-end]]
+end
 
 visualUpgradePriceValues = {}
 function reducePriceWithAnimations(reductionAmount, weaponName, itemName)  -- Accept weapon object
@@ -685,26 +681,10 @@ function addTweenToUpdate(tween)
     return #Tweens
 end
 
-function addUITweenToUpdate(tween)
-    tween.id = currentTweenID
-    currentTweenID = currentTweenID + 1
-    table.insert(uiTweens, tween) -- Add the tween to the list
-    return #uiTweens
-end
-
 function removeTween(tweenID)
     for _, tween in ipairs(Tweens) do
         if tween.id == tweenID then
             table.remove(Tweens, _) -- Remove the tween from the list
-            break
-        end
-    end
-end
-
-function removeUITween(tweenID)
-    for _, tween in ipairs(uiTweens) do
-        if tween.id == tweenID then
-            table.remove(uiTweens, _) -- Remove the tween from the list
             break
         end
     end
@@ -721,19 +701,6 @@ function updateAllTweens(dt)
         end
     end
 end
-
-function updateUITweens(dt)
-    for i = #uiTweens, 1, -1 do -- Iterate backward to safely remove items
-        local tween = uiTweens[i]
-        if tween.update then
-            tween:update(dt) -- Update each tween
-            if tween.clock >= tween.duration then
-                table.remove(uiTweens, i) -- Remove the tween if its duration is over
-            end
-        end
-    end
-end
-
 
 function mapRangeClamped(x, in_min, in_max, out_min, out_max)
     if x < in_min then
