@@ -3259,21 +3259,15 @@ function powerupPickup(powerup)
     playSoundEffect(lvlUpSFX, 0.55, 1, false)   
     powerupPopup.type = powerup.type
     powerupPopup.startTime = gameTime
-    if powerup.type ~= "nuke" then
+    if powerup.type ~= "nuke" and powerup.type ~= "moneyBag" then
         local inTween = tween.new(0.15, powerupPopup, {scale = 1}, tween.easing.outCirc)
         addTweenToUpdate(inTween)
     end
     print("powerup type : " .. powerup.type)
     if powerup.type == "moneyBag" then
-        moneyBagValues.reset(moneyBagValues)
-        Timer.after(15, function()
-            local outTween = tween.new(0.25, powerupPopup, {scale = 0}, tween.easing.inCirc)
-            addTweenToUpdate(outTween)
-            Timer.after(0.25, function()
-                powerupPopup.type = nil
-                moneyBagValues.active = false
-            end)
-        end)
+        local moneyGain = math.random(1,5)
+        Player.shiftMoneyValue(moneyGain);
+        createMoneyPopup(moneyGain, paddle.x + paddle.width/2, paddle.y)
     elseif powerup.type == "nuke" then
         for _, brick in ipairs(bricks) do
             if (brick.health > 0) and (brick.y + brick.height > 0) then

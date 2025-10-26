@@ -160,14 +160,71 @@ function GameOverDraw()
 end
 
 local moneyPopups = {}
+local moneyPopupId = 0
 function createMoneyPopup(value, x, y)
+    local xOffset, yOffset = math.random(-80,80), math.random(-50,-130)
     local popup = {
-        x = paddle.x + paddle.width/2,
-        y = paddle.y + paddle.height/2,
+        x = x,
+        y = y,
+        speedX = xSpeed,
+        speedY = ySpeed,
         value = value,
         scale = 0,
+        id = "Money Popup : " .. moneyPopupId,
     }
+    moneyPopupId = moneyPopupId + 1
     table.insert(moneyPopups, popup)
+    local inTween = tween.new(0.2, popup, {scale = 40}, tween.easing.outCirc)
+    addTweenToUpdate(inTween)
+    local entireInTween = tween.new(1, popup, {x = popup.x + xOffset, y = popup.y + yOffset}, tween.easing.outCirc)
+    addTweenToUpdate(entireInTween)
+    GlobalTimer:after(0.2, function()
+        local outTween = tween.new(0.8, popup, {scale = 0}, tween.easing.inCirc)
+        addTweenToUpdate(outTween)
+        GlobalTimer:after(0.8, function()
+            -- Remove the popup from the list after the animation
+            for i, p in ipairs(moneyPopups) do
+                if p.id == popup.id then
+                    table.remove(moneyPopups, i)
+                    break
+                end
+            end
+        end)
+    end)
+end
+
+local plusStatPopups = {}
+local plusStatPopupId = 0
+function plusStatPopup(text, x, y)
+    local xOffset, yOffset = math.random(-80,80), math.random(-35,-130)
+    local popup = {
+        text = text,
+        x = x,
+        y = y,
+        speedX = xSpeed,
+        speedY = ySpeed,
+        scale = 0,
+        id = "Plus Stat Popup : " .. plusStatPopupId,
+    }
+    plusStatPopupId = plusStatPopupId + 1
+    table.insert(plusStatPopups, popup)
+    local inTween = tween.new(0.2, popup, {scale = 40}, tween.easing.outCirc)
+    addTweenToUpdate(inTween)
+    local entireInTween = tween.new(1, popup, {x = popup.x + xOffset, y = popup.y + yOffset}, tween.easing.outCirc)
+    addTweenToUpdate(entireInTween)
+    GlobalTimer:after(0.2, function()
+        local outTween = tween.new(0.8, popup, {scale = 0}, tween.easing.inCirc)
+        addTweenToUpdate(outTween)
+        GlobalTimer:after(0.8, function()
+            -- Remove the popup from the list after the animation
+            for i, p in ipairs(plusStatPopups) do
+                if p.id == popup.id then
+                    table.remove(plusStatPopups, i)
+                    break
+                end
+            end
+        end)
+    end)
 end
 
 visualItemValues = {}
@@ -619,6 +676,7 @@ end
 
 --Tween functions
 Tweens = {} -- Table to store tweens
+uiTweens = {} -- Table to store UI tweens
 local currentTweenID = 0 -- Initialize a variable to keep track of the current tween ID
 function addTweenToUpdate(tween)
     tween.id = currentTweenID
@@ -627,10 +685,26 @@ function addTweenToUpdate(tween)
     return #Tweens
 end
 
+function addUITweenToUpdate(tween)
+    tween.id = currentTweenID
+    currentTweenID = currentTweenID + 1
+    table.insert(uiTweens, tween) -- Add the tween to the list
+    return #uiTweens
+end
+
 function removeTween(tweenID)
     for _, tween in ipairs(Tweens) do
         if tween.id == tweenID then
             table.remove(Tweens, _) -- Remove the tween from the list
+            break
+        end
+    end
+end
+
+function removeUITween(tweenID)
+    for _, tween in ipairs(uiTweens) do
+        if tween.id == tweenID then
+            table.remove(uiTweens, _) -- Remove the tween from the list
             break
         end
     end
@@ -643,6 +717,18 @@ function updateAllTweens(dt)
             tween:update(dt) -- Update each tween
             if tween.clock >= tween.duration then
                 table.remove(Tweens, i) -- Remove the tween if its duration is over
+            end
+        end
+    end
+end
+
+function updateUITweens(dt)
+    for i = #uiTweens, 1, -1 do -- Iterate backward to safely remove items
+        local tween = uiTweens[i]
+        if tween.update then
+            tween:update(dt) -- Update each tween
+            if tween.clock >= tween.duration then
+                table.remove(uiTweens, i) -- Remove the tween if its duration is over
             end
         end
     end
@@ -990,6 +1076,7 @@ moneyBagValues = {
         self.active = true
     end
 }
+
 function drawPopups()
     for i = #lvlUpTexts, 1, -1 do
         local popup = lvlUpTexts[i]
@@ -1039,9 +1126,6 @@ function drawPopups()
         end
         ::continue::
     end
-    for i = #moneyPopups, 1, -1 do
-        local popup = moneyPopups[i]
-    end
     if powerupPopup and powerupPopup.type ~= nil and powerupPopup.scale ~= 0 then
         love.graphics.setColor(1, 1, 1, 1) -- Reset color to white after drawing popups
         local img = powerupImgs[powerupPopup.type]
@@ -1067,6 +1151,22 @@ function drawPopups()
         end
     end
     love.graphics.setColor(1, 1, 1, 1) -- Reset color to white after drawing popups
+end
+
+function drawMoneyPopups()
+    for i = #moneyPopups, 1, -1 do
+        local popup = moneyPopups[i]
+        setFont(math.max(math.ceil(popup.scale), 1))
+        love.graphics.setColor(14/255, 202/255, 92/255, 1)
+        love.graphics.print("+"..tostring(popup.value).."$", popup.x - getTextSize("+"..tostring(popup.value).."$")/2, popup.y)
+    end
+    
+    for i = #plusStatPopups, 1, -1 do
+        local popup = plusStatPopups[i]
+        setFont(math.max(math.ceil(popup.scale), 1))
+        love.graphics.setColor(14/255, 202/255, 92/255, 1)
+        love.graphics.print(popup.text, popup.x - getTextSize(popup.text)/2, popup.y)
+    end
 end
 
 function removeAnimation(id)

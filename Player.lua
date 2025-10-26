@@ -546,6 +546,7 @@ function Player.changeMoney(amnt)
             0.2,
             function()
                 Player.shiftMoneyValue(amnt);
+                createMoneyPopup(amnt, 200, 200);
             end
         );
     else

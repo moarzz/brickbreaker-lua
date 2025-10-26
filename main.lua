@@ -15,6 +15,7 @@ Balls = require("Balls") -- ball logic
 FancyText = require("Libraries.fancyText") -- fancy text rendering
 upgradesUI = require("upgradesUI") -- upgrade UI logic
 Timer = require("Libraries.timer") -- timer library
+GlobalTimer = Timer.new() -- Timer that runs even when paused
 local permanentUpgrades = require("permanentUpgrades") -- permanent upgrades UI
 local damageRipples = require("DamageRipples") -- damage ripple shader
 confetti = require("particleSystems.confetti") -- confetti particle system
@@ -1083,6 +1084,8 @@ local function gameFixedUpdate(dt)
         upgradesUI.update(dt) -- Update the upgrades UI
         updateAllTweens(dt) -- Update all tweens
 
+
+        GlobalTimer:update(dt) -- Update the global timer
         if Player.choosingUpgrade then
             if lastFreezeTime == 0 then
                 lastFreezeTime = love.timer.getTime()
@@ -2082,6 +2085,8 @@ local function fullDraw()
     -- Draw the UI elements using Suit
     suit.draw()
 
+    drawMoneyPopups()
+
     drawPausedUpgradeNumbers()
 
     if Player.dead then
@@ -2261,6 +2266,10 @@ function love.keypressed(key)
 
 
         -----------------------------------
+
+        if key == "4" then
+            createMoneyPopup(3 ,paddle.x + paddle.width/2, paddle.y, 1000)
+        end
 
         if key == "5" then
             local powerup = {
