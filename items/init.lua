@@ -117,11 +117,6 @@ function Items.parseItem(file)
     if obj.imageReference then
         obj.image = love.graphics.newImage(obj.imageReference);
     end
-
-    -- only create image once and reuse it
-    if obj.imageReference then
-        obj.image = love.graphics.newImage(obj.imageReference);
-    end
 end
 
 function Items.setRarityOdds(common, uncommon, rare, legendary)
