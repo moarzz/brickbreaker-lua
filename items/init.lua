@@ -119,11 +119,8 @@ function Items.parseItem(file)
     end
 
     -- only create image once and reuse it
-    if obj.imageReference and not _shared_item_images[obj.imageReference] then
-        _shared_item_images[obj.imageReference] = love.graphics.newImage(obj.imageReference);
-    end
     if obj.imageReference then
-        obj.image = _shared_item_images[obj.imageReference];
+        obj.image = love.graphics.newImage(obj.imageReference);
     end
 end
 
