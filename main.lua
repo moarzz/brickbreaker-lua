@@ -189,6 +189,7 @@ function resetGame()
     
     -- Clear any existing bricks
     bricks = {}
+    brickBatch = love.graphics.newSpriteBatch(brickImg, 700, "stream");
     
     -- Reset all Player stats and values
     Player.reset()
@@ -1474,10 +1475,57 @@ function drawBricks()
     local screenTop = 0
     local screenBottom = screenHeight
 
-    setFont(18)
+    
+    brickBatch:clear();
+    
+    local brickWidth, brickHeight = brickImg:getDimensions();
+    local defColour = {1,1,1,1};
+    for _, brick in ipairs(bricks) do
+        if brick.destroyed then
+            --? dont draw a brick if its been destroyed
+        elseif brick.type == "gold" then
+            print("Milo:3 didn't handle gold bricks being drawn");
+        else -- brick is not gold
+            brickBatch:setColor(brick.color or defColour);
+            brickBatch:add(
+                brick.x,
+                brick.y,
+                0,
+                brick.width / brickWidth,
+                brick.height / brickHeight
+            );
+        end
+    end
+    
+    love.graphics.draw(brickBatch);
+    
+    setFont(18);
+    love.graphics.setColor(1,1,1); -- white
+
+    local texHeight = love.graphics.getFont():getHeight() / 2;
+
+    for _, brick in ipairs(bricks) do
+        if brick.destroyed then
+            --? dont draw a brick if its been destroyed
+        elseif brick.type == "gold" then
+            print("Milo:3 didn't handle gold bricks being drawn");
+        else -- brick is not gold
+            local text = tostring(brick.health);
+            love.graphics.print(
+                text,
+                brick.x + brick.width / 2,
+                brick.y + brick.height / 2,
+                0,
+                1,
+                1,
+                love.graphics.getFont():getWidth(text) / 2,
+                texHeight
+            );
+        end
+    end
 
     -- Draw all bricks (except boss)
-    for _, brick in ipairs(bricks) do
+    --[[for _, brick in ipairs(bricks) do
         if (not brick.type or brick.type ~= "boss") and not brick.destroyed and brick.y + brick.height > screenTop - 10 and brick.y < screenBottom + 10 then
             local type = brick.type or "small"
             local color = brick.color or {1, 1, 1, 1}
@@ -1505,13 +1553,13 @@ function drawBricks()
             love.graphics.setColor(1, 1, 1)
             love.graphics.print(text, centerX, centerY, 0, 1, 1, love.graphics.getFont():getWidth(text) / 2, love.graphics.getFont():getHeight() / 2)
         end
-    end
+    end]]
 
     -- Reset color
     love.graphics.setColor(1, 1, 1, 1)
 
     -- Cache text objects and widths
-    local textCache = {}
+    --[[local textCache = {}
     local widthCache = {}
     
     -- Group text by same health values
@@ -1523,7 +1571,7 @@ function drawBricks()
             textCache[health] = love.graphics.newText(font, text)
             widthCache[health] = font:getWidth(text)
         end
-    end
+    end]]
 
     -- Draw all black outlines in one batch
     --[[love.graphics.setColor(0, 0, 0, 1)
@@ -1574,7 +1622,7 @@ function drawBricks()
     end
 
     -- Draw boss bricks last (not batched)
-    for _, brick in ipairs(bricks) do
+    --[[for _, brick in ipairs(bricks) do
         if brick.type == "boss" and not brick.destroyed and brick.y + brick.height > screenTop - 10 and brick.y < screenBottom + 10 then
             local color = brick.color or {1, 1, 1, 1}
             love.graphics.setColor(color)
@@ -1601,7 +1649,7 @@ function drawBricks()
             love.graphics.setColor(1, 1, 1, 1)
             love.graphics.print(hpText, centerX, centerY, 0, 1, 1, font:getWidth(hpText)/2, font:getHeight()/2)
         end
-    end
+    end]]
 
     -- Draw brick pieces (not batched)
     for _, brickPiece in ipairs(brickPieces) do
