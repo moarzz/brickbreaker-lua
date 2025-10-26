@@ -36,7 +36,7 @@ local _shared_item_fonts = _shared_item_fonts or {
 
 local _shared_item_images = _shared_item_images or {}
 
-function getItem(itemName) 
+function getItem(itemName)
     return Items.getItemByName(itemName);
     -- return items[itemName]
 end
@@ -1212,6 +1212,11 @@ end
 function setItemShop(forcedItems)
     clearFancyTexts()
     forcedItems = forcedItems or {}
+
+    for i, v in ipairs(displayedItems) do -- when rolling past an item let it be roled into again
+        Items.removeVisibleItem(v.name);
+    end
+
     displayedItems = {}
     for i=1, Player.currentCore == "Collector's Core" and 3 or 3 do
         local itemToDisplay = nil
@@ -1232,8 +1237,9 @@ function setItemShop(forcedItems)
         end
 
         displayedItems[i] = Items.getRandomItem().new();
-
+        
         ::continue::
+        Items.addVisibleItem(displayedItems[i].name);
     end
 end
 

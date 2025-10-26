@@ -182,17 +182,25 @@ function Items.getRandomItem(allowVisible)
 
     local randRarity = love.math.random(); -- [0-1)
     local rarity = nil;
-    local dif = 1;
+    -- local dif = 0;
     -- print(randRarity);
 
     Items.updateRarityOdds(); -- inneficient but i wanna go 2 bed
-    for k, v in pairs(self.rarityOdds) do
-        if randRarity < v and v - randRarity < dif then -- if the random number is less then a rarity: it is possible 2 be chosen. choose the largest rarity that fits this
-            dif = v - randRarity;
-            rarity = k;
-        end
+
+    if randRarity < self.rarityOdds.common then
+        rarity = "common";
+    elseif randRarity < self.rarityOdds.uncommon then
+        rarity = "uncommon";
+    elseif randRarity < self.rarityOdds.rare then
+        rarity = "rare";
+    elseif randRarity < self.rarityOdds.legendary then
+        rarity = "legendary";
+    else
+        print("smthn happened");
+        rarity = "common";
     end
-    -- print(rarity);
+
+    print(rarity, randRarity);
 
     assert(lookingInList[rarity], "somehow a rarity was not chosen, this should be impossible (milo can't write working code apparently)");
 
@@ -235,7 +243,11 @@ function Items.addVisibleItem(name) -- makes an item un-attainable in the shop (
     local index = self.itemIndices[name];
 
     if not index then
-        error("couldnt add visible to non existent item: " .. name);
+        index = self.consumableIndices[name];
+        assert(index, "couldnt add visible to non existent item: " .. name);
+
+        self.consumablesVisible[index.rarity][index.index] = self.consumablesVisible[index.rarity][index.index] + 1;
+        return
     end
 
     self.itemsVisible[index.rarity][index.index] = self.itemsVisible[index.rarity][index.index] + 1;
@@ -244,7 +256,11 @@ function Items.removeVisibleItem(name) -- makes an invisible item visible again 
     local index = self.itemIndices[name];
 
     if not index then
-        error("couldnt remove visible to non existent item: " .. name);
+        index = self.consumableIndices[name];
+        assert(index, "couldnt remove visible to non existent item: " .. name);
+
+        self.consumablesVisible[index.rarity][index.index] = self.consumablesVisible[index.rarity][index.index] - 1;
+        return
     end
 
     self.itemsVisible[index.rarity][index.index] = self.itemsVisible[index.rarity][index.index] - 1;
