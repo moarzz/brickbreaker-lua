@@ -84,7 +84,7 @@ function ItemBase:buy(...)
     end
 
     if not self.unique then
-        Items.removeVisibleItem(self.name);
+        Items.removeVisibleItem(self.filteredName);
     end
 
     EventQueue:addEventToQueue(EVENT_POINTERS.item_purchase .. "_" .. self.filteredName);
