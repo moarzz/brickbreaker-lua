@@ -3,6 +3,7 @@ LoadedDice.__index = LoadedDice;
 LoadedDice.name = "Loaded Dice";
 LoadedDice.description = "rerollPrice starts at <color=money>0$";
 LoadedDice.rarity = "common";
+LoadedDice.imageReference = "assets/sprites/UI/itemIcons/Loaded-Dices.png";
 
 LoadedDice.unique = true; -- does smthn ig
 
@@ -13,7 +14,7 @@ function LoadedDice.new()
 end
 
 function LoadedDice:purchase()
-    rerollPrice = 0; -- this is nit a global. fix it
+    setRerollPrice(0);
 end
 
 return LoadedDice;

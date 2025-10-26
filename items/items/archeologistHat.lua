@@ -3,6 +3,7 @@ ArcheologistHat.__index = ArcheologistHat;
 ArcheologistHat.name = "Archeologist Hat";
 ArcheologistHat.description = "<font=bold>On Level Up<font=default>\nadd a random rare or legendary item to the shop";
 ArcheologistHat.rarity = "rare";
+ArcheologistHat.imageReference = "assets/sprites/UI/itemIcons/Archeologist's-Hat.png";
 
 function ArcheologistHat.new()
     local instance = setmetatable({}, ArcheologistHat):init();

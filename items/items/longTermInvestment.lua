@@ -3,6 +3,7 @@ LongTermInvestment.__index = LongTermInvestment;
 LongTermInvestment.name = "Long Term Investment";
 LongTermInvestment.description = "Gain <color=money><font=big><longTermValue>$<color=white><font=default>\nIncrease the <color=money>$<color=white> gain of every future \n<font=big>Long Term Investment<font=default> by <color=money>1$<color=white> (max <color=money>20$<color=white>)";
 LongTermInvestment.rarity = "common";
+LongTermInvestment.imageReference = "assets/sprites/UI/itemIcons/Long-Term-Investment.png";
 
 LongTermInvestment.consumable = true; -- does smthn ig
 LongTermInvestment.descriptionOverwrite = true;

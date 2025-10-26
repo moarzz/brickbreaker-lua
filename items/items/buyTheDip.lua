@@ -3,6 +3,7 @@ BuyTheDip.__index = BuyTheDip;
 BuyTheDip.name = "Buy the Dip";
 BuyTheDip.description = "When you buy this, set the upgrade price of a random weapon to 0";
 BuyTheDip.rarity = "rare";
+-- BuyTheDip.imageReference = "assets/sprites/UI/itemIcons/Buy-The-Dip.png";
 
 BuyTheDip.consumable = true; -- does smthn ig
 

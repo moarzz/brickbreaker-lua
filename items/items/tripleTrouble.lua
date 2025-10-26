@@ -3,6 +3,7 @@ TripleTrouble.__index = TripleTrouble;
 TripleTrouble.name = "Triple Trouble";
 TripleTrouble.description = "<font=default>Increase <colour=green>3<colour=white> random stats by <colour=blue>1";
 TripleTrouble.rarity = "common";
+TripleTrouble.imageReference = "assets/sprites/UI/itemIcons/Triple-Trouble.png";
 
 function TripleTrouble.new()
     local instance = setmetatable({}, TripleTrouble):init();

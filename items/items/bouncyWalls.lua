@@ -3,6 +3,7 @@ BouncyWalls.__index = BouncyWalls;
 BouncyWalls.name = "Bouncy Walls";
 BouncyWalls.description = "Balls gain a temporary boost of speed after bouncing off walls";
 BouncyWalls.rarity = "uncommon";
+BouncyWalls.imageReference = "assets/sprites/UI/itemIcons/Bouncy-Walls.png";
 
 BouncyWalls.unique = true; -- does smthn ig
 
