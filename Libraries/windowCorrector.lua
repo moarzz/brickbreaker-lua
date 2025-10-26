@@ -365,6 +365,16 @@ function WindowCorrector.clearCanvas(index)
     love.graphics.setCanvas(curCanvas);
 end
 
+function WindowCorrector.getCanvas(index)
+    assert(self.isActive, "tried to clear a canvas while the windowCorrector is inactive");
+
+    index = index + 1;
+
+    assert(index <= #self.canvases, "tried to clear an out of bounds canvas");
+
+    return self.canvases[index];
+end
+
 function WindowCorrector.startDraw()
     -- make calling love.graphics.origin() not mess up the desired centering and scaling of the universe
     self.transformOrigin = true;

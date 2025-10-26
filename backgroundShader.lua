@@ -90,22 +90,24 @@ function BackgroundShader.draw()
         love.graphics.setShader(self.shaders[self.activeShader]);
         WindowCorrector.mergeCanvases(2, 3);
 
-        love.graphics.setBlendMode("add");
+        -- love.graphics.setBlendMode("add", "premultiplied");
         -- love.graphics.setCanvas(); -- main render target
 
         self.fadeInOutShader:send("fade", self.fadePerun);
+        self.fadeInOutShader:send("fadeOut", WindowCorrector.getCanvas(1));
+        
 
-        self.fadeInOutShader:send("fadeIn", true);
+        -- self.fadeInOutShader:send("fadeIn", true);
         love.graphics.setShader(self.fadeInOutShader);
         WindowCorrector.mergeCanvas(2);
+-- 
+        -- love.graphics.setShader();
+-- 
+        -- self.fadeInOutShader:send("fadeIn", false);
+        -- love.graphics.setShader(self.fadeInOutShader);
+        -- WindowCorrector.mergeCanvas(1);
 
-        love.graphics.setShader();
-
-        self.fadeInOutShader:send("fadeIn", false);
-        love.graphics.setShader(self.fadeInOutShader);
-        WindowCorrector.mergeCanvas(1);
-
-        love.graphics.setBlendMode("alpha"); -- normal blend mode
+        -- love.graphics.setBlendMode("alpha"); -- normal blend mode
         love.graphics.setShader();
 
         WindowCorrector.clearCanvas(1);
