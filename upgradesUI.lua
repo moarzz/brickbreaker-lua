@@ -29,7 +29,7 @@ longTermInvestment = {}
 longTermInvestment.value = 1
 permanentItemBonuses = {}
 
-local Items = require("items");
+_G.Items = require("items");
 
 
 local _shared_item_fonts = _shared_item_fonts or {
