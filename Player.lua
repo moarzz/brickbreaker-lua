@@ -12,7 +12,7 @@ function loadGameData()
         gold = 0,
         startingMoney = 0,
         permanentUpgrades = {},
-        paddleCores = {["Collector's Core"] = true},  -- Initialize paddleCores
+        paddleCores = {["Size Core"] = true},  -- Initialize paddleCores
         permanentUpgradePrices = {
             amount = 100,
             speed = 100,
@@ -35,9 +35,9 @@ function loadGameData()
                 data.highScore = fileData.highScore or 0
                 data.gold = fileData.gold or 0
                 data.startingMoney = fileData.startingMoney or 0
-                data.permanentUpgrades = fileData.permanentUpgrades or {}
-                data.paddleCores = fileData.paddleCores or { ["Collector's Core"] = true }
-                data.permanentUpgradePrices = fileData.permanentUpgradePrices or data.permanentUpgradePrices
+                -- data.permanentUpgrades = fileData.permanentUpgrades or {}
+                data.paddleCores = fileData.paddleCores or { ["Size Core"] = true }
+                -- data.permanentUpgradePrices = fileData.permanentUpgradePrices or data.permanentUpgradePrices
                 data.startingItems = fileData.startingItems or data.startingItems
                 data.fastestTime = fileData.fastestTime or 100000000000
                 data.settings = fileData.settings or data.settings
@@ -91,12 +91,12 @@ Player = {
     fastestTime = 1000000, -- in seconds
     bricksDestroyed = 0,
     lives = 1,
-    currentCore = "Collector's Core",
+    currentCore = "Size Core",
     levelingUp = false,
     choosingUpgrade = false,
     price = 1,
     newUpgradePrice = 100,
-    selectedPaddleCore = "Collector's Core",
+    selectedPaddleCore = "Size Core",
     upgradePriceMultScaling = 10,
     dead = false,
     lastHitTime = 0,
@@ -104,18 +104,6 @@ Player = {
     queuedUpgrades = {},    
     permanentUpgrades = {}, -- Store permanent upgrades
     permanentUpgradePrices = {
-        speed = 100,
-        damage = 100,
-        ballDamage = 100,
-        bulletDamage = 100,
-        cooldown = 100,
-        fireRate = 100,
-        ammo = 100,
-        range = 100,
-        amount = 100,
-        --paddleSize = 100,
-        paddleSpeed = 100,
-        health = 500,
     },
     bonuses = { -- These bonuses are percentages
     },
@@ -125,8 +113,9 @@ Player = {
     newStatLevelRequirement = 10,
     xpForNextLevel = 25,
     xp = 0,
+    xpGainMult = 1,
     levelThreshold = 50, -- XP needed for each level
-    paddleCores = {["Collector's Core"] = true},  -- Stores unlockedpaddle cores
+    paddleCores = {["Size Core"] = true},  -- Stores unlockedpaddle cores
 }
 
 function Player.initialize() 
@@ -142,14 +131,14 @@ function saveGameData()
     local hasBasicCore = false
     if Player.paddleCores then
         for core, _ in pairs(Player.paddleCores) do
-            if core == "Collector's Core" then
+            if core == "Size Core" then
                 hasBasicCore = true
                 break
             end
         end
     end
     if not hasBasicCore then
-        Player.paddleCores["Collector's Core"] = true  -- Ensure Basic Core is always present
+        Player.paddleCores["Size Core"] = true  -- Ensure Basic Core is always present
     end
 
 
@@ -158,7 +147,7 @@ function saveGameData()
         fastestTime = Player.fastestTime,
         gold = Player.gold,
         startingMoney = Player.startingMoney,
-        permanentUpgrades = {
+        --[[permanentUpgrades = {
             -- paddleSize = Player.permanentUpgrades.paddleSize or 0,
             -- paddleSpeed = Player.permanentUpgrades.paddleSpeed or 0,
             -- Keep other upgrades...
@@ -170,9 +159,9 @@ function saveGameData()
             range = Player.permanentUpgrades.range or 0,
             amount = Player.permanentUpgrades.amount or 0,
             health = Player.permanentUpgrades.health or 0,
-        },
-        paddleCores = Player.paddleCores or {["Collector's Core"] = true},  -- Change this line
-        permanentUpgradePrices = Player.permanentUpgradePrices,
+        },]]
+        paddleCores = Player.paddleCores or {["Size Core"] = true},  -- Change this line
+        -- permanentUpgradePrices = Player.permanentUpgradePrices,
         startingItems = Player.startingItems or {"Ball"},
         settings = {
             musicVolume = musicVolume,
@@ -193,7 +182,7 @@ function Player.loadJsonValues()
     Player.gold = gameData.gold or 0
     Player.highScore = gameData.highScore or 0
     Player.fastestTime = gameData.fastestTime or 10000
-    Player.permanentUpgrades = gameData.permanentUpgrades or {}
+    -- Player.permanentUpgrades = gameData.permanentUpgrades or {}
     -- Apply paddle upgrades after loading
     if paddle then
         Player.bonusUpgrades.paddleSpeed()
@@ -278,57 +267,41 @@ Player.upgradePaddle = {
 }
 
 Player.availableCores = {
-    { -- deprecated
-        name = "Collector's Core",
-        description = "You can have up to 5 items instead of 4.\n -1 to every stat",
-        price = 0
-    },
-    --[[{
+    {
         name = "Size Core",
-        description = "gain 10% paddle size per level",
+        description = "gain 8% paddle size per level",
         price = 0,
         startingItem = "ball",
     },
     {
-        name = "Spray and Pray Core",
-        description = "gain +1 fireRate for every 5 Player level",
+        name = "Spray aNd Pray Core",
+        description = "gain +1 fireRate for every 5 Player level.",
         price = 250,
         startingItem = "Machine Gun"
     },
     {
         name = "Fast Study Core",
-        description = "gain +2% experience gain per Player Level",
+        description = "gain +3% experience gain per Player Level",
         price = 500,
         startingItem = "Shadow Ball"
     },
     {
         name = "Hacker Core",
-        description = "Weapons start with an upgradePrice of 0",
+        description = "All Weapons start with an upgradePrice of 0",
         price = 750,
         startingItem = "Laser Beam"
     },
-    {
-        name = "Capitalist core",
-        description = "instead of gaining normal interest, you gain $ equal to the Player's level when you level up (max 15)",
-        price = 1000,
-        startingItem = "Rocket Launcher"
-    },]]
     {
         name = "Farm Core",
         description = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown).\nIt takes 100% more xp for you to level up",
         price = 1000,
     },
-    {
-        name = "Speed Core",
-        description = "Start at lvl 4 with 50$, 1 random common weapon and 1 random uncommon weapon",
-        price = 2000
-    },
-    {
+    --[[{
         name = "Economy Core",
-        description = "Always gain 15$ on level up, you cannot gain money from items",
+        description = "gain 10$ instead of 6$ on level up. There are no items that give money in the shop",
         price = 1500,
     },
-    --[[{
+    {
         name = "Madness Core",
         description = "Damage is divided by 2. Cooldown is halved. Every other stat is doubled.",
         price = 5000,
@@ -336,10 +309,11 @@ Player.availableCores = {
 }
 
 Player.coreDescriptions = {
-    -- ["Size Core"] = "gain 10% paddle size per level",
-    ["Speed Core"] = "Start at lvl 5 with 20$, 1 random common weapon and 1 random uncommon weapon",
-    ["Economy Core"] = "Always gain 12$ on level up, you cannot gain money from items",
-    ["Collector's Core"] = "You can have up to 5 items instead of 4.\n There are only 2 items in the itemShop",
+    ["Size Core"] = "gain 8% paddle size per level",
+    ["Spray and Pray Core"] = "gain +1 fireRate for every 5 Player level",
+    ["Fast Study Core"] = "gain +3% experience gain per Player Level",
+    ["Hacker Core"] = "All Weapons start with an upgradePrice of 0",
+    ["Economy Core"] = "gain 10$ instead of 6$ on level up. There are no items that give money in the shop",
     ["Farm Core"] = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown)\nIt takes 100% more xp for you to level up and bricks grow in health 100% faster",
     --["Madness Core"] = "Damage and cooldown are reduced by 50%.\nevery other stat is doubled. bricks go twice as fast\n(can break the game)."
 }
@@ -438,9 +412,12 @@ function Player.levelUp()
         if hasItem("Birthday Hat") then
             FarmCoreUpgrade() -- Trigger a second time if the player has the Birthday Hat
         end
-    elseif Player.currentCore == "Picky Core" then
-        -- Every reroll costs 2$ instead of 1$
-        Player.rerolls = 0
+    elseif Player.currentCore == "Size Core" then
+        paddle.width = paddle.width + 24
+    elseif Player.currentCore == "Fast Study Core" then
+        Player.xpGainMult = Player.xpGainMult + 0.03
+    elseif Player.level % 5 == 0 and Player.currentCore == "Spray and Pray Core" then
+        Player.permanentUpgrades.fireRate = (Player.permanentUpgrades.fireRate or 0) + 1
     end
     if (not usingMoneySystem) then
         Player.levelingUp = true
@@ -470,7 +447,7 @@ end
 local lastPopupTime = 0
 local cumulatedXp = 0
 function Player.gain(amount)
-    
+    amount = amount * Player.xpGainMult
     Player.score = Player.score + amount
     Player.xp = Player.xp + amount -- XP follows score
     moneyBagValues.gainXp(amount, moneyBagValues)

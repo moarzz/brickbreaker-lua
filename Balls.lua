@@ -347,7 +347,7 @@ local function brickDestroyed(brick)
         createPowerup(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth, type)
     end
 
-    if math.random(1,3000) <= currentMoneyDropChance then
+    if math.random(1,2000) <= currentMoneyDropChance then
         createPowerup(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth, "dollarBill")
         currentMoneyDropChance = 0
     else
@@ -2119,9 +2119,13 @@ function Balls.initialize()
     Player.choosingUpgrade = false
     Player.upgradePriceMultScaling = 2
     Player.xpForNextLevel = 15
+    if Player.currentCore == "Fast Study Core" then
+        Player.xpGainMult = 1.03
+    else
+        Player.xpGainMult = 1
+    end
     Player.setMoney(0);
-    -- Player.money = 0
-    
+    Player.permanentUpgrades = {}
     inGame = true
     deathTimerOver = false
     deathTweenValues = {speed = 1, overlayOpacity = 0}
@@ -2245,6 +2249,9 @@ function Balls.addBall(ballName, singleBall)
             upgradePrice = 8
         else
             upgradePrice = 3
+        end
+        if Player.currentCore == "Hacker Core" then
+            upgradePrice = 0
         end
         if isNewBall then
             local newBallType = {
@@ -3285,11 +3292,14 @@ function powerupPickup(powerup)
     end
     print("powerup type : " .. powerup.type)
     if powerup.type == "dollarBill" then
-        local moneyGain = math.random(1,3)            
+        local moneyGain = math.random(1,4)
+        if moneyGain > 2 then
+            moneyGain = 1
+        end          
         Player.shiftMoneyValue(moneyGain);
         createMoneyPopup(moneyGain, paddle.x + paddle.width/2, paddle.y)
     elseif powerup.type == "moneyBag" then
-        local moneyGain = math.random(1,5)
+        local moneyGain = math.random(2,5)
         Player.shiftMoneyValue(moneyGain);
         createMoneyPopup(moneyGain, paddle.x + paddle.width/2, paddle.y)
     elseif powerup.type == "nuke" then
