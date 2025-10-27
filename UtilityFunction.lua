@@ -1136,6 +1136,10 @@ function drawMoneyPopups()
     for i = #plusStatPopups, 1, -1 do
         local popup = plusStatPopups[i]
         setFont(math.max(math.ceil(popup.scale), 1))
+        love.graphics.print(popup.text, popup.x - getTextSize(popup.text)/2 + 1, popup.y + 1)
+        love.graphics.print(popup.text, popup.x - getTextSize(popup.text)/2 - 1, popup.y + 1)
+        love.graphics.print(popup.text, popup.x - getTextSize(popup.text)/2 + 1, popup.y - 1)
+        love.graphics.print(popup.text, popup.x - getTextSize(popup.text)/2 - 1, popup.y - 1)
         love.graphics.setColor(14/255, 202/255, 92/255, 1)
         love.graphics.print(popup.text, popup.x - getTextSize(popup.text)/2, popup.y)
     end
