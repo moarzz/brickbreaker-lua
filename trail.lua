@@ -1,6 +1,8 @@
 local Trail = {};
 Trail.__index = Trail;
 
+Trail.shader = love.graphics.newShader("trail", "Shaders/trail.frag");
+
 function Trail.new(trailRadius, trailLen)
     local instance = setmetatable({}, Trail);
 
@@ -13,8 +15,8 @@ function Trail.new(trailRadius, trailLen)
 
     instance.trailRadius = trailRadius; -- radius of the trail
 
-    instance.verticeCount = 20; -- number of 1d vertices (mesh uses 2 2d vertices per 1d vertex)
-    instance.mesh = love.graphics.newMesh(instance.verticeCount * 2 + 3, "strip", "stream");
+    instance.verticeCount = 60; -- number of 1d vertices (mesh uses 2 2d vertices per 1d vertex)
+    instance.mesh = love.graphics.newMesh(instance.verticeCount * 2 + 1, "strip");
 
     return instance;
 end
@@ -28,9 +30,11 @@ function Trail:addPosition(x, y, dt)
 
     while self.curLen > self.trailLen do
         self.curLen = self.curLen - table.remove(self.prevDTs, #self.prevDTs);
-        table.remove(self.prevXCoords, #self.prevXCoords);
-        table.remove(self.prevYCoords, #self.prevYCoords);
+        table.remove(self.prevXCoords, 1);--#self.prevXCoords);
+        table.remove(self.prevYCoords, 1);--#self.prevYCoords);
     end
+
+    self:formMesh();
 end
 
 function Trail:formMesh()
@@ -42,9 +46,9 @@ function Trail:formMesh()
 
     local prevInd = 0;
     local prevTime = 0;
-    for i = 0, self.verticeCount do
+    for i = 1, self.verticeCount do
         local perun = i / self.verticeCount;
-        local time = perun * self.curTime;
+        local time = perun * self.curLen;
 
         while prevTime < time do
             prevInd = prevInd + 1;
@@ -87,6 +91,7 @@ function Trail:formMesh()
             y + xn * curRadius; -- y
             0; -- texture coord x
             perun; -- texture coord y
+            1,1,1,1; -- colour
         };
 
         local rightVertex = {
@@ -94,6 +99,7 @@ function Trail:formMesh()
             y - xn * curRadius; -- y
             1; -- texture coord x
             perun; -- texture coord y
+            1,1,1,1; -- colour
         };
 
         table.insert(vertices, leftVertex);
@@ -105,11 +111,22 @@ function Trail:formMesh()
         self.prevYCoords[#self.prevYCoords - 1] + (self.prevYCoords[#self.prevYCoords] - self.prevYCoords[#self.prevYCoords - 1]) * 2; -- y
         0.5; -- texture coord x
         1; -- texture coord y
+        1,1,1,1; -- colour
     };
 
     table.insert(vertices, tipVertex);
+    -- print(#vertices);
 
     self.mesh:setVertices(vertices);
+end
+
+function Trail:draw()
+    love.graphics.setColor(1,1,1); -- white
+    love.graphics.setShader(self.shader);
+
+    love.graphics.draw(self.mesh);
+
+    love.graphics.setShader();
 end
 
 return Trail;
