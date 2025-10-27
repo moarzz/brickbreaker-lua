@@ -240,7 +240,7 @@ function permanentUpgrades.draw()
         local x = padding + col * (cellWidth + padding)
         local y = y + row * 200  -- Space for price, value and icon        -- Render price
         local price
-        if (Player.permanentUpgrades[upgradeName] or 0) < 1 and (not (upgradeName == "cooldown" and (Player.permanentUpgrades[upgradeName] or 0) <= -1)) then
+        --[[if (Player.permanentUpgrades[upgradeName] or 0) < 1 and (not (upgradeName == "cooldown" and (Player.permanentUpgrades[upgradeName] or 0) <= -1)) then
             setFont(45)
             price = Player.permanentUpgradePrices[upgradeName] or 100  -- Default price if not set
             local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(price))/2
@@ -263,7 +263,7 @@ function permanentUpgrades.draw()
         if iconsImg[upgradeName] then
             local iconX = x + cellWidth/2 - iconsImg[upgradeName]:getWidth()*1.75/2 * 32/500
             love.graphics.draw(iconsImg[upgradeName], iconX, y + 125, 0, 1.75 * 32/500, 1.75 * 32/500)
-        end
+        end]]
 
         -- Add invisible button for upgrading (now using dress)
         local buttonID = generateNextButtonID()

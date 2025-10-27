@@ -8,6 +8,7 @@ HugePaddle.imageReference = "assets/sprites/UI/ItemIcons/Huge-Paddle.png";
 function HugePaddle.new()
     local instance = setmetatable({}, HugePaddle):init();
 
+    instance.stats.amount = 1;
     instance.descriptionPointers = {
         paddleWidth = hasItem("Four Leafed Clover") and 100 or 50;
     };

@@ -46,7 +46,7 @@ function love.run()
 			addd = addd + dt;
 
             if dt >= targetDT * 2 then
-                print("lag");
+                -- print("lag");
             end
 
             dt = dt % targetDT; -- if lag lasts multiple frames then just eat the lag
