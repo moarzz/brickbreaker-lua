@@ -2217,13 +2217,13 @@ function Balls.addBall(ballName, singleBall)
         print("isNewBall: " .. tostring(isNewBall))
         local upgradePrice
         if ballTemplate.rarity == "common" then
-            upgradePrice = 3
+            upgradePrice = 2
         elseif ballTemplate.rarity == "uncommon" then
-            upgradePrice = 5
+            upgradePrice = 4
         elseif ballTemplate.rarity == "rare" then
-            upgradePrice = 7
+            upgradePrice = 6
         elseif ballTemplate.rarity == "legendary" then
-            upgradePrice = 9
+            upgradePrice = 8
         else
             upgradePrice = 3
         end
