@@ -1282,7 +1282,7 @@ local function drawItemShop()
 
             local upgradePrice = item.rarity == "common" and 10 or item.rarity == "uncommon" and 15 or item.rarity == "rare" and 20 or item.rarity == "legendary" and 25 or 0
             if item.consumable then
-                upgradePrice = math.floor(upgradePrice / 2)
+                upgradePrice = item.rarity == "common" and 4 or item.rarity == "uncommon" and 8 or item.rarity == "rare" and 10 or item.rarity == "legendary" and 12 or 0
             end
             if hasItem("Elon's Shmuck") then
                 upgradePrice = 2
