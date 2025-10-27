@@ -24,6 +24,7 @@ function loadGameData()
             musicVolume = 1,
             sfxVolume = 1,
             fullscreen = true,
+            damageNumbersOn = true
         }
     }
     if love.filesystem.getInfo(saveFilePath) then
@@ -57,6 +58,7 @@ function loadGameData()
     musicVolume = data.settings.musicVolume
     sfxVolume = data.settings.sfxVolume
     fullScreenCheckbox = data.settings.fullscreen
+    damageNumbersOn = data.settings.damageNumbersOn
 
     -- Sync unlockedStartingBalls with startingItems for compatibility with UI
     Player.unlockedStartingBalls = {}
@@ -176,6 +178,7 @@ function saveGameData()
             musicVolume = musicVolume,
             sfxVolume = sfxVolume,
             fullscreen = fullScreenCheckbox,
+            damageNumbersOn = damageNumbersOn
         }
     }
     local encoded = json.encode(data, { indent = true })

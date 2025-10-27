@@ -558,7 +558,7 @@ local function generateRow(brickCount, yPos)
                     if canHeal then
                         Timer.after(1.75 + math.random(1,175)/100, function() healSelf(healBrick) end)
                     end
-                elseif math.random(1, 100) < 20 and (totalGoldBricksGeneratedThisRun < math.floor((gameTime+20)/70)) then
+                elseif math.random(1, 100) < 20 and (totalGoldBricksGeneratedThisRun < math.floor((gameTime + 25)/120)) then
                     totalGoldBricksGeneratedThisRun = totalGoldBricksGeneratedThisRun + 1
                     local goldBrick = {
                         type = "gold",
@@ -1878,8 +1878,15 @@ function drawSettingsMenu()
         love.window.setFullscreen(fullScreenCheckbox);
     end
 
+    local prevDamageNumbersOn = damageNumbersOn;
+    local dmgNumCheckboxInfo = {checked = damageNumbersOn};
+    suit.Label("Damage Numbers", {align = "left"}, sliderX, sliderY + sliderSpacing * 2 + 80, 50000, 40);
+    sliderY = sliderY + sliderSpacing
+    local damageNumbersTickBox = suit.Checkbox(dmgNumCheckboxInfo, {id = "damage_numbers_checkbox"}, sliderX, sliderY + sliderSpacing * 2 + 40, 40, 40);
+    damageNumbersOn = dmgNumCheckboxInfo.checked;
+
     -- Back button
-    local backBtn = suit.Button("Back", {id="settings_back"}, sliderX, sliderY + sliderSpacing * 3 + 20, sliderWidth, buttonHeight)
+    local backBtn = suit.Button("Back", {id="settings_back"}, sliderX, sliderY + sliderSpacing * 5 + 20, sliderWidth, buttonHeight)
     if backBtn.hit then
         saveGameData()
         playSoundEffect(selectSFX, 1, 0.8)
