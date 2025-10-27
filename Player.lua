@@ -310,7 +310,7 @@ Player.availableCores = {
 
 Player.coreDescriptions = {
     ["Size Core"] = "gain 8% paddle size per level",
-    ["Spray and Pray Core"] = "gain +1 fireRate for every 5 Player level",
+    ["Spray aNd Pray Core"] = "gain +1 fireRate for every 5 Player level",
     ["Fast Study Core"] = "gain +3% experience gain per Player Level",
     ["Hacker Core"] = "All Weapons start with an upgradePrice of 0",
     ["Economy Core"] = "gain 10$ instead of 6$ on level up. There are no items that give money in the shop",
