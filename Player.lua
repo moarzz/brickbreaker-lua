@@ -126,6 +126,8 @@ end
 
 -- Save game data to file        
 function saveGameData()
+
+    -- code to check if the player has the basic core, game would break otherwise (just for first time open and safety)
     local hasBasicCore = false
     if Player.paddleCores then
         for core, _ in pairs(Player.paddleCores) do
@@ -138,6 +140,8 @@ function saveGameData()
     if not hasBasicCore then
         Player.paddleCores["Collector's Core"] = true  -- Ensure Basic Core is always present
     end
+
+
     local data = {
         highScore = Player.highScore,
         fastestTime = Player.fastestTime,

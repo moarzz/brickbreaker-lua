@@ -233,6 +233,9 @@ function totalUpgrade()
 end
 
 local powerups = {}
+-- Powerup trail ring-buffer settings (prevents per-frame allocations and table shifting)
+local POWERUP_TRAIL_MAX = 5         -- max stored trail points per powerup
+local POWERUP_TRAIL_SPACING = 0.08  -- seconds between new trail points
 local powerupColors = {
     freeze = {},
     moneyBag = {},
@@ -257,10 +260,17 @@ local function createPowerup(x, y, amount, type)
         speedY = -150,
         gravity = 400,
         lifetime = 10,
-        trail = {},
+        trail = {}, -- preallocated below
         creationTime = gameTime,
-        timeSinceLastTrailPoint = 0
+        -- ring-buffer metadata
+        _trailHead = 1,
+        _trailCount = 0,
+        _lastTrailTime = 0,
     }
+    -- pre-allocate small point tables to avoid per-frame allocations
+    for i = 1, POWERUP_TRAIL_MAX do
+        powerup.trail[i] = { x = 0, y = 0, alpha = 0 }
+    end
     table.insert(powerups, powerup)
 end
 
@@ -337,7 +347,7 @@ local function brickDestroyed(brick)
         createPowerup(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth, type)
     end
 
-    if math.random(1,800) >= currentMoneyDropChance then
+    if math.random(1,1500) <= currentMoneyDropChance then
         createPowerup(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth, "dollarBill")
         currentMoneyDropChance = 0
     else
@@ -3847,19 +3857,29 @@ function Balls.update(dt, paddle, bricks)
             table.remove(powerups, i)
         end
 
-        -- trail logic
-        orb.timeSinceLastTrailPoint = orb.timeSinceLastTrailPoint or 0
-        if gameTime - orb.timeSinceLastTrailPoint > 0.05 then -- Add trail points less frequently
-            table.insert(orb.trail, 1, {x = orb.x, y = orb.y, alpha = 1}) -- Add new trail point
-            orb.timeSinceLastTrailPoint = gameTime
+        -- trail logic (ring-buffer to avoid allocations and table shifting)
+        orb._lastTrailTime = orb._lastTrailTime or 0
+        if gameTime - orb._lastTrailTime >= POWERUP_TRAIL_SPACING then -- Add trail points at controlled spacing
+            orb._lastTrailTime = gameTime
+            -- compute insertion index (newest)
+            local insertIndex = ((orb._trailHead + orb._trailCount - 1) % POWERUP_TRAIL_MAX) + 1
+            if orb._trailCount == POWERUP_TRAIL_MAX then
+                -- buffer full: advance head (overwrite oldest)
+                orb._trailHead = (orb._trailHead % POWERUP_TRAIL_MAX) + 1
+            else
+                orb._trailCount = orb._trailCount + 1
+            end
+            local pt = orb.trail[insertIndex]
+            pt.x = orb.x
+            pt.y = orb.y
+            pt.alpha = 1
         end
-        if #orb.trail > 5 then -- Reduce trail length
-            table.remove(orb.trail)
-        end
-        for j = #orb.trail, 1, -1 do
-            orb.trail[j].alpha = orb.trail[j].alpha - dt * 3 -- Fade out faster
-            if orb.trail[j].alpha <= 0 then
-                table.remove(orb.trail, j)
+        -- fade all points (no removals)
+        for k = 1, POWERUP_TRAIL_MAX do
+            local pt = orb.trail[k]
+            if pt and pt.alpha and pt.alpha > 0 then
+                pt.alpha = pt.alpha - dt * 3
+                if pt.alpha < 0 then pt.alpha = 0 end
             end
         end
     end
@@ -4222,23 +4242,28 @@ function Balls:draw()
 
         -- draw powerups
         for _, powerup in ipairs(powerups) do
-            if #powerup.trail > 1 then
-                -- draw trail
-                for i = 1, #powerup.trail do
-                    local p = powerup.trail[i]
-                    local t = (#powerup.trail > 1) and ((i - 1) / (#powerup.trail - 1)) or 0
-                    local alpha = (p.alpha or 1) * (1 - t) * 0.9 + 0.05
-                    local radius = powerup.radius * (0.6 * (1 - t) + 0.15)
-
-                    love.graphics.setColor(90/255, 150/255, 0.75, alpha)
-                    love.graphics.circle("fill", p.x, p.y, radius)
+            -- draw trail from oldest -> newest using ring buffer
+            local head = powerup._trailHead or 1
+            local count = powerup._trailCount or 0
+            if count > 0 then
+                local startRadius = powerup.radius * 0.6
+                local minRadius = math.max(1, startRadius * 0.15)
+                for k = 0, count - 1 do
+                    local idx = ((head + k - 1) % POWERUP_TRAIL_MAX) + 1
+                    local p = powerup.trail[idx]
+                    if p and p.alpha and p.alpha > 0 then
+                        local t = (count > 1) and (k / (count - 1)) or 1
+                        local alpha = p.alpha * (0.9 * t + 0.1)
+                        local radius = minRadius + (startRadius - minRadius) * t
+                        love.graphics.setColor(90/255, 150/255, 0.75, alpha)
+                        love.graphics.circle("fill", p.x, p.y, radius)
+                    end
                 end
-
-                -- draw powerup image
-                love.graphics.setColor(1,1,1,1)
-                drawImageCentered(powerupImgs[powerup.type], powerup.x, powerup.y, 70 * 0.8, 62* 0.8, powerup.angle)
-                
             end
+
+            -- draw powerup image (always)
+            love.graphics.setColor(1,1,1,1)
+            drawImageCentered(powerupImgs[powerup.type], powerup.x, powerup.y, 70 * 0.8, 62* 0.8, powerup.angle)
         end
     end
 end
