@@ -109,6 +109,7 @@ local function bossDestroyed()
     victoryAchieved = true
     bossSpawned = false
     currentGameState = GameState.VICTORY
+    love.mouse.setVisible(true)
     -- Award gold and save data (same as game over)
     local goldEarned = 500 + Player.level * math.ceil(Player.level / 5) * 5 
     goldEarnedFrl = goldEarned

@@ -1,7 +1,9 @@
+local lily = require('lily')
+
 local Textures = {}
 
 local textures = {
-    ['no_texture'] = love.graphics.newImage('textures_1/no_texture.png')
+    ['no_texture'] = love.graphics.newImage('assets/sprites/no_texture.png')
 }
 
 textures['no_texture']:setFilter('nearest', 'nearest')
@@ -12,10 +14,10 @@ function Textures.getTexture(name, nearestNeighbor, urgent)
             return textures[name]
         end
 
-        if love.filesystem.getInfo('textures_1/' .. name .. '.png') then
-            textures[name] = love.graphics.newImage('textures_1/' .. name .. '.png')
+        if love.filesystem.getInfo(name .. '.png') then
+            textures[name] = love.graphics.newImage(name .. '.png')
         else
-            textures[name] = love.graphics.newImage('textures_2/' .. name .. '.png')
+            textures[name] = love.graphics.newImage(name .. '.png')
         end
 
         if nearestNeighbor then
@@ -33,7 +35,7 @@ function Textures.getTexture(name, nearestNeighbor, urgent)
         return textures[name], false
     end
 
-    if love.filesystem.getInfo('textures_1/' .. name .. '.png') then
+    if love.filesystem.getInfo(name .. '.png') then
         textures[name] = 'l'
         local completed = function(userdata, image)
             textures[name] = image
@@ -43,9 +45,9 @@ function Textures.getTexture(name, nearestNeighbor, urgent)
             end
         end
 
-        lily.newImage('textures_1/' .. name .. '.png'):onComplete(completed)
+        lily.newImage(name .. '.png'):onComplete(completed)
 
-        --textures[name] = love.graphics.newImage('textures_1/' .. name .. '.png')
+        --textures[name] = love.graphics.newImage(name .. '.png')
     else
         textures[name] = 'l'
         local completed = function(userdata, image)
@@ -56,8 +58,8 @@ function Textures.getTexture(name, nearestNeighbor, urgent)
             end
         end
 
-        lily.newImage('textures_2/' .. name .. '.png'):onComplete(completed)
-        --textures[name] = love.graphics.newImage('textures_2/' .. name .. '.png')
+        lily.newImage(name .. '.png'):onComplete(completed)
+        --textures[name] = love.graphics.newImage(name .. '.png')
     end
 
     return textures['no_texture'], true
@@ -79,10 +81,10 @@ function Textures.loadTextures(...)
 
     for i, v in ipairs(args) do
         if not textures[v] then
-            if love.filesystem.getInfo('textures_1/' .. v .. '.png') then
-                textures[v] = love.graphics.newImage('textures_1/' .. v .. '.png')
+            if love.filesystem.getInfo(v .. '.png') then
+                textures[v] = love.graphics.newImage(v .. '.png')
             else
-                textures[v] = love.graphics.newImage('textures_2/' .. v .. '.png')
+                textures[v] = love.graphics.newImage(v .. '.png')
             end
         end
     end

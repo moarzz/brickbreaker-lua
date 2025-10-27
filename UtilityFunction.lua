@@ -138,6 +138,7 @@ function GameOverDraw()
     if dress:Button("Shop", {id = generateNextButtonID()}, startX, buttonY, buttonWidth, buttonHeight).hit then
         changeMusic("menu")
         currentGameState = GameState.UPGRADES
+        love.mouse.setVisible(true)
         Player.reset()
     end
 
@@ -145,6 +146,7 @@ function GameOverDraw()
     if dress:Button("Main Menu", {id = generateNextButtonID()}, startX + buttonWidth + buttonSpacing, buttonY + 75, buttonWidth, buttonHeight).hit then
         changeMusic("menu")
         currentGameState = GameState.MENU
+        love.mouse.setVisible(true)
         Player.reset()
     end    
     
@@ -153,6 +155,7 @@ function GameOverDraw()
         changeMusic("menu")
         resetGame()
         currentGameState = GameState.START_SELECT
+        love.mouse.setVisible(true)
     end
 
     -- Reset the color to white

@@ -1,3 +1,5 @@
+local Textures = require("textures")
+
 local Crooky = {}
 
 local TALK_SPEED = 24
@@ -23,8 +25,8 @@ function Crooky:load()
     Textures.getTexture('crooky/body_back', true)
     Textures.getTexture('crooky/body_front', true)
 
-    self.x = 666
-    self.y = 450
+    self.x = 1550
+    self.y = 300
 
     self.movement = 'idle'
 
@@ -39,7 +41,7 @@ function Crooky:load()
     self.nextText = 'oh my good look im so cool'
     self.nextNextText = ''
 
-    self.textObj = love.graphics.newText(W95Font_16)
+    self.textObj = love.graphics.newText(love.graphics.newFont(16))
     self.talkAnim = 0
     self.talking = true
 
@@ -271,7 +273,7 @@ function Crooky:load()
                 end
             }
         },
-        ['clicker'] = {
+        --[[['clicker'] = {
             ['open'] = {
                 uses = 1,
                 callFunc = function(mailButton)
@@ -354,7 +356,7 @@ function Crooky:load()
                 end,
                 animateFunc = nil
             }
-        }
+        }]]x
     }
 
     self.toAnimate = function() end

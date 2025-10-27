@@ -372,6 +372,7 @@ function Player.levelUp()
 
     Player.InterestGain()
     setMusicEffect("paused")
+    love.mouse.setVisible(true)
     resetRerollPrice()
     Player.level = Player.level + 1
     if (Player.level) % 4 == 0 and tableLength(Balls.getUnlockedBallTypes()) < 6 then
