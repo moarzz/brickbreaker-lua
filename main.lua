@@ -798,11 +798,10 @@ function love.load()
         end
     })
 
-    local data = loadGameData()
-    Player.permanentUpgrades = data.permanentUpgrades
-    Player.permanentUpgradePrices = data.permanentUpgradePrices
-    Player.gold = data.gold
-    Player.startingMoney = data.startingMoney
+    loadGameData()
+
+    backgroundMusic:setVolume(musicVolume/4)
+    love.window.setFullscreen(fullScreenCheckbox);
 end
 
 function getHighestBrickY(lowestInstead)
@@ -1882,6 +1881,7 @@ function drawSettingsMenu()
     -- Back button
     local backBtn = suit.Button("Back", {id="settings_back"}, sliderX, sliderY + sliderSpacing * 3 + 20, sliderWidth, buttonHeight)
     if backBtn.hit then
+        saveGameData()
         playSoundEffect(selectSFX, 1, 0.8)
         if inGame then
             currentGameState = GameState.PAUSED
@@ -2202,6 +2202,15 @@ function love.keypressed(key)
             end
             playSoundEffect(selectSFX, 1, 0.8)
             currentGameState = GameState.PLAYING
+            return
+        elseif currentGameState == GameState.SETTINGS then
+            saveGameData()
+            playSoundEffect(selectSFX, 1, 0.8)
+            if inGame then
+                currentGameState = GameState.PAUSED
+            else
+                currentGameState = GameState.MENU
+            end
             return
         elseif currentGameState == GameState.START_SELECT or currentGameState == GameState.UPGRADES then
             playSoundEffect(selectSFX, 1, 0.8)

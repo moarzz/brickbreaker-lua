@@ -20,6 +20,11 @@ function loadGameData()
             -- ... other default prices
         },
         startingItems = {"Ball", "Nothing"},
+        settings = {
+            musicVolume = 1,
+            sfxVolume = 1,
+            fullscreen = true,
+        }
     }
     if love.filesystem.getInfo(saveFilePath) then
         local contents = love.filesystem.read(saveFilePath)
@@ -34,6 +39,7 @@ function loadGameData()
                 data.permanentUpgradePrices = fileData.permanentUpgradePrices or data.permanentUpgradePrices
                 data.startingItems = fileData.startingItems or data.startingItems
                 data.fastestTime = fileData.fastestTime or 100000000000
+                data.settings = fileData.settings or data.settings
             end
         end
     else
@@ -48,6 +54,9 @@ function loadGameData()
     Player.permanentUpgradePrices = data.permanentUpgradePrices
     Player.startingItems = data.startingItems
     Player.paddleCores = data.paddleCores
+    musicVolume = data.settings.musicVolume
+    sfxVolume = data.settings.sfxVolume
+    fullScreenCheckbox = data.settings.fullscreen
 
     -- Sync unlockedStartingBalls with startingItems for compatibility with UI
     Player.unlockedStartingBalls = {}
@@ -163,6 +172,11 @@ function saveGameData()
         paddleCores = Player.paddleCores or {["Collector's Core"] = true},  -- Change this line
         permanentUpgradePrices = Player.permanentUpgradePrices,
         startingItems = Player.startingItems or {"Ball"},
+        settings = {
+            musicVolume = musicVolume,
+            sfxVolume = sfxVolume,
+            fullscreen = fullScreenCheckbox,
+        }
     }
     local encoded = json.encode(data, { indent = true })
     love.filesystem.write(saveFilePath, encoded)
