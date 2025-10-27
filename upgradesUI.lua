@@ -267,18 +267,6 @@ local function drawPlayerStats()
 
     local definition = suit.layout:cols(statsLayout) -- Create a column layout for the stats
 
-    -- render money
-    local x, y, w, h = definition.cell(2)
-    local fontSize = 80 * visualMoneyValues.scale
-    setFont(fontSize)
-    love.graphics.setColor(1,1,1,1)
-    x,y = statsWidth/2 - getTextSize(formatNumber(Player.getMoney()))/2 - 100, 175 - love.graphics.getFont():getHeight()/2 -- Adjust position for better alignment
-    love.graphics.setColor(0,0,0,1)
-    love.graphics.print(formatNumber(Player.getMoney()) .. "$",x + 104, y +5, math.rad(1.5))
-    local moneyColor = {14/255, 202/255, 92/255,1}
-    love.graphics.setColor(moneyColor)
-    love.graphics.print(formatNumber(Player.getMoney()) .. "$",x + 100, y + 1, math.rad(1.5))
-
     setFont(80)
     x,y = statsWidth/2 - getTextSize(formatNumber(Player.getMoney()))/2 - 100, 175 - love.graphics.getFont():getHeight()/2
 
@@ -1496,10 +1484,29 @@ local function drawPlayerItems()
     end
 end
 
+playerMoneyBoost = {alpha = 0}
+local function drawPlayerMoney()
+    -- render money
+    local opacity = 1
+    if not (Player.levelingUp and not Player.choosingUpgrade) then
+        opacity = playerMoneyBoost.alpha
+    end
+    local x, y, w, h = 965, 930, 210, 30
+    local fontSize = 80 * visualMoneyValues.scale
+    setFont(fontSize)
+    x,y = statsWidth/2 - getTextSize(formatNumber(Player.getMoney()))/2 - 100, 175 - love.graphics.getFont():getHeight()/2 -- Adjust position for better alignment
+    love.graphics.setColor(0,0,0,opacity)
+    love.graphics.print(formatNumber(Player.getMoney()) .. "$",x + 104, y +5, math.rad(1.5))
+    local moneyColor = {14/255, 202/255, 92/255,opacity}
+    love.graphics.setColor(moneyColor)
+    love.graphics.print(formatNumber(Player.getMoney()) .. "$",x + 100, y + 1, math.rad(1.5))
+end
+
 function upgradesUI.draw()
 
     
     drawPlayerStats() -- Draw the player stats table
+    drawPlayerMoney()
     --[[
     drawPlayerUpgrades() -- Draw the player upgrades table
     ]]
