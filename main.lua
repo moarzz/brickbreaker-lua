@@ -60,7 +60,7 @@ love.mouse.setVisible(true)
 -- Add settings variables
 musicVolume = 1
 sfxVolume = 1
-fullScreenCheckbox = love.window.getFullscreen();
+fullScreenCheckbox = love.window.getFullscreen()
 
 -- Add this variable to store the player's choice
 local startingChoice = nil
@@ -1313,23 +1313,22 @@ function drawMenu()
     end]]
 
     -- Settings button
-    buttonID = generateNextButtonID()
-    if suit.Button("Settings", {id=buttonID}, centerX, startY + (buttonHeight + buttonSpacing), buttonWidth, buttonHeight).hit then
+    if suit.Button("Settings", {id="menu settings buttons"}, centerX, startY + (buttonHeight + buttonSpacing), buttonWidth, buttonHeight).hit then
         playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.SETTINGS
         love.mouse.setVisible(true)
     end
 
     -- Upgrades button
-    buttonID = generateNextButtonID()
-    if suit.Button("Shop", {id=buttonID}, centerX, startY + (buttonHeight + buttonSpacing) * 2, buttonWidth, buttonHeight).hit then
+    if suit.Button("Shop", {id="menu shop button"}, centerX, startY + (buttonHeight + buttonSpacing) * 2, buttonWidth, buttonHeight).hit then
         playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.UPGRADES
         love.mouse.setVisible(true)
         loadGameData() -- Load game data when entering upgrades screen
     end
 
-    if suit.Button("Wishlist on steam!", {id=buttonID, align = "center", valign = "top"}, centerX, startY + (buttonHeight + buttonSpacing) * 3.25, buttonWidth, buttonHeight * 1.5).hit then
+    -- Wishlist button
+    if suit.Button("Wishlist on steam!", {id="wishlist button", align = "center", valign = "top"}, centerX, startY + (buttonHeight + buttonSpacing) * 3.25, buttonWidth, buttonHeight * 1.5).hit then
         playSoundEffect(selectSFX, 1, 0.8)
         openBrowser("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
     end

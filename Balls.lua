@@ -102,6 +102,7 @@ end
 
 local function bossDestroyed()
     inGame = false
+    firstRunCompleted = true
     print("Boss destroyed! Triggering victory.")
     for _, b in ipairs(bricks) do
         b.destroyed = true

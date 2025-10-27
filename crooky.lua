@@ -295,9 +295,15 @@ function Crooky:load()
             }
         },
         ["run"] = {
-            ["start"] = {},
-            ["firstLevelUp"] = {},
-            ["death"] = {},
+            ["start"] = {
+
+            },
+            ["firstLevelUp"] = {
+
+            },
+            ["death"] = {
+                
+            },
         }
     }
 

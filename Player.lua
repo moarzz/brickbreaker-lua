@@ -144,6 +144,7 @@ function saveGameData()
 
     local data = {
         highScore = Player.highScore,
+        firstRunCompleted = firstRunCompleted or false,
         fastestTime = Player.fastestTime,
         gold = Player.gold,
         startingMoney = Player.startingMoney,
@@ -177,8 +178,9 @@ end
 -- This file contains the player class, it manages his level, his abilities and his stats
 local gameData = loadGameData()
 function Player.loadJsonValues()
+    firstRunCompleted = gameData.firstRunCompleted or false
     Player.startingMoney = gameData.startingMoney or 0
-    Player.hiddenMoney = gameData.startingMoney or 0;
+    Player.hiddenMoney = gameData.startingMoney or 0
     Player.gold = gameData.gold or 0
     Player.highScore = gameData.highScore or 0
     Player.fastestTime = gameData.fastestTime or 10000
@@ -476,6 +478,7 @@ end
 newHighScore = false
 function Player.die()
     Player.levelingUp = false
+    firstRunCompleted = true
     Player.choosingUpgrade = false
     setMusicEffect("dead")
     inGame = false
