@@ -22,6 +22,18 @@ function addLists(list1, list2)
     return result
 end
 
+function openBrowser(url)
+    local opener
+    if package.config:sub(1,1) == "\\" then
+        -- Windows
+        opener = string.format('start "" "%s"', url)
+    else
+        -- macOS or Linux
+        opener = string.format('xdg-open "%s" 2>/dev/null || open "%s"', url)
+    end
+    os.execute(opener)
+end
+
 function restartGame()
     -- Reset Player
     -- Player.money = 0

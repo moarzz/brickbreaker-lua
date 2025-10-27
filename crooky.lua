@@ -1,4 +1,5 @@
-local Textures = require("textures")
+
+W95_CursorIndicator = require("crooky/w95_cursorindicator")
 
 local Crooky = {}
 
@@ -258,105 +259,46 @@ function Crooky:load()
                 uses = 1,
                 callFunc = function()
                     Crooky:setAnimation('idle')
-                    Crooky:setSpeechBubble('Welcome!!', 1.5)
+                    Crooky:setSpeechBubble('WAKE UP SOLDIER!', 1.5)
                 end,
                 animateFunc = function(time)
                     if Crooky.text == '' then
-                        if time >= 5.6 then
-                            Crooky:setSpeechBubble('To get started with destroying innocent lives you just have to open your "clicker" app.', 1)
-                            Crooky:placeClickIcon(33, 4 * (30 + 18 + 20) + 18 + 25, 'left', 'double')
-                            return true
+                        if time >= 16 then
+                            Crooky:setSpeechBubble("Are you fo' real?", 15, "Ohh okay so you just wanna lay around all day huh?", 25)
                         else
-                            Crooky:setSpeechBubble("I'm Crooky, your personal home computer and felony commiting assistant!", 1.2)
+                            Crooky:setSpeechBubble("We've got some bricks to destroy...", 5, "COME ON!", 1, "Press the play button and let's get down to business!", 10)
                         end
                     end
                 end
+            },
+            ["startSelect"] = {
+                uses = 1,
+                callFunc = function(startButton)
+                    Crooky:setAnimation('idle')
+                    Crooky:setSpeechBubble("This is where we keep all your equipment, but the bricks have intercepted our supply lines...", 2, "Only thing we have now is this lousy ball. But it can still be a deadly weapon in the right hands", 15, "COWARD! Stop wasting time and GO DIE FOR THE PADDLES YOU HOLD DEAR", 30)
+                    -- Crooky:addClickIcon(W95_CursorIndicator.newConnectedCursorIndicator(startButton, 960, 512, 'up', 0, 'normal'))
+                end,
+                animateFunct = function(time) 
+                    if time >= 2 then
+                        
+                    end
+                end,
             }
         },
-        --[[['clicker'] = {
-            ['open'] = {
+        ["clickIcon"] = {
+            ["startSelect"] = {
                 uses = 1,
-                callFunc = function(mailButton)
-                    Crooky:setAnimation('idle')
-                    Crooky:setSpeechBubble('Click on the big mail button to send emails to people.\nPeople can respond with an application.', 1.5)
-                    Crooky:addClickIcon(W95_CursorIndicator.newConnectedCursorIndicator(mailButton, nil, nil, 'up', 0, 'faster'))
-                end,
-                animateFunc = nil
-            },
-            ['applicant'] = {
-                uses = 1,
-                callFunc = function(filingCabinet)
-                    Crooky:setAnimation('idle')
-                    Crooky:setSpeechBubble("Oooh, you've gotten a reply.\nHover over the filing cabinet to view all of your applicants.", 2)
-                    Crooky:addClickIcon(W95_CursorIndicator.newConnectedCursorIndicator(filingCabinet, nil, nil, 'down', 0, 'normal'))
-                end,
-                animateFunc = nil
-            },
-            ['cabinet hover'] = {
-                neededName = 'clicker',
-                neededInfo = 'applicant',
-                neededUses = 0,
-                uses = 1,
-                callFunc = function()
-                    Crooky:setAnimation('idle')
-                    Crooky:setSpeechBubble('Now drag and drop the application onto the check mark to accept it.\rIf you drop it onto the X it will delete it.', 2.5)
-                end,
-                animateFunc = nil
-            },
-            ['accept'] = {
-                uses = 1,
-                callFunc = function(window)
-                    Crooky:setAnimation('idle')
-                    Crooky:setSpeechBubble("Congrats!! you've just gotten your first follower.\nNow to see them make you money, close the window.", 1.5)
-                    Crooky:addClickIcon(W95_CursorIndicator.newConnectedCursorIndicator(window.closeButton, nil, nil, 'down', 0, 'normal'))
-                end,
-                animateFunc = nil
-            },
-            ['close'] = {
-                uses = 1,
-                callFunc = function()
-                    Crooky:setAnimation('idle')
-                    Crooky:setSpeechBubble('Now just open up your "tracker" app.', 1.5)
-                    Crooky:placeClickIcon(33, 3 * (30 + 18 + 20) + 18 + 25, 'left', 'double')
+                callFunc = function(startButton)
+                    Crooky:addClickIcon(W95_CursorIndicator.newConnectedCursorIndicator(startButton, 960, 512, 'up', 0, 'normal'))
                 end,
                 animateFunc = nil
             }
         },
-        ['tracker'] = {
-            ['open'] = {
-                uses = 1,
-                callFunc = function()
-                    Crooky:setAnimation('idle')
-                    Crooky:setSpeechBubble("Great! Every time the red bar fills up, your follower will make another 'investement' and put some sweet sweet cash in your pocket.", 3.2)
-                end,
-                animateFunc = nil
-            },
-            ['follower finish'] = {
-                uses = 1,
-                callFunc = function(poachButton)
-                    Crooky:setAnimation('idle')
-                    Crooky:setSpeechBubble("Oh no! Your follower has stopped giving you money, it looks like they're done investing.\nClick the 'Poach' button to stop responding to them, this will ensure you keep your money but can sometimes piss them off.", 4.1)
-                    Crooky:addClickIcon(W95_CursorIndicator.newConnectedCursorIndicator(poachButton, nil, nil, 'up', 0, 'normal'))
-                end,
-                animateFunc = nil
-            },
-            ['poach'] = {
-                uses = 1,
-                callFunc = function()
-                    Crooky:setAnimation('idle')
-                    Crooky:setSpeechBubble("Great! now you got another slot for more followers; you can go back to the click app and accept more applicants.\nBe careful poaching followers though, do too many and they will report you to the police.", 3.6)
-                end,
-                animateFunc = nil
-            },
-            ['follower reported'] = {
-                uses = 1,
-                callFunc = function()
-                    Crooky:setAnimation('idle')
-                    Crooky:setSpeechBubble("It looks like one of your followers caught on to what you were doing and reported you, don't worry though, the worst that can happen is the police investigate you; find that you're commiting a heinous felony, and imprison you for the rest of your life.\nSo no biggie", 3.7)
-                end,
-                animateFunc = nil
-            }
-        }]]x
+        ["run"] = {
+            ["start"] = {},
+            ["firstLevelUp"] = {},
+            ["death"] = {},
+        }
     }
 
     self.toAnimate = function() end

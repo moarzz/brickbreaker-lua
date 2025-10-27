@@ -2125,11 +2125,7 @@ function Balls.initialize()
     Player.choosingUpgrade = false
     Player.upgradePriceMultScaling = 2
     Player.xpForNextLevel = 15
-    if Player.currentCore == "Fast Study Core" then
-        Player.xpGainMult = 1.03
-    else
-        Player.xpGainMult = 1
-    end
+    Player.xpGainMult = 1
     Player.setMoney(0);
     Player.permanentUpgrades = {}
     inGame = true

@@ -9,6 +9,9 @@ Events = require("Libraries.eventQueue.events")
 
 require("limitFPS"); -- limit the fps
 
+Textures = require("textures") -- for CROOKYYYYY
+Crooky = require("crooky") -- tax evasion goat
+
 UtilityFunction = require("UtilityFunction") -- utility functions
 Player = require("Player") -- player logic
 Balls = require("Balls") -- ball logic
@@ -26,7 +29,6 @@ VFX = require("VFX") -- VFX library
 local KeySys = require("KeywordSystem") -- Keyword system for text parsing
 local Explosion = require("particleSystems.explosion") -- Explosion particle system
 BackgroundShader = require("backgroundShader");
-Crooky = require("crooky") -- Crooky character logic
 
 usingMoneySystem = false
 usingNormalXpSystem = true
@@ -1291,19 +1293,28 @@ function drawMenu()
         playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.START_SELECT -- Go to selection screen
         love.mouse.setVisible(true)
+        Crooky:giveInfo("game", "startSelect")
+        --[[GlobalTimer:after(2, function()
+            if currentGameState == GameState.START_SELECT then
+                for i=1, 60 do
+                    print("cacacaca")
+                end
+                Crooky:giveInfo("clickIcon", "startSelect")
+            end
+        end)]]
     end
 
-    -- Tutorial button
+    --[[ Tutorial button
     buttonID = generateNextButtonID()
     if suit.Button("Tutorial", {id=buttonID}, centerX, startY + buttonHeight + buttonSpacing, buttonWidth, buttonHeight).hit then
         playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.TUTORIAL
         love.mouse.setVisible(false)
-    end
+    end]]
 
     -- Settings button
     buttonID = generateNextButtonID()
-    if suit.Button("Settings", {id=buttonID}, centerX, startY + (buttonHeight + buttonSpacing) * 2, buttonWidth, buttonHeight).hit then
+    if suit.Button("Settings", {id=buttonID}, centerX, startY + (buttonHeight + buttonSpacing), buttonWidth, buttonHeight).hit then
         playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.SETTINGS
         love.mouse.setVisible(true)
@@ -1311,11 +1322,16 @@ function drawMenu()
 
     -- Upgrades button
     buttonID = generateNextButtonID()
-    if suit.Button("Shop", {id=buttonID}, centerX, startY + (buttonHeight + buttonSpacing) * 3, buttonWidth, buttonHeight).hit then
+    if suit.Button("Shop", {id=buttonID}, centerX, startY + (buttonHeight + buttonSpacing) * 2, buttonWidth, buttonHeight).hit then
         playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.UPGRADES
         love.mouse.setVisible(true)
         loadGameData() -- Load game data when entering upgrades screen
+    end
+
+    if suit.Button("Wishlist on steam!", {id=buttonID, align = "center", valign = "top"}, centerX, startY + (buttonHeight + buttonSpacing) * 3.25, buttonWidth, buttonHeight * 1.5).hit then
+        playSoundEffect(selectSFX, 1, 0.8)
+        openBrowser("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
     end
 
     -- draw highscore
@@ -1477,6 +1493,9 @@ local function drawStartSelect()
         if item.name ~= "Nothing" and Player.currentCore ~= "Speed Core" then
             Balls.addBall(item.name)
         end
+
+        -- crooky logic
+
     end
 end
 
@@ -1959,6 +1978,8 @@ local function fullDraw()
         else
             love.graphics.print(levelText, 15, screenHeight - 28)
         end
+
+        -- Crooky:draw() 
     end
 
     if currentGameState == GameState.PAUSED then
@@ -1994,6 +2015,7 @@ local function fullDraw()
             love.mouse.setVisible(true)
         end
         suit.draw()
+        Crooky:draw()
         return
     end
 
@@ -2016,6 +2038,8 @@ local function fullDraw()
             currentGameState = GameState.START_SELECT
             love.mouse.setVisible(true)
         end
+
+        Crooky:draw()
         return
     end
 
@@ -2160,9 +2184,7 @@ local function fullDraw()
     -- draw borders for when the game is in windowed mode
     love.graphics.setColor(0, 0, 0, 0.7)
     love.graphics.rectangle("fill", -1000, -1000, 1000, 4000)
-    love.graphics.rectangle("fill", screenWidth, -1000, 1000, 4000)
-
-    Crooky:draw()   
+    love.graphics.rectangle("fill", screenWidth, -1000, 1000, 4000) 
     
     WindowCorrector.startDrawingToCanvas(gameCanvas);
     --love.graphics.setCanvas(gameCanvas)
@@ -2223,6 +2245,7 @@ function love.keypressed(key)
             changeMusic("intense")
         end
         setMusicEffect("normal")
+        love.mouse.setVisible(false)
     end
 
     if key == "escape" then

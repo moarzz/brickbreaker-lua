@@ -281,7 +281,7 @@ Player.availableCores = {
     },
     {
         name = "Fast Study Core",
-        description = "gain +3% experience gain per Player Level",
+        description = "gain +4% experience gain per Player Level",
         price = 500,
         startingItem = "Shadow Ball"
     },
@@ -311,7 +311,7 @@ Player.availableCores = {
 Player.coreDescriptions = {
     ["Size Core"] = "gain 8% paddle size per level",
     ["Spray aNd Pray Core"] = "gain +1 fireRate for every 5 Player level",
-    ["Fast Study Core"] = "gain +3% experience gain per Player Level",
+    ["Fast Study Core"] = "gain +4% experience gain per Player Level",
     ["Hacker Core"] = "All Weapons start with an upgradePrice of 0",
     ["Economy Core"] = "gain 10$ instead of 6$ on level up. There are no items that give money in the shop",
     ["Farm Core"] = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown)\nIt takes 100% more xp for you to level up and bricks grow in health 100% faster",
@@ -416,7 +416,7 @@ function Player.levelUp()
     elseif Player.currentCore == "Size Core" then
         paddle.width = paddle.width + 24
     elseif Player.currentCore == "Fast Study Core" then
-        Player.xpGainMult = Player.xpGainMult + 0.03
+        Player.xpGainMult = Player.xpGainMult + 0.04
     elseif Player.level % 5 == 0 and Player.currentCore == "Spray and Pray Core" then
         Player.permanentUpgrades.fireRate = (Player.permanentUpgrades.fireRate or 0) + 1
     end
