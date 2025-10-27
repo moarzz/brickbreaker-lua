@@ -10,6 +10,7 @@ JackOfAllTrades.descriptionOverwrite = true; -- does smthn ig
 function JackOfAllTrades.new()
     local instance = setmetatable({}, JackOfAllTrades):init();
 
+    instance.stats.damage    = 2;
     instance.stats.speed    = 2;
     instance.stats.cooldown =-2;
     instance.stats.amount   = 2;

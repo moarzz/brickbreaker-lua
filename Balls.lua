@@ -411,14 +411,18 @@ function dealDamage(ball, brick, burnDamage)
         
         if brick.health >= 1 then
             brick.hitLastFrame = true
-        elseif not hasItem("Phantom Bullets") then
+        else
             kill = true
             brickKilledThisFrame = true
             brick.destroyed = true
             
             if ball.type == "bullet" then
-                ball.stats.damage = ball.stats.damage - damage
-                if ball.stats.damage <= 0 then
+                if isPhantomBullet then
+                    ball.stats.damage = ball.stats.damage - 2  -- Fixed -2 damage per hit for Phantom Bullets
+                    if ball.stats.damage <= 0 then
+                        kill = false
+                    end
+                elseif not ball.golden then
                     kill = false
                 end
             end
@@ -443,11 +447,12 @@ function dealDamage(ball, brick, burnDamage)
     
     damage = damage + getStatItemsBonus("damage", ball) + (Player.permanentUpgrades.damage or 0)
     
+    local isPhantomBullet = ball.type == "bullet" and hasItem("Phantom Bullets")
     if ball.type == "bullet" then
         damage = ball.stats.damage
-    end
-    if hasItem("Phantom Bullets") and ball.type == "bullet" then
-        damage = math.max(math.ceil(damage / 2), 1)
+        if isPhantomBullet then
+            damage = math.max(math.ceil(damage / 2), 1)
+        end
     end
     
     if (Player.currentCore == "Brickbreaker Core" or hasItem("Brickbreaker")) and brick.type ~= "boss" then
@@ -507,7 +512,7 @@ function dealDamage(ball, brick, burnDamage)
         brickKilledThisFrame = true
         brick.destroyed = true
         
-        if ball.type == "bullet" then
+        if ball.type == "bullet" and not ball.golden then
             if (not (ball.name == "Golden Gun" or ball.golden or Player.currentCore == "Phantom Core")) then
                 ball.stats.damage = ball.stats.damage - damage
                 if ball.stats.damage <= 0 then
@@ -3284,15 +3289,16 @@ end
 
 function powerupPickup(powerup)
     playSoundEffect(lvlUpSFX, 0.55, 1, false)   
-    powerupPopup.type = powerup.type
-    powerupPopup.startTime = gameTime
+    
     if powerup.type ~= "nuke" and powerup.type ~= "moneyBag" and powerup.type ~= "dollarBill" then
+        powerupPopup.type = powerup.type
+        powerupPopup.startTime = gameTime
         local inTween = tween.new(0.15, powerupPopup, {scale = 1}, tween.easing.outCirc)
         addTweenToUpdate(inTween)
     end
     print("powerup type : " .. powerup.type)
     if powerup.type == "dollarBill" then
-        local moneyGain = math.random(1,4)
+        local moneyGain = math.random(1,5)
         if moneyGain > 2 then
             moneyGain = 1
         end          
@@ -3305,7 +3311,7 @@ function powerupPickup(powerup)
     elseif powerup.type == "nuke" then
         for _, brick in ipairs(bricks) do
             if (brick.health > 0) and (brick.y + brick.height > 0) then
-                dealDamage({stats = {damage = math.ceil(Player.level)}}, brick) -- Deal damage to all bricks
+                dealDamage({stats = {damage = math.ceil(Player.level * 0.7)}}, brick) -- Deal damage to all bricks
             end
         end
     elseif powerup.type == "freeze" then
@@ -3734,6 +3740,7 @@ function Balls.update(dt, paddle, bricks)
                             break -- Exit brick loop once we know bullet should be removed
                         end
                         hitBrick = true
+                        break
                     end
                 end
                 ::next_brick::
@@ -3748,7 +3755,7 @@ function Balls.update(dt, paddle, bricks)
                 goto continue
             end
             
-            if hitBrick and not bullet.golden then
+            if hitBrick then
                 goto continue  -- Skip to next bullet if we hit a brick (unless golden)
             end
         end
