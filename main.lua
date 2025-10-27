@@ -279,7 +279,8 @@ local function loadAssets()
         doubleSpeed = love.graphics.newImage("assets/sprites/powerups/doubleSpeed.png"),
         doubleFireRate = love.graphics.newImage("assets/sprites/powerups/doubleFireRate.png"),
         doubleDamage = love.graphics.newImage("assets/sprites/powerups/doubleDamage.png"),
-        acceleration = love.graphics.newImage("assets/sprites/powerups/acceleration.png")
+        acceleration = love.graphics.newImage("assets/sprites/powerups/acceleration.png"),
+        dollarBill = love.graphics.newImage("assets/sprites/dollarBill.png"),
     }
 
     -- load sounds

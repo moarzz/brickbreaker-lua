@@ -249,6 +249,7 @@ local function createPowerup(x, y, amount, type)
         x = x,
         y = y,
         type = type,
+        angle = 0,
         bounceAmount = 3,
         amount = amount,
         radius = amount <= 20 and mapRangeClamped(amount, 1, 20, 4, 6) or (amount <= 125 and mapRangeClamped(amount, 20, 125, 6, 8) or mapRangeClamped(amount, 125, 500, 8, 10)),
@@ -275,6 +276,7 @@ local function getRandomPowerupType()
 end
 
 brickPieces = {}
+local currentMoneyDropChance = 0
 local function brickDestroyed(brick)
     Player.bricksDestroyed = (Player.bricksDestroyed or 0) + 1
     local chance = hasItem("Four Leafed Clover") and 40 or 20
@@ -333,6 +335,13 @@ local function brickDestroyed(brick)
     if brick.type == "gold" then
         local type = getRandomPowerupType()
         createPowerup(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth, type)
+    end
+
+    if math.random(1,800) >= currentMoneyDropChance then
+        createPowerup(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth, "dollarBill")
+        currentMoneyDropChance = 0
+    else
+        currentMoneyDropChance = currentMoneyDropChance + 1
     end
 end
 
@@ -3260,12 +3269,16 @@ function powerupPickup(powerup)
     playSoundEffect(lvlUpSFX, 0.55, 1, false)   
     powerupPopup.type = powerup.type
     powerupPopup.startTime = gameTime
-    if powerup.type ~= "nuke" and powerup.type ~= "moneyBag" then
+    if powerup.type ~= "nuke" and powerup.type ~= "moneyBag" and powerup.type ~= "dollarBill" then
         local inTween = tween.new(0.15, powerupPopup, {scale = 1}, tween.easing.outCirc)
         addTweenToUpdate(inTween)
     end
     print("powerup type : " .. powerup.type)
-    if powerup.type == "moneyBag" then
+    if powerup.type == "dollarBill" then
+        local moneyGain = math.random(1,3)            
+        Player.shiftMoneyValue(moneyGain);
+        createMoneyPopup(moneyGain, paddle.x + paddle.width/2, paddle.y)
+    elseif powerup.type == "moneyBag" then
         local moneyGain = math.random(1,5)
         Player.shiftMoneyValue(moneyGain);
         createMoneyPopup(moneyGain, paddle.x + paddle.width/2, paddle.y)
@@ -3801,8 +3814,11 @@ function Balls.update(dt, paddle, bricks)
                 table.remove(powerups, i)
             end
         end
+        orb.speedY = orb.speedY + 300 * dt -- gravity effect
 
-        -- attraction to paddle
+        orb.angle = (orb.angle or 0) + dt * 1
+
+        --[[ attraction to paddle
         local closestX = math.max(paddle.x, math.min(orb.x, paddle.x + paddle.width))
         local closestY = math.max(paddle.y, math.min(orb.y, paddle.y + paddle.height))
         
@@ -3814,8 +3830,16 @@ function Balls.update(dt, paddle, bricks)
         local attractionStrength = mapRangeClamped(distanceToPaddle, 50, 500, 10000, 500)
         local angle = math.atan2(dy, dx)
         orb.speedX = orb.speedX - math.cos(angle) * attractionStrength * dt
-        orb.speedY = orb.speedY - math.sin(angle) * attractionStrength * dt
-        if distanceToPaddle < 2 then
+        orb.speedY = orb.speedY - math.sin(angle) * attractionStrength * dt]]
+
+        local closestX = math.max(paddle.x, math.min(orb.x, paddle.x + paddle.width))
+        local closestY = math.max(paddle.y, math.min(orb.y, paddle.y + paddle.height))
+        
+        local dx = orb.x - closestX
+        local dy = orb.y - closestY
+        
+        local distanceToPaddle = math.sqrt(dx * dx + dy * dy)
+        if distanceToPaddle < 5 then
             -- xp orb pickup
             
             powerupPickup(orb)
@@ -4212,7 +4236,7 @@ function Balls:draw()
 
                 -- draw powerup image
                 love.graphics.setColor(1,1,1,1)
-                drawImageCentered(powerupImgs[powerup.type], powerup.x, powerup.y, 70, 62)
+                drawImageCentered(powerupImgs[powerup.type], powerup.x, powerup.y, 70 * 0.8, 62* 0.8, powerup.angle)
                 
             end
         end
