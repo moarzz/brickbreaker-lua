@@ -105,8 +105,6 @@ function getStatItemBonusNoDouble(statName, weapon)
     return totalBonus
 end
 
-statDoubled = nil
-accelerationOn = false
 function getStatItemsBonus(statName, weapon)
     if statDoubled ~= nil then
         print("current stat doubled : " .. statDoubled)
@@ -153,25 +151,6 @@ function getStatItemsBonus(statName, weapon)
         end
     end
 
-    --[[ logic for doubling powerups. Kind of bootleg that its here, should be in getStat but its too late to go back now
-    if statDoubled == statName or ((statName == "fireRate" or statName == "speed") and accelerationOn) then
-        if weapon then
-            -- Get the base weapon stat value
-            local weaponStatValue = 0
-
-            weaponStatValue = weapon.stats[statName]
-
-            if statName == "speed" then
-                weaponStatValue = weaponStatValue / 50
-            end
-            
-            -- Get permanent upgrades
-            local permanentBonus = Player.permanentUpgrades[statName] or 0
-            
-            -- Current total WITH item bonuses: weaponStatValue + permanentBonus + totalBonus
-            totalBonus = totalBonus + weaponStatValue + permanentBonus
-        end
-    end]]
     return totalBonus
 end
 

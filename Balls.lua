@@ -2146,6 +2146,8 @@ function Balls.clear()
     darts = {}
 end
 
+statDoubled = nil
+accelerationOn = false
 function getStat(ballTypeName, statName)
     if unlockedBallTypes[ballTypeName] then
         local baseValue = unlockedBallTypes[ballTypeName].stats[statName] or 0
@@ -2157,6 +2159,11 @@ function getStat(ballTypeName, statName)
             totalValue = baseValue + bonusValue * 50
         else
             totalValue = baseValue + bonusValue
+        end
+        if statDoubled == statName then
+            totalValue = totalValue * 2
+        elseif accelerationOn and (statName == "fireRate" or statName == "speed") then
+            totalValue = totalValue * 2
         end
         return totalValue
     else return 0 end
