@@ -9,6 +9,9 @@ Events = require("Libraries.eventQueue.events")
 
 require("limitFPS"); -- limit the fps
 
+Textures = require("textures") -- for CROOKYYYYY
+Crooky = require("crooky") -- tax evasion goat
+
 UtilityFunction = require("UtilityFunction") -- utility functions
 Player = require("Player") -- player logic
 Balls = require("Balls") -- ball logic
@@ -52,11 +55,12 @@ GameState = {
     GAMEOVER = "gameover",
 }
 currentGameState = GameState.MENU
+love.mouse.setVisible(true)
 
 -- Add settings variables
 musicVolume = 1
 sfxVolume = 1
-fullScreenCheckbox = love.window.getFullscreen();
+fullScreenCheckbox = love.window.getFullscreen()
 
 -- Add this variable to store the player's choice
 local startingChoice = nil
@@ -134,6 +138,7 @@ function resetGame()
     
     -- Reset game state
     currentGameState = GameState.MENU
+    love.mouse.setVisible(true)
     
     -- Reset game timers
     gameStartTime = love.timer.getTime()
@@ -279,7 +284,8 @@ local function loadAssets()
         doubleSpeed = love.graphics.newImage("assets/sprites/powerups/doubleSpeed.png"),
         doubleFireRate = love.graphics.newImage("assets/sprites/powerups/doubleFireRate.png"),
         doubleDamage = love.graphics.newImage("assets/sprites/powerups/doubleDamage.png"),
-        acceleration = love.graphics.newImage("assets/sprites/powerups/acceleration.png")
+        acceleration = love.graphics.newImage("assets/sprites/powerups/acceleration.png"),
+        dollarBill = love.graphics.newImage("assets/sprites/dollarBill.png"),
     }
 
     -- load sounds
@@ -320,6 +326,7 @@ local function loadAssets()
 
     Player.loadJsonValues()
     damageRipples.load()
+    Crooky:load()
 end
 
 dmgVFXOn = true
@@ -557,7 +564,7 @@ local function generateRow(brickCount, yPos)
                     if canHeal then
                         Timer.after(1.75 + math.random(1,175)/100, function() healSelf(healBrick) end)
                     end
-                elseif math.random(1, 100) < 20 and (totalGoldBricksGeneratedThisRun < math.floor((gameTime+20)/70)) then
+                elseif math.random(1, 100) < 0 and (totalGoldBricksGeneratedThisRun < math.floor((gameTime + 25)/120)) then
                     totalGoldBricksGeneratedThisRun = totalGoldBricksGeneratedThisRun + 1
                     local goldBrick = {
                         type = "gold",
@@ -797,11 +804,12 @@ function love.load()
         end
     })
 
-    local data = loadGameData()
-    Player.permanentUpgrades = data.permanentUpgrades
-    Player.permanentUpgradePrices = data.permanentUpgradePrices
-    Player.gold = data.gold
-    Player.startingMoney = data.startingMoney
+    loadGameData()
+
+    backgroundMusic:setVolume(musicVolume/4)
+    love.window.setFullscreen(fullScreenCheckbox);
+
+    Crooky:giveInfo("game", "open")
 end
 
 function getHighestBrickY(lowestInstead)
@@ -1051,6 +1059,8 @@ local function gameFixedUpdate(dt)
         print("Draw calls: " .. stats.drawcallsbatched, 10, 10)
     end
 
+    Crooky:update(dt) -- Update Crooky character
+
     -- Update confetti system
     if confettiSystem then
         confettiSystem:update(dt)
@@ -1068,6 +1078,7 @@ local function gameFixedUpdate(dt)
     end
     
     if currentGameState == GameState.PLAYING then
+        
         KeywordSystem:update() -- Update the keyword system
 
         if currentScreenShakeIntensity > 0 then
@@ -1281,28 +1292,45 @@ function drawMenu()
     if suit.Button("Play", {id=buttonID}, centerX, startY, buttonWidth, buttonHeight).hit then
         playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.START_SELECT -- Go to selection screen
+        love.mouse.setVisible(true)
+        Crooky:giveInfo("game", "startSelect")
+        --[[GlobalTimer:after(2, function()
+            if currentGameState == GameState.START_SELECT then
+                for i=1, 60 do
+                    print("cacacaca")
+                end
+                Crooky:giveInfo("clickIcon", "startSelect")
+            end
+        end)]]
     end
 
-    -- Tutorial button
+    --[[ Tutorial button
     buttonID = generateNextButtonID()
     if suit.Button("Tutorial", {id=buttonID}, centerX, startY + buttonHeight + buttonSpacing, buttonWidth, buttonHeight).hit then
         playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.TUTORIAL
-    end
+        love.mouse.setVisible(false)
+    end]]
 
     -- Settings button
-    buttonID = generateNextButtonID()
-    if suit.Button("Settings", {id=buttonID}, centerX, startY + (buttonHeight + buttonSpacing) * 2, buttonWidth, buttonHeight).hit then
+    if suit.Button("Settings", {id="menu settings buttons"}, centerX, startY + (buttonHeight + buttonSpacing), buttonWidth, buttonHeight).hit then
         playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.SETTINGS
+        love.mouse.setVisible(true)
     end
 
     -- Upgrades button
-    buttonID = generateNextButtonID()
-    if suit.Button("Shop", {id=buttonID}, centerX, startY + (buttonHeight + buttonSpacing) * 3, buttonWidth, buttonHeight).hit then
+    if suit.Button("Shop", {id="menu shop button"}, centerX, startY + (buttonHeight + buttonSpacing) * 2, buttonWidth, buttonHeight).hit then
         playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.UPGRADES
+        love.mouse.setVisible(true)
         loadGameData() -- Load game data when entering upgrades screen
+    end
+
+    -- Wishlist button
+    if suit.Button("Wishlist on steam!", {id="wishlist button", align = "center", valign = "top"}, centerX, startY + (buttonHeight + buttonSpacing) * 3.25, buttonWidth, buttonHeight * 1.5).hit then
+        playSoundEffect(selectSFX, 1, 0.8)
+        openBrowser("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
     end
 
     -- draw highscore
@@ -1458,11 +1486,15 @@ local function drawStartSelect()
         Player.currentCore = currentSelectedCore -- Set the selected paddle core
         resetGame()
         currentGameState = GameState.PLAYING
+        love.mouse.setVisible(false)
         -- initializeGameState()
         Player.bricksDestroyed = 0 -- Reset bricks destroyed count
         if item.name ~= "Nothing" and Player.currentCore ~= "Speed Core" then
             Balls.addBall(item.name)
         end
+
+        -- crooky logic
+
     end
 end
 
@@ -1725,6 +1757,7 @@ function drawPauseMenu()
         end
         playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.PLAYING
+        love.mouse.setVisible(false)
     end
     btnY = btnY + buttonHeight + 30
     -- Settings button (does nothing for now)
@@ -1732,6 +1765,7 @@ function drawPauseMenu()
     if settingsBtn.hit then
         playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.SETTINGS
+        love.mouse.setVisible(true)
     end
     btnY = btnY + buttonHeight + 30
     -- Restart button (same as play again)
@@ -1743,6 +1777,7 @@ function drawPauseMenu()
         saveGameData()
         resetGame()
         currentGameState = GameState.START_SELECT
+        love.mouse.setVisible(true)
         setMusicEffect("normal")
     end
     btnY = btnY + buttonHeight + 30
@@ -1754,6 +1789,7 @@ function drawPauseMenu()
         saveGameData()
         resetGame()
         currentGameState = GameState.MENU
+        love.mouse.setVisible(true)
         setMusicEffect("normal")
     end
     btnY = btnY + buttonHeight + 30
@@ -1798,6 +1834,7 @@ function drawVictoryScreen()
     if suit.Button("Keep Going", {id = "keep_going"}, startX, y, buttonW, buttonH).hit then
         playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.PLAYING  -- Set state back to playing
+        love.mouse.setVisible(false)
     end
 
     -- Main Menu button
@@ -1805,12 +1842,14 @@ function drawVictoryScreen()
         playSoundEffect(selectSFX, 1, 0.8)
         resetGame()
         currentGameState = GameState.MENU
+        love.mouse.setVisible(true)
     end
     -- Upgrades button
     if suit.Button("Shop", {id = "victory_upgrades"}, startX + (buttonW + spacing) * 2, y, buttonW, buttonH).hit then
         playSoundEffect(selectSFX, 1, 0.8)
         resetGame()
         currentGameState = GameState.UPGRADES
+        love.mouse.setVisible(true)
         loadGameData()
     end
 
@@ -1878,14 +1917,24 @@ function drawSettingsMenu()
         love.window.setFullscreen(fullScreenCheckbox);
     end
 
+    local prevDamageNumbersOn = damageNumbersOn;
+    local dmgNumCheckboxInfo = {checked = damageNumbersOn};
+    suit.Label("Damage Numbers", {align = "left"}, sliderX, sliderY + sliderSpacing * 2 + 80, 50000, 40);
+    sliderY = sliderY + sliderSpacing
+    local damageNumbersTickBox = suit.Checkbox(dmgNumCheckboxInfo, {id = "damage_numbers_checkbox"}, sliderX, sliderY + sliderSpacing * 2 + 40, 40, 40);
+    damageNumbersOn = dmgNumCheckboxInfo.checked;
+
     -- Back button
-    local backBtn = suit.Button("Back", {id="settings_back"}, sliderX, sliderY + sliderSpacing * 3 + 20, sliderWidth, buttonHeight)
+    local backBtn = suit.Button("Back", {id="settings_back"}, sliderX, sliderY + sliderSpacing * 5 + 20, sliderWidth, buttonHeight)
     if backBtn.hit then
+        saveGameData()
         playSoundEffect(selectSFX, 1, 0.8)
         if inGame then
             currentGameState = GameState.PAUSED
+            love.mouse.setVisible(true)
         else
             currentGameState = GameState.MENU
+            love.mouse.setVisible(true)
         end
     end
 end
@@ -1928,6 +1977,8 @@ local function fullDraw()
         else
             love.graphics.print(levelText, 15, screenHeight - 28)
         end
+
+        -- Crooky:draw() 
     end
 
     if currentGameState == GameState.PAUSED then
@@ -1945,6 +1996,7 @@ local function fullDraw()
         drawMenu()
         -- Draw SUIT UI elements
         suit.draw()
+        Crooky:draw()
         return
     end
     
@@ -1954,12 +2006,15 @@ local function fullDraw()
         if suit.Button("Back", {color = invisButtonColor}, 20, 20, uiLabelImg:getWidth()*0.8, uiLabelImg:getHeight()*0.8).hit then
             playSoundEffect(selectSFX, 1, 0.8)
             currentGameState = GameState.MENU
+            love.mouse.setVisible(true)
         end
         if suit.Button("Shop", {color = invisButtonColor}, screenWidth - uiLabelImg:getWidth()*0.8 - 20, 20, uiLabelImg:getWidth()*0.8, uiLabelImg:getHeight()*0.8).hit then
             playSoundEffect(selectSFX, 1, 0.8)
             currentGameState = GameState.UPGRADES
+            love.mouse.setVisible(true)
         end
         suit.draw()
+        Crooky:draw()
         return
     end
 
@@ -1975,11 +2030,15 @@ local function fullDraw()
         if suit.Button("Back", {color = invisButtonColor}, 20, 20, uiLabelImg:getWidth()*0.8, uiLabelImg:getHeight()*0.8).hit then
             playSoundEffect(selectSFX, 1, 0.8)
             currentGameState = GameState.MENU
+            love.mouse.setVisible(true)
         end
         if suit.Button("Play", {color = invisButtonColor}, screenWidth - uiLabelImg:getWidth()*0.8 - 20, 20, uiLabelImg:getWidth()*0.8, uiLabelImg:getHeight()*0.8).hit then
             playSoundEffect(selectSFX, 1, 0.8)
             currentGameState = GameState.START_SELECT
+            love.mouse.setVisible(true)
         end
+
+        Crooky:draw()
         return
     end
 
@@ -2124,7 +2183,7 @@ local function fullDraw()
     -- draw borders for when the game is in windowed mode
     love.graphics.setColor(0, 0, 0, 0.7)
     love.graphics.rectangle("fill", -1000, -1000, 1000, 4000)
-    love.graphics.rectangle("fill", screenWidth, -1000, 1000, 4000)
+    love.graphics.rectangle("fill", screenWidth, -1000, 1000, 4000) 
     
     WindowCorrector.startDrawingToCanvas(gameCanvas);
     --love.graphics.setCanvas(gameCanvas)
@@ -2185,6 +2244,7 @@ function love.keypressed(key)
             changeMusic("intense")
         end
         setMusicEffect("normal")
+        love.mouse.setVisible(false)
     end
 
     if key == "escape" then
@@ -2194,17 +2254,32 @@ function love.keypressed(key)
                 setMusicEffect("paused")
             end
             currentGameState = GameState.PAUSED
+            love.mouse.setVisible(true)
             return
         elseif currentGameState == GameState.PAUSED then
             if not (Player.levelingUp or Player.choosingUpgrade) then
+                love.mouse.setVisible(false)
                 setMusicEffect("normal")
             end
             playSoundEffect(selectSFX, 1, 0.8)
             currentGameState = GameState.PLAYING
+            love.mouse.setVisible(true)
+            return
+        elseif currentGameState == GameState.SETTINGS then
+            saveGameData()
+            playSoundEffect(selectSFX, 1, 0.8)
+            if inGame then
+                currentGameState = GameState.PAUSED
+                love.mouse.setVisible(true)
+            else
+                currentGameState = GameState.MENU
+                love.mouse.setVisible(true)
+            end
             return
         elseif currentGameState == GameState.START_SELECT or currentGameState == GameState.UPGRADES then
             playSoundEffect(selectSFX, 1, 0.8)
             currentGameState = GameState.MENU
+            love.mouse.setVisible(true)
             return
         else
             love.event.quit()
@@ -2290,7 +2365,7 @@ function love.keypressed(key)
 
         if key == "5" then
             local powerup = {
-                type = "moneyBag",        
+                type = "acceleration",        
             }
             powerupPickup(powerup)
         end
@@ -2344,6 +2419,7 @@ function love.keypressed(key)
 
         if key == "p" then
             currentGameState = GameState.VICTORY
+            love.mouse.setVisible(true)
         end
 
         -- brickHitVFX

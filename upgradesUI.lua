@@ -209,10 +209,15 @@ local shortStatNames = {
 }
 
 local invisButtonColor = {
-                    normal  = {bg = {0,0,0,0}, fg = {1,1,1}},           -- invisible bg, black fg
-                    hovered = {bg = {0.19,0.6,0.73,0.2}, fg = {1,1,1}}, -- glowing bg, white fg
-                    active  = {bg = {1,0.6,0}, fg = {1,1,1}}          -- faint bg, white fg
-                }
+    normal  = {bg = {0,0,0,0}, fg = {1,1,1}},           -- invisible bg, black fg
+    hovered = {bg = {0.19,0.6,0.73,0.2}, fg = {1,1,1}}, -- glowing bg, white fg
+    active  = {bg = {1,0.6,0}, fg = {1,1,1}}          -- faint bg, white fg
+}
+local totallyInvisButtonColor = {
+    normal = { bg = {0,0,0,0}, fg = {0,0,0,0}},
+    hovered = { bg = {0,0,0,0}, fg = {0,0,0,0}},
+    active = { bg = {0,0,0,0}, fg = {0,0,0,0}}
+}
 
 local buttonWidth, buttonHeight = 25, 25 -- Dimensions for each button
 
@@ -266,18 +271,6 @@ local function drawPlayerStats()
     }
 
     local definition = suit.layout:cols(statsLayout) -- Create a column layout for the stats
-
-    -- render money
-    local x, y, w, h = definition.cell(2)
-    local fontSize = 80 * visualMoneyValues.scale
-    setFont(fontSize)
-    love.graphics.setColor(1,1,1,1)
-    x,y = statsWidth/2 - getTextSize(formatNumber(Player.getMoney()))/2 - 100, 175 - love.graphics.getFont():getHeight()/2 -- Adjust position for better alignment
-    love.graphics.setColor(0,0,0,1)
-    love.graphics.print(formatNumber(Player.getMoney()) .. "$",x + 104, y +5, math.rad(1.5))
-    local moneyColor = {14/255, 202/255, 92/255,1}
-    love.graphics.setColor(moneyColor)
-    love.graphics.print(formatNumber(Player.getMoney()) .. "$",x + 100, y + 1, math.rad(1.5))
 
     setFont(80)
     x,y = statsWidth/2 - getTextSize(formatNumber(Player.getMoney()))/2 - 100, 175 - love.graphics.getFont():getHeight()/2
@@ -678,6 +671,15 @@ local function getRarityWindow(rarity, windowType)
     end
 end
 
+local statColor = {
+    damage = {1,0,0},
+    cooldown = {1, 218/255, 0},
+    ammo = {72/255, 1, 0},
+    fireRate = {0, 1, 149/255},
+    amount = {0, 144/255, 1},
+    range = {95/255, 0.1, 1},
+    speed = {1, 0, 218/255}
+}
 unlockNewWeaponQueued = false
 local currentBallShowHeight = 0
 local function drawBallStats()
@@ -704,7 +706,7 @@ local function drawBallStats()
     ----------------------------
     -- Prepare Ball List Data --
     ----------------------------
-    local i = 0
+    
     local ballsToShow = {}
     for ballName, ballType in pairs(Balls.getUnlockedBallTypes()) do
         ballsToShow[ballName] = ballType
@@ -715,6 +717,7 @@ local function drawBallStats()
     -----------------------
     local startX = 460 -- Starting X position
     local currentX = startX -- Current X position for drawing
+    local i = 0
     
     for ballName, ballType in pairs(ballsToShow) do
         i = i + 1
@@ -970,6 +973,19 @@ local function drawBallStats()
                 end
                 intIndex = intIndex + 1
                 love.graphics.setColor(1,1,1,1)
+
+                -- hover description
+                local hoverButton = suit.Button("", {id = "bruhdmsavklsam" .. i .. ballName .. statName, color = totallyInvisButtonColor}, statsX, labelY, cellWidth - 20, 120)
+                if hoverButton.hovered then
+                    -- local mouseX, mouseY = love.mouse.getPosition()
+                    setFont(35)
+                    dress:Label(statName, {align = "center", color = {normal = {fg = statColor[statName]}}}, statsX - 100, labelY + 100, cellWidth + 180, 150)
+                    dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 98, labelY + 98, cellWidth + 180, 150)
+                    dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 102, labelY + 98, cellWidth + 180, 150)
+                    dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 98, labelY + 102, cellWidth + 180, 150)
+                    dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 102, labelY + 102, cellWidth + 180, 150)
+                    -- drawTextCenteredWithScale(statName, mouseX, mouseY, 1, 300, {1,1,1,1})
+                end
             end
         end
         suit.layout:row(statsWidth, 20) -- Add spacing for the separator
@@ -1282,7 +1298,7 @@ local function drawItemShop()
 
             local upgradePrice = item.rarity == "common" and 10 or item.rarity == "uncommon" and 15 or item.rarity == "rare" and 20 or item.rarity == "legendary" and 25 or 0
             if item.consumable then
-                upgradePrice = math.floor(upgradePrice / 2)
+                upgradePrice = item.rarity == "common" and 4 or item.rarity == "uncommon" and 8 or item.rarity == "rare" and 10 or item.rarity == "legendary" and 12 or 0
             end
             if hasItem("Elon's Shmuck") then
                 upgradePrice = 2
@@ -1496,10 +1512,29 @@ local function drawPlayerItems()
     end
 end
 
+playerMoneyBoost = {alpha = 0}
+local function drawPlayerMoney()
+    -- render money
+    local opacity = 1
+    if not (Player.levelingUp and not Player.choosingUpgrade) then
+        opacity = playerMoneyBoost.alpha
+    end
+    local x, y, w, h = 965, 930, 210, 30
+    local fontSize = 80 * visualMoneyValues.scale
+    setFont(fontSize)
+    x,y = statsWidth/2 - getTextSize(formatNumber(Player.getMoney()))/2 - 100, 175 - love.graphics.getFont():getHeight()/2 -- Adjust position for better alignment
+    love.graphics.setColor(0,0,0,opacity)
+    love.graphics.print(formatNumber(Player.getMoney()) .. "$",x + 104, y +5, math.rad(1.5))
+    local moneyColor = {14/255, 202/255, 92/255,opacity}
+    love.graphics.setColor(moneyColor)
+    love.graphics.print(formatNumber(Player.getMoney()) .. "$",x + 100, y + 1, math.rad(1.5))
+end
+
 function upgradesUI.draw()
 
     
     drawPlayerStats() -- Draw the player stats table
+    drawPlayerMoney()
     --[[
     drawPlayerUpgrades() -- Draw the player upgrades table
     ]]

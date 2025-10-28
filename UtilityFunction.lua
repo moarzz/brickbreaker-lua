@@ -22,6 +22,18 @@ function addLists(list1, list2)
     return result
 end
 
+function openBrowser(url)
+    local opener
+    if package.config:sub(1,1) == "\\" then
+        -- Windows
+        opener = string.format('start "" "%s"', url)
+    else
+        -- macOS or Linux
+        opener = string.format('xdg-open "%s" 2>/dev/null || open "%s"', url)
+    end
+    os.execute(opener)
+end
+
 function restartGame()
     -- Reset Player
     -- Player.money = 0
@@ -138,6 +150,7 @@ function GameOverDraw()
     if dress:Button("Shop", {id = generateNextButtonID()}, startX, buttonY, buttonWidth, buttonHeight).hit then
         changeMusic("menu")
         currentGameState = GameState.UPGRADES
+        love.mouse.setVisible(true)
         Player.reset()
     end
 
@@ -145,6 +158,7 @@ function GameOverDraw()
     if dress:Button("Main Menu", {id = generateNextButtonID()}, startX + buttonWidth + buttonSpacing, buttonY + 75, buttonWidth, buttonHeight).hit then
         changeMusic("menu")
         currentGameState = GameState.MENU
+        love.mouse.setVisible(true)
         Player.reset()
     end    
     
@@ -153,6 +167,7 @@ function GameOverDraw()
         changeMusic("menu")
         resetGame()
         currentGameState = GameState.START_SELECT
+        love.mouse.setVisible(true)
     end
 
     -- Reset the color to white
@@ -162,7 +177,7 @@ end
 local moneyPopups = {}
 local moneyPopupId = 0
 function createMoneyPopup(value, x, y)
-    local xOffset, yOffset = math.random(-80,80), math.random(-50,-130)
+    local xOffset, yOffset = math.random(-70,70), math.random(-60,-80)
     local popup = {
         x = x,
         y = y,
@@ -251,25 +266,31 @@ local pausedUpgradeNumbers = {}
 
 function gainMoneyWithAnimations(moneyGain, itemName)
     
-    EventQueue:addEventToQueue(EVENT_POINTERS.money_gain, 0.25, function() end)
-    -- First event: Show animation and add money
-    if itemName then -- Changed from itemId to itemName check
-        itemTriggerAnimation(itemName)
-    end
-    playSoundEffect(upgradeSFX, 0.6, 1, false)
-    
-    -- Create and add tween without capturing outer scope variables
-    local inTween = tween.new(0.065, visualMoneyValues, {scale = 1.7}, tween.easing.outCirc)
-    addTweenToUpdate(inTween)
-    
-    -- Update money
-    createMoneyPopup(moneyGain, 200, 200);
+    EventQueue:addEventToQueue(EVENT_POINTERS.money_gain, 0.25, function() --end)
+        -- First event: Show animation and add money
+        if itemName then -- Changed from itemId to itemName check
+            itemTriggerAnimation(itemName)
+        end
+        playSoundEffect(upgradeSFX, 0.6, 1, false)
+        
+        -- Create and add tween without capturing outer scope variables
+        local inTween = tween.new(0.05, visualMoneyValues, {scale = 1.7}, tween.easing.outCirc)
+        addTweenToUpdate(inTween)
+        
+        -- Update money
+        createMoneyPopup(moneyGain, math.random(190, 210), 175);
+        if not Player.levelingUp then
+            playerMoneyBoost.alpha = 1.0
+            local moneyOutTween = tween.new(1.0, playerMoneyBoost, {alpha = 0.0}, tween.easing.inCirc)
+            addTweenToUpdate(moneyOutTween)
+        end
 
-    -- reset Scale tween
-    GlobalTimer:after(0.065, function() 
-        Player.shiftMoneyValue(moneyGain);
-        local outTween = tween.new(0.2, visualMoneyValues, {scale = 1}, tween.easing.inCirc)
-        addTweenToUpdate(outTween)
+        -- reset Scale tween
+        GlobalTimer:after(0.05, function() 
+            Player.shiftMoneyValue(moneyGain);
+            local outTween = tween.new(0.2, visualMoneyValues, {scale = 1}, tween.easing.inCirc)
+            addTweenToUpdate(outTween)
+        end)
     end)
 end
 
@@ -298,8 +319,8 @@ function reducePriceWithAnimations(reductionAmount, weaponName, itemName)  -- Ac
         -- Directly modify the weapon object
         weapon.price = math.max(weapon.price - reductionAmount, 0)
     end)
-    EventQueue:addEventToQueue(EVENT_POINTERS.empty, 0.175, function() 
-        local outTween = tween.new(0.175, visualUpgradePriceValues[weaponName], {scale = 1}, tween.easing.inCirc)
+    EventQueue:addEventToQueue(EVENT_POINTERS.empty, 0.2, function() 
+        local outTween = tween.new(0.2, visualUpgradePriceValues[weaponName], {scale = 1}, tween.easing.inCirc)
         addTweenToUpdate(outTween)
     end)
 end
@@ -341,8 +362,8 @@ function gainStatWithAnimation(statName, weaponName, itemId)
             selectedWeapon.stats[statName] = (selectedWeapon.stats[statName] or 0) + 1
         end
     end)
-    EventQueue:addEventToQueue(EVENT_POINTERS.empty, 0.175, function() 
-        local outTween = tween.new(0.175, visualStatValues[weaponName][statName], {scale = 1}, tween.easing.inCirc)
+    EventQueue:addEventToQueue(EVENT_POINTERS.empty, 0.2, function() 
+        local outTween = tween.new(0.2, visualStatValues[weaponName][statName], {scale = 1}, tween.easing.inCirc)
         addTweenToUpdate(outTween)
     end)
 end
@@ -1124,6 +1145,11 @@ function drawMoneyPopups()
     for i = #moneyPopups, 1, -1 do
         local popup = moneyPopups[i]
         setFont(math.max(math.ceil(popup.scale), 1))
+        love.graphics.setColor(0,0,0,1)
+        love.graphics.print("+"..tostring(popup.value).."$", popup.x - getTextSize("+"..tostring(popup.value).."$")/2 + 1, popup.y + 1)
+        love.graphics.print("+"..tostring(popup.value).."$", popup.x - getTextSize("+"..tostring(popup.value).."$")/2 - 1, popup.y + 1)
+        love.graphics.print("+"..tostring(popup.value).."$", popup.x - getTextSize("+"..tostring(popup.value).."$")/2 + 1, popup.y - 1)
+        love.graphics.print("+"..tostring(popup.value).."$", popup.x - getTextSize("+"..tostring(popup.value).."$")/2 - 1, popup.y - 1)
         love.graphics.setColor(14/255, 202/255, 92/255, 1)
         love.graphics.print("+"..tostring(popup.value).."$", popup.x - getTextSize("+"..tostring(popup.value).."$")/2, popup.y)
     end
@@ -1131,6 +1157,10 @@ function drawMoneyPopups()
     for i = #plusStatPopups, 1, -1 do
         local popup = plusStatPopups[i]
         setFont(math.max(math.ceil(popup.scale), 1))
+        love.graphics.print(popup.text, popup.x - getTextSize(popup.text)/2 + 1, popup.y + 1)
+        love.graphics.print(popup.text, popup.x - getTextSize(popup.text)/2 - 1, popup.y + 1)
+        love.graphics.print(popup.text, popup.x - getTextSize(popup.text)/2 + 1, popup.y - 1)
+        love.graphics.print(popup.text, popup.x - getTextSize(popup.text)/2 - 1, popup.y - 1)
         love.graphics.setColor(14/255, 202/255, 92/255, 1)
         love.graphics.print(popup.text, popup.x - getTextSize(popup.text)/2, popup.y)
     end

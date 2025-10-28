@@ -104,6 +104,7 @@ end
 
 local function bossDestroyed()
     inGame = false
+    firstRunCompleted = true
     print("Boss destroyed! Triggering victory.")
     for _, b in ipairs(bricks) do
         b.destroyed = true
@@ -111,6 +112,7 @@ local function bossDestroyed()
     victoryAchieved = true
     bossSpawned = false
     currentGameState = GameState.VICTORY
+    love.mouse.setVisible(true)
     -- Award gold and save data (same as game over)
     local goldEarned = 500 + Player.level * math.ceil(Player.level / 5) * 5 
     goldEarnedFrl = goldEarned
@@ -235,6 +237,9 @@ function totalUpgrade()
 end
 
 local powerups = {}
+-- Powerup trail ring-buffer settings (prevents per-frame allocations and table shifting)
+local POWERUP_TRAIL_MAX = 5         -- max stored trail points per powerup
+local POWERUP_TRAIL_SPACING = 0.08  -- seconds between new trail points
 local powerupColors = {
     freeze = {},
     moneyBag = {},
@@ -251,17 +256,25 @@ local function createPowerup(x, y, amount, type)
         x = x,
         y = y,
         type = type,
-        bounceAmount = 3,
+        angle = 0,
+        bounceAmount = 1,
         amount = amount,
         radius = amount <= 20 and mapRangeClamped(amount, 1, 20, 4, 6) or (amount <= 125 and mapRangeClamped(amount, 20, 125, 6, 8) or mapRangeClamped(amount, 125, 500, 8, 10)),
         speedX = math.random(-75, 75),
         speedY = -150,
         gravity = 400,
         lifetime = 10,
-        trail = {},
+        trail = {}, -- preallocated below
         creationTime = gameTime,
-        timeSinceLastTrailPoint = 0
+        -- ring-buffer metadata
+        _trailHead = 1,
+        _trailCount = 0,
+        _lastTrailTime = 0,
     }
+    -- pre-allocate small point tables to avoid per-frame allocations
+    for i = 1, POWERUP_TRAIL_MAX do
+        powerup.trail[i] = { x = 0, y = 0, alpha = 0 }
+    end
     table.insert(powerups, powerup)
 end
 
@@ -277,6 +290,7 @@ local function getRandomPowerupType()
 end
 
 brickPieces = {}
+local currentMoneyDropChance = 0
 local function brickDestroyed(brick)
     Player.bricksDestroyed = (Player.bricksDestroyed or 0) + 1
     local chance = hasItem("Four Leafed Clover") and 40 or 20
@@ -336,6 +350,13 @@ local function brickDestroyed(brick)
         local type = getRandomPowerupType()
         createPowerup(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth, type)
     end
+
+    if math.random(1,2000) <= currentMoneyDropChance then
+        createPowerup(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth, "dollarBill")
+        currentMoneyDropChance = 0
+    else
+        currentMoneyDropChance = currentMoneyDropChance + 1
+    end
 end
 
 function Balls.reduceCooldown(typeName) 
@@ -394,14 +415,18 @@ function dealDamage(ball, brick, burnDamage)
         
         if brick.health >= 1 then
             brick.hitLastFrame = true
-        elseif not hasItem("Phantom Bullets") then
+        else
             kill = true
             brickKilledThisFrame = true
             brick.destroyed = true
             
             if ball.type == "bullet" then
-                ball.stats.damage = ball.stats.damage - damage
-                if ball.stats.damage <= 0 then
+                if isPhantomBullet then
+                    ball.stats.damage = ball.stats.damage - 2  -- Fixed -2 damage per hit for Phantom Bullets
+                    if ball.stats.damage <= 0 then
+                        kill = false
+                    end
+                elseif not ball.golden then
                     kill = false
                 end
             end
@@ -426,11 +451,12 @@ function dealDamage(ball, brick, burnDamage)
     
     damage = damage + getStatItemsBonus("damage", ball) + (Player.permanentUpgrades.damage or 0)
     
+    local isPhantomBullet = ball.type == "bullet" and hasItem("Phantom Bullets")
     if ball.type == "bullet" then
         damage = ball.stats.damage
-    end
-    if hasItem("Phantom Bullets") and ball.type == "bullet" then
-        damage = math.max(math.ceil(damage / 2), 1)
+        if isPhantomBullet then
+            damage = math.max(math.ceil(damage / 2), 1)
+        end
     end
     
     if (Player.currentCore == "Brickbreaker Core" or hasItem("Brickbreaker")) and brick.type ~= "boss" then
@@ -490,7 +516,7 @@ function dealDamage(ball, brick, burnDamage)
         brickKilledThisFrame = true
         brick.destroyed = true
         
-        if ball.type == "bullet" then
+        if ball.type == "bullet" and not ball.golden then
             if (not (ball.name == "Golden Gun" or ball.golden or Player.currentCore == "Phantom Core")) then
                 ball.stats.damage = ball.stats.damage - damage
                 if ball.stats.damage <= 0 then
@@ -2102,9 +2128,9 @@ function Balls.initialize()
     Player.choosingUpgrade = false
     Player.upgradePriceMultScaling = 2
     Player.xpForNextLevel = 15
+    Player.xpGainMult = 1
     Player.setMoney(0);
-    -- Player.money = 0
-    
+    Player.permanentUpgrades = {}
     inGame = true
     deathTimerOver = false
     deathTweenValues = {speed = 1, overlayOpacity = 0}
@@ -2219,15 +2245,18 @@ function Balls.addBall(ballName, singleBall)
         print("isNewBall: " .. tostring(isNewBall))
         local upgradePrice
         if ballTemplate.rarity == "common" then
-            upgradePrice = 3
+            upgradePrice = 2
         elseif ballTemplate.rarity == "uncommon" then
-            upgradePrice = 5
+            upgradePrice = 4
         elseif ballTemplate.rarity == "rare" then
-            upgradePrice = 7
+            upgradePrice = 6
         elseif ballTemplate.rarity == "legendary" then
-            upgradePrice = 9
+            upgradePrice = 8
         else
             upgradePrice = 3
+        end
+        if Player.currentCore == "Hacker Core" then
+            upgradePrice = 0
         end
         if isNewBall then
             local newBallType = {
@@ -3262,21 +3291,29 @@ end
 
 function powerupPickup(powerup)
     playSoundEffect(lvlUpSFX, 0.55, 1, false)   
-    powerupPopup.type = powerup.type
-    powerupPopup.startTime = gameTime
-    if powerup.type ~= "nuke" and powerup.type ~= "moneyBag" then
+    
+    if powerup.type ~= "nuke" and powerup.type ~= "moneyBag" and powerup.type ~= "dollarBill" then
+        powerupPopup.type = powerup.type
+        powerupPopup.startTime = gameTime
         local inTween = tween.new(0.15, powerupPopup, {scale = 1}, tween.easing.outCirc)
         addTweenToUpdate(inTween)
     end
     print("powerup type : " .. powerup.type)
-    if powerup.type == "moneyBag" then
+    if powerup.type == "dollarBill" then
         local moneyGain = math.random(1,5)
+        if moneyGain > 2 then
+            moneyGain = 1
+        end          
+        Player.shiftMoneyValue(moneyGain);
+        createMoneyPopup(moneyGain, paddle.x + paddle.width/2, paddle.y)
+    elseif powerup.type == "moneyBag" then
+        local moneyGain = math.random(2,5)
         Player.shiftMoneyValue(moneyGain);
         createMoneyPopup(moneyGain, paddle.x + paddle.width/2, paddle.y)
     elseif powerup.type == "nuke" then
         for _, brick in ipairs(bricks) do
             if (brick.health > 0) and (brick.y + brick.height > 0) then
-                dealDamage({stats = {damage = math.ceil(Player.level)}}, brick) -- Deal damage to all bricks
+                dealDamage({stats = {damage = math.ceil(Player.level * 0.7)}}, brick) -- Deal damage to all bricks
             end
         end
     elseif powerup.type == "freeze" then
@@ -3706,6 +3743,7 @@ function Balls.update(dt, paddle, bricks)
                             break -- Exit brick loop once we know bullet should be removed
                         end
                         hitBrick = true
+                        break
                     end
                 end
                 ::next_brick::
@@ -3720,7 +3758,7 @@ function Balls.update(dt, paddle, bricks)
                 goto continue
             end
             
-            if hitBrick and not bullet.golden then
+            if hitBrick then
                 goto continue  -- Skip to next bullet if we hit a brick (unless golden)
             end
         end
@@ -3806,8 +3844,11 @@ function Balls.update(dt, paddle, bricks)
                 table.remove(powerups, i)
             end
         end
+        orb.speedY = orb.speedY + 300 * dt -- gravity effect
 
-        -- attraction to paddle
+        orb.angle = (orb.angle or 0) + dt * 1
+
+        --[[ attraction to paddle
         local closestX = math.max(paddle.x, math.min(orb.x, paddle.x + paddle.width))
         local closestY = math.max(paddle.y, math.min(orb.y, paddle.y + paddle.height))
         
@@ -3819,8 +3860,16 @@ function Balls.update(dt, paddle, bricks)
         local attractionStrength = mapRangeClamped(distanceToPaddle, 50, 500, 10000, 500)
         local angle = math.atan2(dy, dx)
         orb.speedX = orb.speedX - math.cos(angle) * attractionStrength * dt
-        orb.speedY = orb.speedY - math.sin(angle) * attractionStrength * dt
-        if distanceToPaddle < 2 then
+        orb.speedY = orb.speedY - math.sin(angle) * attractionStrength * dt]]
+
+        local closestX = math.max(paddle.x, math.min(orb.x, paddle.x + paddle.width))
+        local closestY = math.max(paddle.y, math.min(orb.y, paddle.y + paddle.height))
+        
+        local dx = orb.x - closestX
+        local dy = orb.y - closestY
+        
+        local distanceToPaddle = math.sqrt(dx * dx + dy * dy)
+        if distanceToPaddle < 5 then
             -- xp orb pickup
             
             powerupPickup(orb)
@@ -3828,19 +3877,29 @@ function Balls.update(dt, paddle, bricks)
             table.remove(powerups, i)
         end
 
-        -- trail logic
-        orb.timeSinceLastTrailPoint = orb.timeSinceLastTrailPoint or 0
-        if gameTime - orb.timeSinceLastTrailPoint > 0.05 then -- Add trail points less frequently
-            table.insert(orb.trail, 1, {x = orb.x, y = orb.y, alpha = 1}) -- Add new trail point
-            orb.timeSinceLastTrailPoint = gameTime
+        -- trail logic (ring-buffer to avoid allocations and table shifting)
+        orb._lastTrailTime = orb._lastTrailTime or 0
+        if gameTime - orb._lastTrailTime >= POWERUP_TRAIL_SPACING then -- Add trail points at controlled spacing
+            orb._lastTrailTime = gameTime
+            -- compute insertion index (newest)
+            local insertIndex = ((orb._trailHead + orb._trailCount - 1) % POWERUP_TRAIL_MAX) + 1
+            if orb._trailCount == POWERUP_TRAIL_MAX then
+                -- buffer full: advance head (overwrite oldest)
+                orb._trailHead = (orb._trailHead % POWERUP_TRAIL_MAX) + 1
+            else
+                orb._trailCount = orb._trailCount + 1
+            end
+            local pt = orb.trail[insertIndex]
+            pt.x = orb.x
+            pt.y = orb.y
+            pt.alpha = 1
         end
-        if #orb.trail > 5 then -- Reduce trail length
-            table.remove(orb.trail)
-        end
-        for j = #orb.trail, 1, -1 do
-            orb.trail[j].alpha = orb.trail[j].alpha - dt * 3 -- Fade out faster
-            if orb.trail[j].alpha <= 0 then
-                table.remove(orb.trail, j)
+        -- fade all points (no removals)
+        for k = 1, POWERUP_TRAIL_MAX do
+            local pt = orb.trail[k]
+            if pt and pt.alpha and pt.alpha > 0 then
+                pt.alpha = pt.alpha - dt * 3
+                if pt.alpha < 0 then pt.alpha = 0 end
             end
         end
     end
@@ -4207,23 +4266,28 @@ function Balls:draw()
 
         -- draw powerups
         for _, powerup in ipairs(powerups) do
-            if #powerup.trail > 1 then
-                -- draw trail
-                for i = 1, #powerup.trail do
-                    local p = powerup.trail[i]
-                    local t = (#powerup.trail > 1) and ((i - 1) / (#powerup.trail - 1)) or 0
-                    local alpha = (p.alpha or 1) * (1 - t) * 0.9 + 0.05
-                    local radius = powerup.radius * (0.6 * (1 - t) + 0.15)
-
-                    love.graphics.setColor(90/255, 150/255, 0.75, alpha)
-                    love.graphics.circle("fill", p.x, p.y, radius)
+            -- draw trail from oldest -> newest using ring buffer
+            local head = powerup._trailHead or 1
+            local count = powerup._trailCount or 0
+            if count > 0 then
+                local startRadius = powerup.radius * 0.6
+                local minRadius = math.max(1, startRadius * 0.15)
+                for k = 0, count - 1 do
+                    local idx = ((head + k - 1) % POWERUP_TRAIL_MAX) + 1
+                    local p = powerup.trail[idx]
+                    if p and p.alpha and p.alpha > 0 then
+                        local t = (count > 1) and (k / (count - 1)) or 1
+                        local alpha = p.alpha * (0.9 * t + 0.1)
+                        local radius = minRadius + (startRadius - minRadius) * t
+                        love.graphics.setColor(90/255, 150/255, 0.75, alpha)
+                        love.graphics.circle("fill", p.x, p.y, radius)
+                    end
                 end
-
-                -- draw powerup image
-                love.graphics.setColor(1,1,1,1)
-                drawImageCentered(powerupImgs[powerup.type], powerup.x, powerup.y, 70, 62)
-                
             end
+
+            -- draw powerup image (always)
+            love.graphics.setColor(1,1,1,1)
+            drawImageCentered(powerupImgs[powerup.type], powerup.x, powerup.y, 70 * 0.8, 62* 0.8, powerup.angle)
         end
     end
 end

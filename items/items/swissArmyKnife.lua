@@ -13,7 +13,7 @@ function SwissArmyKnife.new()
     instance.stats.fireRate = 1;
     instance.stats.speed    = 1;
     instance.stats.cooldown =-1;
-    instance.stats.size     = 1;
+    instance.stats.damage     = 1;
     instance.stats.amount   = 1;
     instance.stats.range    = 1;
     instance.stats.ammo     = 1;
