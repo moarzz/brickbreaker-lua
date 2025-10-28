@@ -153,7 +153,7 @@ function getStatItemsBonus(statName, weapon)
         end
     end
 
-    -- logic for doubling powerups. Kind of bootleg that its here, should be in getStat but its too late to go back now
+    --[[ logic for doubling powerups. Kind of bootleg that its here, should be in getStat but its too late to go back now
     if statDoubled == statName or ((statName == "fireRate" or statName == "speed") and accelerationOn) then
         if weapon then
             -- Get the base weapon stat value
@@ -171,7 +171,7 @@ function getStatItemsBonus(statName, weapon)
             -- Current total WITH item bonuses: weaponStatValue + permanentBonus + totalBonus
             totalBonus = totalBonus + weaponStatValue + permanentBonus
         end
-    end
+    end]]
     return totalBonus
 end
 
