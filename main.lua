@@ -259,7 +259,9 @@ local function loadAssets()
     brickPiece1Img = love.graphics.newImage("assets/sprites/brickPiece1.png")
     brickPiece2Img = love.graphics.newImage("assets/sprites/brickPiece2.png")
     brickPiece3Img = love.graphics.newImage("assets/sprites/brickPiece3.png")
-        -- UI
+    vignetteImg = love.graphics.newImage("assets/sprites/vignette.png")
+
+    -- UI
     uiLabelImg = love.graphics.newImage("assets/sprites/UI/label.png")
     uiSmallWindowImg = love.graphics.newImage("assets/sprites/UI/windowSmall.png")
     uiWindowImg = love.graphics.newImage("assets/sprites/UI/window.png")
@@ -623,7 +625,7 @@ local function addMoreBricks()
             print("spawning more bricks")
             for i=1 , 10 do
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
-                currentRowPopulation = currentRowPopulation + math.ceil(Player.level * (Player.currentCore == "Farm Core" and 1 or 0.5) + 1)
+                currentRowPopulation = currentRowPopulation + math.ceil(Player.level * (Player.currentCore == "Farm Core" and 1.3 or 0.65) + 1)
                 if spawnBossNextRow and not bossSpawned then
                     spawnBoss()
                     bossSpawned = true
@@ -950,7 +952,7 @@ function changeMusic(newMusicStage)
         BackgroundShader.changeShader(1); -- vexel
     elseif newMusicStage == "mid" then
         ref = "assets/SFX/inGame2.mp3";
-        BackgroundShader.changeShader(2); -- acid
+        BackgroundShader.changeShader(1); -- acid
     elseif newMusicStage == "intense" then
         ref = "assets/SFX/inGame3.mp3";
         BackgroundShader.changeShader(3); -- vexel
@@ -1494,7 +1496,7 @@ local function drawStartSelect()
         end
 
         -- crooky logic
-
+        Crooky:giveInfo("run", "start")
     end
 end
 
@@ -1978,7 +1980,7 @@ local function fullDraw()
             love.graphics.print(levelText, 15, screenHeight - 28)
         end
 
-        -- Crooky:draw() 
+        
     end
 
     if currentGameState == GameState.PAUSED then
@@ -1996,7 +1998,9 @@ local function fullDraw()
         drawMenu()
         -- Draw SUIT UI elements
         suit.draw()
-        Crooky:draw()
+        if not firstRunCompleted then
+            Crooky:draw()
+        end
         return
     end
     
@@ -2014,7 +2018,9 @@ local function fullDraw()
             love.mouse.setVisible(true)
         end
         suit.draw()
-        Crooky:draw()
+        if not firstRunCompleted then
+            Crooky:draw()
+        end
         return
     end
 
@@ -2038,7 +2044,9 @@ local function fullDraw()
             love.mouse.setVisible(true)
         end
 
-        Crooky:draw()
+        if not firstRunCompleted then
+            Crooky:draw()
+        end
         return
     end
 
@@ -2154,11 +2162,17 @@ local function fullDraw()
     drawAnimations()
     drawMuzzleFlashes()
 
-
+    local vignetteIntensity = mapRange(screenHeight - paddle.y, -10, 125, 1, 0)
+    love.graphics.setColor(1, 1, 1, vignetteIntensity)
+    love.graphics.draw(vignetteImg, 0, 0, 0)
     upgradesUI.draw()
 
     -- Draw the UI elements using Suit
     suit.draw()
+
+    if (not firstRunCompleted) and currentGameState == GameState.PLAYING then
+        Crooky:draw()
+    end
 
     -- why is this not being displayed in front of Player.money???????
     drawMoneyPopups()
@@ -2223,6 +2237,29 @@ function love.draw()
     end
 end
 
+function finishUpgrading()
+    playSoundEffect(selectSFX, 1, 0.8)
+    itemsOnLevelUpEnd()
+    Player.levelingUp = false
+    for _, ballType in pairs(Balls.getUnlockedBallTypes()) do
+        if ballType.type == "ball" then
+            Balls.adjustSpeed(ballType.name)
+        end
+    end
+    if Player.level == 8 then
+        changeMusic("mid")
+    elseif Player.level == 16 then
+        changeMusic("intense")
+    end
+    setMusicEffect("normal")
+    love.mouse.setVisible(false)
+
+    -- crooky logic
+    if Player.level == 2 and not firstRunCompleted then
+        Crooky:giveInfo("run", "firstLevelUpEnd")
+    end
+end
+
 damageNumbersOn = true
 healNumbersOn = true
 ballTrailsOn = true
@@ -2231,20 +2268,7 @@ local old_love_keypressed = love.keypressed
 moneyScale = {scale = 1}
 function love.keypressed(key)
     if key == "space" and Player.levelingUp and (not Player.choosingUpgrade) and EventQueue:isQueueFinished() then
-        itemsOnLevelUpEnd()
-        Player.levelingUp = false
-        for _, ballType in pairs(Balls.getUnlockedBallTypes()) do
-            if ballType.type == "ball" then
-                Balls.adjustSpeed(ballType.name)
-            end
-        end
-        if Player.level == 8 then
-            changeMusic("mid")
-        elseif Player.level == 16 then
-            changeMusic("intense")
-        end
-        setMusicEffect("normal")
-        love.mouse.setVisible(false)
+        finishUpgrading()
     end
 
     if key == "escape" then

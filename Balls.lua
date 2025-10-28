@@ -255,11 +255,11 @@ local function createPowerup(x, y, amount, type)
         y = y,
         type = type,
         angle = 0,
-        bounceAmount = 1,
+        bounceAmount = 0,
         amount = amount,
         radius = amount <= 20 and mapRangeClamped(amount, 1, 20, 4, 6) or (amount <= 125 and mapRangeClamped(amount, 20, 125, 6, 8) or mapRangeClamped(amount, 125, 500, 8, 10)),
         speedX = math.random(-75, 75),
-        speedY = -150,
+        speedY = -250,
         gravity = 400,
         lifetime = 10,
         trail = {}, -- preallocated below
@@ -349,7 +349,7 @@ local function brickDestroyed(brick)
         createPowerup(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth, type)
     end
 
-    if math.random(1,2000) <= currentMoneyDropChance then
+    if math.random(1,3500) <= currentMoneyDropChance then   
         createPowerup(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth, "dollarBill")
         currentMoneyDropChance = 0
     else
@@ -1523,7 +1523,7 @@ local function ballListInit()
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
-            speedMult = 2,
+            speedMult = 1.8,
             size = 1,
             rarity = "common",
             ballAmount = 1,

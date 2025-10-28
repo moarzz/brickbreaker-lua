@@ -1,9 +1,9 @@
 
-W95_CursorIndicator = require("crooky/w95_cursorindicator")
+W95_CursorIndicator = require("crooky/W95_CursorIndicator")
 
 local Crooky = {}
 
-local TALK_SPEED = 24
+local TALK_SPEED = 50
 
 function Crooky:load()
     Textures.getTexture('crooky/eye', true)
@@ -278,11 +278,7 @@ function Crooky:load()
                     Crooky:setSpeechBubble("This is where we keep all your equipment, but the bricks have intercepted our supply lines...", 2, "Only thing we have now is this lousy ball. But it can still be a deadly weapon in the right hands", 15, "COWARD! Stop wasting time and GO DIE FOR THE PADDLES YOU HOLD DEAR", 30)
                     -- Crooky:addClickIcon(W95_CursorIndicator.newConnectedCursorIndicator(startButton, 960, 512, 'up', 0, 'normal'))
                 end,
-                animateFunct = function(time) 
-                    if time >= 2 then
-                        
-                    end
-                end,
+                animateFunct = nil
             }
         },
         ["clickIcon"] = {
@@ -296,10 +292,29 @@ function Crooky:load()
         },
         ["run"] = {
             ["start"] = {
-
+                uses = 1,
+                callFunc = function()
+                    Crooky:setAnimation('idle')
+                    Crooky:setSpeechBubble("ALRIGHT! LET'S GET TO FIGHTING!", 2, "The bricks are laying a siege... They'll send bigger and bigger bricks as time goes on", 5, "If they manage to move to the bottom of the screen, we're toast.", 100)
+                    -- add "you're our only hope soldier. MAKE ME PROUD"
+                end,
+                animateFunc = nil
             },
             ["firstLevelUp"] = {
-
+                uses = 1,
+                callFunc = function()
+                    Crooky:setAnimation('idle')
+                    Crooky:setSpeechBubble("Welcome to the armory son! This is where you'll be doing all that upgrading to make you stronger", 1.5, "Your money is on the top left, There is an item shop to the top right and your weapons are at the bottom right", 2, "Your weapons each have a few stats, if you hover over them you will see their name. If you hover over an item, it will explain its effect", 100)
+                end,
+                animateFunc = nil
+            },
+            ["firstLevelUpEnd"] = {
+                uses = 1,
+                callFunc = function()
+                    Crooky:setAnimation('idle')
+                    Crooky:setSpeechBubble("I won't lie soldier, you probably won't make it out alive", 1.5, "But if you can buy even a few seconds to help the paddle women and children flee, that will be a death worthy of a warrior", 1.5, "NOW FIGHT SOLDIER!", 2)
+                end,
+                animateFunc = nil
             },
             ["death"] = {
                 

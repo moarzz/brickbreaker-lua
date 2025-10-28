@@ -153,22 +153,14 @@ function getStatItemsBonus(statName, weapon)
         end
     end
 
-    if statDoubled == statName or ((statName == "fireRate" or statName == "speed") and accelerationOn) then
-        if weapon then
-            print("totalBonus before doubling for " .. (weapon.name or "") .. " " .. statName .." : " .. totalBonus)
-        end
-    end
-
     -- logic for doubling powerups. Kind of bootleg that its here, should be in getStat but its too late to go back now
     if statDoubled == statName or ((statName == "fireRate" or statName == "speed") and accelerationOn) then
         if weapon then
             -- Get the base weapon stat value
             local weaponStatValue = 0
-            if statName == "amount" and not weapon.noAmount then
-                weaponStatValue = weapon.ballAmount
-            elseif weapon.stats[statName] then
-                weaponStatValue = weapon.stats[statName]
-            end
+
+            weaponStatValue = weapon.stats[statName]
+
             if statName == "speed" then
                 weaponStatValue = weaponStatValue / 50
             end
@@ -179,10 +171,6 @@ function getStatItemsBonus(statName, weapon)
             -- Current total WITH item bonuses: weaponStatValue + permanentBonus + totalBonus
             totalBonus = totalBonus + weaponStatValue + permanentBonus
         end
-    end
-
-    if statDoubled == statName or ((statName == "fireRate" or statName == "speed") and accelerationOn) then
-        print("totalBonus after doubling : " .. totalBonus)
     end
     return totalBonus
 end
@@ -309,7 +297,7 @@ local function drawPlayerStats()
     end]]
 
     if Player.currentCore and Player.levelingUp and not Player.choosingUpgrade then
-        setFont(38)
+        --[[setFont(38)
         local coreText = tostring(Player.currentCore)
         love.graphics.setColor(0, 0, 0, 0.7)
         local tw = love.graphics.getFont():getWidth(coreText)
@@ -317,7 +305,7 @@ local function drawPlayerStats()
         -- Centered under Bricks Destroyed (which is at x=40, y=40)
         love.graphics.setColor(0.9, 0.9, 0.9, 1)
         love.graphics.print(coreText, screenWidth/2 - tw/2, screenHeight - th - 15)
-        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setColor(1, 1, 1, 1)]]
     end
 
     if Player.score then
@@ -979,11 +967,11 @@ local function drawBallStats()
                 if hoverButton.hovered then
                     -- local mouseX, mouseY = love.mouse.getPosition()
                     setFont(35)
-                    dress:Label(statName, {align = "center", color = {normal = {fg = statColor[statName]}}}, statsX - 100, labelY + 100, cellWidth + 180, 150)
-                    dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 98, labelY + 98, cellWidth + 180, 150)
-                    dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 102, labelY + 98, cellWidth + 180, 150)
-                    dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 98, labelY + 102, cellWidth + 180, 150)
-                    dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 102, labelY + 102, cellWidth + 180, 150)
+                    dress:Label(statName, {align = "center", color = {normal = {fg = statColor[statName]}}}, statsX - 90, labelY + 100, cellWidth + 180, 150)
+                    dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 88, labelY + 98, cellWidth + 180, 150)
+                    dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 92, labelY + 98, cellWidth + 180, 150)
+                    dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 88, labelY + 102, cellWidth + 180, 150)
+                    dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 92, labelY + 102, cellWidth + 180, 150)
                     -- drawTextCenteredWithScale(statName, mouseX, mouseY, 1, 300, {1,1,1,1})
                 end
             end
@@ -1181,9 +1169,7 @@ function drawLevelUpShop()
             -- Button clicked: apply the effect and close the shop
             print("Clicked on upgrade: " .. currentUpgrade.name)
             currentUpgrade.effect() -- Apply the effect of the upgrade
-            Timer.after(15, function() 
-                if Player.choosingUpgrade then Player.choosingUpgrade = false end
-            end)
+            Player.onLevelUp()
             Player.choosingUpgrade = false
             if not usingMoneySystem then
                 uiOffset.x = 0
@@ -1238,7 +1224,7 @@ function setItemShop(forcedItems)
     end
 
     displayedItems = {}
-    for i=1, Player.currentCore == "Collector's Core" and 3 or 3 do
+    for i=1, 3 do
         local itemToDisplay = nil
         if forcedItems[i] then
             itemToDisplay = forcedItems[i]
@@ -1530,30 +1516,27 @@ local function drawPlayerMoney()
     love.graphics.print(formatNumber(Player.getMoney()) .. "$",x + 100, y + 1, math.rad(1.5))
 end
 
+local function drawFinishUpgradingButton()
+    if Player.levelingUp and not Player.choosingUpgrade then
+        local buttonW, buttonH = 250, 75
+        local buttonX = screenWidth/2 - buttonW/2
+        local buttonY = screenHeight - buttonH - 10
+        setFont(30)
+        if suit.Button("Finish Upgrading", {id="finishUpgrading", valign = "top"}, buttonX, buttonY, buttonW, buttonH).hit then
+            finishUpgrading()
+        end
+    end
+end
+
 function upgradesUI.draw()
 
     
     drawPlayerStats() -- Draw the player stats table
     drawPlayerMoney()
-    --[[
-    drawPlayerUpgrades() -- Draw the player upgrades table
-    ]]
     drawBallStats() -- Draw the ball stats table
     drawItemShop()
     drawPlayerItems()
-
-    -- Draw separator lines
-    --[[if usingMoneySystem then
-        love.graphics.setColor(0.6, 0.6, 0.6, 0.6*math.max(math.min(math.max(0, 1-math.abs(Balls.getMinX()-statsWidth)/100), 1),math.min(math.max(0, 1-math.max(paddle.x-statsWidth,0)/100), 1))) -- Light gray
-        love.graphics.rectangle("fill", statsWidth, 0, 1, screenHeight) -- Separator line
-        love.graphics.setColor(0.6, 0.6, 0.6, 0.6*math.max(math.min(math.max(0, 1-math.abs(Balls.getMaxX()-(screenWidth - statsWidth))/100), 1), math.min(math.max(0, 1-math.max((screenWidth - statsWidth) - (paddle.x + paddle.width),0)/100))))
-        love.graphics.rectangle("fill", screenWidth - statsWidth, 0, 1, screenHeight)
-        love.graphics.setColor(0.6, 0.6, 0.6, 0.6* mapRangeClamped(math.abs(getHighestBrickY() + brickHeight - paddle.y), 0, 150, 1, 0)) -- Reset color to white
-        love.graphics.rectangle("fill", statsWidth, paddle.y, screenWidth - statsWidth * 2, 1) -- Draw the paddle area
-        love.graphics.setColor(1, 1, 1, 1) -- Reset color to white   
-    end]]
-    
-    -- Draw Player.bricksDestroyed at the bottom left of the screen
+    drawFinishUpgradingButton()
 
     -- Draw stat hover label if hovering a stat
     if hoveredStatName and Player.levelingUp then

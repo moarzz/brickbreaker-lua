@@ -1,7 +1,7 @@
 local JackOfAllTrades = ItemBase.new();
 JackOfAllTrades.__index = JackOfAllTrades;
 JackOfAllTrades.name = "Jack Of All Trades";
-JackOfAllTrades.description = "Increases all stats of your weapons by 2 (except damage) and decreases cooldown by 2";
+JackOfAllTrades.description = "Increases all stats of your weapons by 2 and decreases cooldown by 2";
 JackOfAllTrades.rarity = "rare";
 JackOfAllTrades.imageReference = "assets/sprites/UI/ItemIcons/Jack-Of-All-Trades.png";
 

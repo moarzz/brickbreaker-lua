@@ -369,14 +369,18 @@ function Player.InterestGain()
     Player.changeMoney(moneyGain);
 end
 
-function Player.levelUp()
+function Player.onLevelUp()
     EventQueue:addEventToQueue(EVENT_POINTERS.levelUp, 0);
-
     Player.InterestGain()
+end
+
+function Player.levelUp()
     setMusicEffect("paused")
     love.mouse.setVisible(true)
     resetRerollPrice()
     Player.level = Player.level + 1
+
+    -- should player unlock new weapon?
     if (Player.level) % 4 == 0 and tableLength(Balls.getUnlockedBallTypes()) < 6 then
         if usingMoneySystem then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.2)
@@ -384,7 +388,15 @@ function Player.levelUp()
         Player.newWeaponLevelRequirement = Player.newWeaponLevelRequirement + 5
         setLevelUpShop(true) -- Set the level up shop with ball unlockedBallTypes
         Player.choosingUpgrade = true -- Set the flag to indicate leveling up
+    else
+        Player.onLevelUp()
     end
+
+    -- crooky
+    if (not firstRunCompleted) and Player.level == 2 then
+        Crooky:giveInfo("run", "firstLevelUp")
+    end
+
     Player.xp = 0
     if usingMoneySystem then
         Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.25)
@@ -392,13 +404,13 @@ function Player.levelUp()
         if Player.level < 5 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 2)
         elseif Player.level < 10 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.55)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.65)
         elseif Player.level < 15 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.5)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.55)
         elseif Player.level < 20 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.4)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.45)
         elseif Player.level < 25 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.3)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.35)
         elseif Player.level < 30 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.25)
         elseif Player.level < 35 then
