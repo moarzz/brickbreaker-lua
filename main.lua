@@ -567,7 +567,7 @@ local function generateRow(brickCount, yPos)
                     if canHeal then
                         Timer.after(1.75 + math.random(1,175)/100, function() healSelf(healBrick) end)
                     end
-                elseif math.random(1, 100) < 0 and (totalGoldBricksGeneratedThisRun < math.floor((gameTime + 25)/120)) then
+                elseif (totalGoldBricksGeneratedThisRun < math.floor((gameTime + 25)/120)) then
                     totalGoldBricksGeneratedThisRun = totalGoldBricksGeneratedThisRun + 1
                     local goldBrick = {
                         type = "gold",
@@ -693,7 +693,7 @@ function initializeBricks()
     -- Generate bricks
     for i = 0, rows - 1 do
         generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing)) --generate 100 scaling rows of bricks
-        currentRowPopulation = math.min(currentRowPopulation + 1, 750)
+        currentRowPopulation = currentRowPopulation + gameTime/20
     end
 
     -- remove the bossSpawnTimer on gameStart if it exists
