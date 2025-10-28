@@ -329,6 +329,7 @@ local function loadAssets()
     Player.loadJsonValues()
     damageRipples.load()
     Crooky:load()
+    Crooky:setVisible(false)
 end
 
 dmgVFXOn = true
@@ -625,7 +626,8 @@ local function addMoreBricks()
             print("spawning more bricks")
             for i=1 , 10 do
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
-                currentRowPopulation = currentRowPopulation + math.ceil(Player.level * (Player.currentCore == "Farm Core" and 1.3 or 0.65) + 1)
+                local addBrickMult = mapRangeClamped(Player.level, 1, 20, 2, 1)
+                currentRowPopulation = currentRowPopulation + gameTime/20
                 if spawnBossNextRow and not bossSpawned then
                     spawnBoss()
                     bossSpawned = true
@@ -855,10 +857,10 @@ function getBrickSpeedMult()
     if Player.dead then
         return deathTweenValues.speed * getBrickSpeedByTime()
     elseif bossSpawned and boss.y >= -boss.height and getHighestBrickY() <= (screenHeight * 3/4 - 250) then
-        return mapRangeClamped(boss.y, -boss.height, screenHeight/3, 2.8, 0.75) * getBrickSpeedByTime()
+        return mapRangeClamped(boss.y, -boss.height, screenHeight/3, 2.8, 1.5) * getBrickSpeedByTime()
     else
         local posMult = 1
-        posMult = mapRangeClamped(getHighestBrickY(), 100, (screenHeight/2 + 200), 15, 1)
+        posMult = mapRangeClamped(getHighestBrickY(), 100, (screenHeight/2 + 200), 15, 1.5)
         if #bricks == 0 then
             return 1
         end
@@ -2162,8 +2164,8 @@ local function fullDraw()
     drawAnimations()
     drawMuzzleFlashes()
 
-    local vignetteIntensity = mapRange(screenHeight - paddle.y, -10, 125, 1, 0)
-    love.graphics.setColor(1, 1, 1, vignetteIntensity)
+    local vignetteIntensity = mapRange(screenHeight - paddle.y, 0   , 110, 1, 0)
+    love.graphics.setColor(0.15, 0, 0, vignetteIntensity)
     love.graphics.draw(vignetteImg, 0, 0, 0)
     upgradesUI.draw()
 

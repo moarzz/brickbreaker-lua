@@ -508,6 +508,7 @@ function Player.die()
     Timer.after(1.15, function()
         toggleFreeze()
         deathTimerOver = true
+        love.mouse.setVisible(true)
     end)
     -- Calculate gold earned based on score
     local goldEarned = Player.level * math.ceil(Player.level / 5) * 5 
