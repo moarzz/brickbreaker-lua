@@ -879,10 +879,14 @@ local function shoot(gunName, ball)
             gun.currentAmmo = getStat(gun.name, "ammo")
 
             local cooldownValue = getStat(gun.name, "cooldown") * 0.5
+            print("gun cooldown : " .. cooldownValue .. " - current ammo : " .. gun.currentAmmo)
             if accelerationOn then
                 cooldownValue = cooldownValue * 0.5
             end
-            Timer.after(cooldownValue, function() shoot(gunName) end)
+            Timer.after(cooldownValue, function() shoot(gunName) 
+                print("gun cooldown ended")
+                print("current ammo : " .. gun.currentAmmo)
+            end)
             --cooldownVFX(gun.stats.cooldown * 2, paddle.x + paddle.width / 2, paddle.y)
         end
     else 
@@ -2155,6 +2159,7 @@ function getStat(ballTypeName, statName)
         local totalValue
         if statName == "ammo" then
             totalValue = baseValue + bonusValue * (unlockedBallTypes[ballTypeName].ammoMult or 1)
+            print("Calculating ammo for " .. ballTypeName .. ": baseValue = " .. baseValue .. ", bonusValue = " .. bonusValue .. ", ammoMult = " .. (unlockedBallTypes[ballTypeName].ammoMult or 1) .. ", totalValue = " .. totalValue)
         elseif statName == "speed" then
             totalValue = baseValue + bonusValue * 50
         else
@@ -2240,7 +2245,7 @@ function Balls.addBall(ballName, singleBall)
                 newBallType.stats[statName] = statValue -- Copy other stats as well
             end
             if newBallType.stats.ammo ~= nil then
-                newBallType.stats.ammo = getStat(newBallType.name, "ammo")
+                -- newBallType.stats.ammo = getStat(newBallType.name, "ammo")
             end
             unlockedBallTypes[ballName] = newBallType -- Add the new ball type to the unlockedBallTypes dictionary
             stats = unlockedBallTypes[ballName].stats -- Get the stats of the new ball type

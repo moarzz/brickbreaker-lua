@@ -1727,7 +1727,7 @@ local function drawGameTimer()
         -- Draw timer
         local font = love.graphics.getFont()
         local textWidth = font:getWidth(timeString)
-        local x = screenWidth / 2 - 105
+        local x = screenWidth / 2 - textWidth / 2
         local y = screenHeight - 175
         
         love.graphics.setColor(1, 1, 1, 1)
