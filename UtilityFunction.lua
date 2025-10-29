@@ -65,7 +65,7 @@ end
 
 function playSoundEffect(soundEffect, volume, pitch, loop, clone)
     if soundEffect ~= backgroundMusicSFX then
-        volume = (sfxVolume or 1) * (volume or 1) * 0.5 -- Adjust volume based on global sfxVolume
+        volume = (sfxVolume or 1) * (volume or 1) * 0.35 -- Adjust volume based on global sfxVolume
     end
     if Player.dead and currentGameState == GameState.PLAYING then
         return

@@ -12,10 +12,6 @@ function CouponCollector.new()
 end
 
 function CouponCollector.events:levelUp()
-    if not hasItem("Abandon Greed") then
-        Player.changeMoney(1);
-        -- gainMoneyWithAnimations(1, self.name);
-    end
 
     local randomWeaponId = math.random(1, tableLength(Balls.getUnlockedBallTypes()));
     local i = 1;

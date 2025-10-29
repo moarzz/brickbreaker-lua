@@ -627,7 +627,7 @@ local function addMoreBricks()
             for i=1 , 10 do
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
                 local addBrickMult = mapRangeClamped(Player.level, 1, 20, 2, 1)
-                currentRowPopulation = currentRowPopulation + gameTime/mapRangeClamped(gameTime, 0, 300, 20, 30)
+                currentRowPopulation = currentRowPopulation + gameTime/30
                 if spawnBossNextRow and not bossSpawned then
                     spawnBoss()
                     bossSpawned = true
@@ -693,7 +693,7 @@ function initializeBricks()
     -- Generate bricks
     for i = 0, rows - 1 do
         generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing)) --generate 100 scaling rows of bricks
-        currentRowPopulation = currentRowPopulation + gameTime/mapRangeClamped(gameTime, 0, 600, 30, 60)
+        currentRowPopulation = currentRowPopulation + gameTime/30
     end
 
     -- remove the bossSpawnTimer on gameStart if it exists
@@ -839,7 +839,7 @@ brickFreeze = false
 brickFreezeTime = gameTime
 function getBrickSpeedByTime()
     -- Scale speed from 0.5 to 3 over 30 minutes
-    local returnValue = mapRange(gameTime, 0, 2000, 0.5, 3) * (Player.currentCore == "Madness Core" and 2 or 1)
+    local returnValue = mapRange(gameTime, 0, 2000, 0.3, 3) * (Player.currentCore == "Madness Core" and 2 or 1)
     if brickFreeze == true then
         if gameTime - brickFreezeTime > 10 then
             brickFreeze = false
@@ -850,6 +850,22 @@ function getBrickSpeedByTime()
     return returnValue
 end
 
+function getAverageBrickHealth()
+    local totalHealth = 0
+    local brickCount = 0
+    for _, brick in ipairs(bricks) do
+        if not brick.destroyed then
+            totalHealth = totalHealth + brick.health
+            brickCount = brickCount + 1
+        end
+    end
+    if brickCount == 0 then
+        return 0
+    else
+        return totalHealth / brickCount
+    end
+end
+
 currentBrickSpeed = 1
 deathTweenValues = {speed = 1, overlayOpacity = 0}
 function getBrickSpeedMult() 
@@ -857,10 +873,10 @@ function getBrickSpeedMult()
     if Player.dead then
         return deathTweenValues.speed * getBrickSpeedByTime()
     elseif bossSpawned and boss.y >= -boss.height and getHighestBrickY() <= (screenHeight * 3/4 - 250) then
-        return mapRangeClamped(boss.y, -boss.height, screenHeight/3, 2.8, 1.5) * getBrickSpeedByTime()
+        return mapRangeClamped(boss.y, -boss.height, screenHeight/3, 2.8, 1.35) * getBrickSpeedByTime()
     else
         local posMult = 1
-        posMult = mapRangeClamped(getHighestBrickY(), 100, (screenHeight/2 + 200), 15, 1.5)
+        posMult = mapRangeClamped(getHighestBrickY(), 100, (screenHeight/2 + 250), 15, 1.35)
         if #bricks == 0 then
             return 1
         end

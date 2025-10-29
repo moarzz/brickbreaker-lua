@@ -1306,7 +1306,7 @@ local function cast(spellName, brick, forcedDamage)
                     addTweenToUpdate(tweenEnd)
                 end)
             end)        end
-        local cooldownValue = getStat("Light Beam", "cooldown") * 2
+        local cooldownValue = getStat("Light Beam", "cooldown") * 1.5
         if accelerationOn then
             cooldownValue = cooldownValue * 0.5
         end
@@ -3252,13 +3252,13 @@ function powerupPickup(powerup)
         Player.shiftMoneyValue(moneyGain);
         createMoneyPopup(moneyGain, paddle.x + paddle.width/2, paddle.y)
     elseif powerup.type == "moneyBag" then
-        local moneyGain = math.random(2,5)
+        local moneyGain = math.random(3,5)
         Player.shiftMoneyValue(moneyGain);
         createMoneyPopup(moneyGain, paddle.x + paddle.width/2, paddle.y)
     elseif powerup.type == "nuke" then
         for _, brick in ipairs(bricks) do
             if (brick.health > 0) and (brick.y + brick.height > 0) then
-                dealDamage({stats = {damage = math.ceil(Player.level * 0.7)}}, brick) -- Deal damage to all bricks
+                dealDamage({stats = {damage = math.ceil(getAverageBrickHealth()/2.5)}}, brick) -- Deal damage to all bricks
             end
         end
     elseif powerup.type == "freeze" then
@@ -3806,7 +3806,7 @@ function Balls.update(dt, paddle, bricks)
         local dy = orb.y - closestY
         
         local distanceToPaddle = math.sqrt(dx * dx + dy * dy)
-        if distanceToPaddle < 5 then
+        if distanceToPaddle < 10 then
             -- xp orb pickup
             
             powerupPickup(orb)

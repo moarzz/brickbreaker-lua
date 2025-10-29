@@ -54,6 +54,16 @@ function hasItem(itemName)
     return false
 end
 
+function itemCount(itemName)
+    local count = 0
+    for _, item in ipairs(Player.items) do
+        if item.name == itemName then
+            count = count + 1
+        end
+    end
+    return count
+end
+
 function getItemsIncomeBonus()
     local incomeBonus = 0
     for itemName, item in pairs(Player.items) do
@@ -1268,7 +1278,7 @@ local function drawItemShop()
             if hasItem("Elon's Shmuck") then
                 upgradePrice = 2
             end
-            if hasItem("Coupon Collector") then
+            for i=1, itemCount("Coupon Collector") do
                 upgradePrice = math.max(upgradePrice - 1, 0)
             end
 
