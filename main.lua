@@ -567,7 +567,7 @@ local function generateRow(brickCount, yPos)
                     if canHeal then
                         Timer.after(1.75 + math.random(1,175)/100, function() healSelf(healBrick) end)
                     end
-                elseif (totalGoldBricksGeneratedThisRun < math.floor((gameTime + 25)/120)) then
+                elseif (totalGoldBricksGeneratedThisRun < math.floor((gameTime + 25)/100)) then
                     totalGoldBricksGeneratedThisRun = totalGoldBricksGeneratedThisRun + 1
                     local goldBrick = {
                         type = "gold",
@@ -627,7 +627,7 @@ local function addMoreBricks()
             for i=1 , 10 do
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
                 local addBrickMult = mapRangeClamped(Player.level, 1, 20, 2, 1)
-                currentRowPopulation = currentRowPopulation + gameTime/20
+                currentRowPopulation = currentRowPopulation + gameTime/mapRangeClamped(gameTime, 0, 300, 20, 30)
                 if spawnBossNextRow and not bossSpawned then
                     spawnBoss()
                     bossSpawned = true
@@ -693,7 +693,7 @@ function initializeBricks()
     -- Generate bricks
     for i = 0, rows - 1 do
         generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing)) --generate 100 scaling rows of bricks
-        currentRowPopulation = currentRowPopulation + gameTime/20
+        currentRowPopulation = currentRowPopulation + gameTime/mapRangeClamped(gameTime, 0, 600, 30, 60)
     end
 
     -- remove the bossSpawnTimer on gameStart if it exists
@@ -2164,7 +2164,7 @@ local function fullDraw()
     drawAnimations()
     drawMuzzleFlashes()
 
-    local vignetteIntensity = mapRange(screenHeight - paddle.y, 0   , 110, 1, 0)
+    local vignetteIntensity = mapRange(screenHeight - paddle.y, 0 , 110, 0.8, 0)
     love.graphics.setColor(0.15, 0, 0, vignetteIntensity)
     love.graphics.draw(vignetteImg, 0, 0, 0)
     upgradesUI.draw()

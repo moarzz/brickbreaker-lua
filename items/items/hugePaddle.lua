@@ -4,6 +4,7 @@ HugePaddle.name = "Huge Paddle";
 HugePaddle.description = "paddle width is increased by <font=bold><paddleWidth>%";
 HugePaddle.rarity = "common";
 HugePaddle.imageReference = "assets/sprites/UI/ItemIcons/Huge-Paddle.png";
+HugePaddle.unique = true;
 
 function HugePaddle.new()
     local instance = setmetatable({}, HugePaddle):init();

@@ -9,7 +9,7 @@ startingBall = "Machine Gun" -- The first ball that is added to the game
 local Balls = {}
 local ballCategories = {}
 local ballList = {}
-local bouncyCoreSpeedBoost = 7
+local bouncyCoreSpeedBoost = 5
 
 function Balls.getBallList()
     return ballList
@@ -391,7 +391,10 @@ function dealDamage(ball, brick, burnDamage)
     local kill = false
     
     
-    local damage = getStat(ball.name, "damage")
+    local damage = ball.stats.damage
+    if unlockedBallTypes[ball.name] then
+        damage = damage + getStatItemsBonus(statName, ballList[ball.name]) + (Player.permanentUpgrades["damage"] or 0)
+    end
     
     local isPhantomBullet = ball.type == "bullet" and hasItem("Phantom Bullets")
     if ball.type == "bullet" then
@@ -1565,7 +1568,7 @@ local function ballListInit()
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
-            speedMult = 1.35,
+            speedMult = 1,
             size = 1,
             rarity = "common",
             startingPrice = 50,
@@ -1820,7 +1823,7 @@ local function ballListInit()
                 range = 3
             }
         },
-        ["Saw Blades"] = {
+        --[[["Saw Blades"] = {
             name = "Saw Blades",
             type = "tech",
             size = 1,
@@ -1839,7 +1842,7 @@ local function ballListInit()
             currentAngle = 0, -- Current rotation angle
             orbitRadius = 225,
             damageCooldowns = {}, -- Add this line to track cooldowns per saw per brick
-        },
+        },]]
         ["Gun Turrets"] = {
             name = "Gun Turrets",
             type = "gun",
@@ -2473,7 +2476,7 @@ local function brickCollisionCheck(ball)
                 
                 -- Apply your existing effects
                 if Player.currentCore == "Bouncy Core" then
-                    ball.speedExtra = math.min((ball.speedExtra or 1) + bouncyCoreSpeedBoost, 12)
+                    ball.speedExtra = math.min((ball.speedExtra or 1) + 4, 12)
                 end
                 
                 brickCollisionEffects(ball, brick)
@@ -2634,7 +2637,7 @@ local function wallCollisionCheck(ball)
         ball.speedX = -ball.speedX
         ball.x = leftWallPosition + effectiveRadius -- Ensure the ball is not stuck in the wall
         if Player.currentCore == "Bouncy Core" or hasItem("Bouncy Walls") then
-            ball.speedExtra = math.min((ball.speedExtra or 1) + bouncyCoreSpeedBoost, 12)
+            ball.speedExtra = math.min((ball.speedExtra or 1) + 4, 12)
         end
         if ball.y < screenWidth then
             playSoundEffect(wallBoopSFX, 0.5, 0.6)
@@ -2644,7 +2647,7 @@ local function wallCollisionCheck(ball)
         ball.speedX = -ball.speedX
         ball.x = rightWallPosition - effectiveRadius -- Ensure the ball is not stuck in the 
         if Player.currentCore == "Bouncy Core" or hasItem("Bouncy Walls") then
-            ball.speedExtra = math.min((ball.speedExtra or 1) + bouncyCoreSpeedBoost, 12)
+            ball.speedExtra = math.min((ball.speedExtra or 1) + 4, 12)
         end
         if ball.y < screenWidth then
             playSoundEffect(wallBoopSFX, 0.5, 0.6)
@@ -2655,7 +2658,7 @@ local function wallCollisionCheck(ball)
         ball.speedY = -ball.speedY
         ball.y = effectiveRadius -- Ensure the ball is not stuck in the wall
         if Player.currentCore == "Bouncy Core" or hasItem("Bouncy Walls") then
-            ball.speedExtra = math.min((ball.speedExtra or 1) + bouncyCoreSpeedBoost, 12)
+            ball.speedExtra = math.min((ball.speedExtra or 1) + 4, 12)
         end
         playSoundEffect(wallBoopSFX, 0.5, 0.6)
         wallHit = true
@@ -2663,7 +2666,7 @@ local function wallCollisionCheck(ball)
         ball.speedY = -ball.speedY
         ball.y = screenHeight - effectiveRadius
         if Player.currentCore == "Bouncy Core" or hasItem("Bouncy Walls") then
-            ball.speedExtra = math.min((ball.speedExtra or 1) + bouncyCoreSpeedBoost, 12)
+            ball.speedExtra = math.min((ball.speedExtra or 1) + 4, 12)
         end
         playSoundEffect(wallBoopSFX, 0.5, 0.6)
         if ball.name == "Ping-Pong ball" and ball.speedY < 0 then
@@ -2710,7 +2713,7 @@ local function techUpdate(dt)
             
             -- Deal damage if we've been on target long enough
             
-            local cooldownLength = (Player.currentCore == "Madness Core" and 0.5 or 1) * 1.35/((Player.currentCore == "Damage Core" and 1 or getStat("Laser Beam", "fireRate")))
+            local cooldownLength = (Player.currentCore == "Madness Core" and 0.5 or 1) * 1.2/((Player.currentCore == "Damage Core" and 1 or getStat("Laser Beam", "fireRate")))
             if hasItem("Spray and Pray") then
                 local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
                 cooldownLength = cooldownLength * sprayMult
@@ -2782,11 +2785,10 @@ local function techUpdate(dt)
     if unlockedBallTypes["Saw Blades"] then
         local sawBlades = unlockedBallTypes["Saw Blades"]
         local numSaws = (Player.currentCore == "Damage Core") and 1 or getStat("Saw Blades", "amount")
-        local orbitRadius = sawBlades.orbitRadius * (math.sin(gameTime/2.5)/2 + 1)
+        local orbitRadius = sawBlades.orbitRadius * (math.sin(gameTime/2.5)/2 + 1) * 0.9
         local paddleCenterX = paddle.x + paddle.width / 2
         local paddleCenterY = paddle.y + paddle.height / 2
-        local speed = getStat("Saw Blades", "speed") * 50
-        print("Saw Blades speed: " .. tostring(speed) .. " permanent speed: " .. tostring(Player.permanentUpgrades.speed or 0) .. " stat bonus: " .. tostring(getStatItemsBonus("speed", sawBlades)))
+        local speed = getStat("Saw Blades", "speed") * 25
         sawBlades.sawPositions = sawBlades.sawPositions or {}
         sawBlades.sawAnimations = sawBlades.sawAnimations or {}
         sawBlades.damageCooldowns = sawBlades.damageCooldowns or {} -- Initialize cooldown table
@@ -3713,7 +3715,7 @@ function Balls.update(dt, paddle, bricks)
             bullet.y = screenHeight - bullet.radius -- Ensure the bullet is not stuck in the wall
         end
         -- Remove bullets that go off-screen
-        if bullet.y - bullet.radius > screenHeight or bullet.y <= -200 then
+        if bullet.y <= -200 then
             bullet.trailFade = 1
             bullet.deathTime = love.timer.getTime()
             table.insert(deadBullets, bullet)
@@ -3779,7 +3781,7 @@ function Balls.update(dt, paddle, bricks)
                 table.remove(powerups, i)
             end
         end
-        orb.speedY = orb.speedY + 300 * dt -- gravity effect
+        orb.speedY = math.min(orb.speedY + 300 * dt, 300) -- gravity effect
 
         orb.angle = (orb.angle or 0) + dt * 1
 

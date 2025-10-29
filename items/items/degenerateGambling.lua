@@ -1,7 +1,7 @@
 local DegenerateGambling = ItemBase.new();
 DegenerateGambling.__index = DegenerateGambling;
 DegenerateGambling.name = "Degenerate Gambling";
-DegenerateGambling.description = "<font=bold>on level up\n<gambleChance>%<font=default> chance to gain <font=big><color=money>20$";
+DegenerateGambling.description = "<font=bold>on level up\n<gambleChance>%<font=default> chance to gain <font=big><color=money>15$";
 DegenerateGambling.rarity = "uncommon";
 DegenerateGambling.imageReference = "assets/sprites/UI/ItemIcons/Degenerate-Gambling.png";
 
@@ -31,7 +31,7 @@ function DegenerateGambling.events:levelUp()
     end
 
     if math.random(1,100) <= (self.descriptionPointers.gambleChance) then
-        Player.changeMoney(20);
+        Player.changeMoney(15);
         -- gainMoneyWithAnimations(20, self.name);
     end
 end
