@@ -560,7 +560,7 @@ local function shoot(gunName, ball)
             return
         end
     end
-    local spray = Player.currentCore == "Spray and Pray Core" or hasItem("Spray and Pray")
+    local spray = hasItem("Spray and Pray")
     if unlockedBallTypes[gunName] then
         local bulletStormMult = Player.perks.bulletStorm and 2 or 1
         local gun = unlockedBallTypes[gunName]
@@ -1056,7 +1056,7 @@ fire = function(techName)
     end
     if techName == "Rocket Launcher" then
         if unlockedBallTypes["Rocket Launcher"].currentAmmo > 0 then
-            local angle = (Player.currentCore == "Spray and Pray Core" or hasItem("Spray and Pray")) and 0 + math.random(-40, 40) or 0 + math.random(-7, 7)
+            local angle = hasItem("Spray and Pray") and 0 + math.random(-40, 40) or 0 + math.random(-7, 7)
             local speed = 800
             local rocket = {
                 x = paddle.x + paddle.width / 2,
@@ -1088,7 +1088,7 @@ fire = function(techName)
                 end)
             else
                 local timerLength = (Player.currentCore == "Madness Core" and 0.5 or 1) * 6/getStat("Rocket Launcher", "fireRate")
-                if (Player.currentCore == "Spray and Pray Core" or hasItem("Spray and Pray")) then
+                if hasItem("Spray and Pray") then
                     local timerMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
                     timerLength = timerLength * timerMult
                 end
@@ -1223,7 +1223,7 @@ local function cast(spellName, brick, forcedDamage)
         return
     end   
     if spellName == "Shadow Ball" then
-        local angle = (Player.currentCore == "Spray and Pray Core" or hasItem("Spray and Pray")) and (math.random() * 0.5 + 0.25) * math.pi or (math.random() * 0.2 + 0.4) * math.pi
+        local angle = hasItem("Spray and Pray") and (math.random() * 0.5 + 0.25) * math.pi or (math.random() * 0.2 + 0.4) * math.pi
         local speed = 350
         local range = 1.5 + getStat("Shadow Ball", "range") * 0.5
         local shadowBall = {
@@ -1244,7 +1244,7 @@ local function cast(spellName, brick, forcedDamage)
         local shadowBallStartTween = tween.new(0.25, shadowBalls[#shadowBalls], {radius = 5 * range}, tween.outExpo)
         addTweenToUpdate(shadowBallStartTween)
         local sprayCooldown = hasItem("Four Leafed Clover") and 10 or 13.34 -- this is correct, stop tweaking and changing it
-        local cooldownLength = (Player.currentCore == "Spray and Pray Core" or hasItem("Spray and Pray")) and sprayCooldown/(getStat("Shadow Ball", "fireRate") + 2) or 20/(getStat("Shadow Ball", "fireRate"))
+        local cooldownLength = hasItem("Spray and Pray") and sprayCooldown/(getStat("Shadow Ball", "fireRate") + 2) or 20/(getStat("Shadow Ball", "fireRate"))
         Timer.after(cooldownLength, function()
             -- Refill shadowBall spell after cooldown
             cast("Shadow Ball")
@@ -2711,14 +2711,14 @@ local function techUpdate(dt)
             -- Deal damage if we've been on target long enough
             
             local cooldownLength = (Player.currentCore == "Madness Core" and 0.5 or 1) * 1.35/((Player.currentCore == "Damage Core" and 1 or getStat("Laser Beam", "fireRate")))
-            if (Player.currentCore == "Spray and Pray Core" or hasItem("Spray and Pray")) then
+            if hasItem("Spray and Pray") then
                 local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
                 cooldownLength = cooldownLength * sprayMult
             end
             if laserBeamTimer >= cooldownLength and laserBeamBrick.y > -laserBeamBrick.height then
                 dealDamage(laserBeam, laserBeamBrick)
                 laserBeamTimer = 0  -- Reset timer after damage
-                if (Player.currentCore == "Spray and Pray Core" or hasItem("Spray and Pray")) then
+                if hasItem("Spray and Pray") then
                     laserBeam.angle = math.random(-100, 100)/10
                 else
                     laserBeam.angle = 0
@@ -3482,7 +3482,7 @@ function Balls.update(dt, paddle, bricks)
                         local dx = (brick.x + brick.width/2) - ball.x
                         local dy = (brick.y + brick.height/2) - ball.y
                         local dist = math.sqrt(dx*dx + dy*dy)
-                        if dist < minDist and dist > brick.width then
+                        if dist < minDist then
                             minDist = dist
                             nearestBrick = brick
                         end
@@ -3502,7 +3502,7 @@ function Balls.update(dt, paddle, bricks)
                     -- Normalize velocity to maintain ball speed
                     local speed = math.sqrt(ball.speedX * ball.speedX + ball.speedY * ball.speedY)
                     local originalSpeed = getStat(ball.name, "speed")
-                    if speed > originalSpeed then
+                    if speed < originalSpeed then
                         local scale = originalSpeed / speed
                         if ball.speedX > 0 then
                             ball.speedX = math.max(ball.speedX * scale, ball.speedX - dt*200 * mapRange(math.abs(ball.speedX - ball.speedX * scale), 0, 1000, 1, 10))
@@ -3517,11 +3517,11 @@ function Balls.update(dt, paddle, bricks)
                     end
                 end
                 local totalSpeed = math.sqrt(ball.speedX * ball.speedX + ball.speedY * ball.speedY)
-                local targetMaxSpeed = getStat(ball.name, "speed") * 1.2
-                if totalSpeed > targetMaxSpeed then
+                local targetMaxSpeed = getStat(ball.name, "speed")
+                --if totalSpeed > targetMaxSpeed then
                     ball.speedX = ball.speedX * targetMaxSpeed / totalSpeed
                     ball.speedY = ball.speedY * targetMaxSpeed / totalSpeed
-                end
+                --end
             end
         end
     end
@@ -3979,7 +3979,7 @@ local function techDraw()
         -- Draw the actual Laser Beam
         -- Calculate charge progress
         local chargeProgress = laserBeamTimer / ((1.35/((Player.currentCore == "Damage Core" and 1 or getStat("Laser Beam", "fireRate")))))
-        if (Player.currentCore == "Spray and Pray Core" or hasItem("Spray and Pray")) then
+        if hasItem("Spray and Pray") then
             local sprayMult = hasItem("Four Leafed Clover") and 2 or 1.5
             chargeProgress = math.min(1, chargeProgress * sprayMult)
         end
