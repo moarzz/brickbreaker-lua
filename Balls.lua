@@ -873,24 +873,24 @@ local function shoot(gunName, ball)
             end
             if gun.name == "Minigun" then
                 local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
-                Timer.after(gun.fireRateMult * (mapRangeClamped(getStat("Minigun", "ammo") - gun.currentAmmo, 0, 25, 4, 0.5) * (spray and sprayMult or 1))/(getStat(gun.name, "fireRate") * bulletStormMult), function() shoot(gunName) end)
+                local timeUntilNextShot = gun.fireRateMult * (mapRangeClamped(getStat("Minigun", "ammo") - gun.currentAmmo, 0, 25, 4, 0.5) * (spray and sprayMult or 1))/(getStat(gun.name, "fireRate") * bulletStormMult)
+                Timer.after(timeUntilNextShot, function() shoot(gunName) end)
+                -- createCooldownVFX(cooldownValue)
             else
                 local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
-                Timer.after((gun.fireRateMult * 3.0 * (spray and sprayMult or 1))/(getStat(gun.name, "fireRate") * bulletStormMult), function() shoot(gunName) end)
+                local timeUntilNextShot = (gun.fireRateMult * 3.0 * (spray and sprayMult or 1))/(getStat(gun.name, "fireRate") * bulletStormMult)
+                Timer.after(timeUntilNextShot, function() shoot(gunName) end)
+                -- createCooldownVFX(cooldownValue)
             end
         else
             gun.currentAmmo = getStat(gun.name, "ammo")
 
             local cooldownValue = getStat(gun.name, "cooldown") * 0.5
-            print("gun cooldown : " .. cooldownValue .. " - current ammo : " .. gun.currentAmmo)
             if accelerationOn then
                 cooldownValue = cooldownValue * 0.5
             end
-            Timer.after(cooldownValue, function() shoot(gunName) 
-                print("gun cooldown ended")
-                print("current ammo : " .. gun.currentAmmo)
-            end)
-            --cooldownVFX(gun.stats.cooldown * 2, paddle.x + paddle.width / 2, paddle.y)
+            Timer.after(cooldownValue, function() shoot(gunName) end)
+            createCooldownVFX(cooldownValue)
         end
     else 
         print("Error: gun is not unlocked but shoot is being called.")
@@ -1089,6 +1089,7 @@ fire = function(techName)
                     unlockedBallTypes["Rocket Launcher"].currentAmmo = getStat("Rocket Launcher", "ammo")
                     fire("Rocket Launcher")
                 end)
+                createCooldownVFX(cooldownValue)
             else
                 local timerLength = (Player.currentCore == "Madness Core" and 0.5 or 1) * 6/getStat("Rocket Launcher", "fireRate")
                 if hasItem("Spray and Pray") then
@@ -1130,6 +1131,7 @@ fire = function(techName)
                         flamethrower.currentAmmo = getStat("Flamethrower", "ammo")
                         fire("Flamethrower")
                     end)
+                    createCooldownVFX(cooldownValue)
                 end
             end)
         end
@@ -1174,6 +1176,7 @@ fire = function(techName)
                 turret.currentAmmo = getStat("Gun Turrets", "ammo")
                 fire("Gun Turrets")
             end)
+            createCooldownVFX(cooldownValue)
         else
             turretsInQueue = turretsInQueue + 1
         end
@@ -1278,6 +1281,10 @@ local function cast(spellName, brick, forcedDamage)
         end
         local cooldownValue = 12 / getStat("Fireballs", "fireRate")
         local timeUntilNextCast = (3 + cooldownValue)/3
+        Timer.after(timeUntilNextCast, function()
+            cast("Fireballs")
+        end)
+        createCooldownVFX(cooldownValue)
     end
     if spellName == "Light Beam" then        
         local ammoValue = getStat("Light Beam", "ammo")
@@ -1313,6 +1320,7 @@ local function cast(spellName, brick, forcedDamage)
         Timer.after(0.2 * ammoValue + math.max(cooldownValue, 0) + 0.05, function()
             cast("Light Beam")
         end)
+        createCooldownVFX(cooldownValue)
     end
     if spellName == "Lightning Pulse" then
         print("Casting Lightning Pulse")
@@ -1354,6 +1362,7 @@ local function cast(spellName, brick, forcedDamage)
         Timer.after(timeUntilNextCast, function()
             cast("Lightning Pulse")
         end)
+        createCooldownVFX(cooldownValue)
     end
     if spellName == "Chain Lightning" or spellName == "Lightning Ball" or spellName == "Incrediball" then
         local ballType = unlockedBallTypes[spellName]
@@ -3012,12 +3021,12 @@ local function updateDeadBullets(dt)
         bullet.y = bullet.y + bullet.speedY * dt
         
         -- Remove bullets that go off screen
-          if bullet.y < 0 or bullet.y > love.graphics.getHeight() or
-              bullet.x < 0 or bullet.x > love.graphics.getWidth() then
-                bullet.trailFade = 1
-                bullet.deathTime = love.timer.getTime()
-                table.insert(deadBullets, bullet)
-                table.remove(bullets, i)
+        if bullet.y < 0 or bullet.y > love.graphics.getHeight() or
+            bullet.x < 0 or bullet.x > screenWidth then
+            bullet.trailFade = 1
+            bullet.deathTime = love.timer.getTime()
+            table.insert(deadBullets, bullet)
+            table.remove(bullets, i)
         end
     end
 
@@ -3253,7 +3262,7 @@ function powerupPickup(powerup)
         createMoneyPopup(moneyGain, paddle.x + paddle.width/2, paddle.y)
     elseif powerup.type == "moneyBag" then
         local moneyGain = math.random(3,5)
-        Player.shiftMoneyValue(moneyGain);
+        Player.shiftMoneyValue(moneyGain)
         createMoneyPopup(moneyGain, paddle.x + paddle.width/2, paddle.y)
     elseif powerup.type == "nuke" then
         for _, brick in ipairs(bricks) do

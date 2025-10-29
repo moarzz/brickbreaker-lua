@@ -26,8 +26,8 @@ function Crooky:load()
     Textures.getTexture('crooky/body_back', true)
     Textures.getTexture('crooky/body_front', true)
 
-    self.x = 1550
-    self.y = 300
+    self.x = 1600
+    self.y = 400
 
     self.movement = 'idle'
 
@@ -542,8 +542,9 @@ function Crooky:draw()
         return
     end
 
-    love.graphics.setColor(0.8,0.8,0.8)
-    love.graphics.draw(Textures.getTexture('crooky/background'), self.x, self.y)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.draw(drillSergeantImg, self.x, self.y, 0, 0.5)
+    -- love.graphics.draw(Textures.getTexture('crooky/background'), self.x, self.y)
 
     love.graphics.setColor(1,1,1)
 
@@ -556,7 +557,7 @@ function Crooky:draw()
     local w = cur[3]
     local h = cur[4]
 
-    love.graphics.draw(Textures.getTexture('crooky/body_back'), tx + 9 * w, ty + 2 * h, 0, w,h, 10,64)
+    --[[love.graphics.draw(Textures.getTexture('crooky/body_back'), tx + 9 * w, ty + 2 * h, 0, w,h, 10,64)
 
     love.graphics.draw(Textures.getTexture('crooky/eye'), tx + cur[6] * w, ty + cur[7] * h, 0, w,h, 10,64)
     love.graphics.draw(Textures.getTexture('crooky/eye'), tx + cur[9] * w, ty + cur[10] * h, 0, w,h, 10,64)
@@ -569,7 +570,7 @@ function Crooky:draw()
 
     love.graphics.draw(Textures.getTexture('crooky/mouth_' .. tostring(cur[17] or self.talkAnim)), tx + 3 * w, ty + 33 * h, 0, w,h, 10,64)
 
-    love.graphics.draw(Textures.getTexture('crooky/body_front'), tx, ty, 0, w,h, 10,64)
+    love.graphics.draw(Textures.getTexture('crooky/body_front'), tx, ty, 0, w,h, 10,64)]]
 
     if self.talking then
         love.graphics.draw(self.speechBubble, self.x - self.textW + 3, self.y - self.textObj:getHeight() - 3)

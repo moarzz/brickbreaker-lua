@@ -14,11 +14,12 @@ function SprayAndPray.new()
         fireRateMult = hasItem("Four Leafed Clover") and 70 or 35;
     };
 
-    instance.stats.fireRate = 2;
+    instance.stats.fireRate = 3;
 
     return instance;
 end
 
+-- I dont think this is necessary it should already be in the paddle metadata
 function SprayAndPray.events:item_purchase_FourLeafedClover()
     self.descriptionPointers.paddleWidth = 70;
 end

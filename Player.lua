@@ -554,9 +554,9 @@ function Player.update(dt)
     checkForHit()
 end
 
-function Player.changeMoney(amnt)
+function Player.changeMoney(amnt, itemID)
     if amnt > 0 then
-        gainMoneyWithAnimations(amnt)
+        gainMoneyWithAnimations(amnt, itemID)
         --[[EventQueue:addEventToQueue(
             EVENT_POINTERS.money_gain,
             0.2,

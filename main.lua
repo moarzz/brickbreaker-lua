@@ -260,6 +260,7 @@ local function loadAssets()
     brickPiece2Img = love.graphics.newImage("assets/sprites/brickPiece2.png")
     brickPiece3Img = love.graphics.newImage("assets/sprites/brickPiece3.png")
     vignetteImg = love.graphics.newImage("assets/sprites/vignette.png")
+    drillSergeantImg = love.graphics.newImage("assets/sprites/drillSergeant.png")
 
     -- UI
     uiLabelImg = love.graphics.newImage("assets/sprites/UI/label.png")
@@ -329,7 +330,7 @@ local function loadAssets()
     Player.loadJsonValues()
     damageRipples.load()
     Crooky:load()
-    Crooky:setVisible(false)
+    Crooky:setVisible(not firstRunCompleted)
 end
 
 dmgVFXOn = true
@@ -1536,11 +1537,14 @@ function drawBricks()
     local brickWidth, brickHeight = brickImg:getDimensions();
     local defColour = {1,1,1,1};
     local goldBricksToDraw = {};
+    local bossBrick
     for _, brick in ipairs(bricks) do
         if brick.destroyed then
             --? dont draw a brick if its been destroyed
         elseif brick.type == "gold" then
             table.insert(goldBricksToDraw, brick);
+        elseif brick.type == "boss" then
+            bossBrick = brick
         else -- brick is not gold
             brickBatch:setColor(brick.color or defColour);
             brickBatch:add(
@@ -1594,7 +1598,7 @@ function drawBricks()
         end
     end
 
-    -- Draw all bricks (except boss)
+    -- Draw all gold bricks
     for _, brick in ipairs(goldBricksToDraw) do
         if (not brick.type or brick.type ~= "boss") and not brick.destroyed and brick.y + brick.height > screenTop - 10 and brick.y < screenBottom + 10 then
             local type = brick.type or "small"
@@ -1623,6 +1627,23 @@ function drawBricks()
             love.graphics.setColor(1, 1, 1)
             love.graphics.print(text, centerX, centerY, 0, 1, 1, love.graphics.getFont():getWidth(text) / 2, love.graphics.getFont():getHeight() / 2)
         end
+    end
+
+    if bossBrick then
+        local brick = bossBrick
+        local color = brick.color
+        love.graphics.setColor(color)
+        love.graphics.draw(brickImg, centerX, centerY, brick.drawOffsetRot, scaleX, scaleY, brickImg:getWidth() / 2, brickImg:getHeight() / 2)
+        
+        setFont(35)
+        -- Draw health text (black outline)
+        local text = tostring(brick.health)
+        love.graphics.setColor(0, 0, 0)
+        love.graphics.print(text, centerX, centerY, 0, 1, 1, love.graphics.getFont():getWidth(text) / 2, love.graphics.getFont():getHeight() / 2)
+        
+        -- Draw health text (white)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.print(text, centerX, centerY, 0, 1, 1, love.graphics.getFont():getWidth(text) / 2, love.graphics.getFont():getHeight() / 2)
     end
 
     -- Reset color

@@ -243,33 +243,33 @@ function plusStatPopup(text, x, y)
 end
 
 visualItemValues = {}
-function itemTriggerAnimation(itemName)
+function itemTriggerAnimation(itemID)
     local item = nil
-    for _, itemm in pairs(Balls.getUnlockedBallTypes()) do
-        if itemm.name == itemName then
+    for _, itemm in ipairs(Player.items) do
+        if _ == itemID then
             item = itemm
         end
     end
     if item == nil then return end
-    if not visualItemValues[itemName] then
-        print("itemId : " .. itemName)
-        visualItemValues[itemName] = {scale = 1}
+    if not visualItemValues[itemID] then
+        print("itemId : " .. itemID)
+        visualItemValues[itemID] = {scale = 1}
     end
-    local inTween = tween.new(0.05, visualItemValues[itemName], {scale = 1.7}, tween.easing.outCirc)
+    local inTween = tween.new(0.05, visualItemValues[itemID], {scale = 1.7}, tween.easing.outCirc)
     addTweenToUpdate(inTween)
     Timer.after(0.05, function()
-        local outTween = tween.new(0.175, visualItemValues[itemName], {scale = 1}, tween.easing.inCirc)
+        local outTween = tween.new(0.175, visualItemValues[itemID], {scale = 1}, tween.easing.inCirc)
         addTweenToUpdate(outTween)
     end)
 end
 local pausedUpgradeNumbers = {}
 
-function gainMoneyWithAnimations(moneyGain, itemName)
+function gainMoneyWithAnimations(moneyGain, itemName, itemID)
     
     EventQueue:addEventToQueue(EVENT_POINTERS.money_gain, 0.25, function() --end)
         -- First event: Show animation and add money
         if itemName then -- Changed from itemId to itemName check
-            itemTriggerAnimation(itemName)
+            itemTriggerAnimation(itemID)
         end
         playSoundEffect(upgradeSFX, 0.6, 1, false)
         
@@ -295,7 +295,7 @@ function gainMoneyWithAnimations(moneyGain, itemName)
 end
 
 visualUpgradePriceValues = {}
-function reducePriceWithAnimations(reductionAmount, weaponName, itemName)  -- Accept weapon object
+function reducePriceWithAnimations(reductionAmount, weaponName, itemName, itemID)  -- Accept weapon object
     local weapon
     for _, weaponn in pairs(Balls.getUnlockedBallTypes()) do
         if weaponn.name == weaponName then
@@ -306,7 +306,7 @@ function reducePriceWithAnimations(reductionAmount, weaponName, itemName)  -- Ac
     EventQueue:addEventToQueue(EVENT_POINTERS.empty, 0.05, function() 
         playSoundEffect(upgradeSFX, 0.6, 1, false)
         if itemId ~= nil then
-            itemTriggerAnimation(itemName)
+            itemTriggerAnimation(itemID)
         end
         
         if not visualUpgradePriceValues[weapon.name] then
@@ -877,18 +877,37 @@ function createSpriteAnimation(x, y, scale, spritesheet, frameWidth, frameHeight
     return animation.id
 end
 
-function cooldownVFX(duration, x, y)
-    local timer = 0
-    local function update(dt)
-        timer = timer + dt
-        if timer >= duration then
-            -- Create a visual effect at (x, y)
-            createSpriteAnimation(x, y)
-            return true -- Stop the update
+local cooldownVFXs = {}
+function createCooldownVFX(duration)
+    local vfx = {
+        duration = duration,
+        timer = 0
+    }
+    table.insert(cooldownVFXs, vfx)
+end
+
+function updateCooldownTimers(dt)
+    if Player.levelingUp then return false end
+
+    for i = #cooldownVFXs, 1, -1 do
+        local vfx = cooldownVFXs[i]
+        vfx.timer = vfx.timer + dt
+        if vfx.timer >= vfx.duration then
+            table.remove(cooldownVFXs, i)
         end
-        return false -- Continue the update
+        
     end
-    return update
+    
+end
+
+function drawCooldownVFXs()
+    -- Draw cooldown visual effects here
+    for i, vfx in ipairs(cooldownVFXs) do
+        local alpha = 1 - (vfx.timer / vfx.duration)
+        love.graphics.setColor(1, 1, 1, 1)
+        local currentWidth = 150 * alpha
+        love.graphics.rectangle("fill", paddle.x + paddle.width/2 - currentWidth/2, paddle.y + paddle.height + 5 + (i-1) * 10, currentWidth, 5)
+    end
 end
 
 function getAnimation(id)

@@ -1426,8 +1426,8 @@ local function drawPlayerItems()
 
             if item.image then
                 local imgScaleMult = 1
-                if visualItemValues[item.name] then
-                    local imgScaleMult = visualItemValues[item.name]
+                if visualItemValues[index] then
+                    imgScaleMult = visualItemValues[index]
                 end
                 local xOffset, yOffset = -(imgScaleMult-1) * itemWidth * 0.25, -(imgScaleMult-1) * itemHeight * 0.25
                 love.graphics.draw(item.image, itemX + xOffset, itemY + yOffset, 0, 0.5 * imgScaleMult, 0.5 * imgScaleMult)
@@ -1519,7 +1519,7 @@ end
 
 function upgradesUI.draw()
 
-    
+    drawCooldownVFXs()
     drawPlayerStats() -- Draw the player stats table
     drawPlayerMoney()
     drawBallStats() -- Draw the ball stats table
@@ -1542,7 +1542,7 @@ function upgradesUI.draw()
 end
 
 function upgradesUI.update(dt)
-    
+    updateCooldownTimers(dt)
 end
 
 return upgradesUI
