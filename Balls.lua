@@ -2506,12 +2506,12 @@ local function brickCollisionCheck(ball)
                 if ball.name == "Ping-Pong ball" and ball.speedY < 0 then
                     ball.speedY = ball.speedY - 150
                 end
-                if ball.name == "Magnetic Ball" or ball.name == "Incrediball" or hasItem("Electromagnetic Alignment") then
-                    local currentBallSpeed = getStat(ball.name, "speed")
+                if ball.name == "Magnetic Ball" or ball.name == "Incrediball" then
+                    local currentBallSpeed = (unlockedBallTypes[ball.name].stats.speed + getStatItemsBonus("speed", ballList[ball.name]) * 50 + (Player.permanentUpgrades.speed or 0) * 50) * (Player.currentCore == "Madness Core" and 2 or 1)
                     local normalizedSpeedX, normalizedSpeedY = normalizeVector(ball.x - (brick.x + brick.width/2), ball.y - (brick.y + brick.height/2))
                     local speed = math.sqrt(ball.speedX^2 + ball.speedY^2)
-                    local knockback = math.max((Player.currentCore == "Madness Core" and 2 or 1) * math.pow(getStat(ball.name, "speed") + 250, 0.6), 350)
-                    knockback = math.max(math.min(knockback, 1500 - currentBallSpeed), 0)
+                    local knockback = math.max(0.5 * (Player.currentCore == "Madness Core" and 2 or 1) * math.pow((ball.stats.speed + getStatItemsBonus("speed", ballList[ball.name]) * 50 + (Player.perks.speed or 0) * 50 + 250), 0.6), 250)
+                    knockback = math.max(math.min(knockback, 1500 - currentBallSpeed),0)
                     ball.speedX = ball.speedX + normalizedSpeedX * knockback
                     ball.speedY = ball.speedY + normalizedSpeedY * knockback
                 end
@@ -3473,7 +3473,7 @@ function Balls.update(dt, paddle, bricks)
             end
 
             -- Magnetic ball behavior (use visibleBricks)
-            if ball.name == "Magnetic Ball" or hasItem("Electromagnetic Alignment") or ball.name == "Incrediball" then
+            if ball.name == "Magnetic Ball" or hasItem("Electromagnetic alignment") or ball.name == "Incrediball" then
                 -- Find nearest visible brick
                 local nearestBrick = nil
                 local minDist = math.huge
@@ -3490,19 +3490,19 @@ function Balls.update(dt, paddle, bricks)
                 end
                 -- Apply magnetic attraction to nearest brick
                 if nearestBrick then
-                    local attractionStrength = ball.attractionStrength or 350
+                    local attractionStrength = ball.attractionStrength or 450
                     local dx = (nearestBrick.x + nearestBrick.width/2) - ball.x
                     local dy = (nearestBrick.y + nearestBrick.height/2) - ball.y
                     local dist = math.sqrt(dx*dx + dy*dy)
-                    local attraction = (attractionStrength / math.max(dist, 10)) * math.pow((getStat(ball.name, "speed") * 15), 1.45) * 0.035
-                    attraction = attraction * mapRangeClamped(getStat(ball.name, "speed") + (ball.speedExtra or 0)*10, 1, 500, 0.5, 2)
+                    local attraction = mapRange((attractionStrength / math.max(dist, 10)) * math.pow((ball.stats.speed + getStatItemsBonus("speed", ball) * 50 + (ball.speedExtra or 0) * 15) * (Player.currentCore == "Madness Core" and 2 or 1), 1.45), 1, 10, 1, 20) * 0.0175
+                    attraction = attraction * mapRangeClamped(ball.stats.speed + getStatItemsBonus("speed", ball) * 50 + (ball.speedExtra or 0)*10, 1, 500, 0.5, 2)
                     local angle = math.atan2(dy, dx)
                     ball.speedX = ball.speedX + math.cos(angle) * attraction * dt
                     ball.speedY = ball.speedY + math.sin(angle) * attraction * dt
                     -- Normalize velocity to maintain ball speed
                     local speed = math.sqrt(ball.speedX * ball.speedX + ball.speedY * ball.speedY)
-                    local originalSpeed = getStat(ball.name, "speed")
-                    if speed < originalSpeed then
+                    local originalSpeed = (ball.stats.speed + getStatItemsBonus("speed", ball) * 50 + (Player.permanentUpgrades.speed or 0) * 50) * (Player.currentCore == "Madness Core" and 2 or 1)
+                    if speed > originalSpeed then
                         local scale = originalSpeed / speed
                         if ball.speedX > 0 then
                             ball.speedX = math.max(ball.speedX * scale, ball.speedX - dt*200 * mapRange(math.abs(ball.speedX - ball.speedX * scale), 0, 1000, 1, 10))
@@ -3516,12 +3516,6 @@ function Balls.update(dt, paddle, bricks)
                         end
                     end
                 end
-                local totalSpeed = math.sqrt(ball.speedX * ball.speedX + ball.speedY * ball.speedY)
-                local targetMaxSpeed = getStat(ball.name, "speed")
-                --if totalSpeed > targetMaxSpeed then
-                    ball.speedX = ball.speedX * targetMaxSpeed / totalSpeed
-                    ball.speedY = ball.speedY * targetMaxSpeed / totalSpeed
-                --end
             end
         end
     end
