@@ -250,7 +250,9 @@ local function loadAssets()
     healImg = love.graphics.newImage("assets/sprites/heal.png")
     brickImg = love.graphics.newImage("assets/sprites/brick.png")
     goldBrickImg = love.graphics.newImage("assets/sprites/goldBrick.png")
-    heartImg = love.graphics.newImage("assets/sprites/heart.png") -- Heart image for health
+    bossBrickImg = love.graphics.newImage("assets/sprites/bossBrick.png")
+    crownImg = love.graphics.newImage("assets/sprites/crown.png")
+    heartImg = love.graphics.newImage("assets/sprites/heart.png")
     muzzleFlashImg = love.graphics.newImage("assets/sprites/muzzleFlash.png")
     rocketImg = love.graphics.newImage("assets/sprites/rocket.png")
     turretImg = love.graphics.newImage("assets/sprites/turret.png")
@@ -302,6 +304,7 @@ local function loadAssets()
     gunShootSFX = love.audio.newSource("assets/SFX/gunShoot.mp3", "static") -- Add gun shoot sound if available
     lvlUpSFX = love.audio.newSource("assets/SFX/lvlUp.mp3", "static")
     upgradeSFX = love.audio.newSource("assets/SFX/upgrade.mp3", "static")
+    loseMoneySFX = love.audio.newSource("assets/SFX/loseMoney.mp3", "static")
     selectSFX = love.audio.newSource("assets/SFX/select.mp3", "static")
     laserSFX = love.audio.newSource("assets/SFX/laser.mp3", "static")
     lightningPulseSFX = love.audio.newSource("assets/SFX/lightningPulse.mp3", "static")
@@ -621,6 +624,7 @@ local function generateRow(brickCount, yPos)
     return row
 end
 
+local bossSpawnTime = 2
 --This function is called every 0.5 seconds to see if we should add more bricks, if we should, it adds 10 rows using the generateRow() function
 local function addMoreBricks()
     if bricks[#bricks] then
@@ -635,7 +639,7 @@ local function addMoreBricks()
                     bossSpawned = true
                     spawnBossNextRow = false
                     currentRowPopulation = 1000
-                elseif not (bossSpawned or spawnBossNextRow) and gameTime >= 600 then
+                elseif not (bossSpawned or spawnBossNextRow) and gameTime >= bossSpawnTime then
                     spawnBossNextRow = true
                 end
             end
@@ -1641,10 +1645,16 @@ function drawBricks()
     if bossBrick then
         local brick = bossBrick
         local color = brick.color
+        local scale = brick.drawScale or 1
+        -- Calculate scale to fit the brick width/height exactly
+        local scaleX = brick.width / bossBrickImg:getWidth()
+        local scaleY = brick.height / bossBrickImg:getHeight()
+        local centerX = brick.x + brick.width / 2 + brick.drawOffsetX + 3
+        local centerY = brick.y + brick.height / 2 + brick.drawOffsetY
         love.graphics.setColor(color)
-        love.graphics.draw(brickImg, centerX, centerY, brick.drawOffsetRot, scaleX, scaleY, brickImg:getWidth() / 2, brickImg:getHeight() / 2)
-        
-        setFont(35)
+        -- Draw from center of image and brick
+        love.graphics.draw(bossBrickImg, centerX, centerY, brick.drawOffsetRot, scaleX, scaleY, bossBrickImg:getWidth() / 2, bossBrickImg:getHeight() / 2)
+        setFont(50)
         -- Draw health text (black outline)
         local text = tostring(brick.health)
         love.graphics.setColor(0, 0, 0)
@@ -1653,6 +1663,8 @@ function drawBricks()
         -- Draw health text (white)
         love.graphics.setColor(1, 1, 1)
         love.graphics.print(text, centerX, centerY, 0, 1, 1, love.graphics.getFont():getWidth(text) / 2, love.graphics.getFont():getHeight() / 2)
+
+        drawImageCentered(crownImg, centerX, centerY - brick.height / 2, crownImg:getWidth()/2.5, crownImg:getHeight()/2.5)
     end
 
     -- Reset color
@@ -1762,12 +1774,11 @@ end
 
 local frozenTime = 0
 local lastFreezeTime = 0
-local bossSpawnTime = 600
 local useTime = true
 
 local function drawGameTimer()
     if useTime then
-        local countdownTime = 600 - gameTime
+        local countdownTime = bossSpawnTime - gameTime
         local minutes = math.floor(countdownTime / 60)
         local seconds = math.floor(countdownTime % 60)
         local timeString = string.format("%02d:%02d", minutes, seconds)
@@ -2215,7 +2226,7 @@ local function fullDraw()
     drawAnimations()
     drawMuzzleFlashes()
 
-    local vignetteIntensity = mapRange(screenHeight - paddle.y, 0 , 110, 0.8, 0)
+    local vignetteIntensity = mapRangeClamped(screenHeight - paddle.y, 0 , 110, 0.8, 0)
     love.graphics.setColor(0.15, 0, 0, vignetteIntensity)
     love.graphics.draw(vignetteImg, 0, 0, 0)
     upgradesUI.draw()

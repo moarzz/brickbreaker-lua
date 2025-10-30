@@ -65,7 +65,7 @@ end
 
 function playSoundEffect(soundEffect, volume, pitch, loop, clone)
     if soundEffect ~= backgroundMusicSFX then
-        volume = (sfxVolume or 1) * (volume or 1) * 0.35 -- Adjust volume based on global sfxVolume
+        volume = (sfxVolume or 1) * (volume or 1) * 0.225 -- Adjust volume based on global sfxVolume
     end
     if Player.dead and currentGameState == GameState.PLAYING then
         return
@@ -243,25 +243,47 @@ function plusStatPopup(text, x, y)
 end
 
 visualItemValues = {}
-function itemTriggerAnimation(itemID)
-    print("triggering item animation for itemID: " .. itemID)
-    local item = nil
-    for _, itemm in ipairs(Player.items) do
-        if itemm.id == itemID then
-            item = itemm
-            print("found item!")
+function itemTriggerAnimation(itemIdentifier)
+    -- Accept either an item id or an item name; resolve to item name for the visual key
+    if not itemIdentifier then return end
+    -- If the identifier matches an instance id, find the item's name
+    local resolvedName = nil
+    for _, item in ipairs(Player.items) do
+        if item.id and item.id == itemIdentifier then
+            resolvedName = item.filteredName or item.templateFilteredName or item.name
+            break
         end
     end
-    if item == nil then return end
-    if not visualItemValues[itemID] then
-        print("itemId : " .. itemID)
-        visualItemValues[itemID] = {scale = 1}
+    -- If we didn't find an id match, assume the caller passed a name directly
+    if not resolvedName then
+        resolvedName = itemIdentifier
     end
-    local inTween = tween.new(0.05, visualItemValues[itemID], {scale = 1.6}, tween.easing.outCirc)
+
+    -- Ensure visual table entry exists for this item name
+    if not visualItemValues[resolvedName] then
+        visualItemValues[resolvedName] = {scale = 1}
+    end
+
+    local inTween = tween.new(0.05, visualItemValues[resolvedName], {scale = 1.6}, tween.easing.outCirc)
     addTweenToUpdate(inTween)
     GlobalTimer:after(0.05, function()
-        local outTween = tween.new(0.175, visualItemValues[itemID], {scale = 1}, tween.easing.inCirc)
+        local outTween = tween.new(0.175, visualItemValues[resolvedName], {scale = 1}, tween.easing.inCirc)
         addTweenToUpdate(outTween)
+    end)
+end
+
+-- Reorder Player.items so that items with the same template/name are adjacent.
+function reorderPlayerItems()
+    if not Player or not Player.items then return end
+    table.sort(Player.items, function(a, b)
+        local ka = a.filteredName or a.templateFilteredName or a.name or ""
+        local kb = b.filteredName or b.templateFilteredName or b.name or ""
+        if ka == kb then
+            -- keep stable order among identical keys by comparing ids if present
+            if a.id and b.id then return a.id < b.id end
+            return false
+        end
+        return ka < kb
     end)
 end
 local pausedUpgradeNumbers = {}
@@ -273,7 +295,11 @@ function gainMoneyWithAnimations(moneyGain, itemID)
         if itemID then -- Changed from itemId to itemName check
             itemTriggerAnimation(itemID)
         end
-        playSoundEffect(upgradeSFX, 0.6, 1, false)
+        if moneyGain > 0 then
+            playSoundEffect(upgradeSFX, 0.6, 1, false)
+        else
+            playSoundEffect(loseMoneySFX, 0.6, 1, false)
+        end
         
         -- Create and add tween without capturing outer scope variables
         local inTween = tween.new(0.075, visualMoneyValues, {scale = 1.7}, tween.easing.outCirc)
@@ -495,6 +521,8 @@ end
 
 
 function drawImageCentered(image, x, y, targetWidth, targetHeight, angle, xOffset, yOffset)
+    targetWidth = targetWidth or image:getWidth()
+    targetHeight = targetHeight or image:getHeight()
     xOffset = xOffset or 0
     yOffset = yOffset or 0
     -- Get the original dimensions of the image

@@ -1355,6 +1355,8 @@ local function drawItemShop()
                         table.insert(Player.items, item);
                         Player.items[#Player.items].id = item.name .. tostring(currentItemId);
                         currentItemId = currentItemId + 1;
+                        -- Keep Player.items grouped so identical items are adjacent
+                        if reorderPlayerItems then reorderPlayerItems() end
                     end
                     if item.stats.amount then
                         Balls.amountIncrease(item.stats.amount)
@@ -1409,13 +1411,31 @@ local function drawPlayerItems()
     if Player.levelingUp and not Player.choosingUpgrade then
 
         -- print title
-        love.graphics.setColor(1,1,1,1)               
+        love.graphics.setColor(1,1,1,1)
         love.graphics.print("Items", 200 - getTextSize("Items")/2, 400)
-        
+
+        -- Aggregate duplicates so we only draw each unique item once
+        local uniqueMap = {}
+        local uniqueOrder = {}
+        for _, item in ipairs(Player.items) do
+            local key = item.filteredName or item.templateFilteredName or item.name or tostring(item)
+            if not uniqueMap[key] then
+                uniqueMap[key] = {sample = item, count = 1, ids = {item.id}}
+                table.insert(uniqueOrder, key)
+            else
+                uniqueMap[key].count = uniqueMap[key].count + 1
+                table.insert(uniqueMap[key].ids, item.id)
+            end
+        end
+
         local hoveredItem = nil
         local hoveredItemIndex = nil
 
-        for index, item in ipairs(Player.items) do            
+        -- Draw each unique item once
+        for index, key in ipairs(uniqueOrder) do
+            local entry = uniqueMap[key]
+            local item = entry.sample
+
             -- Keep original row-based positioning, just scaled
             local itemWidth = 140
             local itemHeight = 125
@@ -1423,22 +1443,41 @@ local function drawPlayerItems()
             local startingY = screenHeight/2 - 85 -- Don't scale the starting Y
             local itemY = startingY + math.floor((index - 1)/3) * itemHeight
 
-
             if item.image then
                 local imgScaleMult = 1
-                -- print("current id : " .. item.id)
-                if item.id then
-                    if visualItemValues[item.id] then
-                        imgScaleMult = visualItemValues[item.id].scale
-                    end
+                local representativeName = entry.sample.filteredName or entry.sample.templateFilteredName or entry.sample.name
+                if representativeName and visualItemValues[representativeName] then
+                    imgScaleMult = visualItemValues[representativeName].scale
                 else
-                    print("item has no id!: " .. item.name)
+                    -- fallback: try using the sample item's name
+                    if item.name and visualItemValues[item.name] then
+                        imgScaleMult = visualItemValues[item.name].scale
+                    end
                 end
                 local xOffset, yOffset = -(imgScaleMult-1) * itemWidth * 0.5, -(imgScaleMult-1) * itemHeight * 0.5
                 love.graphics.draw(item.image, itemX + xOffset, itemY + yOffset, 0, 0.5 * imgScaleMult, 0.5 * imgScaleMult)
             end
-            
-            -- Check if mouse is hovering over this item
+
+            -- Draw counter badge if owning more than one
+            if entry.count and entry.count > 1 then
+                local badgeX = itemX + itemWidth * 3/4
+                local badgeY = itemY + 30
+                local badgeRadius = 14
+                
+                setFont(28)
+                local countText = "x"..tostring(entry.count)
+                local tw = love.graphics.getFont():getWidth(countText)
+                local th = love.graphics.getFont():getHeight()
+                love.graphics.setColor(0, 0, 0, 1)
+                love.graphics.print(countText, badgeX - tw/2 - 1, badgeY - th/2 - 1)
+                love.graphics.print(countText, badgeX - tw/2 + 1, badgeY - th/2 - 1)
+                love.graphics.print(countText, badgeX - tw/2 - 1, badgeY - th/2 + 1)
+                love.graphics.print(countText, badgeX - tw/2 + 1, badgeY - th/2 + 1)
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.print(countText, badgeX - tw/2, badgeY - th/2)
+            end
+
+            -- Check if mouse is hovering over this (unique) item
             local mouseX, mouseY = love.mouse.getPosition()
             if mouseX >= itemX and mouseX <= itemX + itemWidth and
                mouseY >= itemY and mouseY <= itemY + itemHeight then
@@ -1447,6 +1486,7 @@ local function drawPlayerItems()
             end
         end
 
+        -- Show description for hovered unique item
         if hoveredItem then
             local item = hoveredItem
             local index = hoveredItemIndex
@@ -1462,27 +1502,11 @@ local function drawPlayerItems()
             setFont(18)
             drawTextCenteredWithScale(item.name or "Unknown", itemX + 12, itemY + 15, 1, (uiBigWindowImg:getWidth() - 20)/2, {1,1,1,1})
 
-            local function getValue()
-                return longTermInvestment.value
-            end
-            --[[local pointers = {
-                default = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 18),
-                big = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 23),
-                bold = love.graphics.newFont("assets/Fonts/KenneyFutureBold.ttf", 25),
-                longTermValue = getValue
-            }
-            if item.descriptionPointers then
-                for pointerName, pointerFunc in pairs(item.descriptionPointers) do
-                    pointers[pointerName] = pointerFunc
-                end
-            end]]
             local id = "fancyText, player.items" .. index .. item.name:gsub("%s+", "_") .. (item.id or "")
             if fancyTexts[id] then
-                -- fancyTexts[id]:update()
                 fancyTexts[id]:draw()
             else
-                local text
-                text = getItemFullDescription(item) or ""
+                local text = getItemFullDescription(item) or ""
                 local fancyText = FancyText.new(text, itemX + 15, itemY + 70, (uiBigWindowImg:getWidth() - 25)/2, 12, "center", item.descriptionPointers.default, item.descriptionPointers)
                 fancyTexts[id] = fancyText
 

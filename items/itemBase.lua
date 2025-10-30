@@ -77,23 +77,63 @@ function ItemBase:init()
 end
 
 function ItemBase:buy(...)
-    print("purchase function not set for this item: " .. self.name);
+    print("purchase function not set for this item: " .. tostring(self.name));
 
     if self.purchase then
         return self:purchase(...);
     end
 
-    if self.instancesLeft then
-        Items.getItemByName(self.name).instancesLeft = Items.getItemByName(self.name).instancesLeft - 1
-        print("Instances left for item " .. self.name .. ": " .. Items.getItemByName(self.name).instancesLeft)
+    -- Resolve the template (the registered item) safely. Instances may mutate .name, so prefer
+    -- the template's filteredName if available.
+    local template = nil
+    if self.filteredName and Items.itemIndices[self.filteredName] then
+        template = Items.getItemByName(self.filteredName)
+    else
+        -- try pcall with self.name (may error if name isn't registered)
+        local ok, res = pcall(Items.getItemByName, self.name)
+        if ok then template = res end
     end
-    if not self.unique then
-        if Items.getItemByName(self.name).instancesLeft >= 1 then
-            Items.removeInvisibleItem(self.filteredName);
+
+    -- fallback: scan lists for a template with matching name
+    if not template then
+        for _, list in pairs(Items.allItems) do
+            for _, it in ipairs(list) do
+                if it.name == self.name then
+                    template = it
+                    break
+                end
+            end
+            if template then break end
+        end
+        if not template then
+            for _, list in pairs(Items.allConsumables) do
+                for _, it in ipairs(list) do
+                    if it.name == self.name then
+                        template = it
+                        break
+                    end
+                end
+                if template then break end
+            end
         end
     end
 
-    EventQueue:addEventToQueue(EVENT_POINTERS.item_purchase .. "_" .. self.filteredName);
+    -- Decrement instancesLeft on the template (not the instance)
+    if template and template.instancesLeft then
+        template.instancesLeft = template.instancesLeft - 1
+        print("Instances left for item " .. (template.name or tostring(self.name)) .. ": " .. template.instancesLeft)
+    end
+
+    if not self.unique then
+        if template and template.instancesLeft and template.instancesLeft >= 1 then
+            -- use template.filteredName when un-hiding
+            Items.removeInvisibleItem(template.filteredName or self.filteredName)
+        end
+    end
+
+    -- Queue the purchase event using the template's filteredName when possible
+    local eventName = (template and template.filteredName) or self.filteredName or self.name
+    EventQueue:addEventToQueue(EVENT_POINTERS.item_purchase .. "_" .. eventName);
 end
 
 function ItemBase:setDescription(description)
