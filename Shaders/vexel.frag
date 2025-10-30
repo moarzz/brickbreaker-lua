@@ -54,7 +54,6 @@ vec4 effect(vec4 colour, Image tex, vec2 textureCoords, vec2 screenCoords)
 
     // Ensure alpha is 1.0
     fragColor.a = 1.0;
-    
-    // Apply the original colour (usually the sprite colour)
-    return fragColor;
+
+    return fragColor; 
 }

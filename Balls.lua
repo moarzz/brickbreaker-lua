@@ -349,7 +349,7 @@ local function brickDestroyed(brick)
         createPowerup(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth, type)
     end
 
-    if math.random(1,3500) <= currentMoneyDropChance then   
+    if math.random(1,4000) <= currentMoneyDropChance then   
         createPowerup(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth, "dollarBill")
         currentMoneyDropChance = 0
     else
@@ -2102,6 +2102,16 @@ function Balls.initialize()
     organiseBallList()
     resetGoldBricksValues()
     permanentItemBonuses = {}
+
+    -- sets which items should be visible
+    Items.setAllVisible(true)
+    if Player.coreRestrictions[Player.currentCore] then
+        print("lets do the restricitions!")
+        for _, itemName in pairs(Player.coreRestrictions[Player.currentCore] or {}) do
+            print("Making item invisible: " .. itemName)
+            Items.addInvisibleItem(itemName)
+        end
+    end
 end
 
 function Balls.amountDecrease(decreaseValue)
@@ -2181,6 +2191,11 @@ function getStat(ballTypeName, statName)
             totalValue = totalValue * 2
         elseif accelerationOn and (statName == "fireRate" or statName == "speed") then
             totalValue = totalValue * 2
+        end
+        if statName == "cooldown" then
+            totalValue = math.max(0, totalValue)
+        else
+            totalValue = math.max(1, totalValue)
         end
         return totalValue
     else return 0 end
@@ -3267,7 +3282,7 @@ function powerupPickup(powerup)
     elseif powerup.type == "nuke" then
         for _, brick in ipairs(bricks) do
             if (brick.health > 0) and (brick.y + brick.height > 0) then
-                dealDamage({stats = {damage = math.ceil(getAverageBrickHealth()/2.5)}}, brick) -- Deal damage to all bricks
+                dealDamage({stats = {damage = math.ceil(getAverageBrickHealth()/2.1)}}, brick) -- Deal damage to all bricks
             end
         end
     elseif powerup.type == "freeze" then

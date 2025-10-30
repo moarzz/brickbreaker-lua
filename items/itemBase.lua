@@ -83,8 +83,14 @@ function ItemBase:buy(...)
         return self:purchase(...);
     end
 
+    if self.instancesLeft then
+        Items.getItemByName(self.name).instancesLeft = Items.getItemByName(self.name).instancesLeft - 1
+        print("Instances left for item " .. self.name .. ": " .. Items.getItemByName(self.name).instancesLeft)
+    end
     if not self.unique then
-        Items.removeVisibleItem(self.filteredName);
+        if Items.getItemByName(self.name).instancesLeft >= 1 then
+            Items.removeInvisibleItem(self.filteredName);
+        end
     end
 
     EventQueue:addEventToQueue(EVENT_POINTERS.item_purchase .. "_" .. self.filteredName);

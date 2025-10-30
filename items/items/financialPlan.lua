@@ -13,7 +13,7 @@ end
 
 function FinancialPlan.events:levelUp()
     if not hasItem("Abandon Greed") then
-        Player.changeMoney(3);
+        Player.changeMoney(3, self.id);
         -- gainMoneyWithAnimations(3, self.name);
     end
 end

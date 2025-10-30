@@ -16,7 +16,7 @@ end
 
 function LongTermInvestment:purchase()
     if not hasItem("Abandon Greed") then
-        Player.changeMoney(longTermInvestment.value);
+        Player.changeMoney(longTermInvestment.value, self.id);
         -- Player.money = Player.money + longTermInvestment.value;
         -- richGetRicherUpdate(Player.money - longTermInvestment.value, Player.money);
     end

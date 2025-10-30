@@ -166,7 +166,7 @@ function resetGame()
         _width = 300, -- Base width + size upgrade
         widthMult = 1,
         height = 20,
-        speed = 900,
+        speed = 700,
         currrentSpeedX = 0,
         speedMult = 1
     }
@@ -261,6 +261,7 @@ local function loadAssets()
     brickPiece3Img = love.graphics.newImage("assets/sprites/brickPiece3.png")
     vignetteImg = love.graphics.newImage("assets/sprites/vignette.png")
     drillSergeantImg = love.graphics.newImage("assets/sprites/drillSergeant.png")
+    healAuraImg = love.graphics.newImage("assets/sprites/healAura.png")
 
     -- UI
     uiLabelImg = love.graphics.newImage("assets/sprites/UI/label.png")
@@ -330,7 +331,7 @@ local function loadAssets()
     Player.loadJsonValues()
     damageRipples.load()
     Crooky:load()
-    Crooky:setVisible(not firstRunCompleted)
+    
 end
 
 dmgVFXOn = true
@@ -628,7 +629,7 @@ local function addMoreBricks()
             for i=1 , 10 do
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
                 local addBrickMult = mapRangeClamped(Player.level, 1, 20, 2, 1)
-                currentRowPopulation = currentRowPopulation + gameTime/30
+                currentRowPopulation = currentRowPopulation + (gameTime + 30)/50 -- /mapRange(gameTime, 0, 600, 30, 60)
                 if spawnBossNextRow and not bossSpawned then
                     spawnBoss()
                     bossSpawned = true
@@ -694,7 +695,7 @@ function initializeBricks()
     -- Generate bricks
     for i = 0, rows - 1 do
         generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing)) --generate 100 scaling rows of bricks
-        currentRowPopulation = currentRowPopulation + gameTime/30
+        currentRowPopulation = currentRowPopulation +  gameTime/mapRange(gameTime, 0, 600, 30, 60)
     end
 
     -- remove the bossSpawnTimer on gameStart if it exists
@@ -737,6 +738,8 @@ function stopConfetti()
     confettiSystem = nil
 end
 
+local backgroundOpacity = {value = 0}
+local loadTime
 function love.load()
     math.randomseed(os.time())
 
@@ -789,7 +792,7 @@ function love.load()
         _width = 300, -- Base width + size upgrade
         widthMult = 1,
         height = 20,
-        speed = 900, -- Base speed + speed upgrade
+        speed = 700, -- Base speed + speed upgrade
         currrentSpeedX = 0,
         speedMult = 1
     }
@@ -810,11 +813,13 @@ function love.load()
     })
 
     loadGameData()
+    Crooky:setVisible(not firstRunCompleted)
 
     backgroundMusic:setVolume(musicVolume/4)
     love.window.setFullscreen(fullScreenCheckbox);
 
     Crooky:giveInfo("game", "open")
+    loadTime = love.timer.getTime()
 end
 
 function getHighestBrickY(lowestInstead)
@@ -867,7 +872,8 @@ function getAverageBrickHealth()
     end
 end
 
-currentBrickSpeed = 1
+local startingBrickSpeed = 20
+currentBrickSpeed = startingBrickSpeed
 deathTweenValues = {speed = 1, overlayOpacity = 0}
 function getBrickSpeedMult() 
     -- Get the position-based multiplier
@@ -877,7 +883,8 @@ function getBrickSpeedMult()
         return mapRangeClamped(boss.y, -boss.height, screenHeight/3, 2.8, 1.35) * getBrickSpeedByTime()
     else
         local posMult = 1
-        posMult = mapRangeClamped(getHighestBrickY(), 100, (screenHeight/2 + 250), 15, 1.35)
+        local highestY = getHighestBrickY()
+        posMult = highestY < 350 and mapRangeClamped(highestY, 0, 350, startingBrickSpeed, 10) or mapRangeClamped(highestY, 350, 750, 10, 1.35)
         if #bricks == 0 then
             return 1
         end
@@ -900,7 +907,7 @@ local function moveBricksDown(dt)
     local currentTime = love.timer.getTime()
     local isInHitState = (currentTime - Player.lastHitTime) < 2.0 -- Check if within 2 seconds of hit
     -- Normal speed calculation
-    currentBrickSpeed = (currentBrickSpeed == getBrickSpeedByTime() and currentBrickSpeed or (getBrickSpeedMult() < currentBrickSpeed and math.max(currentBrickSpeed - dt * 2, getBrickSpeedMult()) or math.min(currentBrickSpeed + dt * 2, getBrickSpeedMult())))
+    currentBrickSpeed = getBrickSpeedMult()-- < currentBrickSpeed and math.max(currentBrickSpeed - dt * 10, getBrickSpeedMult()) or math.min(currentBrickSpeed + dt * 5, getBrickSpeedMult())
     local speedMult = currentBrickSpeed -- Get the combined speed multiplier
     for _, brick in ipairs(bricks) do
         if not brick.destroyed and brick.health > 0 then
@@ -1227,8 +1234,10 @@ end
 
 local memLeakCheckTimer = 0
 local memLeakLog = ""  -- holds the entire log in memory
+local memLeakCheckOn = false
 
 local function memLeakCheck(dt)
+    if not memLeakCheckOn then return end
     memLeakCheckTimer = memLeakCheckTimer + dt
     if memLeakCheckTimer > 5 then
         memLeakCheckTimer = 0
@@ -1710,6 +1719,8 @@ function drawBricks()
         else
             table.remove(healBricks, i)
         end
+        love.graphics.setColor(0 ,1 ,0 , 0.5)
+        drawImageCentered(healAuraImg, brick.x + brick.width/2, brick.y + brick.height/2,brick.width * 2.8, brick.width * 2.8)
     end
 
     -- Draw boss bricks last (not batched)
@@ -2040,6 +2051,9 @@ local function fullDraw()
         if not firstRunCompleted then
             Crooky:draw()
         end
+        local opacity = mapRange(love.timer.getTime() - loadTime, 0, 2.5, 1, 0)
+        love.graphics.setColor(0,0,0, opacity)
+        love.graphics.rectangle("fill", -screenWidth, -screenHeight, screenWidth*3, screenHeight*3)
         return
     end
     

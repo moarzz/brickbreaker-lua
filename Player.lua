@@ -41,6 +41,7 @@ function loadGameData()
                 data.startingItems = fileData.startingItems or data.startingItems
                 data.fastestTime = fileData.fastestTime or 100000000000
                 data.settings = fileData.settings or data.settings
+                data.firstRunCompleted = fileData.firstRunCompleted or false
             end
         end
     else
@@ -59,6 +60,7 @@ function loadGameData()
     sfxVolume = data.settings.sfxVolume
     fullScreenCheckbox = data.settings.fullscreen
     damageNumbersOn = data.settings.damageNumbersOn
+    firstRunCompleted = data.firstRunCompleted or false
 
     -- Sync unlockedStartingBalls with startingItems for compatibility with UI
     Player.unlockedStartingBalls = {}
@@ -176,8 +178,9 @@ function saveGameData()
 end
 
 -- This file contains the player class, it manages his level, his abilities and his stats
+
 local gameData = loadGameData()
-function Player.loadJsonValues()
+function Player.loadJsonValues() -- wtf is this bootleg function?
     firstRunCompleted = gameData.firstRunCompleted or false
     Player.startingMoney = gameData.startingMoney or 0
     Player.hiddenMoney = gameData.startingMoney or 0
@@ -293,16 +296,17 @@ Player.availableCores = {
         price = 750,
         startingItem = "Laser Beam"
     },
+    {
+        name = "Economy Core",
+        description = "gain 10$ instead of 6$ on level up. There are no items that give money in the shop",
+        price = 1000,
+    },
     --[[{
         name = "Farm Core",
         description = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown).\nIt takes 100% more xp for you to level up",
         price = 1000,
     },
-    {
-        name = "Economy Core",
-        description = "gain 10$ instead of 6$ on level up. There are no items that give money in the shop",
-        price = 1500,
-    },
+    
     {
         name = "Madness Core",
         description = "Damage is divided by 2. Cooldown is halved. Every other stat is doubled.",
@@ -315,9 +319,13 @@ Player.coreDescriptions = {
     ["Spray and Pray Core"] = "gain +1 fireRate for every 5 Player level",
     ["Fast Study Core"] = "gain +5% experience gain per Player Level",
     ["Hacker Core"] = "All Weapons start with an upgradePrice of 0",
-    ["Economy Core"] = "gain 10$ instead of 6$ on level up. There are no items that give money in the shop",
+    ["Economy Core"] = "gain 9$ instead of 5$ on level up. There are no items that give money in the shop",
     ["Farm Core"] = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown)\nIt takes 100% more xp for you to level up and bricks grow in health 100% faster",
     --["Madness Core"] = "Damage and cooldown are reduced by 50%.\nevery other stat is doubled. bricks go twice as fast\n(can break the game)."
+}
+
+Player.coreRestrictions = {
+    ["Economy Core"] = {"Financial Plan", "Coupon Collector", "Degenerate Gambling", }
 }
 
 function Player.addBonus(name)
@@ -557,23 +565,8 @@ end
 function Player.changeMoney(amnt, itemID)
     if amnt > 0 then
         gainMoneyWithAnimations(amnt, itemID)
-        --[[EventQueue:addEventToQueue(
-            EVENT_POINTERS.money_gain,
-            0.2,
-            function()
-                Player.shiftMoneyValue(amnt);
-                createMoneyPopup(amnt, 200, 200);
-                gainMoneyWithAnimations(amnt)
-            end
-        );]]
     else
-        --EventQueue:addEventToQueue(
-            --EVENT_POINTERS.money_lose,
-            --0.2,
-            --function()
-                Player.shiftMoneyValue(amnt);
-            --end
-        --);
+        gainMoneyWithAnimations(amnt, itemID)
     end
 end
 

@@ -259,7 +259,7 @@ local function drawPlayerStats()
     local interestValue = 0--math.floor(math.min(Player.money, Player.currentCore == "Economy Core" and 50 or 25)/5)
     local gainValue = 5
     if Player.currentCore == "Economy Core" then
-        gainValue = 12
+        gainValue = 9
     end
     local popupText = "At the start of the level up phase, gain <color=money><font=big>" .. gainValue .. "$"-- </color=money></font=big><color=white><font=default> + </font=default></color=white><font=big><color=money>1$ </color=money></font=big><color=white><font=default>for every <font=big><color=money>5$</color=money></font=big><color=white><font=default> you have, max </color=white></font=default><color=money><font=big>10$ </color=money></font=big><color=white><font=default><font=default><color=white>"
     if Player.currentCore == "Economy Core" then
@@ -276,7 +276,7 @@ local function drawPlayerStats()
     -- render interest if player has not finished leveling up
     local interestValue = 5 -- + math.floor(math.min(Player.money, Player.currentCore == "Economy Core" and 50 or 25)/5) + getItemsIncomeBonus()
     if Player.currentCore == "Economy Core" then
-        interestValue = 8
+        interestValue = 9
     end
     --[[if Player.levelingUp and interestValue > 0 then
         setFont(45)
@@ -1209,7 +1209,7 @@ function setItemShop(forcedItems)
     forcedItems = forcedItems or {}
 
     for i, v in ipairs(displayedItems) do -- when rolling past an item let it be roled into again
-        Items.removeVisibleItem(v.filteredName);
+        Items.removeInvisibleItem(v.filteredName);
     end
 
     displayedItems = {}
@@ -1234,7 +1234,7 @@ function setItemShop(forcedItems)
         displayedItems[i] = Items.getRandomItem().new();
         
         ::continue::
-        Items.addVisibleItem(displayedItems[i].filteredName);
+        Items.addInvisibleItem(displayedItems[i].filteredName);
     end
 end
 
@@ -1426,10 +1426,15 @@ local function drawPlayerItems()
 
             if item.image then
                 local imgScaleMult = 1
-                if visualItemValues[index] then
-                    imgScaleMult = visualItemValues[index]
+                -- print("current id : " .. item.id)
+                if item.id then
+                    if visualItemValues[item.id] then
+                        imgScaleMult = visualItemValues[item.id].scale
+                    end
+                else
+                    print("item has no id!: " .. item.name)
                 end
-                local xOffset, yOffset = -(imgScaleMult-1) * itemWidth * 0.25, -(imgScaleMult-1) * itemHeight * 0.25
+                local xOffset, yOffset = -(imgScaleMult-1) * itemWidth * 0.5, -(imgScaleMult-1) * itemHeight * 0.5
                 love.graphics.draw(item.image, itemX + xOffset, itemY + yOffset, 0, 0.5 * imgScaleMult, 0.5 * imgScaleMult)
             end
             
@@ -1491,7 +1496,7 @@ playerMoneyBoost = {alpha = 0}
 local function drawPlayerMoney()
     -- render money
     local opacity = 1
-    if not (Player.levelingUp and not Player.choosingUpgrade) then
+    if not Player.levelingUp then
         opacity = playerMoneyBoost.alpha
     end
     local x, y, w, h = 965, 930, 210, 30
