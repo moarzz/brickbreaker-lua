@@ -2068,6 +2068,7 @@ end
 
 -- calls ballListInit and adds a ball to it
 function Balls.initialize()
+    Player.setMoney(0);
     -- initializeRarityItemLists()
     longTermInvestment.value = 0
     if Player.currentCore == "Collector's Core" then

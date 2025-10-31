@@ -85,6 +85,7 @@ end
 local defaultPermanentUpgrades = {speed = 0, damage = 0, cooldown = 0, amount = 0, fireRate = 0, ammo = 0, range = 0}
 Player = {
     hiddenMoney = 0;
+    realMoney = 0;
     startingMoney = 0,
     gold = 0,
     rerolls = 0,
@@ -563,6 +564,7 @@ function Player.update(dt)
 end
 
 function Player.changeMoney(amnt, itemID)
+    Player.realMoney = Player.realMoney + amnt;
     if amnt > 0 then
         gainMoneyWithAnimations(amnt, itemID)
     else
@@ -572,6 +574,7 @@ end
 
 function Player.shiftMoneyValue(amnt)
     Player.hiddenMoney = Player.hiddenMoney + amnt;
+    -- Player.realMoney = Player.realMoney + amnt;
 
     if Player.hiddenMoney < 0 then
         print("player spent more money then they had");
@@ -580,6 +583,7 @@ end
 
 function Player.setMoney(amnt)
     Player.hiddenMoney = amnt;
+    Player.realMoney = amnt;
 end
 
 function Player.getMoney()

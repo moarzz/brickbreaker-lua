@@ -229,10 +229,10 @@ local function drawPlayerStats()
     local definition = suit.layout:cols(statsLayout) -- Create a column layout for the stats
 
     setFont(80)
-    x,y = statsWidth/2 - getTextSize(formatNumber(Player.getMoney()))/2 - 100, 175 - love.graphics.getFont():getHeight()/2
+    x,y = statsWidth/2 - getTextSize(formatNumber(Player.realMoney))/2 - 100, 175 - love.graphics.getFont():getHeight()/2
 
     -- Popup on hover: explain interest system
-    local moneyBoxW = getTextSize(formatNumber(Player.getMoney()) .. "$")
+    local moneyBoxW = getTextSize(formatNumber(Player.realMoney) .. "$")
     local moneyBoxH = love.graphics.getFont():getHeight()
     local mouseX, mouseY = love.mouse.getPosition()
     local interestValue = 0--math.floor(math.min(Player.money, Player.currentCore == "Economy Core" and 50 or 25)/5)
@@ -475,7 +475,7 @@ local function drawPlayerUpgrades()
             local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(math.ceil(Player.bonusPrice[bonusName]))) / 2
             love.graphics.setColor(0,0,0,1)
             love.graphics.print(formatNumber(math.ceil(Player.bonusPrice[bonusName])) .. "$", x + 104 + moneyOffsetX, y+4, math.rad(5))
-            local moneyColor = Player.getMoney() >= Player.bonusPrice[bonusName] and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
+            local moneyColor = Player.realMoney >= Player.bonusPrice[bonusName] and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
             love.graphics.setColor(moneyColor)
             love.graphics.print(formatNumber(math.ceil(Player.bonusPrice[bonusName])) .. "$", x + 100 + moneyOffsetX, y, math.rad(5))
             love.graphics.setColor(1,1,1,1)
@@ -514,8 +514,8 @@ local function drawPlayerUpgrades()
                     upgradeQueued = true
                 end
             end
-            if upgradeStatButton.hit or (upgradeQueued and Player.getMoney() >= math.ceil(Player.bonusPrice[bonusName])) and (usingMoneySystem or Player.levelingUp) then
-                if Player.getMoney() < math.ceil(Player.bonusPrice[bonusName]) then
+            if upgradeStatButton.hit or (upgradeQueued and Player.realMoney >= math.ceil(Player.bonusPrice[bonusName])) and (usingMoneySystem or Player.levelingUp) then
+                if Player.realMoney < math.ceil(Player.bonusPrice[bonusName]) then
                     if usingMoneySystem then
                         print("Not enough money to upgrade " .. bonusName)
                         table.insert(Player.queuedUpgrades, bonusName)
@@ -958,7 +958,7 @@ local function drawBallStats()
         labelY = bruhY - love.graphics.getFont():getHeight()/2 + 25
         love.graphics.setColor(0,0,0,1)
         love.graphics.print(formatNumber(math.ceil(ballType.price)) .. "$",currentX + statsWidth/2 + 104 +moneyOffsetX, labelY+4, math.rad(5))
-        local moneyColor = Player.getMoney() >= math.ceil(ballType.price) and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
+        local moneyColor = Player.realMoney >= math.ceil(ballType.price) and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
         love.graphics.setColor(moneyColor)
         love.graphics.print(formatNumber(math.ceil(ballType.price)) .. "$",currentX + statsWidth/2 + 100 +moneyOffsetX, labelY, math.rad(5))
         love.graphics.setColor(1,1,1,1)
@@ -967,7 +967,7 @@ local function drawBallStats()
         local buttonId = ballType.name .. "_upgradeButton"
         local upgradeStatButton = dress:Button("", {color = invisButtonColor, id = buttonId}, currentX + 10, y + 15, getRarityWindow("common"):getWidth() - 30, getRarityWindow("common"):getHeight()/2 - 30)
         if upgradeStatButton.hit then
-            if Player.getMoney() < math.ceil(ballType.price) then
+            if Player.realMoney < math.ceil(ballType.price) then
                 -- does nothing
             else
                 playSoundEffect(upgradeSFX, 0.5, 0.95, false)
@@ -1320,7 +1320,7 @@ local function drawItemShop()
             if buyButton.hit then
                 print("button working")
                 -- if (#Player.items < maxItems or item.consumable) and Player.money >= upgradePrice then
-                if Player.getMoney() >= upgradePrice then
+                if Player.realMoney >= upgradePrice then
                     Player.pay(upgradePrice)
                     playSoundEffect(upgradeSFX, 0.5, 0.95)
                     table.remove(displayedItems, i)
@@ -1361,7 +1361,7 @@ local function drawItemShop()
             end
             local moneyXoffset = item.consumable and -65 or 0
             local moneyYoffset = item.consumable and -25 or 0
-            printMoney(upgradePrice, itemX + uiBigWindowImg:getWidth() * 0.75 - 40 - getTextSize(upgradePrice .. "$")/2 + moneyXoffset, itemY + uiBigWindowImg:getHeight() * 0.65/2 - 85 + moneyYoffset, math.rad(4), Player.getMoney() >= upgradePrice, 50)
+            printMoney(upgradePrice, itemX + uiBigWindowImg:getWidth() * 0.75 - 40 - getTextSize(upgradePrice .. "$")/2 + moneyXoffset, itemY + uiBigWindowImg:getHeight() * 0.65/2 - 85 + moneyYoffset, math.rad(4), Player.realMoney >= upgradePrice, 50)
 
             i = i + 1
         end
@@ -1372,7 +1372,7 @@ local function drawItemShop()
             actualRerollPrice = 2
         end
         if suit.Button("Reroll", {id = "reroll_items", color = invisButtonColor}, screenWidth - 260, 50 + uiBigWindowImg:getHeight() * 0.65/2 - 57, uiLabelImg:getWidth() - 30, uiLabelImg:getHeight() - 6).hit then
-            if Player.getMoney() >= actualRerollPrice then
+            if Player.realMoney >= actualRerollPrice then
                 Player.pay(actualRerollPrice)
                 -- playSoundEffect(upgradeSFX, 0.5, 0.95)
                 setItemShop()
@@ -1382,7 +1382,7 @@ local function drawItemShop()
                 
             end
         end
-        printMoney(actualRerollPrice, screenWidth - 40 - getTextSize(actualRerollPrice .. "$")/2, 30 + uiBigWindowImg:getHeight() * 0.65/2 - 60, math.rad(4), Player.getMoney() >= actualRerollPrice, 40)
+        printMoney(actualRerollPrice, screenWidth - 40 - getTextSize(actualRerollPrice .. "$")/2, 30 + uiBigWindowImg:getHeight() * 0.65/2 - 60, math.rad(4), Player.realMoney >= actualRerollPrice, 40)
     end
 end
 

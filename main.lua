@@ -1298,6 +1298,7 @@ function love.update(dt)
     BackgroundShader.update(dt);
     gameFixedUpdate(dt);
     memLeakCheck(dt)
+    print("real money" .. Player.realMoney)
 end
 
 -- Menu settings
@@ -1358,7 +1359,7 @@ function drawMenu()
     end
 
     -- Wishlist button
-    if suit.Button("Wishlist on steam!", {id="wishlist button", align = "center", valign = "top"}, centerX, startY + (buttonHeight + buttonSpacing) * 3.25, buttonWidth, buttonHeight * 1.5).hit then
+    if suit.Button("Wishlist on steam!", {id="wishlist button", align = "center", valign = "middle"}, centerX, startY + (buttonHeight + buttonSpacing) * 3.25, buttonWidth, buttonHeight * 2).hit then
         playSoundEffect(selectSFX, 1, 0.8)
         openBrowser("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
     end
