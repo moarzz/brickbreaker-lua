@@ -1,7 +1,7 @@
 local CouponCollector = ItemBase.new();
 CouponCollector.__index = CouponCollector;
 CouponCollector.name = "Coupon Collector";
-CouponCollector.description = "<font=bold>On Level Up <font=default>Gain <color=money>1$<color=white> and reduce the upgrade price of a weapon by <color=money>1$\n\n<color=white>Items cost <color=money>1$<color=white> less";
+CouponCollector.description = "<font=bold>On Level Up\nreduce the upgrade price of a weapon by <color=money>1$\n\n<color=white>Items cost <color=money>1$<color=white> less";
 CouponCollector.rarity = "common";
 CouponCollector.imageReference = "assets/sprites/UI/ItemIcons/Coupon-Collector.png";
 
@@ -13,7 +13,7 @@ end
 
 function CouponCollector.events:levelUp()
     if not hasItem("Abandon Greed") then
-        Player.changeMoney(1, self.id);
+        -- Player.changeMoney(1, self.id);
         -- gainMoneyWithAnimations(1, self.name);
     end
 

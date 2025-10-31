@@ -1557,7 +1557,7 @@ local function ballListInit()
                 speed = 150,
                 damage = 1,
             },
-            attractionStrength = 1000
+            attractionStrength = 800
         },
         ["Lightning Ball"] = {
             name = "Lightning Ball",
@@ -2069,7 +2069,7 @@ end
 -- calls ballListInit and adds a ball to it
 function Balls.initialize()
     -- initializeRarityItemLists()
-    longTermInvestment.value = 1
+    longTermInvestment.value = 0
     if Player.currentCore == "Collector's Core" then
         setMaxItems(5)
     else
@@ -2545,7 +2545,6 @@ local function brickCollisionCheck(ball)
                     local speed = math.sqrt(ball.speedX^2 + ball.speedY^2)
                     local knockback = math.max(0.5 * (Player.currentCore == "Madness Core" and 2 or 1) * math.pow((ball.stats.speed + getStatItemsBonus("speed", ballList[ball.name]) * 50 + (Player.perks.speed or 0) * 50 + 250), 0.6), 250)
                     knockback = math.max(math.min(knockback, 1500 - currentBallSpeed),0)
-                    -- knockback = knockback * 0.9
                     ball.speedX = ball.speedX + normalizedSpeedX * knockback
                     ball.speedY = ball.speedY + normalizedSpeedY * knockback
                 end
@@ -3548,8 +3547,8 @@ function Balls.update(dt, paddle, bricks)
                             ball.speedY = math.min(ball.speedY * scale, ball.speedY + dt*200 * mapRange(math.abs(ball.speedY - ball.speedY * scale), 0, 1000, 1, 10))
                         end
                     end
-                    if speed > originalSpeed * 1.25 then
-                        local scale = (originalSpeed * 1.25) / speed
+                    if speed > originalSpeed * 1.5 then
+                        local scale = (originalSpeed * 1.5) / speed
                         ball.speedX = ball.speedX * scale
                         ball.speedY = ball.speedY * scale
                     end

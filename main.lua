@@ -629,7 +629,7 @@ local function addMoreBricks()
             for i=1 , 10 do
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
                 local addBrickMult = mapRangeClamped(Player.level, 1, 20, 2, 1)
-                currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 20, 80) 
+                currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 15, 80) 
                 if spawnBossNextRow and not bossSpawned then
                     spawnBoss()
                     bossSpawned = true
@@ -687,7 +687,7 @@ function initializeBricks()
     brickWidth = 75
     brickHeight = 30
     brickSpacing = 10 -- Spacing between bricks
-    rows = 10
+    rows = 3
     cols = 10
     brickSpeed = { value = 10 } -- Speed at which bricks move down (pixels per second)
     currentRowPopulation = Player.currentCore == "Speed Core" and 100 or 1 -- Number of bricks in the first row
@@ -695,7 +695,7 @@ function initializeBricks()
     -- Generate bricks
     for i = 0, rows - 1 do
         generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing)) --generate 100 scaling rows of bricks
-        currentRowPopulation = currentRowPopulation + (gameTime)/mapRange(gameTime, 0, 600, 20, 80) 
+        currentRowPopulation = currentRowPopulation + (gameTime)/mapRange(gameTime, 0, 600, 15, 80) 
     end
 
     -- remove the bossSpawnTimer on gameStart if it exists
