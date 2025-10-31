@@ -1250,9 +1250,9 @@ local function drawItemShop()
             itemX = centerX - windowW/2
             itemY = centerY - windowH/2
 
-            local upgradePrice = item.rarity == "common" and 10 or item.rarity == "uncommon" and 15 or item.rarity == "rare" and 20 or item.rarity == "legendary" and 25 or 0
+            local upgradePrice = item.rarity == "common" and 8 or item.rarity == "uncommon" and 16 or item.rarity == "rare" and 24 or item.rarity == "legendary" and 30 or 0
             if item.consumable then
-                upgradePrice = item.rarity == "common" and 5 or item.rarity == "uncommon" and 8 or item.rarity == "rare" and 10 or item.rarity == "legendary" and 12 or 0
+                upgradePrice = item.rarity == "common" and 4 or item.rarity == "uncommon" and 8 or item.rarity == "rare" and 12 or item.rarity == "legendary" and 16 or 0
             end
             if hasItem("Elon's Shmuck") then
                 upgradePrice = 2

@@ -283,12 +283,12 @@ function createPowerupss(amount)
 end
 
 local function getRandomPowerupType()
-    local powerupTypes = {"moneyBag", "nuke", "acceleration", "doubleDamage", "freeze"}
+    local powerupTypes = {"moneyBag", "nuke", "acceleration", "doubleDamage"}
     local powerup = powerupTypes[math.random(#powerupTypes)] 
-    if getHighestBrickY() < screenHeight - 400 then
+    --[[if getHighestBrickY() < screenHeight - 400 then
         local powerupTypesNoFreeze = {"moneyBag", "nuke", "acceleration", "doubleDamage"}
         powerup = powerupTypesNoFreeze[math.random(#powerupTypesNoFreeze)]
-    end
+    end]]
     return powerup
 end
 
@@ -1367,7 +1367,7 @@ local function cast(spellName, brick, forcedDamage)
         Timer.after(timeUntilNextCast, function()
             cast("Lightning Pulse")
         end)
-        createCooldownVFX(cooldownValue)
+        createCooldownVFX(timeUntilNextCast)
     end
     if spellName == "Chain Lightning" or spellName == "Lightning Ball" or spellName == "Incrediball" then
         local ballType = unlockedBallTypes[spellName]
@@ -1476,7 +1476,7 @@ local function ballListInit()
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
-            speedMult = 1.8,
+            speedMult = 2,
             size = 1,
             rarity = "common",
             ballAmount = 1,
@@ -1557,7 +1557,7 @@ local function ballListInit()
                 speed = 150,
                 damage = 1,
             },
-            attractionStrength = 800
+            attractionStrength = 500
         },
         ["Lightning Ball"] = {
             name = "Lightning Ball",

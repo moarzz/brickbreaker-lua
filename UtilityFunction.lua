@@ -914,6 +914,9 @@ function createCooldownVFX(duration)
         timer = 0
     }
     table.insert(cooldownVFXs, vfx)
+    table.sort(cooldownVFXs, function(a, b)
+        return a.duration < b.duration
+    end)
 end
 
 function updateCooldownTimers(dt)
