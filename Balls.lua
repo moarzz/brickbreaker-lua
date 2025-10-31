@@ -283,8 +283,13 @@ function createPowerupss(amount)
 end
 
 local function getRandomPowerupType()
-    local powerupTypes = {"moneyBag", "nuke", "acceleration", "doubleDamage"}
-    return powerupTypes[math.random(#powerupTypes)] 
+    local powerupTypes = {"moneyBag", "nuke", "acceleration", "doubleDamage", "freeze"}
+    local powerup = powerupTypes[math.random(#powerupTypes)] 
+    if getHighestBrickY() < screenHeight - 400 then
+        local powerupTypesNoFreeze = {"moneyBag", "nuke", "acceleration", "doubleDamage"}
+        powerup = powerupTypesNoFreeze[math.random(#powerupTypesNoFreeze)]
+    end
+    return powerup
 end
 
 brickPieces = {}
@@ -1629,7 +1634,7 @@ local function ballListInit()
             rarity = "common",
             startingPrice = 10,
             ammoMult = 5,
-            fireRateMult = 0.45,
+            fireRateMult = 0.4,
             description = "Fires bullets, fast fireRate",
             onBuy = function() 
                 shoot("Machine Gun")
@@ -1654,7 +1659,7 @@ local function ballListInit()
             size = 1,
             rarity = "common",
             ammoMult = 2,
-            fireRateMult = 2,
+            fireRateMult = 1.8,
             startingPrice = 25,
             description = "Fire bullets that die on impact in bursts.",
             onBuy = function() 
@@ -2031,6 +2036,7 @@ local commonWeapons = {}
 local uncommonWeapons = {}
 local addBallsQueued = false
 local function speedCoreInitialize()
+    powerupPopup = {startTime = 0, type = nil, scale = 0, angle = 0}
     Player.setMoney(50);
     -- Player.money = 50
     Player.level = 4
@@ -2063,7 +2069,7 @@ end
 -- calls ballListInit and adds a ball to it
 function Balls.initialize()
     -- initializeRarityItemLists()
-    longTermInvestment.value = 2
+    longTermInvestment.value = 1
     if Player.currentCore == "Collector's Core" then
         setMaxItems(5)
     else
@@ -2539,6 +2545,7 @@ local function brickCollisionCheck(ball)
                     local speed = math.sqrt(ball.speedX^2 + ball.speedY^2)
                     local knockback = math.max(0.5 * (Player.currentCore == "Madness Core" and 2 or 1) * math.pow((ball.stats.speed + getStatItemsBonus("speed", ballList[ball.name]) * 50 + (Player.perks.speed or 0) * 50 + 250), 0.6), 250)
                     knockback = math.max(math.min(knockback, 1500 - currentBallSpeed),0)
+                    -- knockback = knockback * 0.9
                     ball.speedX = ball.speedX + normalizedSpeedX * knockback
                     ball.speedY = ball.speedY + normalizedSpeedY * knockback
                 end
@@ -3273,11 +3280,11 @@ function powerupPickup(powerup)
         if moneyGain > 2 then
             moneyGain = 1
         end          
-        Player.shiftMoneyValue(moneyGain);
+        Player.changeMoney(moneyGain);
         createMoneyPopup(moneyGain, paddle.x + paddle.width/2, paddle.y)
     elseif powerup.type == "moneyBag" then
         local moneyGain = math.random(3,5)
-        Player.shiftMoneyValue(moneyGain)
+        Player.changeMoney(moneyGain)
         createMoneyPopup(moneyGain, paddle.x + paddle.width/2, paddle.y)
     elseif powerup.type == "nuke" then
         for _, brick in ipairs(bricks) do
@@ -3288,7 +3295,7 @@ function powerupPickup(powerup)
     elseif powerup.type == "freeze" then
         brickFreeze = true
         brickFreezeTime = gameTime
-        Timer.after(6, function() 
+        Timer.after(20, function() 
             local outTween = tween.new(0.15, powerupPopup, {scale = 0}, tween.easing.inCirc)
             addTweenToUpdate(outTween)
             Timer.after(0.15, function()
@@ -3527,7 +3534,7 @@ function Balls.update(dt, paddle, bricks)
                     ball.speedY = ball.speedY + math.sin(angle) * attraction * dt
                     -- Normalize velocity to maintain ball speed
                     local speed = math.sqrt(ball.speedX * ball.speedX + ball.speedY * ball.speedY)
-                    local originalSpeed = (ball.stats.speed + getStatItemsBonus("speed", ball) * 50 + (Player.permanentUpgrades.speed or 0) * 50) * (Player.currentCore == "Madness Core" and 2 or 1)
+                    local originalSpeed = getStat("Magnetic Ball", "speed")
                     if speed > originalSpeed then
                         local scale = originalSpeed / speed
                         if ball.speedX > 0 then
@@ -3540,6 +3547,11 @@ function Balls.update(dt, paddle, bricks)
                         else
                             ball.speedY = math.min(ball.speedY * scale, ball.speedY + dt*200 * mapRange(math.abs(ball.speedY - ball.speedY * scale), 0, 1000, 1, 10))
                         end
+                    end
+                    if speed > originalSpeed * 1.25 then
+                        local scale = (originalSpeed * 1.25) / speed
+                        ball.speedX = ball.speedX * scale
+                        ball.speedY = ball.speedY * scale
                     end
                 end
             end
@@ -3788,7 +3800,7 @@ function Balls.update(dt, paddle, bricks)
         orb.y = orb.y + orb.speedY * dt
         orb.x = orb.x + orb.speedX * dt
         local totalSpeed = math.sqrt(orb.speedX * orb.speedX + orb.speedY * orb.speedY)
-        local maxSpeed = 500
+        local maxSpeed = 400
         if totalSpeed > maxSpeed then
             orb.speedX = orb.speedX * maxSpeed / totalSpeed
             orb.speedY = orb.speedY * maxSpeed / totalSpeed
@@ -4241,7 +4253,8 @@ function Balls:draw()
 
             -- draw powerup image (always)
             love.graphics.setColor(1,1,1,1)
-            drawImageCentered(powerupImgs[powerup.type], powerup.x, powerup.y, 70 * 0.8, 62* 0.8, powerup.angle)
+            local sizeMult = powerup.type == "dollarBill" and 0.8 or 1.3
+            drawImageCentered(powerupImgs[powerup.type], powerup.x, powerup.y, 70 * sizeMult, 62 * sizeMult, powerup.angle)
         end
     end
 end

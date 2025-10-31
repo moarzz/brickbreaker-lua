@@ -1,7 +1,7 @@
 local Mechanic = ItemBase.new();
 Mechanic.__index = Mechanic;
 Mechanic.name = "Mechanic";
-Mechanic.description = "<font=bold>on level up<font=default>\npay <color=money>3$<color=white> and then upgrade a random stat from a random weapon twice";
+Mechanic.description = "<font=bold>on level up<font=default>\npay <color=money>2$<color=white> and then upgrade a random stat from a random weapon twice";
 Mechanic.rarity = "common";
 Mechanic.imageReference = "assets/sprites/UI/ItemIcons/Mechanic.png";
 
@@ -12,7 +12,7 @@ function Mechanic.new()
 end
 
 function Mechanic.events:levelUp()
-    Player.changeMoney(-3, self.id)
+    Player.changeMoney(-2, self.id)
     local unlockedWeapons = Balls.getUnlockedBallTypes()
     if tableLength(unlockedWeapons) == 0 then
         return;

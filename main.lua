@@ -254,7 +254,6 @@ local function loadAssets()
     crownImg = love.graphics.newImage("assets/sprites/crown.png")
     heartImg = love.graphics.newImage("assets/sprites/heart.png")
     muzzleFlashImg = love.graphics.newImage("assets/sprites/muzzleFlash.png")
-    rocketImg = love.graphics.newImage("assets/sprites/rocket.png")
     turretImg = love.graphics.newImage("assets/sprites/turret.png")
     turretBaseImg = love.graphics.newImage("assets/sprites/turretBase.png")
     turretGunImg = love.graphics.newImage("assets/sprites/turretGun.png")
@@ -286,9 +285,6 @@ local function loadAssets()
         moneyBag = love.graphics.newImage("assets/sprites/powerups/moneyBag.png"),
         freeze = love.graphics.newImage("assets/sprites/powerups/freeze.png"),
         nuke = love.graphics.newImage("assets/sprites/powerups/nuke.png"),
-        doubleAmount = love.graphics.newImage("assets/sprites/powerups/doubleAmount.png"),
-        doubleSpeed = love.graphics.newImage("assets/sprites/powerups/doubleSpeed.png"),
-        doubleFireRate = love.graphics.newImage("assets/sprites/powerups/doubleFireRate.png"),
         doubleDamage = love.graphics.newImage("assets/sprites/powerups/doubleDamage.png"),
         acceleration = love.graphics.newImage("assets/sprites/powerups/acceleration.png"),
         dollarBill = love.graphics.newImage("assets/sprites/dollarBill.png"),
@@ -624,7 +620,7 @@ local function generateRow(brickCount, yPos)
     return row
 end
 
-local bossSpawnTime = 2
+local bossSpawnTime = 600
 --This function is called every 0.5 seconds to see if we should add more bricks, if we should, it adds 10 rows using the generateRow() function
 local function addMoreBricks()
     if bricks[#bricks] then
@@ -633,7 +629,7 @@ local function addMoreBricks()
             for i=1 , 10 do
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
                 local addBrickMult = mapRangeClamped(Player.level, 1, 20, 2, 1)
-                currentRowPopulation = currentRowPopulation + (gameTime + 30)/50 -- /mapRange(gameTime, 0, 600, 30, 60)
+                currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 20, 80) 
                 if spawnBossNextRow and not bossSpawned then
                     spawnBoss()
                     bossSpawned = true
@@ -699,7 +695,7 @@ function initializeBricks()
     -- Generate bricks
     for i = 0, rows - 1 do
         generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing)) --generate 100 scaling rows of bricks
-        currentRowPopulation = currentRowPopulation +  gameTime/mapRange(gameTime, 0, 600, 30, 60)
+        currentRowPopulation = currentRowPopulation + (gameTime)/mapRange(gameTime, 0, 600, 20, 80) 
     end
 
     -- remove the bossSpawnTimer on gameStart if it exists
@@ -1238,7 +1234,7 @@ end
 
 local memLeakCheckTimer = 0
 local memLeakLog = ""  -- holds the entire log in memory
-local memLeakCheckOn = false
+local memLeakCheckOn = true
 
 local function memLeakCheck(dt)
     if not memLeakCheckOn then return end
@@ -1732,7 +1728,7 @@ function drawBricks()
             table.remove(healBricks, i)
         end
         love.graphics.setColor(0 ,1 ,0 , 0.5)
-        drawImageCentered(healAuraImg, brick.x + brick.width/2, brick.y + brick.height/2,brick.width * 2.8, brick.width * 2.8)
+        drawImageCentered(healAuraImg, brick.x + brick.width/2, brick.y + brick.height/2,brick.width * 3.25, brick.width * 3.25)
     end
 
     -- Draw boss bricks last (not batched)
@@ -2036,9 +2032,9 @@ local function fullDraw()
         local levelText = "Lvl " .. Player.level
         local textWidth = love.graphics.getFont():getWidth(levelText)
         if usingMoneySystem then
-            love.graphics.print(levelText, statsWidth + 15, screenHeight - 28)
+            love.graphics.print(levelText, statsWidth + 15, screenHeight - 25)
         else
-            love.graphics.print(levelText, 15, screenHeight - 28)
+            love.graphics.print(levelText, 15, screenHeight - 25)
         end
 
         
@@ -2453,7 +2449,7 @@ function love.keypressed(key)
 
         if key == "5" then
             local powerup = {
-                type = "acceleration",        
+                type = "freeze",        
             }
             powerupPickup(powerup)
         end

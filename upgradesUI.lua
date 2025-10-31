@@ -26,7 +26,7 @@ local queuedUpgradeAnimations = {}
 
 -- items list
 longTermInvestment = {}
-longTermInvestment.value = 1
+longTermInvestment.value = 0
 permanentItemBonuses = {}
 
 _G.Items = require("items");
@@ -139,27 +139,6 @@ function getStatItemsBonus(statName, weapon)
             end
         end
     end
-    
-    -- Apply minimum value logic only if weapon is provided
-    if weapon then
-        local weaponStatValue = 0
-        if statName == "amount" and not weapon.noAmount then
-            weaponStatValue = weapon.ballAmount
-        elseif weapon.stats[statName] then
-            weaponStatValue = weapon.stats[statName]
-        end
-        
-        -- Calculate what the total would be with current bonus
-        local permanentBonus = Player.permanentUpgrades[statName] or 0
-        local currentStatValue = weaponStatValue + permanentBonus + totalBonus
-        
-        -- If the total would be less than 1, adjust the bonus to make it exactly 1
-        local targetValue = statName == "speed" and 50 or 1
-        targetValue = statName == "cooldown" and 0 or 1
-        if currentStatValue < targetValue then
-            totalBonus = targetValue - weaponStatValue - permanentBonus
-        end
-    end
 
     return totalBonus
 end
@@ -257,18 +236,18 @@ local function drawPlayerStats()
     local moneyBoxH = love.graphics.getFont():getHeight()
     local mouseX, mouseY = love.mouse.getPosition()
     local interestValue = 0--math.floor(math.min(Player.money, Player.currentCore == "Economy Core" and 50 or 25)/5)
-    local gainValue = 5
+    local gainValue = 5 + longTermInvestment.value
     if Player.currentCore == "Economy Core" then
         gainValue = 9
     end
-    local popupText = "At the start of the level up phase, gain <color=money><font=big>" .. gainValue .. "$"-- </color=money></font=big><color=white><font=default> + </font=default></color=white><font=big><color=money>1$ </color=money></font=big><color=white><font=default>for every <font=big><color=money>5$</color=money></font=big><color=white><font=default> you have, max </color=white></font=default><color=money><font=big>10$ </color=money></font=big><color=white><font=default><font=default><color=white>"
+    local popupText = "At the start of the level up phase, gain <color=money><font=big>" .. gainValue .. "$ <font=default><color=white>interest"-- </color=money></font=big><color=white><font=default> + </font=default></color=white><font=big><color=money>1$ </color=money></font=big><color=white><font=default>for every <font=big><color=money>5$</color=money></font=big><color=white><font=default> you have, max </color=white></font=default><color=money><font=big>10$ </color=money></font=big><color=white><font=default><font=default><color=white>"
     if Player.currentCore == "Economy Core" then
-        popupText = "At the start of the level up phase, gain <color=money><font=big>8$"
+        popupText = "At the start of the level up phase, gain <color=money><font=big>8$ <font=default><color=white>interest"
     end
     if popupFancyText == nil then
         popupFancyText = FancyText.new(popupText, 20, 15, 350, 20, "left", playerStatsPointers.default, playerStatsPointers)
     else
-        popupFancyText:setText(popupText);
+        popupFancyText:setText(popupText); 
     end
     love.graphics.setColor(1,1,1,1)
     popupFancyText:draw()
@@ -1273,7 +1252,7 @@ local function drawItemShop()
 
             local upgradePrice = item.rarity == "common" and 10 or item.rarity == "uncommon" and 15 or item.rarity == "rare" and 20 or item.rarity == "legendary" and 25 or 0
             if item.consumable then
-                upgradePrice = item.rarity == "common" and 4 or item.rarity == "uncommon" and 8 or item.rarity == "rare" and 10 or item.rarity == "legendary" and 12 or 0
+                upgradePrice = item.rarity == "common" and 5 or item.rarity == "uncommon" and 8 or item.rarity == "rare" and 10 or item.rarity == "legendary" and 12 or 0
             end
             if hasItem("Elon's Shmuck") then
                 upgradePrice = 2
@@ -1395,7 +1374,7 @@ local function drawItemShop()
         if suit.Button("Reroll", {id = "reroll_items", color = invisButtonColor}, screenWidth - 260, 50 + uiBigWindowImg:getHeight() * 0.65/2 - 57, uiLabelImg:getWidth() - 30, uiLabelImg:getHeight() - 6).hit then
             if Player.getMoney() >= actualRerollPrice then
                 Player.pay(actualRerollPrice)
-                playSoundEffect(upgradeSFX, 0.5, 0.95)
+                -- playSoundEffect(upgradeSFX, 0.5, 0.95)
                 setItemShop()
                 if Player.currentCore ~= "Picky Core" then
                     rerollPrice = rerollPrice + 1
