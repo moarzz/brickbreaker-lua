@@ -375,7 +375,7 @@ end
 
 
 -- reduce trail length to make draw cheaper (was 35)
-local ballTrailLength = 20   -- Length of the ball trail
+local ballTrailLength = 15   -- Length of the ball trail
 local bullets = {}
 local deadBullets = {}
 local laserBeamBrick
@@ -426,6 +426,9 @@ function dealDamage(ball, brick, burnDamage)
 
     local critChance = hasItem("Four Leafed Clover") and 50 or 25
     if hasItem("Assassin's Dagger") and math.random(1,100) <= critChance and ball.type ~= "bullet" then
+        damage = damage * 2
+    end
+    if statDoubled == "damage" and ball.type ~= "bullet" then
         damage = damage * 2
     end
     
@@ -613,7 +616,7 @@ local function shoot(gunName, ball)
                         speedMult = ballTemplate.speedMult or 2,
                         radius = (ballTemplate.radius or 10) * 1.5,
                         drawSizeBoost = 1,
-                        drawSizeMult = 0.5,
+                        drawSizeMult = 0,
                         drawSizeBoostTweens = {},
                         onBounce = ballTemplate.onBounce or nil, -- Function to call when the ball bounces off a brick
                         currentlyOverlappingBricks = {},
@@ -1683,7 +1686,7 @@ local function ballListInit()
             y = screenHeight / 2,
             size = 1,
             radius = 10,
-            rarity = "rare",
+            rarity = "uncommon",
             speedMult = 2,
             ammoMult = 3,
             fireRateMult = 6,
@@ -1698,8 +1701,8 @@ local function ballListInit()
             stats = {
                 damage = 1,
                 amount = 1,
-                fireRate = 1,
-                speed = 100
+                fireRate = 2,
+                speed = 150
             },
         },
         Minigun = {
@@ -1901,7 +1904,6 @@ local function ballListInit()
                 end)
             end,
             stats = {
-                --amount = 1,
                 damage = 1,
                 range = 2,
                 fireRate = 1,
@@ -2953,6 +2955,48 @@ end
 
 local function updateshadowBall(shadowBall, dt)
     -- Update position
+    if hasItem("Homing Bullets") then
+        -- Find nearest brick
+        local nearestBrick = nil
+        local minDist = math.huge
+        
+        for _, brick in ipairs(bricks) do  -- Use visibleBricks for performance
+            if not brick.destroyed and brick.health > 0 then
+                local dx = (brick.x + brick.width/2) - shadowBall.x
+                local dy = (brick.y + brick.height/2) - shadowBall.y
+                local dist = dx * dx + dy * dy -- Square distance is fine, no need for square root
+
+                if dist < minDist and dist > brick.width/2 and brick.y < shadowBall.y then
+                    minDist = dist
+                    nearestBrick = brick
+                end
+            end
+        end
+        
+        -- If we found a brick, adjust bullet velocity towards it
+        if nearestBrick then
+            local dx = (nearestBrick.x + nearestBrick.width/2) - shadowBall.x
+            local dy = (nearestBrick.y + nearestBrick.height/2) - shadowBall.y
+            local dist = math.sqrt(dx * dx + dy * dy)
+            
+            -- Normalize direction
+            dx = dx / dist
+            dy = dy / dist
+            
+            -- Calculate homing strength (adjust this value to change how aggressive the homing is)
+            local homingStrength = 1200 -- pixels per second
+            
+            -- Adjust velocity (with smooth turning)
+            local turnSpeed = 10 -- Lower = more gradual turning, Higher = sharper turning
+            shadowBall.speedX = shadowBall.speedX + (dx * homingStrength - shadowBall.speedX) * dt * turnSpeed
+            shadowBall.speedY = -math.abs(shadowBall.speedY + (dy * homingStrength - shadowBall.speedY) * dt * turnSpeed)
+            local currentSpeed =  math.sqrt(shadowBall.speedX^2 + shadowBall.speedY^2)
+            if currentSpeed < 400 then
+                shadowBall.speedX = shadowBall.speedX * (400 / currentSpeed)
+                shadowBall.speedY = shadowBall.speedY * (400 / currentSpeed)
+            end
+        end
+    end
     shadowBall.x = shadowBall.x + shadowBall.speedX * dt
     shadowBall.y = shadowBall.y + shadowBall.speedY * dt
 
@@ -3187,6 +3231,48 @@ local function spellsUpdate(dt)
         end
         for i = #fireballs, 1, -1 do
             local fireball = fireballs[i]
+            if hasItem("Homing Bullets") then
+                -- Find nearest brick
+                local nearestBrick = nil
+                local minDist = math.huge
+                
+                for _, brick in ipairs(bricks) do  -- Use visibleBricks for performance
+                    if not brick.destroyed and brick.health > 0 then
+                        local dx = (brick.x + brick.width/2) - fireball.x
+                        local dy = (brick.y + brick.height/2) - fireball.y
+                        local dist = dx * dx + dy * dy -- Square distance is fine, no need for square root
+
+                        if dist < minDist and dist > brick.width * 1.25 and brick.y < fireball.y then
+                            minDist = dist
+                            nearestBrick = brick
+                        end
+                    end
+                end
+                
+                -- If we found a brick, adjust bullet velocity towards it
+                if nearestBrick then
+                    local dx = (nearestBrick.x + nearestBrick.width/2) - fireball.x
+                    local dy = (nearestBrick.y + nearestBrick.height/2) - fireball.y
+                    local dist = math.sqrt(dx * dx + dy * dy)
+                    
+                    -- Normalize direction
+                    dx = dx / dist
+                    dy = dy / dist
+                    
+                    -- Calculate homing strength (adjust this value to change how aggressive the homing is)
+                    local homingStrength = 800 -- pixels per second
+                    
+                    -- Adjust velocity (with smooth turning)
+                    local turnSpeed = 7 -- Lower = more gradual turning, Higher = sharper turning
+                    fireball.speedX = fireball.speedX + (dx * homingStrength - fireball.speedX) * dt * turnSpeed
+                    fireball.speedY = -math.abs(fireball.speedY + (dy * homingStrength - fireball.speedY) * dt * turnSpeed)
+                    local currentSpeed =  math.sqrt(fireball.speedX^2 + fireball.speedY^2)
+                    if currentSpeed < 500 then
+                        fireball.speedX = fireball.speedX * (500 / currentSpeed)
+                        fireball.speedY = fireball.speedY * (500 / currentSpeed)
+                    end
+                end
+            end
             fireball.x = fireball.x + fireball.speedX * dt
             fireball.y = fireball.y + fireball.speedY * dt
             if fireball.animation == nil then
@@ -3197,6 +3283,7 @@ local function spellsUpdate(dt)
             else
                 fireball.animation.x = fireball.x
                 fireball.animation.y = fireball.y
+                fireball.animation.angle = math.deg(math.atan2(fireball.speedY, fireball.speedX))
             end
             if fireball.x < 0 and fireball.speedX < 0 then
                 fireball.speedX = -fireball.speedX
@@ -3388,10 +3475,53 @@ function Balls.update(dt, paddle, bricks)
     -- Update rockets
     for i = #rockets, 1, -1 do
         local rocket = rockets[i]
+        if hasItem("Homing Bullets") then
+            -- Find nearest brick
+            local nearestBrick = nil
+            local minDist = math.huge
+            
+            for _, brick in ipairs(bricks) do  -- Use visibleBricks for performance
+                if not brick.destroyed and brick.health > 0 then
+                    local dx = (brick.x + brick.width/2) - rocket.x
+                    local dy = (brick.y + brick.height/2) - rocket.y
+                    local dist = dx * dx + dy * dy -- Square distance is fine, no need for square root
+
+                    if dist < minDist and dist > brick.width * 1.25 and brick.y < rocket.y then
+                        minDist = dist
+                        nearestBrick = brick
+                    end
+                end
+            end
+            
+            -- If we found a brick, adjust bullet velocity towards it
+            if nearestBrick then
+                local dx = (nearestBrick.x + nearestBrick.width/2) - rocket.x
+                local dy = (nearestBrick.y + nearestBrick.height/2) - rocket.y
+                local dist = math.sqrt(dx * dx + dy * dy)
+                
+                -- Normalize direction
+                dx = dx / dist
+                dy = dy / dist
+                
+                -- Calculate homing strength (adjust this value to change how aggressive the homing is)
+                local homingStrength = 800 -- pixels per second
+                
+                -- Adjust velocity (with smooth turning)
+                local turnSpeed = 7 -- Lower = more gradual turning, Higher = sharper turning
+                rocket.speedX = rocket.speedX + (dx * homingStrength - rocket.speedX) * dt * turnSpeed
+                rocket.speedY = -math.abs(rocket.speedY + (dy * homingStrength - rocket.speedY) * dt * turnSpeed)
+                local currentSpeed =  math.sqrt(rocket.speedX^2 + rocket.speedY^2)
+                if currentSpeed < 500 then
+                    rocket.speedX = rocket.speedX * (500 / currentSpeed)
+                    rocket.speedY = rocket.speedY * (500 / currentSpeed)
+                end
+            end
+        end
         rocket.x = rocket.x + rocket.speedX * dt
         rocket.y = rocket.y + rocket.speedY * dt
         rocket.animation.x = rocket.x
         rocket.animation.y = rocket.y
+        rocket.animation.angle = math.deg(math.atan2(rocket.speedY, rocket.speedX)) + 90
 
         -- Check for collision with bricks
         local hitBrick = false
@@ -3507,31 +3637,49 @@ function Balls.update(dt, paddle, bricks)
 
             -- Magnetic ball behavior (use visibleBricks)
             if ball.name == "Magnetic Ball" or hasItem("Electromagnetic alignment") or ball.name == "Incrediball" then
-                -- Find nearest visible brick
-                local nearestBrick = nil
-                local minDist = math.huge
-                for _, brick in ipairs(visibleBricks) do
-                    if not brick.destroyed and brick.health > 0 and brick.y > - brick.height/2 then
-                        local dx = (brick.x + brick.width/2) - ball.x
-                        local dy = (brick.y + brick.height/2) - ball.y
-                        local dist = math.sqrt(dx*dx + dy*dy)
-                        if dist < minDist then
-                            minDist = dist
-                            nearestBrick = brick
+                -- Update nearest brick every 0.1 seconds instead of every frame
+                ball.magneticUpdateTimer = (ball.magneticUpdateTimer or 0) + dt
+                if ball.magneticUpdateTimer >= 0.1 then
+                    ball.magneticUpdateTimer = 0
+                    
+                    local nearestBrick = nil
+                    local minDistSq = math.huge
+                    local MAX_RANGE_SQ = 500 * 500 -- Only check bricks within 500 units
+                    
+                    for _, brick in ipairs(visibleBricks) do
+                        if not brick.destroyed and brick.health > 0 and brick.y > -brick.height/2 then
+                            local dx = (brick.x + brick.width/2) - ball.x
+                            local dy = (brick.y + brick.height/2) - ball.y
+                            local distSq = dx*dx + dy*dy
+                            
+                            if distSq < MAX_RANGE_SQ and distSq < minDistSq then
+                                minDistSq = distSq
+                                nearestBrick = brick
+                            end
                         end
                     end
+                    
+                    ball.cachedNearestBrick = nearestBrick
+                    ball.cachedNearestDistSq = minDistSq
                 end
-                -- Apply magnetic attraction to nearest brick
-                if nearestBrick then
+                
+                -- Apply magnetic attraction using cached brick
+                if ball.cachedNearestBrick then
+                    local nearestBrick = ball.cachedNearestBrick
+                    local dist = math.sqrt(ball.cachedNearestDistSq)
+                    
                     local attractionStrength = ball.attractionStrength or 450
                     local dx = (nearestBrick.x + nearestBrick.width/2) - ball.x
                     local dy = (nearestBrick.y + nearestBrick.height/2) - ball.y
-                    local dist = math.sqrt(dx*dx + dy*dy)
+                    -- Recalculate dist for current frame (brick might have moved slightly)
+                    dist = math.sqrt(dx*dx + dy*dy)
+                    
                     local attraction = mapRange((attractionStrength / math.max(dist, 10)) * math.pow((ball.stats.speed + getStatItemsBonus("speed", ball) * 50 + (ball.speedExtra or 0) * 15) * (Player.currentCore == "Madness Core" and 2 or 1), 1.45), 1, 10, 1, 20) * 0.0175
                     attraction = attraction * mapRangeClamped(ball.stats.speed + getStatItemsBonus("speed", ball) * 50 + (ball.speedExtra or 0)*10, 1, 500, 0.5, 2)
                     local angle = math.atan2(dy, dx)
                     ball.speedX = ball.speedX + math.cos(angle) * attraction * dt
                     ball.speedY = ball.speedY + math.sin(angle) * attraction * dt
+                    
                     -- Normalize velocity to maintain ball speed
                     local speed = math.sqrt(ball.speedX * ball.speedX + ball.speedY * ball.speedY)
                     local originalSpeed = getStat("Magnetic Ball", "speed")
@@ -3564,7 +3712,7 @@ function Balls.update(dt, paddle, bricks)
         bullet.distanceTraveled = bullet.distanceTraveled or 0
         bullet.hasSplit = bullet.hasSplit or false
         
-        -- Handle homing bullets
+        -- Handle Homing Bullets
         if hasItem("Homing Bullets") then
             -- Find nearest brick
             local nearestBrick = nil
@@ -4172,6 +4320,7 @@ function Balls:draw()
 
                             -- compute radius that tapers from ball radius -> small
                             local segRadius = minRadius + (startRadius - minRadius) * segmentPos
+                            segRadius = segRadius * (ball.drawSizeMult or 1)
 
                             -- alpha that eases out towards tail with quadratic falloff
                             local alpha = math.max(0.04, segmentPosSq * (p.alpha or 1))

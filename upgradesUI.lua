@@ -299,17 +299,17 @@ end
 
 local function getRarityDistributionByLevel()
     local level = Player.level
-    if level < 5 then
+    if level < 4 then
         return {common = 1, uncommon = 0, rare = 0.0, legendary = 0.0}
-    elseif level < 8 then
+    elseif level < 7 then
         return {common = 0.88, uncommon = 0.1, rare = 0.02, legendary = 0.0}
-    elseif level < 13 then
+    elseif level < 11 then
         return {common = 0.75, uncommon = 0.2, rare  = 0.05, legendary = 0}
-    elseif level < 18 then
+    elseif level < 15 then
         return {common = 0.625, uncommon = 0.3, rare = 0.075, legendary = 0}
-    elseif level < 22 then
+    elseif level < 18 then
         return {common = 0.53, uncommon = 0.35, rare = 0.1, legendary = 0.02}
-    elseif level < 26 then
+    elseif level < 23 then
         return {common = 0.485, uncommon = 0.35, rare = 0.125, legendary = 0.04}  
     else
         return {common = 0.4, uncommon = 0.39, rare = 0.15, legendary = 0.06}
@@ -1515,13 +1515,17 @@ end
 
 local function drawFinishUpgradingButton()
     if Player.levelingUp and not Player.choosingUpgrade then
-        local buttonW, buttonH = 250, 75
+        local buttonW, buttonH = 400, 120
         local buttonX = screenWidth/2 - buttonW/2
         local buttonY = screenHeight - buttonH - 10
         setFont(30)
-        if suit.Button("Finish Upgrading", {id="finishUpgrading", valign = "top"}, buttonX, buttonY, buttonW, buttonH).hit then
+        love.graphics.setColor(0,0,0,0.6)
+        love.graphics.rectangle("fill", screenWidth/2 - buttonW/2, screenHeight - buttonH + 10, buttonW, buttonH)
+        love.graphics.setColor(1,1,1,1)
+        drawTextCenteredWithScale("Press [SPACE] to Finish Upgrading", screenWidth/2 - buttonW/2, screenHeight - buttonH + 35, 1, buttonW, {1,1,1,1})
+        --[[if suit.Button("Finish Upgrading", {id="finishUpgrading", valign = "top"}, buttonX, buttonY, buttonW, buttonH).hit then
             finishUpgrading()
-        end
+        end]]
     end
 end
 

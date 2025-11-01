@@ -1,7 +1,7 @@
 local LongTermInvestment = ItemBase.new();
 LongTermInvestment.__index = LongTermInvestment;
 LongTermInvestment.name = "Long Term Investment";
-LongTermInvestment.description = "+<color=money>1$<color=white> to interest";
+LongTermInvestment.description = "+<color=money>1$<color=white> interest per level";
 LongTermInvestment.rarity = "common";
 LongTermInvestment.imageReference = "assets/sprites/UI/ItemIcons/Long-Term-Investment.png";
 

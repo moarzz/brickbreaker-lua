@@ -629,7 +629,7 @@ local function addMoreBricks()
             for i=1 , 10 do
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
                 local addBrickMult = mapRangeClamped(Player.level, 1, 20, 2, 1)
-                currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 15, 120) 
+                currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 15, 150) 
                 if spawnBossNextRow and not bossSpawned then
                     spawnBoss()
                     bossSpawned = true
@@ -695,7 +695,7 @@ function initializeBricks()
     -- Generate bricks
     for i = 0, rows - 1 do
         generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing)) --generate 100 scaling rows of bricks
-        currentRowPopulation = currentRowPopulation + (gameTime)/mapRange(gameTime, 0, 600, 15, 120) 
+        currentRowPopulation = currentRowPopulation + (gameTime)/mapRange(gameTime, 0, 600, 15, 150) 
     end
 
     -- remove the bossSpawnTimer on gameStart if it exists
@@ -741,6 +741,8 @@ end
 local backgroundOpacity = {value = 0}
 local loadTime
 function love.load()
+    love.mouse.setVisible(true)
+    love.mouse.setGrabbed(true)
     math.randomseed(os.time())
 
     WindowCorrector.init(7); -- 5 additional render canvases for shaders and draw order stuff
@@ -820,6 +822,7 @@ function love.load()
 
     Crooky:giveInfo("game", "open")
     loadTime = love.timer.getTime()
+    
 end
 
 function getHighestBrickY(lowestInstead)
@@ -2465,7 +2468,7 @@ function love.keypressed(key)
         end
 
         if key == "7" then
-            Balls.addBall("Saw Blades")
+            Balls.addBall("Magnetic Ball")
         end
 
         if key == "8" then

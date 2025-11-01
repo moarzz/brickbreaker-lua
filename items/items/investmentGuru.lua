@@ -1,7 +1,7 @@
 local InvestmentGuru = ItemBase.new();
 InvestmentGuru.__index = InvestmentGuru;
 InvestmentGuru.name = "Investment Guru";
-InvestmentGuru.description = "<font=bold>On level up<font=default>\nadd a <font=bold>Long Term Investment<font=default> in the shop";
+InvestmentGuru.description = "<font=bold>On level up<font=default>\ngain +<color=money>1$<color=white> interest per level";
 InvestmentGuru.rarity = "rare";
 InvestmentGuru.imageReference = "assets/sprites/UI/ItemIcons/Investment-Guru.png";
 

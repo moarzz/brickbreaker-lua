@@ -8,7 +8,7 @@ RichGetRicher.imageReference = "assets/sprites/UI/ItemIcons/Rich-Get-Richer.png"
 function RichGetRicher.new()
     local instance = setmetatable({}, RichGetRicher):init();
 
-    local bonus = math.floor(Player.getMoney() / 15);
+    local bonus = math.floor(Player.getMoney() / 10);
     instance.stats.amount = bonus;
     instance.stats.fireRate = bonus;
 
@@ -16,7 +16,7 @@ function RichGetRicher.new()
 end
 
 function RichGetRicher.events:money() -- update whenever money moves
-    local bonus = math.floor(Player.getMoney() / 15);
+    local bonus = math.floor(Player.getMoney() / 10);
     instance.stats.amount = bonus;
     instance.stats.fireRate = bonus;
 end
