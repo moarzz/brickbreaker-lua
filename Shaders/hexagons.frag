@@ -116,12 +116,11 @@ vec4 effect(vec4 colour, Image tex, vec2 textureCoords, vec2 screenCoords)
         ac += addition;
 	}
 
-	col = ac * 0.02;
+	col = ac * 0.02 * (0.3 + intensity) * (0.3 + brightness);
 
-	col *= 1.0 - t * (0.02 + 0.02 * sin(time)) - 0.3 * intensity;
+	col *= 1.0 - t * (0.02 + 0.02 * sin(time));
 
-	col += vec3(0.1) * brightness;
-
+	col = max(col, 0.0);
 
 	return vec4(col, 1.0);
 }

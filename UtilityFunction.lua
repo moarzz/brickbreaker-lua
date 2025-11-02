@@ -290,7 +290,7 @@ local pausedUpgradeNumbers = {}
 
 function gainMoneyWithAnimations(moneyGain, itemID)
     print("gaining money: " .. moneyGain .. " with itemID: " .. (itemID or "NO ID"))
-    EventQueue:addEventToQueue(EVENT_POINTERS.money_gain, 0.35, function() 
+    EventQueue:addEventToQueue(EVENT_POINTERS.money_gain, 0.3, function() 
         -- First event: Show animation and add money
         if itemID then -- Changed from itemId to itemName check
             itemTriggerAnimation(itemID)
@@ -316,7 +316,7 @@ function gainMoneyWithAnimations(moneyGain, itemID)
         -- reset Scale tween
         GlobalTimer:after(0.075, function() 
             Player.shiftMoneyValue(moneyGain);
-            local outTween = tween.new(0.275, visualMoneyValues, {scale = 1}, tween.easing.inCirc)
+            local outTween = tween.new(0.225, visualMoneyValues, {scale = 1}, tween.easing.inCirc)
             addTweenToUpdate(outTween)
         end)
     end)
@@ -347,8 +347,8 @@ function reducePriceWithAnimations(reductionAmount, weaponName, itemID)  -- Acce
         -- Directly modify the weapon object
         weapon.price = math.max(weapon.price - reductionAmount, 0)
     end)
-    EventQueue:addEventToQueue(EVENT_POINTERS.empty, 0.275, function() 
-        local outTween = tween.new(0.275, visualUpgradePriceValues[weaponName], {scale = 1}, tween.easing.inCirc)
+    EventQueue:addEventToQueue(EVENT_POINTERS.empty, 0.225, function() 
+        local outTween = tween.new(0.225, visualUpgradePriceValues[weaponName], {scale = 1}, tween.easing.inCirc)
         addTweenToUpdate(outTween)
     end)
 end
@@ -390,8 +390,8 @@ function gainStatWithAnimation(statName, weaponName, itemID)
             selectedWeapon.stats[statName] = (selectedWeapon.stats[statName] or 0) + 1
         end
     end)
-    EventQueue:addEventToQueue(EVENT_POINTERS.empty, 0.275, function() 
-        local outTween = tween.new(0.275, visualStatValues[weaponName][statName], {scale = 1}, tween.easing.inCirc)
+    EventQueue:addEventToQueue(EVENT_POINTERS.empty, 0.225, function() 
+        local outTween = tween.new(0.225, visualStatValues[weaponName][statName], {scale = 1}, tween.easing.inCirc)
         addTweenToUpdate(outTween)
     end)
 end

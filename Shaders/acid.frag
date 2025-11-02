@@ -3,6 +3,8 @@ uniform float intensity;
 uniform float brightness;
 
 float tau = 6.28318;
+float actualIntensity = intensity/2 + 0.2;
+float actualBrightness = brightness/2 + 0.2;
 
 mat2 rot(float a)
 {
@@ -46,7 +48,7 @@ vec4 effect(vec4 colour, Image tex, vec2 textureCoords, vec2 screenCoords)
         finalColor += col * d;
     }
 
-    finalColor = sqrt(finalColor * 4.0) / (10.0 - 3.0 * intensity) + vec3(0.1) * brightness;
+    finalColor = sqrt(finalColor * 4.0) * actualIntensity * actualBrightness;
         
     return vec4(finalColor, 1.0);
 }

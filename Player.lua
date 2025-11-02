@@ -298,7 +298,7 @@ Player.availableCores = {
         startingItem = "Laser Beam"
     },
     {
-        name = "Economy Core",
+        name = "Loan Core",
         description = "gain 10$ instead of 6$ on level up. There are no items that give money in the shop",
         price = 1000,
     },
@@ -320,13 +320,13 @@ Player.coreDescriptions = {
     ["Spray and Pray Core"] = "gain +1 fireRate for every 5 Player level",
     ["Fast Study Core"] = "gain +5% experience gain per Player Level",
     ["Hacker Core"] = "All Weapons start with an upgradePrice of 0",
-    ["Economy Core"] = "gain 9$ instead of 5$ on level up. There are no items that give money in the shop",
+    ["Loan Core"] = "start with 25$. gain 3$ instead of 5$ on level up.",
     ["Farm Core"] = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown)\nIt takes 100% more xp for you to level up and bricks grow in health 100% faster",
     --["Madness Core"] = "Damage and cooldown are reduced by 50%.\nevery other stat is doubled. bricks go twice as fast\n(can break the game)."
 }
 
 Player.coreRestrictions = {
-    ["Economy Core"] = {"Financial Plan", "Coupon Collector", "Degenerate Gambling", }
+    -- ["Economy Core"] = {"Financial Plan", "Coupon Collector", "Degenerate Gambling", }
 }
 
 function Player.addBonus(name)
@@ -369,8 +369,8 @@ end
 
 function Player.InterestGain()
     local moneyGain
-    if Player.currentCore == "Economy Core" then
-        moneyGain = 9
+    if Player.currentCore == "Loan Core" then
+        moneyGain = 3 + longTermInvestment.value --+ math.floor(math.min(Player.money, 25)/5)
     else
         moneyGain = 5 + longTermInvestment.value --+ math.floor(math.min(Player.money, 25)/5)
     end

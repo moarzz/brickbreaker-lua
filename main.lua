@@ -263,6 +263,7 @@ local function loadAssets()
     vignetteImg = love.graphics.newImage("assets/sprites/vignette.png")
     drillSergeantImg = love.graphics.newImage("assets/sprites/drillSergeant.png")
     healAuraImg = love.graphics.newImage("assets/sprites/healAura.png")
+    defaultItemImage = love.graphics.newImage("assets/sprites/UI/ItemIcons/default.png")
 
     -- UI
     uiLabelImg = love.graphics.newImage("assets/sprites/UI/label.png")
@@ -981,7 +982,7 @@ function changeMusic(newMusicStage)
         BackgroundShader.changeShader(1); -- vexel
     elseif newMusicStage == "mid" then
         ref = "assets/SFX/inGame2.mp3";
-        BackgroundShader.changeShader(1); -- acid
+        BackgroundShader.changeShader(2); -- acid
     elseif newMusicStage == "intense" then
         ref = "assets/SFX/inGame3.mp3";
         BackgroundShader.changeShader(3); -- vexel
@@ -1271,6 +1272,10 @@ local function memLeakCheck(dt)
         local quadCacheAmount = getQuadCacheLength() or 0
         local explosionAmount = (explosions and #explosions) or 0
         local fontTableAmount = getFontTableLength() or 0
+        local shadowBallCount = getShadowBallCount() or 0
+        local fireballCount = getFireballCount() or 0
+        local lightBeamCount = getLightBeamCount() or 0
+        local arcaneMissileCount = getArcaneMissileCount() or 0
 
         -- Add formatted info
         logText = logText .. string.format("#Bricks: %d - #Brick Pieces: %d - #Brick Text Cache: %d\n", brickAmount, brickPieceAmount, brickTextCacheAmount)
@@ -1279,6 +1284,7 @@ local function memLeakCheck(dt)
         logText = logText .. string.format("#Animations: %d - #Sprite Batches: %d - #Quad Cache: %d\n", animationAmount, spriteBatchesAmount, quadCacheAmount)
         logText = logText .. string.format("#Explosions: %d\n", explosionAmount)
         logText = logText .. string.format("#Font Table: %d\n", fontTableAmount)
+        logText = logText .. string.format("#Shadow Balls: %d - #Fireballs: %d - #Light Beams: %d - #Arcane Missiles: %d\n", shadowBallCount, fireballCount, lightBeamCount, arcaneMissileCount)
 
         -- Add this entry to the full log
         memLeakLog = memLeakLog .. logText
@@ -1301,7 +1307,6 @@ function love.update(dt)
     BackgroundShader.update(dt);
     gameFixedUpdate(dt);
     memLeakCheck(dt)
-    print("real money" .. Player.realMoney)
 end
 
 -- Menu settings
@@ -1842,6 +1847,7 @@ function drawPauseMenu()
         currentGameState = GameState.START_SELECT
         love.mouse.setVisible(true)
         setMusicEffect("normal")
+        changeMusic("menu")
     end
     btnY = btnY + buttonHeight + 30
     -- Main Menu button
@@ -2446,6 +2452,10 @@ function love.keypressed(key)
 
 
         -----------------------------------
+
+        if key == "3" then
+            damageThisFrame = 50
+        end
 
         if key == "4" then
             createMoneyPopup(3 ,paddle.x + paddle.width/2, paddle.y, 1000)

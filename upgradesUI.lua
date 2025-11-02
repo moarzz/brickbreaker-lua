@@ -237,12 +237,12 @@ local function drawPlayerStats()
     local mouseX, mouseY = love.mouse.getPosition()
     local interestValue = 0--math.floor(math.min(Player.money, Player.currentCore == "Economy Core" and 50 or 25)/5)
     local gainValue = 5 + longTermInvestment.value
-    if Player.currentCore == "Economy Core" then
-        gainValue = 9
+    if Player.currentCore == "Loan Core" then
+        gainValue = 3 + longTermInvestment.value
     end
     local popupText = "At the start of the level up phase, gain <color=money><font=big>" .. gainValue .. "$ <font=default><color=white>interest"-- </color=money></font=big><color=white><font=default> + </font=default></color=white><font=big><color=money>1$ </color=money></font=big><color=white><font=default>for every <font=big><color=money>5$</color=money></font=big><color=white><font=default> you have, max </color=white></font=default><color=money><font=big>10$ </color=money></font=big><color=white><font=default><font=default><color=white>"
-    if Player.currentCore == "Economy Core" then
-        popupText = "At the start of the level up phase, gain <color=money><font=big>8$ <font=default><color=white>interest"
+    if Player.currentCore == "Loan Core" then
+        popupText = "At the start of the level up phase, gain <color=money><font=big>".. gainValue .."$ <font=default><color=white>interest"
     end
     if popupFancyText == nil then
         popupFancyText = FancyText.new(popupText, 20, 15, 350, 20, "left", playerStatsPointers.default, playerStatsPointers)
@@ -254,8 +254,8 @@ local function drawPlayerStats()
 
     -- render interest if player has not finished leveling up
     local interestValue = 5 -- + math.floor(math.min(Player.money, Player.currentCore == "Economy Core" and 50 or 25)/5) + getItemsIncomeBonus()
-    if Player.currentCore == "Economy Core" then
-        interestValue = 9
+    if Player.currentCore == gainValue then
+        interestValue = 3
     end
     --[[if Player.levelingUp and interestValue > 0 then
         setFont(45)
@@ -1252,7 +1252,7 @@ local function drawItemShop()
 
             local upgradePrice = item.rarity == "common" and 8 or item.rarity == "uncommon" and 16 or item.rarity == "rare" and 24 or item.rarity == "legendary" and 30 or 0
             if item.consumable then
-                upgradePrice = item.rarity == "common" and 4 or item.rarity == "uncommon" and 8 or item.rarity == "rare" and 12 or item.rarity == "legendary" and 16 or 0
+                upgradePrice = item.rarity == "common" and 5 or item.rarity == "uncommon" and 9 or item.rarity == "rare" and 12 or item.rarity == "legendary" and 15 or 0
             end
             if hasItem("Elon's Shmuck") then
                 upgradePrice = 2
@@ -1422,6 +1422,9 @@ local function drawPlayerItems()
             local startingY = screenHeight/2 - 85 -- Don't scale the starting Y
             local itemY = startingY + math.floor((index - 1)/3) * itemHeight
 
+            if not item.image then
+                item.image = defaultItemImage
+            end
             if item.image then
                 local imgScaleMult = 1
                 local representativeName = entry.sample.filteredName or entry.sample.templateFilteredName or entry.sample.name

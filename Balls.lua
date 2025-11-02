@@ -1194,6 +1194,10 @@ end
 -- Table to hold active arcane missiles
 local arcaneMissiles = {}
 
+function getArcaneMissileCount()
+    return #arcaneMissiles
+end
+
 local function castArcaneMissile(ball)
     -- Per-ball cooldown: only allow cast once per 2 seconds per ball
     local redo = true
@@ -1227,6 +1231,15 @@ end
 local shadowBalls = {}
 local fireballs = {}
 local lightBeams = {}
+function getShadowBallCount()
+    return #shadowBalls
+end
+function getFireballCount()
+    return #fireballs
+end
+function getLightBeamCount()
+    return #lightBeams
+end
 
 local lastFireballsCastTime = 0
 local lightningSFXCooldown = 0
@@ -1636,8 +1649,8 @@ local function ballListInit()
             size = 1,
             rarity = "common",
             startingPrice = 10,
-            ammoMult = 5,
-            fireRateMult = 0.4,
+            ammoMult = 7,
+            fireRateMult = 0.325,
             description = "Fires bullets, fast fireRate",
             onBuy = function() 
                 shoot("Machine Gun")
@@ -1650,7 +1663,7 @@ local function ballListInit()
             stats = {
                 damage = 1,
                 cooldown = 8,
-                ammo = 10,
+                ammo = 14,
                 fireRate = 3,
             },
         },
@@ -1893,7 +1906,7 @@ local function ballListInit()
             y = screenHeight / 2,
             size = 1,
             noAmount = true,
-            rarity = "common",
+            rarity = "uncommon",
             startingPrice = 25,
             description = "shoots shadowBalls that pass through bricks. Very slow fire rate.",
             color = {1, 0.5, 0, 1}, -- Orange color for shadowBall
@@ -2085,6 +2098,9 @@ function Balls.initialize()
     Player.xpForNextLevel = 15
     Player.xpGainMult = 1
     Player.setMoney(0);
+    if Player.currentCore == "Loan Core" then
+        Player.setMoney(25)
+    end
     Player.permanentUpgrades = {}
     inGame = true
     deathTimerOver = false
@@ -3636,7 +3652,7 @@ function Balls.update(dt, paddle, bricks)
             end
 
             -- Magnetic ball behavior (use visibleBricks)
-            if ball.name == "Magnetic Ball" or hasItem("Electromagnetic alignment") or ball.name == "Incrediball" then
+            if ball.name == "Magnetic Ball" or hasItem("Electromagnetic Alignment") or ball.name == "Incrediball" then
                 -- Update nearest brick every 0.1 seconds instead of every frame
                 ball.magneticUpdateTimer = (ball.magneticUpdateTimer or 0) + dt
                 if ball.magneticUpdateTimer >= 0.1 then
@@ -3668,7 +3684,7 @@ function Balls.update(dt, paddle, bricks)
                     local nearestBrick = ball.cachedNearestBrick
                     local dist = math.sqrt(ball.cachedNearestDistSq)
                     
-                    local attractionStrength = ball.attractionStrength or 450
+                    local attractionStrength = ball.attractionStrength or 425
                     local dx = (nearestBrick.x + nearestBrick.width/2) - ball.x
                     local dy = (nearestBrick.y + nearestBrick.height/2) - ball.y
                     -- Recalculate dist for current frame (brick might have moved slightly)
@@ -3682,7 +3698,7 @@ function Balls.update(dt, paddle, bricks)
                     
                     -- Normalize velocity to maintain ball speed
                     local speed = math.sqrt(ball.speedX * ball.speedX + ball.speedY * ball.speedY)
-                    local originalSpeed = getStat("Magnetic Ball", "speed")
+                    local originalSpeed = getStat(ball.name, "speed")
                     if speed > originalSpeed then
                         local scale = originalSpeed / speed
                         if ball.speedX > 0 then
