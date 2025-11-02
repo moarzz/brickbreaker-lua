@@ -470,6 +470,10 @@ end
 
 local lastPopupTime = 0
 local cumulatedXp = 0
+function resetXpStuff()
+    lastPopupTime = 0
+    cumulatedXp = 0
+end
 function Player.gain(amount)
     amount = amount * Player.xpGainMult
     Player.score = Player.score + amount

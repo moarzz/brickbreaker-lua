@@ -49,6 +49,7 @@ vec4 effect(vec4 colour, Image tex, vec2 textureCoords, vec2 screenCoords)
     }
 
     finalColor = sqrt(finalColor * 4.0) * actualIntensity * actualBrightness;
-        
+    finalColor = max(finalColor - vec3(0.05), vec3(0.0)); // Subtract threshold, clamp to black
+
     return vec4(finalColor, 1.0);
 }

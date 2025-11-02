@@ -2127,6 +2127,7 @@ function Balls.initialize()
     organiseBallList()
     resetGoldBricksValues()
     permanentItemBonuses = {}
+    resetXpStuff()
 
     -- sets which items should be visible
     Items.setAllVisible(true)
@@ -3985,27 +3986,22 @@ function Balls.update(dt, paddle, bricks)
 
         orb.angle = (orb.angle or 0) + dt * 1
 
-        --[[ attraction to paddle
+        -- attraction to paddle
         local closestX = math.max(paddle.x, math.min(orb.x, paddle.x + paddle.width))
         local closestY = math.max(paddle.y, math.min(orb.y, paddle.y + paddle.height))
         
         local dx = orb.x - closestX
         local dy = orb.y - closestY
-        
         local distanceToPaddle = math.sqrt(dx * dx + dy * dy)
-        print("distance to paddle: " .. distanceToPaddle)
-        local attractionStrength = mapRangeClamped(distanceToPaddle, 50, 500, 10000, 500)
-        local angle = math.atan2(dy, dx)
-        orb.speedX = orb.speedX - math.cos(angle) * attractionStrength * dt
-        orb.speedY = orb.speedY - math.sin(angle) * attractionStrength * dt]]
+        if orb.type == "moneyBill" and orb.x > paddle.x and orb.x < paddle.x + paddle.width then    
+            print("distance to paddle: " .. distanceToPaddle)
+            local attractionStrength = mapRangeClamped(distanceToPaddle, 50, 500, 10000, 500)
+            local angle = math.atan2(dy, dx)
+            orb.speedX = orb.speedX - math.cos(angle) * attractionStrength * dt
+            orb.speedY = orb.speedY - math.sin(angle) * attractionStrength * dt
+        end
 
-        local closestX = math.max(paddle.x, math.min(orb.x, paddle.x + paddle.width))
-        local closestY = math.max(paddle.y, math.min(orb.y, paddle.y + paddle.height))
-        
-        local dx = orb.x - closestX
-        local dy = orb.y - closestY
-        
-        local distanceToPaddle = math.sqrt(dx * dx + dy * dy)
+        -- orb pickup when close enough
         if distanceToPaddle < 10 then
             -- xp orb pickup
             
