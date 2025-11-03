@@ -380,6 +380,9 @@ end
 
 function Player.onLevelUp()
     EventQueue:addEventToQueue(EVENT_POINTERS.levelUp, 0);
+    if hasItem("Birthday Hat") then
+        EventQueue:addEventToQueue(EVENT_POINTERS.levelUp, 0);
+    end
     Player.InterestGain()
 end
 

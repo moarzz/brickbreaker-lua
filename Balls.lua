@@ -3993,13 +3993,13 @@ function Balls.update(dt, paddle, bricks)
         local dx = orb.x - closestX
         local dy = orb.y - closestY
         local distanceToPaddle = math.sqrt(dx * dx + dy * dy)
-        if orb.type == "moneyBill" and orb.x > paddle.x and orb.x < paddle.x + paddle.width then    
+        --[[if orb.type == "moneyBill" and orb.x > paddle.x and orb.x < paddle.x + paddle.width then    
             print("distance to paddle: " .. distanceToPaddle)
             local attractionStrength = mapRangeClamped(distanceToPaddle, 50, 500, 10000, 500)
             local angle = math.atan2(dy, dx)
             orb.speedX = orb.speedX - math.cos(angle) * attractionStrength * dt
             orb.speedY = orb.speedY - math.sin(angle) * attractionStrength * dt
-        end
+        end]]
 
         -- orb pickup when close enough
         if distanceToPaddle < 10 then
