@@ -55,7 +55,7 @@ function BackgroundShader.changeShader(toShader)
         return;
     end
 
-    if toShader < 1 or toShader > 3 then
+    if toShader < 1 or toShader > #self.shaders then
         return;
     end
 
