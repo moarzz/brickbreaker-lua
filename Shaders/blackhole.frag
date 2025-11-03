@@ -5,7 +5,10 @@ uniform number time = 0.0;
 
 const vec2 fixxedDimensions = vec2(640.0, 360.0);
 
-const float brightness = 0.0029;
+uniform number brightness = 0.0;
+uniform number intensity = 0.0;
+
+const float bgBrightness = 0.0029;
 const float darkmatter = 0.300;
 const float distfading = 0.750;
 const float saturation = 0.850;
@@ -102,7 +105,7 @@ vec4 background(vec2 coords)
         }
 
         v += fade;
-        v += vec3(s, s * s, s * s * s * s) * a * brightness * fade; // coloring based on distance
+        v += vec3(s, s * s, s * s * s * s) * a * bgBrightness * fade + (brightness + intensity) * 0.00000001; // coloring based on distance
 
         fade *= distfading; // distance fading
         s += stepsize;
@@ -188,7 +191,7 @@ vec4 raymarchDisk(vec3 ray, vec3 zeroPos)
     {
         position -= dist * ray;
 
-        float intensity = clamp(1.0 - abs((i - 0.8) * (1.0 / discSteps) * 2.0), 0.0, 1.0);
+        float intense = clamp(1.0 - abs((i - 0.8) * (1.0 / discSteps) * 2.0), 0.0, 1.0);
         float lengthPos = length(position.xz);
         float distMult = 1.0;
 
@@ -196,7 +199,7 @@ vec4 raymarchDisk(vec3 ray, vec3 zeroPos)
         distMult *= clamp((bhSize * 10.0 - lengthPos) * (1.0 / bhSize) * 0.20, 0.0, 1.0);
         distMult *= distMult;
 
-        float u = lengthPos + time * bhSize * 0.3 + intensity * bhSize * 0.2;
+        float u = lengthPos + time * bhSize * 0.3 + intense * bhSize * 0.2;
 
         vec2 xy;
         float rot = mod(time * discSpeed * (1.0 - disMix / 2.0), 8192.0);
@@ -212,14 +215,14 @@ vec4 raymarchDisk(vec3 ray, vec3 zeroPos)
 
         float extraWidth = noise * 1.0 * (1.0 - clamp(i * (1.0 / discSteps) * 2.0 - 1.0, 0.0, 1.0));
 
-        float alpha = clamp(noise * (intensity + extraWidth) * ((1.0 / bhSize) * 7.0 + 0.01) * dist * distMult, 0.0, 1.0);
+        float alpha = clamp(noise * (intense + extraWidth) * ((1.0 / bhSize) * 7.0 + 0.01) * dist * distMult, 0.0, 1.0);
 
-        vec3 col = 2.0 * mix(vec3(0.3, 0.2, 0.15) * insideCol, insideCol, min(1.0, intensity * 2.0));
+        vec3 col = 2.0 * mix(vec3(0.3, 0.2, 0.15) * insideCol, insideCol, min(1.0, intense * 2.0));
         o = clamp(vec4(col * alpha + o.rgb * (1.0 - alpha), o.a * (1.0 - alpha) + alpha), vec4(0.0), vec4(1.0));
 
         lengthPos *= (1.0 / bhSize);
    
-        o.rgb += redShift * (intensity * 1.0 + 0.5) * (1.0 / discSteps) * 100.0 * distMult / (lengthPos * lengthPos);
+        o.rgb += redShift * (intense * 1.0 + 0.5) * (1.0 / discSteps) * 100.0 * distMult / (lengthPos * lengthPos);
     }  
  
     o.rgb = clamp(o.rgb - 0.005, 0.0, 1.0);

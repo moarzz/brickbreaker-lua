@@ -84,8 +84,6 @@ bossSpawned = false
 local spawnBossNextRow = false
 healThisFrame = 0
 
-local bhShader = love.graphics.newShader("blackhole", "Shaders/blackhole.frag");
-
 local mt = {
     __index = function(t, k)
         local value = rawget(t, k)
@@ -978,7 +976,7 @@ function changeMusic(newMusicStage)
     if newMusicStage == "menu" then
         ref = "assets/SFX/inGame1.mp3";
         targetMusicPitch = 1;
-        BackgroundShader.changeShader(1); -- vexel
+        BackgroundShader.changeShader(4); -- vexel
     elseif newMusicStage == "calm" then
         ref = "assets/SFX/inGame1.mp3";
         BackgroundShader.changeShader(1); -- vexel
@@ -2307,11 +2305,6 @@ function love.draw()
         -- print("texture mem:" .. tostring(drawStats.texturememory));
         gcTimer = 0
     end
-
-    bhShader:send("time", love.timer.getTime());
-
-    -- love.graphics.setShader(bhShader);
-    -- WindowCorrector.mergeCanvas(1);
 end
 
 function finishUpgrading()

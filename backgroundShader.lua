@@ -13,17 +13,19 @@ function BackgroundShader.init()
         love.graphics.newShader("vexel", "Shaders/vexel.frag");
         love.graphics.newShader("acid", "Shaders/acid.frag");
         love.graphics.newShader("hexagons", "Shaders/hexagons.frag");
+        love.graphics.newShader("blackhole", "Shaders/blackhole.frag");
     };
 
     self.indices = {
         ["vexel"] = 1;
         ["acid"] = 2;
         ["hexagons"] = 3;
+        ["blackhole"] = 4;
     };
 
     self.fadeInOutShader = love.graphics.newShader("fadeInOut", "Shaders/fadeInOut.frag");
 
-    self.activeShader = 1; -- index to the current shader
+    self.activeShader = 4; -- index to the current shader
     self.prevActiveShader = 0; -- index to the previous shader (for fading)
 
     self.fadePerun = 1; -- perun from prevActiveShader to activeShader
@@ -97,24 +99,12 @@ function BackgroundShader.draw()
         love.graphics.setShader(self.shaders[self.activeShader]);
         WindowCorrector.mergeCanvases(2, 3);
 
-        -- love.graphics.setBlendMode("add", "premultiplied");
-        -- love.graphics.setCanvas(); -- main render target
-
         self.fadeInOutShader:send("fade", self.fadePerun);
         self.fadeInOutShader:send("fadeOut", WindowCorrector.getCanvas(1));
-        
 
-        -- self.fadeInOutShader:send("fadeIn", true);
         love.graphics.setShader(self.fadeInOutShader);
         WindowCorrector.mergeCanvas(2);
--- 
-        -- love.graphics.setShader();
--- 
-        -- self.fadeInOutShader:send("fadeIn", false);
-        -- love.graphics.setShader(self.fadeInOutShader);
-        -- WindowCorrector.mergeCanvas(1);
 
-        -- love.graphics.setBlendMode("alpha"); -- normal blend mode
         love.graphics.setShader();
 
         WindowCorrector.clearCanvas(1);
