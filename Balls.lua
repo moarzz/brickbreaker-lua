@@ -5,6 +5,8 @@ local Explosion = require("particleSystems.explosion")
 local ArcaneMissile = require("particleSystems.arcaneMissile")
 local FlameBurst = require("particleSystems.flameBurst")
 
+local Trail = require("trail");
+
 startingBall = "Machine Gun" -- The first ball that is added to the game 
 local Balls = {}
 local ballCategories = {}
@@ -551,7 +553,7 @@ local function shoot(gunName, ball)
                     speedX = speedX,
                     speedY = speedY,
                     dead = false,
-                    trail = {},
+                    trail = Trail.new((ballTemplate.radius or 10) * 1.5, 1),
                     speedMultiplier = 1
                 }
                 table.insert(Balls, newBall)
@@ -625,7 +627,7 @@ local function shoot(gunName, ball)
                         speedX = speedX,
                         speedY = speedY,
                         dead = false,
-                        trail = {},
+                        trail = Trail.new((ballTemplate.radius or 10) * 1.5, 1),
                         speedMultiplier = 1
                     }
                     table.insert(Balls, newBall)
@@ -670,7 +672,7 @@ local function shoot(gunName, ball)
                         speedX = speedX,
                         speedY = speedY,
                         dead = false,
-                        trail = {},
+                        trail = Trail.new((ballTemplate.radius or 10) * 1.5, 1),
                         speedMultiplier = 1
                     }
                     table.insert(Balls, newBall)
@@ -730,7 +732,7 @@ local function shoot(gunName, ball)
                         speedX = speedX,
                         speedY = speedY,
                         dead = false,
-                        trail = {},
+                        trail = Trail.new((ballTemplate.radius or 10) * 1.5, 1),
                         speedMultiplier = 1
                     }
                     table.insert(Balls, newBall)
@@ -802,7 +804,7 @@ local function shoot(gunName, ball)
                         speedX = speedX,
                         speedY = speedY,
                         dead = false,
-                        trail = {},
+                        trail = Trail.new((ballTemplate.radius or 10) * 1.5, 1),
                         speedMultiplier = 1
                     }
                     table.insert(Balls, newBall)
@@ -859,7 +861,7 @@ local function shoot(gunName, ball)
                         speedX = speedX,
                         speedY = speedY,
                         dead = false,
-                        trail = {},
+                        trail = Trail.new((ballTemplate.radius or 10) * 1.5, 1),
                         speedMultiplier = 1
                     }
                     table.insert(Balls, newBall)
@@ -986,7 +988,7 @@ local function turretShoot(turret)
                 speedX = speedX,
                 speedY = speedY,
                 dead = false,
-                trail = {},
+                trail = Trail.new((ballTemplate.radius or 10) * 1.5, 1),
                 speedMultiplier = 1
             }
             table.insert(Balls, newBall)
@@ -1263,7 +1265,7 @@ local function cast(spellName, brick, forcedDamage)
             stats = unlockedBallTypes["Shadow Ball"].stats,
             damage = getStat("Shadow Ball", "damage"),
             range = range,
-            trail = {},
+            trail = Trail.new(range * 5, 1),
             dead = false
         }
         -- Removed shadowBall hit sound effect
@@ -2338,7 +2340,7 @@ function Balls.addBall(ballName, singleBall)
                     speedX = speedX,
                     speedY = speedY,
                     dead = false,
-                    trail = {},
+                    trail = Trail.new(ballTemplate.radius * 1.5, 1),
                     speedMultiplier = 1
                 }
                 local ballAmount = 0
@@ -2628,7 +2630,7 @@ local function paddleCollisionCheck(ball, paddle)
                     speedX = speedX,
                     speedY = speedY,
                     dead = false,
-                    trail = {},
+                    trail = Trail.new((ballTemplate.radius or 10) * 1.5, 1),
                     speedMultiplier = 1
                 }
                 table.insert(Balls, newBall)
@@ -3058,12 +3060,13 @@ local function updateshadowBall(shadowBall, dt)
 
     -- Update trail
     if not shadowBall.trail then
-        shadowBall.trail = {}
+        shadowBall.trail = Trail.new(shadowBall.radius, 1);
     end
-    table.insert(shadowBall.trail, {x = shadowBall.x, y = shadowBall.y})
-    if #shadowBall.trail > 65 then -- Shorter trail than regular balls
-        table.remove(shadowBall.trail, 1)
-    end
+    shadowBall.trail:addPosition(shadowBall.x, shadowBall.y, dt);
+    -- table.insert(shadowBall.trail, {x = shadowBall.x, y = shadowBall.y})
+    -- if #shadowBall.trail > 65 then -- Shorter trail than regular balls
+        -- table.remove(shadowBall.trail, 1)
+    -- end
 end
 
 -- Add near the top with other local functions
@@ -3148,15 +3151,16 @@ local function drawShadowBall(shadowBall)
     love.graphics.setColor(0.2, 0, 0.2, 0.65) -- Orange glow
     love.graphics.circle("fill", shadowBall.x, shadowBall.y, shadowBall.radius * 1.6)
 
+    shadowBall.trail:draw();
     -- Draw trail
-    for i = 1, #(shadowBall.trail or {}) do
+    --[[for i = 1, #(shadowBall.trail or {}) do
         local p = shadowBall.trail[i]
         local t = i / #shadowBall.trail
         local trailRadius = shadowBall.radius * math.pow(t, 2.3)
         -- Gradient from yellow to red
         love.graphics.setColor(t * 0.6, 0, t * 0.6, math.pow(t, 1.25))
         love.graphics.circle("fill", p.x, p.y, trailRadius)
-    end
+    end]]
 
     -- draw ball
     love.graphics.setColor(120/255, 0, 120/255, 1) -- 
@@ -3622,7 +3626,8 @@ function Balls.update(dt, paddle, bricks)
             ball.y = ball.y + (ball.speedY + speedExtra * multY * 50) * ball.speedMult * dt * (Player.currentCore == "Madness Core" and 2 or 1) * speedMult
 
             if ball.type == "ball" then
-                local trailSpacing = 3 -- Distance between trail points
+                ball.trail:addPosition(ball.x, ball.y, dt);
+                --[[local trailSpacing = 3 -- Distance between trail points
                 if not ball.lastTrailPos then
                     ball.lastTrailPos = {x = ball.x, y = ball.y}
                     table.insert(ball.trail, {x = ball.x, y = ball.y})
@@ -3633,12 +3638,12 @@ function Balls.update(dt, paddle, bricks)
                     table.insert(ball.trail, {x = ball.x, y = ball.y})
                     ball.lastTrailPos.x = ball.x
                     ball.lastTrailPos.y = ball.y
-                end
+                end]]
 
                 -- Limit the trail length
-                while #ball.trail > ballTrailLength do
-                    table.remove(ball.trail, 1)
-                end
+                -- while #ball.trail > ballTrailLength do
+                    -- table.remove(ball.trail, 1)
+                -- end
             end
 
             -- Ball collision with paddle
@@ -4343,7 +4348,7 @@ function Balls:draw()
 
                     love.graphics.setColor(1,1,1,1)
                 end
-            end
+            end]]
 
             if ball.name == "Phantom Ball" then
                 local auraSize = getStat("Phantom Ball", "auraSize") * 15
