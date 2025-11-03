@@ -16,28 +16,38 @@ const float saturation = 0.850;
 const int iterations = 15;
 const float magicnum = 0.53;
 
-const int volsteps = 100;
+const int volsteps = 30;
 const float stepsize = 0.13;
 
 const float zoom = 1.200;
 const float tile = 0.850;
 const float speed = 0.00035;
 
-const int AA = 4; // anti aliasing (lower = better performance)
+const int discIterations = 10;
+
+const float AA = 1.0; // anti aliasing (lower = better performance)
 
 const float discSpeed = 1.7; // disk rotation speed
 
-const float discSteps = 12.0; // disk texture layers
+const float discSteps = 6.0; // disk texture layers
 const float bhSize = 0.3; // size of BH
+const float bhSizeRecip = 1.0 / bhSize;
 
 const float tau = 6.28318;
+
+const vec2 angle1 = vec2(0.0, tau + 0.1);
+// cosx = 1.0
+// cosy = 0.99500416527
+// sinx = 0.0
+// siny = 0.09983341664
+const vec2 angle2 = vec2(-0.0294170667, tau + 0.08529146665);
 
 float SCurve(float value)
 {
     // for some reason pow(value, 5.0) doesnt work
 
     if (value < 0.5) {
-        return value * value * value * value * value * 16.0;
+        return pow(value, 5.0) * 16.0;
     }
 
     value -= 1.0;
@@ -45,13 +55,13 @@ float SCurve(float value)
     return value * value * value * value * value * 16.0 + 1.0;
 }
 
-vec4 background(vec2 coords)
+vec3 background(vec2 coords)
 {
-    vec4 retColour;
+    vec3 retColour;
 
     // starfield
-    vec4 L;
-    vec4 C;
+    // vec3 L;
+    vec3 C;
 
     // get coords and direction
     vec2 uv = coords - 0.5; // [-0.5 : 0.5]
@@ -113,20 +123,20 @@ vec4 background(vec2 coords)
 
     v = mix(vec3(length(v)), v, saturation); //color adjust
 
-    C = vec4(v * 0.01, 1.0);
+    C = vec3(v * 0.01);
 
     C.r = pow(C.r, 0.35);
     C.g = pow(C.g, 0.36);
     C.b = pow(C.b, 0.4);
 
-    L = C;
+    // L = C;
 
-    C.r = mix(L.r, SCurve(C.r), 1.0);
-    C.g = mix(L.g, SCurve(C.g), 0.9);
-    C.b = mix(L.b, SCurve(C.b), 0.6);
+    C.r = SCurve(C.r);
+    C.g = mix(C.g, SCurve(C.g), 0.9);
+    C.b = mix(C.b, SCurve(C.b), 0.6);
 
-    retColour += pow(vec4(C.rgb, 1.0), vec4(1.08));
-    retColour.a = 1.0;
+    retColour += pow(C, vec3(1.08));
+    // retColour.a = 1.0;
 
     return retColour;
 }
@@ -156,76 +166,49 @@ float value(vec2 p, float f) // value noise
     return mix(b, t, fr.y);
 }
 
-vec4 raymarchDisk(vec3 ray, vec3 zeroPos)
+vec3 raymarchDisk(vec3 ray, vec3 zeroPos)
 {
-	vec3 position = zeroPos;
-    float lengthPos = length(position.xz);
-    float dist = min(1.0, lengthPos * (1.0 / bhSize) * 0.5) * bhSize * 0.4 * (1.0 / discSteps) / abs(ray.y);
+    vec2 position = zeroPos.xz;
+    float lengthPos = length(position);
+    float dist = min(1.0, lengthPos * bhSizeRecip * 0.5) * bhSize * 0.4 * (1.0 / discSteps) / abs(ray.y);
 
-    position += dist * discSteps * ray * 0.5;
-
-    vec2 deltaPos;
-    deltaPos.x = -zeroPos.z * 0.01 + zeroPos.x;
-    deltaPos.y =  zeroPos.x * 0.01 + zeroPos.z;
-    deltaPos = normalize(deltaPos - zeroPos.xz);
+    position += dist * discSteps * ray.xz * 0.5;
     
-    float parallel = dot(ray.xz, deltaPos);
-    parallel /= sqrt(lengthPos);
-    parallel *= 0.5;
-    float redShift = parallel + 0.3;
-    redShift *= redShift;
+    float disMix = clamp((lengthPos - bhSize * 2.0) * bhSizeRecip * 0.24, 0.0, 1.0);
+    vec3 insideCol = mix(vec3(5.0, 2.5, 1.0), vec3(5.0, 1.75, 0.75) * 0.2, disMix);
+    vec3 outsideCol = vec3(0.3, 0.2, 0.15) * insideCol;
 
-    redShift = clamp(redShift, 0.0, 1.0);
-    
-    float disMix = clamp((lengthPos - bhSize * 2.0) * (1.0 / bhSize) * 0.24, 0.0, 1.0);
-    vec3 insideCol =  mix(vec3(1.0, 1.0, 0.8), vec3(1.0, 0.7, 0.6) * 0.2, disMix);
-    
-    insideCol *= mix(vec3(2.0, 1.0, 0.5), vec3(1.6, 2.4, 4.0), redShift);
-	insideCol *= 1.25;
-    redShift += 0.12;
-    redShift *= redShift;
+    vec3 o = vec3(0.0);
 
-    vec4 o = vec4(0.0);
+    float rot = time * discSpeed * (1.0 - disMix / 2.0);
+    float sRot = sin(rot);
+    float cRot = cos(rot);
 
     for (float i = 0.0; i < discSteps; i++)
     {
-        position -= dist * ray;
+        position -= dist * ray.xz;
+        lengthPos = length(position);
 
-        float intense = clamp(1.0 - abs((i - 0.8) * (1.0 / discSteps) * 2.0), 0.0, 1.0);
-        float lengthPos = length(position.xz);
-        float distMult = 1.0;
-
-        distMult *= clamp((lengthPos - bhSize * 0.75) * (1.0 / bhSize) * 1.5, 0.0, 1.0);
-        distMult *= clamp((bhSize * 10.0 - lengthPos) * (1.0 / bhSize) * 0.20, 0.0, 1.0);
+        float intense = clamp(1.0 - abs((i - 0.8) / discSteps * 2.0), 0.0, 1.0);
+        float distMult = clamp((lengthPos - bhSize * 0.75) * bhSizeRecip * 1.5, 0.0, 1.0);
+        distMult *= clamp((bhSize * 10.0 - lengthPos) * bhSizeRecip * 0.2, 0.0, 1.0);
         distMult *= distMult;
 
-        float u = lengthPos + time * bhSize * 0.3 + intense * bhSize * 0.2;
+		vec2 angle = vec2(
+            0.02 * atan(abs((-position.y * sRot + position.x * cRot) / (position.x * sRot + position.y * cRot))),
+            (lengthPos + time * bhSize * 0.3 + intense * bhSize * 0.2) * bhSizeRecip * 0.05
+        );
 
-        vec2 xy;
-        float rot = mod(time * discSpeed * (1.0 - disMix / 2.0), 8192.0);
-        xy.x = -position.z * sin(rot) + position.x * cos(rot);
-        xy.y =  position.x * sin(rot) + position.z * cos(rot);
+        float noise = value(angle, 70.0) * 0.66 + 0.33 * value(angle, 140.0);
 
-        float x = abs(xy.x / xy.y);
-		float angle = 0.02 * atan(x);
-  
-        const float f = 70.0;
-        float noise = value(vec2(angle, u * (1.0 / bhSize) * 0.05), f);
-        noise = noise * 0.66 + 0.33 * value(vec2(angle, u * (1.0 / bhSize) * 0.05), f * 2.0);
+        float extraWidth = noise * (1.0 - clamp(i / discSteps * 2.0 - 1.0, 0.0, 1.0));
+        float alpha = clamp(noise * (intense + extraWidth) * (7.0 * bhSizeRecip + 0.01) * dist * distMult, 0.0, 1.0);
 
-        float extraWidth = noise * 1.0 * (1.0 - clamp(i * (1.0 / discSteps) * 2.0 - 1.0, 0.0, 1.0));
-
-        float alpha = clamp(noise * (intense + extraWidth) * ((1.0 / bhSize) * 7.0 + 0.01) * dist * distMult, 0.0, 1.0);
-
-        vec3 col = 2.0 * mix(vec3(0.3, 0.2, 0.15) * insideCol, insideCol, min(1.0, intense * 2.0));
-        o = clamp(vec4(col * alpha + o.rgb * (1.0 - alpha), o.a * (1.0 - alpha) + alpha), vec4(0.0), vec4(1.0));
-
-        lengthPos *= (1.0 / bhSize);
-   
-        o.rgb += redShift * (intense * 1.0 + 0.5) * (1.0 / discSteps) * 100.0 * distMult / (lengthPos * lengthPos);
+        vec3 col = mix(outsideCol, insideCol, min(1.0, intense * 2.0));
+        o = clamp(mix(o, col, alpha), vec3(0.0), vec3(1.0));
     }  
  
-    o.rgb = clamp(o.rgb - 0.005, 0.0, 1.0);
+    o = clamp(o - 0.005, 0.0, 1.0);
 
     return o;
 }
@@ -233,16 +216,16 @@ vec4 raymarchDisk(vec3 ray, vec3 zeroPos)
 
 void Rotate(inout vec3 vector, vec2 angle)
 {
-	vector.yz = cos(angle.y) * vector.yz + sin(angle.y) * vec2(-1.0, 1.0) * vector.zy;
-	vector.xz = cos(angle.x) * vector.xz + sin(angle.x) * vec2(-1.0, 1.0) * vector.zx;
+	vector.yz = cos(angle.y) * vector.yz + sin(angle.y) * vec2(-vector.z, vector.y);
+	vector.xz = cos(angle.x) * vector.xz + sin(angle.x) * vec2(-vector.z, vector.x);
 }
 
 vec4 effect(vec4 colour, Image img, vec2 textureCoords, vec2 screenCoords)
 {
-    vec2 fakeScreenCoords = (screenCoords - vec2((love_ScreenSize.xy - fixxedDimensions * min(love_ScreenSize.x / fixxedDimensions.x, love_ScreenSize.y / fixxedDimensions.y)) / 2.0)) / vec2(min(love_ScreenSize.x / fixxedDimensions.x, love_ScreenSize.y / fixxedDimensions.y));
+    vec2 fakeScreenCoords = (screenCoords - vec2((love_ScreenSize.xy - fixxedDimensions * min(love_ScreenSize.x / fixxedDimensions.x, love_ScreenSize.y / fixxedDimensions.y)) * 0.5)) / vec2(min(love_ScreenSize.x / fixxedDimensions.x, love_ScreenSize.y / fixxedDimensions.y));
     fakeScreenCoords.y = fixxedDimensions.y - fakeScreenCoords.y;
 
-    vec4 colOut = vec4(0.0);
+    vec3 colOut = vec3(0.0);
     
     vec2 fragCoordRot;
     fragCoordRot.x = fakeScreenCoords.x * 0.985 + fakeScreenCoords.y * 0.174;
@@ -257,42 +240,41 @@ vec4 effect(vec4 colour, Image img, vec2 textureCoords, vec2 screenCoords)
     {
         for (int i = 0; i < AA; i++)
         {
-            //setting up camera
-            vec3 ray = normalize(vec3((fragCoordRot - fixxedDimensions * 0.5 + vec2(i, j) / float(AA)) / fixxedDimensions.x, 1.0));
-            vec3 pos = vec3(2.0, 0.05, -10.0); // previously based off of mouse position
-            vec2 angle = vec2(0.0, tau + 0.1);
+            vec3 ray = normalize(vec3((fragCoordRot - fixxedDimensions * 0.5 + vec2(i, j) / AA) / fixxedDimensions.x, 1.0));
 
-            float dist = length(pos);
-            Rotate(pos, angle);
-            angle.xy -= min(0.3 / dist, tau * 0.5) * vec2(1.0, 0.5);
-            Rotate(ray, angle);
+            vec3 pos = vec3(
+                2.0,
+                1.04808437466,
+                -9.94504998187
+            );
+
+            Rotate(ray, angle2);
 
             if (i == 0 && j == 0)
             {
                 distortBg = ray;
             }
 
-            vec4 col = vec4(0.0);
-
-            for (int disks = 0; disks < 20; disks++) // steps
+            for (int discs = 0; discs < discIterations; discs++) // steps
             {
+                // 6 is the minimum number of iterations that doesnt look shit
                 for (int h = 0; h < 6; h++) // reduces tests for exit conditions (to minimise branching)
                 {
                     float dotpos = dot(pos, pos);
                     float invDist = inversesqrt(dotpos); // reciprocal of distance to BH
-                    float centDist = dotpos * invDist; // 1.0 / dotpos 	// distance to BH
-                    float stepDist = 0.92 * abs(pos.y / ray.y);  // conservative distance to disk (y==0)   
+                    float centDist = dotpos * invDist; // sqrt(dotpos) // distance to BH
+                    // float stepDist = 0.92 * abs(pos.y / ray.y);  // conservative distance to disk (y==0)   
                     float farLimit = centDist * 0.5; // limit step size far from to BH
-                    float closeLimit = centDist * 0.1 + 0.05 * centDist * centDist * (1.0 / bhSize); // limit step size closse to BH
-                    stepDist = min(stepDist, min(farLimit, closeLimit));
+                    float closeLimit = centDist * 0.1 + 0.05 * centDist * centDist / bhSize; // limit step size closse to BH
+                    float stepDist = min(0.92 * abs(pos.y / ray.y), min(farLimit, closeLimit));
     
-                    float invDistSqr = invDist * invDist; // reciprocal of dotpos ^ 4.0
-                    float bendForce = stepDist * invDistSqr * bhSize * 0.625;  // bending force
-                    ray = normalize(ray - (bendForce * invDist) * pos);  // bend ray towards BH
+                    // float invDistSqr = 1.0 / dotpos; // reciprocal of dotpos
+                    float bendForce = stepDist / dotpos * bhSize * 0.625 * invDist; // bending force
+                    ray = normalize(ray - bendForce * pos); // bend ray towards BH
 
                     if (i == 0 && j == 0)
                     {
-                        distortBg = normalize(distortBg - (bendForce * invDist * 0.2) * pos); // bend bg towards bh by a smaller amnt then the actual light
+                        distortBg = distortBg - (bendForce * 0.2) * pos; // bend bg towards bh by a smaller amnt then the actual light
                     }
 
                     pos += stepDist * ray;
@@ -304,31 +286,29 @@ vec4 effect(vec4 colour, Image img, vec2 textureCoords, vec2 screenCoords)
                 {
                     break;
                 }
-                else if(dist2 > bhSize * 1000.0) // ray escaped BH
+
+                if(dist2 > bhSize * 1000.0) // ray escaped BH
                 {
                     useBg = true;
                     break;
                 }
-                else if (abs(pos.y) <= bhSize * 0.002) // ray hit accretion disk
+
+                if (abs(pos.y) <= bhSize * 0.002) // ray hit accretion disk
                 {
-                    vec4 diskCol = raymarchDisk(ray, pos); // render disk
                     pos.y = 0.0;
                     pos += abs(bhSize * 0.001 / ray.y) * ray;
-                    col = vec4(diskCol.rgb * (1.0 - col.a) + col.rgb, col.a + diskCol.a * (1.0 - col.a));
+                    colOut += raymarchDisk(ray, pos);
                 }
             }
-
-            col.a = 1.0;
-            colOut += col;
         }
     }
 
-    colOut /= colOut.a;
+    colOut /= AA * AA;
 
     if (useBg)
     {
         colOut += background(distortBg.xy / distortBg.z);
     }
 
-    return colOut;
+    return vec4(colOut, 1.0);
 }
