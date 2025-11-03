@@ -743,7 +743,6 @@ local backgroundOpacity = {value = 0}
 local loadTime
 function love.load()
     love.mouse.setVisible(true)
-    love.mouse.setGrabbed(true)
     math.randomseed(os.time())
 
     WindowCorrector.init(7); -- 5 additional render canvases for shaders and draw order stuff
@@ -2453,6 +2452,12 @@ function love.keypressed(key)
 
         -----------------------------------
 
+        if key == "1" then
+            BackgroundShader.changeShader(4)
+        end
+        if key == "2" then
+            BackgroundShader.changeShader(1)
+        end
         if key == "3" then
             damageThisFrame = 50
         end
