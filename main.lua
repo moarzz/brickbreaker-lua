@@ -168,7 +168,7 @@ function resetGame()
         _width = 300, -- Base width + size upgrade
         widthMult = 1,
         height = 20,
-        speed = 900,
+        speed = 700,
         currrentSpeedX = 0,
         speedMult = 1
     }
@@ -252,16 +252,22 @@ local function loadAssets()
     healImg = love.graphics.newImage("assets/sprites/heal.png")
     brickImg = love.graphics.newImage("assets/sprites/brick.png")
     goldBrickImg = love.graphics.newImage("assets/sprites/goldBrick.png")
-    heartImg = love.graphics.newImage("assets/sprites/heart.png") -- Heart image for health
+    bossBrickImg = love.graphics.newImage("assets/sprites/bossBrick.png")
+    crownImg = love.graphics.newImage("assets/sprites/crown.png")
+    heartImg = love.graphics.newImage("assets/sprites/heart.png")
     muzzleFlashImg = love.graphics.newImage("assets/sprites/muzzleFlash.png")
-    rocketImg = love.graphics.newImage("assets/sprites/rocket.png")
     turretImg = love.graphics.newImage("assets/sprites/turret.png")
     turretBaseImg = love.graphics.newImage("assets/sprites/turretBase.png")
     turretGunImg = love.graphics.newImage("assets/sprites/turretGun.png")
     brickPiece1Img = love.graphics.newImage("assets/sprites/brickPiece1.png")
     brickPiece2Img = love.graphics.newImage("assets/sprites/brickPiece2.png")
     brickPiece3Img = love.graphics.newImage("assets/sprites/brickPiece3.png")
-        -- UI
+    vignetteImg = love.graphics.newImage("assets/sprites/vignette.png")
+    drillSergeantImg = love.graphics.newImage("assets/sprites/drillSergeant.png")
+    healAuraImg = love.graphics.newImage("assets/sprites/healAura.png")
+    defaultItemImage = love.graphics.newImage("assets/sprites/UI/ItemIcons/default.png")
+
+    -- UI
     uiLabelImg = love.graphics.newImage("assets/sprites/UI/label.png")
     uiSmallWindowImg = love.graphics.newImage("assets/sprites/UI/windowSmall.png")
     uiWindowImg = love.graphics.newImage("assets/sprites/UI/window.png")
@@ -282,9 +288,6 @@ local function loadAssets()
         moneyBag = love.graphics.newImage("assets/sprites/powerups/moneyBag.png"),
         freeze = love.graphics.newImage("assets/sprites/powerups/freeze.png"),
         nuke = love.graphics.newImage("assets/sprites/powerups/nuke.png"),
-        doubleAmount = love.graphics.newImage("assets/sprites/powerups/doubleAmount.png"),
-        doubleSpeed = love.graphics.newImage("assets/sprites/powerups/doubleSpeed.png"),
-        doubleFireRate = love.graphics.newImage("assets/sprites/powerups/doubleFireRate.png"),
         doubleDamage = love.graphics.newImage("assets/sprites/powerups/doubleDamage.png"),
         acceleration = love.graphics.newImage("assets/sprites/powerups/acceleration.png"),
         dollarBill = love.graphics.newImage("assets/sprites/dollarBill.png"),
@@ -300,6 +303,7 @@ local function loadAssets()
     gunShootSFX = love.audio.newSource("assets/SFX/gunShoot.mp3", "static") -- Add gun shoot sound if available
     lvlUpSFX = love.audio.newSource("assets/SFX/lvlUp.mp3", "static")
     upgradeSFX = love.audio.newSource("assets/SFX/upgrade.mp3", "static")
+    loseMoneySFX = love.audio.newSource("assets/SFX/loseMoney.mp3", "static")
     selectSFX = love.audio.newSource("assets/SFX/select.mp3", "static")
     laserSFX = love.audio.newSource("assets/SFX/laser.mp3", "static")
     lightningPulseSFX = love.audio.newSource("assets/SFX/lightningPulse.mp3", "static")
@@ -329,6 +333,7 @@ local function loadAssets()
     Player.loadJsonValues()
     damageRipples.load()
     Crooky:load()
+    
 end
 
 dmgVFXOn = true
@@ -566,7 +571,7 @@ local function generateRow(brickCount, yPos)
                     if canHeal then
                         Timer.after(1.75 + math.random(1,175)/100, function() healSelf(healBrick) end)
                     end
-                elseif math.random(1, 100) < 0 and (totalGoldBricksGeneratedThisRun < math.floor((gameTime + 25)/120)) then
+                elseif (totalGoldBricksGeneratedThisRun < math.floor((gameTime + 25)/100)) then
                     totalGoldBricksGeneratedThisRun = totalGoldBricksGeneratedThisRun + 1
                     local goldBrick = {
                         type = "gold",
@@ -618,6 +623,7 @@ local function generateRow(brickCount, yPos)
     return row
 end
 
+local bossSpawnTime = 600
 --This function is called every 0.5 seconds to see if we should add more bricks, if we should, it adds 10 rows using the generateRow() function
 local function addMoreBricks()
     if bricks[#bricks] then
@@ -625,13 +631,14 @@ local function addMoreBricks()
             print("spawning more bricks")
             for i=1 , 10 do
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
-                currentRowPopulation = currentRowPopulation + math.ceil(Player.level * (Player.currentCore == "Farm Core" and 1 or 0.5) + 1)
+                local addBrickMult = mapRangeClamped(Player.level, 1, 20, 2, 1)
+                currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 15, 150) 
                 if spawnBossNextRow and not bossSpawned then
                     spawnBoss()
                     bossSpawned = true
                     spawnBossNextRow = false
                     currentRowPopulation = 1000
-                elseif not (bossSpawned or spawnBossNextRow) and gameTime >= 600 then
+                elseif not (bossSpawned or spawnBossNextRow) and gameTime >= bossSpawnTime then
                     spawnBossNextRow = true
                 end
             end
@@ -683,7 +690,7 @@ function initializeBricks()
     brickWidth = 75
     brickHeight = 30
     brickSpacing = 10 -- Spacing between bricks
-    rows = 10
+    rows = 3
     cols = 10
     brickSpeed = { value = 10 } -- Speed at which bricks move down (pixels per second)
     currentRowPopulation = Player.currentCore == "Speed Core" and 100 or 1 -- Number of bricks in the first row
@@ -691,7 +698,7 @@ function initializeBricks()
     -- Generate bricks
     for i = 0, rows - 1 do
         generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing)) --generate 100 scaling rows of bricks
-        currentRowPopulation = math.min(currentRowPopulation + 1, 750)
+        currentRowPopulation = currentRowPopulation + (gameTime)/mapRange(gameTime, 0, 600, 15, 150) 
     end
 
     -- remove the bossSpawnTimer on gameStart if it exists
@@ -734,7 +741,11 @@ function stopConfetti()
     confettiSystem = nil
 end
 
+local backgroundOpacity = {value = 0}
+local loadTime
 function love.load()
+    love.mouse.setVisible(true)
+    love.mouse.setGrabbed(true)
     math.randomseed(os.time())
 
     WindowCorrector.init(7); -- 5 additional render canvases for shaders and draw order stuff
@@ -786,7 +797,7 @@ function love.load()
         _width = 300, -- Base width + size upgrade
         widthMult = 1,
         height = 20,
-        speed = 900, -- Base speed + speed upgrade
+        speed = 700, -- Base speed + speed upgrade
         currrentSpeedX = 0,
         speedMult = 1
     }
@@ -807,11 +818,14 @@ function love.load()
     })
 
     loadGameData()
+    Crooky:setVisible(not firstRunCompleted)
 
     backgroundMusic:setVolume(musicVolume/4)
     love.window.setFullscreen(fullScreenCheckbox);
 
     Crooky:giveInfo("game", "open")
+    loadTime = love.timer.getTime()
+    
 end
 
 function getHighestBrickY(lowestInstead)
@@ -837,9 +851,9 @@ brickFreeze = false
 brickFreezeTime = gameTime
 function getBrickSpeedByTime()
     -- Scale speed from 0.5 to 3 over 30 minutes
-    local returnValue = mapRange(gameTime, 0, 2000, 0.5, 3) * (Player.currentCore == "Madness Core" and 2 or 1)
+    local returnValue = mapRange(gameTime, 0, 2000, 0.3, 3) * (Player.currentCore == "Madness Core" and 2 or 1)
     if brickFreeze == true then
-        if gameTime - brickFreezeTime > 10 then
+        if gameTime - brickFreezeTime > 20 then
             brickFreeze = false
         else
             return 0
@@ -848,17 +862,35 @@ function getBrickSpeedByTime()
     return returnValue
 end
 
-currentBrickSpeed = 1
+function getAverageBrickHealth()
+    local totalHealth = 0
+    local brickCount = 0
+    for _, brick in ipairs(bricks) do
+        if not brick.destroyed then
+            totalHealth = totalHealth + brick.health
+            brickCount = brickCount + 1
+        end
+    end
+    if brickCount == 0 then
+        return 0
+    else
+        return totalHealth / brickCount
+    end
+end
+
+local startingBrickSpeed = 20
+currentBrickSpeed = startingBrickSpeed
 deathTweenValues = {speed = 1, overlayOpacity = 0}
 function getBrickSpeedMult() 
     -- Get the position-based multiplier
     if Player.dead then
         return deathTweenValues.speed * getBrickSpeedByTime()
     elseif bossSpawned and boss.y >= -boss.height and getHighestBrickY() <= (screenHeight * 3/4 - 250) then
-        return mapRangeClamped(boss.y, -boss.height, screenHeight/3, 2.8, 0.75) * getBrickSpeedByTime()
+        return mapRangeClamped(boss.y, -boss.height, screenHeight/3, 2.8, 1.35) * getBrickSpeedByTime()
     else
         local posMult = 1
-        posMult = mapRangeClamped(getHighestBrickY(), 100, (screenHeight/2 + 200), 15, 1)
+        local highestY = getHighestBrickY()
+        posMult = highestY < 350 and mapRangeClamped(highestY, 0, 350, startingBrickSpeed, 10) or mapRangeClamped(highestY, 350, 750, 10, 1.35)
         if #bricks == 0 then
             return 1
         end
@@ -881,7 +913,7 @@ local function moveBricksDown(dt)
     local currentTime = love.timer.getTime()
     local isInHitState = (currentTime - Player.lastHitTime) < 2.0 -- Check if within 2 seconds of hit
     -- Normal speed calculation
-    currentBrickSpeed = (currentBrickSpeed == getBrickSpeedByTime() and currentBrickSpeed or (getBrickSpeedMult() < currentBrickSpeed and math.max(currentBrickSpeed - dt * 2, getBrickSpeedMult()) or math.min(currentBrickSpeed + dt * 2, getBrickSpeedMult())))
+    currentBrickSpeed = getBrickSpeedMult()-- < currentBrickSpeed and math.max(currentBrickSpeed - dt * 10, getBrickSpeedMult()) or math.min(currentBrickSpeed + dt * 5, getBrickSpeedMult())
     local speedMult = currentBrickSpeed -- Get the combined speed multiplier
     for _, brick in ipairs(bricks) do
         if not brick.destroyed and brick.health > 0 then
@@ -1208,8 +1240,10 @@ end
 
 local memLeakCheckTimer = 0
 local memLeakLog = ""  -- holds the entire log in memory
+local memLeakCheckOn = true
 
 local function memLeakCheck(dt)
+    if not memLeakCheckOn then return end
     memLeakCheckTimer = memLeakCheckTimer + dt
     if memLeakCheckTimer > 5 then
         memLeakCheckTimer = 0
@@ -1240,6 +1274,10 @@ local function memLeakCheck(dt)
         local quadCacheAmount = getQuadCacheLength() or 0
         local explosionAmount = (explosions and #explosions) or 0
         local fontTableAmount = getFontTableLength() or 0
+        local shadowBallCount = getShadowBallCount() or 0
+        local fireballCount = getFireballCount() or 0
+        local lightBeamCount = getLightBeamCount() or 0
+        local arcaneMissileCount = getArcaneMissileCount() or 0
 
         -- Add formatted info
         logText = logText .. string.format("#Bricks: %d - #Brick Pieces: %d - #Brick Text Cache: %d\n", brickAmount, brickPieceAmount, brickTextCacheAmount)
@@ -1248,6 +1286,7 @@ local function memLeakCheck(dt)
         logText = logText .. string.format("#Animations: %d - #Sprite Batches: %d - #Quad Cache: %d\n", animationAmount, spriteBatchesAmount, quadCacheAmount)
         logText = logText .. string.format("#Explosions: %d\n", explosionAmount)
         logText = logText .. string.format("#Font Table: %d\n", fontTableAmount)
+        logText = logText .. string.format("#Shadow Balls: %d - #Fireballs: %d - #Light Beams: %d - #Arcane Missiles: %d\n", shadowBallCount, fireballCount, lightBeamCount, arcaneMissileCount)
 
         -- Add this entry to the full log
         memLeakLog = memLeakLog .. logText
@@ -1330,7 +1369,7 @@ function drawMenu()
     end
 
     -- Wishlist button
-    if suit.Button("Wishlist on steam!", {id="wishlist button", align = "center", valign = "top"}, centerX, startY + (buttonHeight + buttonSpacing) * 3.25, buttonWidth, buttonHeight * 1.5).hit then
+    if suit.Button("Wishlist on steam!", {id="wishlist button", align = "center", valign = "middle"}, centerX, startY + (buttonHeight + buttonSpacing) * 3.25, buttonWidth, buttonHeight * 2).hit then
         playSoundEffect(selectSFX, 1, 0.8)
         openBrowser("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
     end
@@ -1496,7 +1535,7 @@ local function drawStartSelect()
         end
 
         -- crooky logic
-
+        Crooky:giveInfo("run", "start")
     end
 end
 
@@ -1518,11 +1557,14 @@ function drawBricks()
     local brickWidth, brickHeight = brickImg:getDimensions();
     local defColour = {1,1,1,1};
     local goldBricksToDraw = {};
+    local bossBrick
     for _, brick in ipairs(bricks) do
         if brick.destroyed then
             --? dont draw a brick if its been destroyed
         elseif brick.type == "gold" then
             table.insert(goldBricksToDraw, brick);
+        elseif brick.type == "boss" then
+            bossBrick = brick
         else -- brick is not gold
             brickBatch:setColor(brick.color or defColour);
             brickBatch:add(
@@ -1576,7 +1618,7 @@ function drawBricks()
         end
     end
 
-    -- Draw all bricks (except boss)
+    -- Draw all gold bricks
     for _, brick in ipairs(goldBricksToDraw) do
         if (not brick.type or brick.type ~= "boss") and not brick.destroyed and brick.y + brick.height > screenTop - 10 and brick.y < screenBottom + 10 then
             local type = brick.type or "small"
@@ -1605,6 +1647,31 @@ function drawBricks()
             love.graphics.setColor(1, 1, 1)
             love.graphics.print(text, centerX, centerY, 0, 1, 1, love.graphics.getFont():getWidth(text) / 2, love.graphics.getFont():getHeight() / 2)
         end
+    end
+
+    if bossBrick then
+        local brick = bossBrick
+        local color = brick.color
+        local scale = brick.drawScale or 1
+        -- Calculate scale to fit the brick width/height exactly
+        local scaleX = brick.width / bossBrickImg:getWidth()
+        local scaleY = brick.height / bossBrickImg:getHeight()
+        local centerX = brick.x + brick.width / 2 + brick.drawOffsetX + 3
+        local centerY = brick.y + brick.height / 2 + brick.drawOffsetY
+        love.graphics.setColor(color)
+        -- Draw from center of image and brick
+        love.graphics.draw(bossBrickImg, centerX, centerY, brick.drawOffsetRot, scaleX, scaleY, bossBrickImg:getWidth() / 2, bossBrickImg:getHeight() / 2)
+        setFont(50)
+        -- Draw health text (black outline)
+        local text = tostring(brick.health)
+        love.graphics.setColor(0, 0, 0)
+        love.graphics.print(text, centerX, centerY, 0, 1, 1, love.graphics.getFont():getWidth(text) / 2, love.graphics.getFont():getHeight() / 2)
+        
+        -- Draw health text (white)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.print(text, centerX, centerY, 0, 1, 1, love.graphics.getFont():getWidth(text) / 2, love.graphics.getFont():getHeight() / 2)
+
+        drawImageCentered(crownImg, centerX, centerY - brick.height / 2, crownImg:getWidth()/2.5, crownImg:getHeight()/2.5)
     end
 
     -- Reset color
@@ -1671,6 +1738,8 @@ function drawBricks()
         else
             table.remove(healBricks, i)
         end
+        love.graphics.setColor(0 ,1 ,0 , 0.5)
+        drawImageCentered(healAuraImg, brick.x + brick.width/2, brick.y + brick.height/2,brick.width * 3.25, brick.width * 3.25)
     end
 
     -- Draw boss bricks last (not batched)
@@ -1712,12 +1781,11 @@ end
 
 local frozenTime = 0
 local lastFreezeTime = 0
-local bossSpawnTime = 600
 local useTime = true
 
 local function drawGameTimer()
     if useTime then
-        local countdownTime = 600 - gameTime
+        local countdownTime = bossSpawnTime - gameTime
         local minutes = math.floor(countdownTime / 60)
         local seconds = math.floor(countdownTime % 60)
         local timeString = string.format("%02d:%02d", minutes, seconds)
@@ -1725,7 +1793,7 @@ local function drawGameTimer()
         -- Draw timer
         local font = love.graphics.getFont()
         local textWidth = font:getWidth(timeString)
-        local x = screenWidth / 2 - 105
+        local x = screenWidth / 2 - textWidth / 2
         local y = screenHeight - 175
         
         love.graphics.setColor(1, 1, 1, 1)
@@ -1781,6 +1849,7 @@ function drawPauseMenu()
         currentGameState = GameState.START_SELECT
         love.mouse.setVisible(true)
         setMusicEffect("normal")
+        changeMusic("menu")
     end
     btnY = btnY + buttonHeight + 30
     -- Main Menu button
@@ -1975,12 +2044,12 @@ local function fullDraw()
         local levelText = "Lvl " .. Player.level
         local textWidth = love.graphics.getFont():getWidth(levelText)
         if usingMoneySystem then
-            love.graphics.print(levelText, statsWidth + 15, screenHeight - 28)
+            love.graphics.print(levelText, statsWidth + 15, screenHeight - 25)
         else
-            love.graphics.print(levelText, 15, screenHeight - 28)
+            love.graphics.print(levelText, 15, screenHeight - 25)
         end
 
-        -- Crooky:draw() 
+        
     end
 
     if currentGameState == GameState.PAUSED then
@@ -1998,7 +2067,12 @@ local function fullDraw()
         drawMenu()
         -- Draw SUIT UI elements
         suit.draw()
-        Crooky:draw()
+        if not firstRunCompleted then
+            Crooky:draw()
+        end
+        local opacity = mapRange(love.timer.getTime() - loadTime, 0, 2.5, 1, 0)
+        love.graphics.setColor(0,0,0, opacity)
+        love.graphics.rectangle("fill", -screenWidth, -screenHeight, screenWidth*3, screenHeight*3)
         return
     end
     
@@ -2016,7 +2090,9 @@ local function fullDraw()
             love.mouse.setVisible(true)
         end
         suit.draw()
-        Crooky:draw()
+        if not firstRunCompleted then
+            Crooky:draw()
+        end
         return
     end
 
@@ -2040,7 +2116,9 @@ local function fullDraw()
             love.mouse.setVisible(true)
         end
 
-        Crooky:draw()
+        if not firstRunCompleted then
+            Crooky:draw()
+        end
         return
     end
 
@@ -2156,11 +2234,17 @@ local function fullDraw()
     drawAnimations()
     drawMuzzleFlashes()
 
-
+    local vignetteIntensity = mapRangeClamped(screenHeight - paddle.y, 0 , 110, 0.8, 0)
+    love.graphics.setColor(0.15, 0, 0, vignetteIntensity)
+    love.graphics.draw(vignetteImg, 0, 0, 0)
     upgradesUI.draw()
 
     -- Draw the UI elements using Suit
     suit.draw()
+
+    if (not firstRunCompleted) and currentGameState == GameState.PLAYING then
+        Crooky:draw()
+    end
 
     -- why is this not being displayed in front of Player.money???????
     drawMoneyPopups()
@@ -2230,6 +2314,29 @@ function love.draw()
     -- WindowCorrector.mergeCanvas(1);
 end
 
+function finishUpgrading()
+    playSoundEffect(selectSFX, 1, 0.8)
+    itemsOnLevelUpEnd()
+    Player.levelingUp = false
+    for _, ballType in pairs(Balls.getUnlockedBallTypes()) do
+        if ballType.type == "ball" then
+            Balls.adjustSpeed(ballType.name)
+        end
+    end
+    if Player.level == 8 then
+        changeMusic("mid")
+    elseif Player.level == 16 then
+        changeMusic("intense")
+    end
+    setMusicEffect("normal")
+    love.mouse.setVisible(false)
+
+    -- crooky logic
+    if Player.level == 2 and not firstRunCompleted then
+        Crooky:giveInfo("run", "firstLevelUpEnd")
+    end
+end
+
 damageNumbersOn = true
 healNumbersOn = true
 ballTrailsOn = true
@@ -2238,20 +2345,7 @@ local old_love_keypressed = love.keypressed
 moneyScale = {scale = 1}
 function love.keypressed(key)
     if key == "space" and Player.levelingUp and (not Player.choosingUpgrade) and EventQueue:isQueueFinished() then
-        itemsOnLevelUpEnd()
-        Player.levelingUp = false
-        for _, ballType in pairs(Balls.getUnlockedBallTypes()) do
-            if ballType.type == "ball" then
-                Balls.adjustSpeed(ballType.name)
-            end
-        end
-        if Player.level == 8 then
-            changeMusic("mid")
-        elseif Player.level == 16 then
-            changeMusic("intense")
-        end
-        setMusicEffect("normal")
-        love.mouse.setVisible(false)
+        finishUpgrading()
     end
 
     if key == "escape" then
@@ -2366,13 +2460,17 @@ function love.keypressed(key)
 
         -----------------------------------
 
+        if key == "3" then
+            damageThisFrame = 50
+        end
+
         if key == "4" then
             createMoneyPopup(3 ,paddle.x + paddle.width/2, paddle.y, 1000)
         end
 
         if key == "5" then
             local powerup = {
-                type = "acceleration",        
+                type = "freeze",        
             }
             powerupPickup(powerup)
         end
@@ -2387,7 +2485,7 @@ function love.keypressed(key)
         end
 
         if key == "7" then
-            Balls.addBall("Saw Blades")
+            Balls.addBall("Magnetic Ball")
         end
 
         if key == "8" then

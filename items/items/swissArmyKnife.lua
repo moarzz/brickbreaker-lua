@@ -1,7 +1,7 @@
 local SwissArmyKnife = ItemBase.new();
 SwissArmyKnife.__index = SwissArmyKnife;
 SwissArmyKnife.name = "Swiss Army Knife";
-SwissArmyKnife.description = "Increases all stats of your weapons by 1 (except <color=damage>damage<color=white>) and reduce cooldown by 1";
+SwissArmyKnife.description = "Increases all stats of your weapons by 1 and reduce cooldown by 1";
 SwissArmyKnife.rarity = "uncommon";
 SwissArmyKnife.imageReference = "assets/sprites/UI/ItemIcons/Swiss-Army-Knife.png";
 

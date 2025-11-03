@@ -15,7 +15,7 @@ end
 
 function Recession.events:levelUp()
     for _, weaponType in pairs(Balls.getUnlockedBallTypes()) do
-        reducePriceWithAnimations(1, weaponType.name, self.name);
+        reducePriceWithAnimations(1, weaponType.name, self.id);
     end
 end
 

@@ -18,6 +18,7 @@ function PlusThreeBuff.new()
     };
 
     local itemNames = {
+        "Kitchen Knife";
         "Running Shoes";
         "Two for One Meal Ticket";
         "Extended Magazine";

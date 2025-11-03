@@ -28,7 +28,7 @@ function TeslaCoil.events:levelUp()
 
         if i == randomWeaponId then
             for statName, statValue in pairs(statNames) do
-                gainStatWithAnimation(statName, weapon.name);
+                gainStatWithAnimation(statName, weapon.name, self.id);
             end
         end
 

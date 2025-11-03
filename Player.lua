@@ -41,6 +41,7 @@ function loadGameData()
                 data.startingItems = fileData.startingItems or data.startingItems
                 data.fastestTime = fileData.fastestTime or 100000000000
                 data.settings = fileData.settings or data.settings
+                data.firstRunCompleted = fileData.firstRunCompleted or false
             end
         end
     else
@@ -59,6 +60,7 @@ function loadGameData()
     sfxVolume = data.settings.sfxVolume
     fullScreenCheckbox = data.settings.fullscreen
     damageNumbersOn = data.settings.damageNumbersOn
+    firstRunCompleted = data.firstRunCompleted or false
 
     -- Sync unlockedStartingBalls with startingItems for compatibility with UI
     Player.unlockedStartingBalls = {}
@@ -83,6 +85,7 @@ end
 local defaultPermanentUpgrades = {speed = 0, damage = 0, cooldown = 0, amount = 0, fireRate = 0, ammo = 0, range = 0}
 Player = {
     hiddenMoney = 0;
+    realMoney = 0;
     startingMoney = 0,
     gold = 0,
     rerolls = 0,
@@ -176,8 +179,9 @@ function saveGameData()
 end
 
 -- This file contains the player class, it manages his level, his abilities and his stats
+
 local gameData = loadGameData()
-function Player.loadJsonValues()
+function Player.loadJsonValues() -- wtf is this bootleg function?
     firstRunCompleted = gameData.firstRunCompleted or false
     Player.startingMoney = gameData.startingMoney or 0
     Player.hiddenMoney = gameData.startingMoney or 0
@@ -276,14 +280,14 @@ Player.availableCores = {
         startingItem = "ball",
     },
     {
-        name = "Spray aNd Pray Core",
+        name = "Spray and Pray Core",
         description = "gain +1 fireRate for every 5 Player level.",
         price = 250,
         startingItem = "Machine Gun"
     },
     {
         name = "Fast Study Core",
-        description = "gain +4% experience gain per Player Level",
+        description = "gain +5% experience gain per Player Level",
         price = 500,
         startingItem = "Shadow Ball"
     },
@@ -294,15 +298,16 @@ Player.availableCores = {
         startingItem = "Laser Beam"
     },
     {
+        name = "Loan Core",
+        description = "gain 10$ instead of 6$ on level up. There are no items that give money in the shop",
+        price = 1000,
+    },
+    --[[{
         name = "Farm Core",
         description = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown).\nIt takes 100% more xp for you to level up",
         price = 1000,
     },
-    --[[{
-        name = "Economy Core",
-        description = "gain 10$ instead of 6$ on level up. There are no items that give money in the shop",
-        price = 1500,
-    },
+    
     {
         name = "Madness Core",
         description = "Damage is divided by 2. Cooldown is halved. Every other stat is doubled.",
@@ -312,12 +317,16 @@ Player.availableCores = {
 
 Player.coreDescriptions = {
     ["Size Core"] = "gain 8% paddle size per level",
-    ["Spray aNd Pray Core"] = "gain +1 fireRate for every 5 Player level",
-    ["Fast Study Core"] = "gain +4% experience gain per Player Level",
+    ["Spray and Pray Core"] = "gain +1 fireRate for every 5 Player level",
+    ["Fast Study Core"] = "gain +5% experience gain per Player Level",
     ["Hacker Core"] = "All Weapons start with an upgradePrice of 0",
-    ["Economy Core"] = "gain 10$ instead of 6$ on level up. There are no items that give money in the shop",
+    ["Loan Core"] = "start with 25$. gain 3$ instead of 5$ on level up.",
     ["Farm Core"] = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown)\nIt takes 100% more xp for you to level up and bricks grow in health 100% faster",
     --["Madness Core"] = "Damage and cooldown are reduced by 50%.\nevery other stat is doubled. bricks go twice as fast\n(can break the game)."
+}
+
+Player.coreRestrictions = {
+    -- ["Economy Core"] = {"Financial Plan", "Coupon Collector", "Degenerate Gambling", }
 }
 
 function Player.addBonus(name)
@@ -360,23 +369,30 @@ end
 
 function Player.InterestGain()
     local moneyGain
-    if Player.currentCore == "Economy Core" then
-        moneyGain = 9
+    if Player.currentCore == "Loan Core" then
+        moneyGain = 3 + longTermInvestment.value --+ math.floor(math.min(Player.money, 25)/5)
     else
-        moneyGain = 5 --+ math.floor(math.min(Player.money, 25)/5)
+        moneyGain = 5 + longTermInvestment.value --+ math.floor(math.min(Player.money, 25)/5)
     end
 
     Player.changeMoney(moneyGain);
 end
 
-function Player.levelUp()
+function Player.onLevelUp()
     EventQueue:addEventToQueue(EVENT_POINTERS.levelUp, 0);
-
+    if hasItem("Birthday Hat") then
+        EventQueue:addEventToQueue(EVENT_POINTERS.levelUp, 0);
+    end
     Player.InterestGain()
+end
+
+function Player.levelUp()
     setMusicEffect("paused")
     love.mouse.setVisible(true)
     resetRerollPrice()
     Player.level = Player.level + 1
+
+    -- should player unlock new weapon?
     if (Player.level) % 4 == 0 and tableLength(Balls.getUnlockedBallTypes()) < 6 then
         if usingMoneySystem then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.2)
@@ -384,7 +400,15 @@ function Player.levelUp()
         Player.newWeaponLevelRequirement = Player.newWeaponLevelRequirement + 5
         setLevelUpShop(true) -- Set the level up shop with ball unlockedBallTypes
         Player.choosingUpgrade = true -- Set the flag to indicate leveling up
+    else
+        Player.onLevelUp()
     end
+
+    -- crooky
+    if (not firstRunCompleted) and Player.level == 2 then
+        Crooky:giveInfo("run", "firstLevelUp")
+    end
+
     Player.xp = 0
     if usingMoneySystem then
         Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.25)
@@ -392,7 +416,7 @@ function Player.levelUp()
         if Player.level < 5 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 2)
         elseif Player.level < 10 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.55)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.6)
         elseif Player.level < 15 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.5)
         elseif Player.level < 20 then
@@ -418,8 +442,8 @@ function Player.levelUp()
     elseif Player.currentCore == "Size Core" then
         paddle.width = paddle.width + 24
     elseif Player.currentCore == "Fast Study Core" then
-        Player.xpGainMult = Player.xpGainMult + 0.04
-    elseif Player.level % 5 == 0 and Player.currentCore == "Spray and Pray Core" then
+        Player.xpGainMult = Player.xpGainMult + 0.05
+    elseif Player.level % 5 == 0 and Player.currentCore == "Spray and Pray Core" then -- THIS IS NOT AN ERROR
         Player.permanentUpgrades.fireRate = (Player.permanentUpgrades.fireRate or 0) + 1
     end
     if (not usingMoneySystem) then
@@ -449,6 +473,10 @@ end
 
 local lastPopupTime = 0
 local cumulatedXp = 0
+function resetXpStuff()
+    lastPopupTime = 0
+    cumulatedXp = 0
+end
 function Player.gain(amount)
     amount = amount * Player.xpGainMult
     Player.score = Player.score + amount
@@ -496,6 +524,7 @@ function Player.die()
     Timer.after(1.15, function()
         toggleFreeze()
         deathTimerOver = true
+        love.mouse.setVisible(true)
     end)
     -- Calculate gold earned based on score
     local goldEarned = Player.level * math.ceil(Player.level / 5) * 5 
@@ -530,7 +559,7 @@ end
 
 local function checkForHit()
     for _, brick in ipairs(bricks) do
-        if paddle.y > screenHeight + 10 then
+        if paddle.y > screenHeight + 25 then
             Player.hit()
             damageScreenVisuals(0.25, 100)
         end
@@ -541,26 +570,12 @@ function Player.update(dt)
     checkForHit()
 end
 
-function Player.changeMoney(amnt)
+function Player.changeMoney(amnt, itemID)
+    Player.realMoney = Player.realMoney + amnt;
     if amnt > 0 then
-        gainMoneyWithAnimations(amnt)
-        --[[EventQueue:addEventToQueue(
-            EVENT_POINTERS.money_gain,
-            0.2,
-            function()
-                Player.shiftMoneyValue(amnt);
-                createMoneyPopup(amnt, 200, 200);
-                gainMoneyWithAnimations(amnt)
-            end
-        );]]
+        gainMoneyWithAnimations(amnt, itemID)
     else
-        --EventQueue:addEventToQueue(
-            --EVENT_POINTERS.money_lose,
-            --0.2,
-            --function()
-                Player.shiftMoneyValue(amnt);
-            --end
-        --);
+        gainMoneyWithAnimations(amnt, itemID)
     end
 end
 
@@ -574,6 +589,7 @@ end
 
 function Player.setMoney(amnt)
     Player.hiddenMoney = amnt;
+    Player.realMoney = amnt;
 end
 
 function Player.getMoney()

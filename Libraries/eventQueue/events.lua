@@ -135,6 +135,8 @@ _G.EVENTS = setmetatable({
             TripleTrouble         = true;
             TripleTroublePlus     = true;
             TripleTroublePlusPlus = true;
+            BrainEnhancementBracelet = true;
+            ElectromagneticAlignment = true;
         };
 
         sell = {
@@ -183,6 +185,8 @@ _G.EVENTS = setmetatable({
             TripleTrouble         = true;
             TripleTroublePlus     = true;
             TripleTroublePlusPlus = true;
+            BrainEnhancementBracelet = true;
+            ElectromagneticAlignment = true;
         }
     };
     levelUp = true;

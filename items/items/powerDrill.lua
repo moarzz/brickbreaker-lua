@@ -43,6 +43,9 @@ function PowerDrill:purchase()
         for statName, _ in pairs(selectedWeapon.stats) do
             table.insert(statList, statName);
         end
+        if selectedWeapon.type == "ball" then
+            table.insert(statList, "amount")
+        end
         local statToUpgrade = statList[math.random(1, #statList)];
 
         gainStatWithAnimation(statToUpgrade, selectedWeapon.name);

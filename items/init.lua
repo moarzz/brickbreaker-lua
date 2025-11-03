@@ -80,6 +80,7 @@ function Items.parseItem(file)
 
     assert(self.allItems[obj.rarity] ~= nil, "tried to add an item of invalid rarity: " .. (obj.rarity or "nil"));
 
+    -- adds item to list
     if obj.consumable then
         table.insert(self.allConsumables[obj.rarity], obj);
         table.insert(self.consumablesVisible[obj.rarity], 0);
@@ -97,6 +98,14 @@ function Items.parseItem(file)
     assert(EVENTS.item.sell[filteredName], "tried to create item that does not have a 'sell' event: " .. filteredName);
 
     obj.filteredName = filteredName; -- for calling events internally
+    obj.id = getNextItemId()
+    if not obj.unique then
+        if obj.rarity == "common" then
+            obj.instancesLeft = 3
+        elseif obj.rarity =="uncommon" then
+            obj.instancesLeft = 2
+        end
+    end
 
     if obj.consumable then
         self.consumableIndices[filteredName] = {
@@ -186,7 +195,7 @@ function Items.getItemByName(name)
 end
 
 --* does NOT set returned item as visible
-function Items.getRandomItem(allowVisible)
+function Items.getRandomItem(allowInvisible)
     --? always uses exactly 2 love.math.random calls (one for the rarity and one for the index)
 
     local lookingInList;
@@ -225,42 +234,50 @@ function Items.getRandomItem(allowVisible)
 
     assert(lookingInList[rarity], "somehow a rarity was not chosen, this should be impossible (milo can't write working code apparently)");
 
-    if allowVisible then
+    if allowInvisible then
         local index = love.math.random(1, #lookingInList[rarity]);
 
         return lookingInList[rarity][index];
     end
 
-    local visibleCount = 0;
-    for _, v in ipairs(visibilityList[rarity]) do -- check if there are ANY visible modifiers left
-        if v <= 0 then -- if v == 0 then modifier IS visible
-            visibleCount = visibleCount + 1;
-        end
-    end
-
-    if visibleCount == 0 then -- if no modifiers are visible
-        print("ran out of items, returning a default");
-        return lookingInList["common"][1]; -- return the 1st item in the common list as a safety measure
-    end
-
-    local index = love.math.random(1, visibleCount);
-
-    local modifSeen = 0;
-    for i, v in ipairs(visibilityList[rarity]) do -- check if there are ANY visible modifiers left
-        if v <= 0 then -- if v == 0 then modifier IS visible
-            modifSeen = modifSeen + 1;
-
-            if modifSeen == index then
-                return lookingInList[rarity][i];
+    -- Build a weighted pool based on instancesLeft for visible items
+    -- visible means visibilityList[rarity][i] <= 0
+    local totalWeight = 0
+    local weights = {}
+    for i, v in ipairs(visibilityList[rarity]) do
+        if v <= 0 then
+            local item = lookingInList[rarity][i]
+            local instances = 1
+            if item and item.instancesLeft then
+                instances = item.instancesLeft
             end
+            -- Ensure at least weight 1
+            local w = math.max(1, instances)
+            weights[i] = w
+            totalWeight = totalWeight + w
+        else
+            weights[i] = 0
         end
     end
 
-    -- shouldnt be possible to get here
-    error("milo cant write a working rng function apparently");
+    if totalWeight == 0 then
+        -- no visible items in this rarity, fallback to first common
+        return lookingInList["common"][1]
+    end
+
+    local pick = love.math.random(1, totalWeight)
+    local acc = 0
+    for i, w in ipairs(weights) do
+        acc = acc + w
+        if pick <= acc and w > 0 then
+            return lookingInList[rarity][i]
+        end
+    end
+
+    error("uh oh, getRandomItem failed to return an item");
 end
 
-function Items.addVisibleItem(name) -- makes an item un-attainable in the shop (calling twice needs 2 'removeVisibleItem' calls 2 make visible again)
+function Items.addInvisibleItem(name) -- makes an item un-attainable in the shop (calling twice needs 2 'removeInvisibleItem' calls 2 make visible again)
     local index = self.itemIndices[name];
 
     if index then
@@ -295,7 +312,7 @@ function Items.addVisibleItem(name) -- makes an item un-attainable in the shop (
 
     error("couldnt add visible to non existent item: " .. name);
 end
-function Items.removeVisibleItem(name) -- makes an invisible item visible again (calling twice needs 2 'addVisibleItem' calls 2 make invisible again)
+function Items.removeInvisibleItem(name) -- makes an invisible item visible again (calling twice needs 2 'addInvisibleItem' calls 2 make invisible again)
     local index = self.itemIndices[name];
 
     if index then
@@ -329,6 +346,27 @@ function Items.removeVisibleItem(name) -- makes an invisible item visible again 
     end
 
     error("couldnt remove visible to non existent item: " .. name);
+end
+function Items.setAllVisible(visible)
+    local val = visible and 0 or 1 -- 0 = visible, >0 = hidden
+    for rarity, list in pairs(self.itemsVisible) do
+        for i = 1, #list do
+            self.itemsVisible[rarity][i] = val
+            local item = self.allItems[rarity][i]
+            if not item.unique then
+                if rarity == "common" then
+                    item.instancesLeft = 3
+                elseif rarity == "uncommon" then
+                    item.instancesLeft = 2
+                end
+            end
+        end
+    end
+    for rarity, list in pairs(self.consumablesVisible) do
+        for i = 1, #list do
+            self.consumablesVisible[rarity][i] = val
+        end
+    end
 end
 
 self.load(); -- load on require();

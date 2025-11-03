@@ -14,8 +14,6 @@ function TeslaBullets.new()
         teslaChance = hasItem("Four Leafed Clover") and 50 or 25;
     };
 
-    instance.stats.fireRate = 2;
-
     return instance;
 end
 

@@ -65,7 +65,7 @@ end
 
 function playSoundEffect(soundEffect, volume, pitch, loop, clone)
     if soundEffect ~= backgroundMusicSFX then
-        volume = (sfxVolume or 1) * (volume or 1) * 0.5 -- Adjust volume based on global sfxVolume
+        volume = (sfxVolume or 1) * (volume or 1) * 0.225 -- Adjust volume based on global sfxVolume
     end
     if Player.dead and currentGameState == GameState.PLAYING then
         return
@@ -243,38 +243,66 @@ function plusStatPopup(text, x, y)
 end
 
 visualItemValues = {}
-function itemTriggerAnimation(itemName)
-    local item = nil
-    for _, itemm in pairs(Balls.getUnlockedBallTypes()) do
-        if itemm.name == itemName then
-            item = itemm
+function itemTriggerAnimation(itemIdentifier)
+    -- Accept either an item id or an item name; resolve to item name for the visual key
+    if not itemIdentifier then return end
+    -- If the identifier matches an instance id, find the item's name
+    local resolvedName = nil
+    for _, item in ipairs(Player.items) do
+        if item.id and item.id == itemIdentifier then
+            resolvedName = item.filteredName or item.templateFilteredName or item.name
+            break
         end
     end
-    if item == nil then return end
-    if not visualItemValues[itemName] then
-        print("itemId : " .. itemName)
-        visualItemValues[itemName] = {scale = 1}
+    -- If we didn't find an id match, assume the caller passed a name directly
+    if not resolvedName then
+        resolvedName = itemIdentifier
     end
-    local inTween = tween.new(0.05, visualItemValues[itemName], {scale = 1.7}, tween.easing.outCirc)
+
+    -- Ensure visual table entry exists for this item name
+    if not visualItemValues[resolvedName] then
+        visualItemValues[resolvedName] = {scale = 1}
+    end
+
+    local inTween = tween.new(0.05, visualItemValues[resolvedName], {scale = 1.6}, tween.easing.outCirc)
     addTweenToUpdate(inTween)
-    Timer.after(0.05, function()
-        local outTween = tween.new(0.175, visualItemValues[itemName], {scale = 1}, tween.easing.inCirc)
+    GlobalTimer:after(0.05, function()
+        local outTween = tween.new(0.175, visualItemValues[resolvedName], {scale = 1}, tween.easing.inCirc)
         addTweenToUpdate(outTween)
+    end)
+end
+
+-- Reorder Player.items so that items with the same template/name are adjacent.
+function reorderPlayerItems()
+    if not Player or not Player.items then return end
+    table.sort(Player.items, function(a, b)
+        local ka = a.filteredName or a.templateFilteredName or a.name or ""
+        local kb = b.filteredName or b.templateFilteredName or b.name or ""
+        if ka == kb then
+            -- keep stable order among identical keys by comparing ids if present
+            if a.id and b.id then return a.id < b.id end
+            return false
+        end
+        return ka < kb
     end)
 end
 local pausedUpgradeNumbers = {}
 
-function gainMoneyWithAnimations(moneyGain, itemName)
-    
-    EventQueue:addEventToQueue(EVENT_POINTERS.money_gain, 0.25, function() --end)
+function gainMoneyWithAnimations(moneyGain, itemID)
+    print("gaining money: " .. moneyGain .. " with itemID: " .. (itemID or "NO ID"))
+    EventQueue:addEventToQueue(EVENT_POINTERS.money_gain, 0.3, function() 
         -- First event: Show animation and add money
-        if itemName then -- Changed from itemId to itemName check
-            itemTriggerAnimation(itemName)
+        if itemID then -- Changed from itemId to itemName check
+            itemTriggerAnimation(itemID)
         end
-        playSoundEffect(upgradeSFX, 0.6, 1, false)
+        if moneyGain > 0 then
+            playSoundEffect(upgradeSFX, 0.6, 1, false)
+        else
+            playSoundEffect(loseMoneySFX, 0.6, 1, false)
+        end
         
         -- Create and add tween without capturing outer scope variables
-        local inTween = tween.new(0.05, visualMoneyValues, {scale = 1.7}, tween.easing.outCirc)
+        local inTween = tween.new(0.075, visualMoneyValues, {scale = 1.7}, tween.easing.outCirc)
         addTweenToUpdate(inTween)
         
         -- Update money
@@ -286,16 +314,16 @@ function gainMoneyWithAnimations(moneyGain, itemName)
         end
 
         -- reset Scale tween
-        GlobalTimer:after(0.05, function() 
+        GlobalTimer:after(0.075, function() 
             Player.shiftMoneyValue(moneyGain);
-            local outTween = tween.new(0.2, visualMoneyValues, {scale = 1}, tween.easing.inCirc)
+            local outTween = tween.new(0.225, visualMoneyValues, {scale = 1}, tween.easing.inCirc)
             addTweenToUpdate(outTween)
         end)
     end)
 end
 
 visualUpgradePriceValues = {}
-function reducePriceWithAnimations(reductionAmount, weaponName, itemName)  -- Accept weapon object
+function reducePriceWithAnimations(reductionAmount, weaponName, itemID)  -- Accept weapon object
     local weapon
     for _, weaponn in pairs(Balls.getUnlockedBallTypes()) do
         if weaponn.name == weaponName then
@@ -303,33 +331,33 @@ function reducePriceWithAnimations(reductionAmount, weaponName, itemName)  -- Ac
         end
     end
     if weapon == nil then return end
-    EventQueue:addEventToQueue(EVENT_POINTERS.empty, 0.05, function() 
+    EventQueue:addEventToQueue(EVENT_POINTERS.empty, 0.075, function() 
         playSoundEffect(upgradeSFX, 0.6, 1, false)
-        if itemId ~= nil then
-            itemTriggerAnimation(itemName)
+        if itemID then
+            itemTriggerAnimation(itemID)
         end
         
         if not visualUpgradePriceValues[weapon.name] then
             visualUpgradePriceValues[weapon.name] = {scale = 1}
         end
         
-        local inTween = tween.new(0.05, visualUpgradePriceValues[weaponName], {scale = 1.7}, tween.easing.outCirc)
+        local inTween = tween.new(0.075, visualUpgradePriceValues[weaponName], {scale = 1.7}, tween.easing.outCirc)
         addTweenToUpdate(inTween)
         
         -- Directly modify the weapon object
         weapon.price = math.max(weapon.price - reductionAmount, 0)
     end)
-    EventQueue:addEventToQueue(EVENT_POINTERS.empty, 0.2, function() 
-        local outTween = tween.new(0.2, visualUpgradePriceValues[weaponName], {scale = 1}, tween.easing.inCirc)
+    EventQueue:addEventToQueue(EVENT_POINTERS.empty, 0.225, function() 
+        local outTween = tween.new(0.225, visualUpgradePriceValues[weaponName], {scale = 1}, tween.easing.inCirc)
         addTweenToUpdate(outTween)
     end)
 end
 
 visualStatValues = {}
-function gainStatWithAnimation(statName, weaponName, itemId)
-    EventQueue:addEventToQueue(EVENT_POINTERS.empty, 0.05, function() 
-        if itemId ~= nil then
-            itemTriggerAnimation(itemId)
+function gainStatWithAnimation(statName, weaponName, itemID)
+    EventQueue:addEventToQueue(EVENT_POINTERS.empty, 0.075, function() 
+        if itemID then
+            itemTriggerAnimation(itemID)
         end
         playSoundEffect(upgradeSFX, 0.6, 1, false)
 
@@ -346,7 +374,7 @@ function gainStatWithAnimation(statName, weaponName, itemId)
         if not visualStatValues[weaponName][statName] then
             visualStatValues[weaponName][statName] = {scale = 1}
         end
-        local inTween = tween.new(0.05, visualStatValues[weaponName][statName], {scale = 1.6}, tween.easing.outCirc)
+        local inTween = tween.new(0.075, visualStatValues[weaponName][statName], {scale = 1.6}, tween.easing.outCirc)
         addTweenToUpdate(inTween)
         local selectedWeapon = Balls.getUnlockedBallTypes()[weaponName]
         if statName == "cooldown" then
@@ -362,8 +390,8 @@ function gainStatWithAnimation(statName, weaponName, itemId)
             selectedWeapon.stats[statName] = (selectedWeapon.stats[statName] or 0) + 1
         end
     end)
-    EventQueue:addEventToQueue(EVENT_POINTERS.empty, 0.2, function() 
-        local outTween = tween.new(0.2, visualStatValues[weaponName][statName], {scale = 1}, tween.easing.inCirc)
+    EventQueue:addEventToQueue(EVENT_POINTERS.empty, 0.225, function() 
+        local outTween = tween.new(0.225, visualStatValues[weaponName][statName], {scale = 1}, tween.easing.inCirc)
         addTweenToUpdate(outTween)
     end)
 end
@@ -493,6 +521,8 @@ end
 
 
 function drawImageCentered(image, x, y, targetWidth, targetHeight, angle, xOffset, yOffset)
+    targetWidth = targetWidth or image:getWidth()
+    targetHeight = targetHeight or image:getHeight()
     xOffset = xOffset or 0
     yOffset = yOffset or 0
     -- Get the original dimensions of the image
@@ -877,18 +907,40 @@ function createSpriteAnimation(x, y, scale, spritesheet, frameWidth, frameHeight
     return animation.id
 end
 
-function cooldownVFX(duration, x, y)
-    local timer = 0
-    local function update(dt)
-        timer = timer + dt
-        if timer >= duration then
-            -- Create a visual effect at (x, y)
-            createSpriteAnimation(x, y)
-            return true -- Stop the update
+local cooldownVFXs = {}
+function createCooldownVFX(duration)
+    local vfx = {
+        duration = duration,
+        timer = 0
+    }
+    table.insert(cooldownVFXs, vfx)
+    table.sort(cooldownVFXs, function(a, b)
+        return a.duration < b.duration
+    end)
+end
+
+function updateCooldownTimers(dt)
+    if Player.levelingUp then return false end
+
+    for i = #cooldownVFXs, 1, -1 do
+        local vfx = cooldownVFXs[i]
+        vfx.timer = vfx.timer + dt
+        if vfx.timer >= vfx.duration then
+            table.remove(cooldownVFXs, i)
         end
-        return false -- Continue the update
+        
     end
-    return update
+    
+end
+
+function drawCooldownVFXs()
+    -- Draw cooldown visual effects here
+    for i, vfx in ipairs(cooldownVFXs) do
+        local alpha = 1 - (vfx.timer / vfx.duration)
+        love.graphics.setColor(1, 1, 1, 1)
+        local currentWidth = 150 * alpha
+        love.graphics.rectangle("fill", paddle.x + paddle.width/2 - currentWidth/2, paddle.y + paddle.height + 5 + (i-1) * 10, currentWidth, 5)
+    end
 end
 
 function getAnimation(id)
@@ -1029,6 +1081,12 @@ function resetLvlUpPopups()
     currentPopupId = 1
 end
 
+local currentItemId = 0
+function getNextItemId()
+    currentItemId = currentItemId + 1
+    return currentItemId
+end
+
 powerupPopup = {startTime = 0, type = nil, scale = 0, angle = 0}
 
 function powerupUpdate(dt)
@@ -1146,12 +1204,22 @@ function drawMoneyPopups()
         local popup = moneyPopups[i]
         setFont(math.max(math.ceil(popup.scale), 1))
         love.graphics.setColor(0,0,0,1)
-        love.graphics.print("+"..tostring(popup.value).."$", popup.x - getTextSize("+"..tostring(popup.value).."$")/2 + 1, popup.y + 1)
-        love.graphics.print("+"..tostring(popup.value).."$", popup.x - getTextSize("+"..tostring(popup.value).."$")/2 - 1, popup.y + 1)
-        love.graphics.print("+"..tostring(popup.value).."$", popup.x - getTextSize("+"..tostring(popup.value).."$")/2 + 1, popup.y - 1)
-        love.graphics.print("+"..tostring(popup.value).."$", popup.x - getTextSize("+"..tostring(popup.value).."$")/2 - 1, popup.y - 1)
-        love.graphics.setColor(14/255, 202/255, 92/255, 1)
-        love.graphics.print("+"..tostring(popup.value).."$", popup.x - getTextSize("+"..tostring(popup.value).."$")/2, popup.y)
+        
+        if popup.value > 0 then
+            love.graphics.print("+"..tostring(popup.value).."$", popup.x - getTextSize("+"..tostring(popup.value).."$")/2 + 1, popup.y + 1)
+            love.graphics.print("+"..tostring(popup.value).."$", popup.x - getTextSize("+"..tostring(popup.value).."$")/2 - 1, popup.y + 1)
+            love.graphics.print("+"..tostring(popup.value).."$", popup.x - getTextSize("+"..tostring(popup.value).."$")/2 + 1, popup.y - 1)
+            love.graphics.print("+"..tostring(popup.value).."$", popup.x - getTextSize("+"..tostring(popup.value).."$")/2 - 1, popup.y - 1)
+            love.graphics.setColor(14/255, 202/255, 92/255, 1)
+            love.graphics.print("+"..tostring(popup.value).."$", popup.x - getTextSize("+"..tostring(popup.value).."$")/2, popup.y)
+        else
+            love.graphics.print(tostring(popup.value).."$", popup.x - getTextSize(tostring(popup.value).."$")/2 + 1, popup.y + 1)
+            love.graphics.print(tostring(popup.value).."$", popup.x - getTextSize(tostring(popup.value).."$")/2 - 1, popup.y + 1)
+            love.graphics.print(tostring(popup.value).."$", popup.x - getTextSize(tostring(popup.value).."$")/2 + 1, popup.y - 1)
+            love.graphics.print(tostring(popup.value).."$", popup.x - getTextSize(tostring(popup.value).."$")/2 - 1, popup.y - 1)
+            love.graphics.setColor(164/255, 14/255, 14/255,1)
+            love.graphics.print(tostring(popup.value).."$", popup.x - getTextSize(tostring(popup.value).."$")/2, popup.y)
+        end
     end
     
     for i = #plusStatPopups, 1, -1 do

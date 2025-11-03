@@ -1,4 +1,4 @@
-local targetFPS = 60;
+local targetFPS = 45;
 local targetDT = 1 / targetFPS;
 
 function love.run()
@@ -63,8 +63,8 @@ function love.run()
 				local postDrawTime = love.timer.getTime();
 
 				if addd > 0.5 then
-					print("update time : " .. tostring((postUpdateTime - preUpdateTime) * 10000));
-					print("drawing time: " .. tostring((postDrawTime - preDrawTime) * 10000));
+					-- print("update time : " .. tostring((postUpdateTime - preUpdateTime) * 10000));
+					-- print("drawing time: " .. tostring((postDrawTime - preDrawTime) * 10000));
 					addd = 0;
 				end
 

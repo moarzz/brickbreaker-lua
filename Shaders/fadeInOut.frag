@@ -9,8 +9,8 @@ vec4 effect(vec4 colour, Image fadeIn, vec2 textureCoords, vec2 screenCoords)
     vec4 fadeInColour = Texel(fadeIn, textureCoords);
 
     // fadeIn
-    float innerDist = sqrt(2.0) * (fade - 0.2) / 0.8;
-    float outerDist = sqrt(2.0) * fade / 0.6;
+    float innerDist = sqrt(2) * (fade - 0.2) / 0.8;
+    float outerDist = sqrt(2) * fade / 0.6 * 1.5;
 
     float dist = length(textureCoords * 2.0 - vec2(1.0));
 
@@ -27,8 +27,8 @@ vec4 effect(vec4 colour, Image fadeIn, vec2 textureCoords, vec2 screenCoords)
 
     vec4 fadeOutColour = Texel(fadeOut, textureCoords);
 
-    innerDist = sqrt(2.0) * fade;
-    outerDist = sqrt(2.0) * fade;
+    innerDist = sqrt(2) * fade;
+    outerDist = sqrt(2) * fade * 1.5;
 
     dist = length(textureCoords * 2.0 - vec2(1.0));
 

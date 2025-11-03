@@ -1,9 +1,9 @@
 
-W95_CursorIndicator = require("crooky/w95_cursorindicator")
+W95_CursorIndicator = require("crooky/W95_CursorIndicator")
 
 local Crooky = {}
 
-local TALK_SPEED = 24
+local TALK_SPEED = 50
 
 function Crooky:load()
     Textures.getTexture('crooky/eye', true)
@@ -26,8 +26,8 @@ function Crooky:load()
     Textures.getTexture('crooky/body_back', true)
     Textures.getTexture('crooky/body_front', true)
 
-    self.x = 1550
-    self.y = 300
+    self.x = 1600
+    self.y = 400
 
     self.movement = 'idle'
 
@@ -278,11 +278,7 @@ function Crooky:load()
                     Crooky:setSpeechBubble("This is where we keep all your equipment, but the bricks have intercepted our supply lines...", 2, "Only thing we have now is this lousy ball. But it can still be a deadly weapon in the right hands", 15, "COWARD! Stop wasting time and GO DIE FOR THE PADDLES YOU HOLD DEAR", 30)
                     -- Crooky:addClickIcon(W95_CursorIndicator.newConnectedCursorIndicator(startButton, 960, 512, 'up', 0, 'normal'))
                 end,
-                animateFunct = function(time) 
-                    if time >= 2 then
-                        
-                    end
-                end,
+                animateFunct = nil
             }
         },
         ["clickIcon"] = {
@@ -296,10 +292,29 @@ function Crooky:load()
         },
         ["run"] = {
             ["start"] = {
-
+                uses = 1,
+                callFunc = function()
+                    Crooky:setAnimation('idle')
+                    Crooky:setSpeechBubble("ALRIGHT! LET'S GET TO FIGHTING!", 2, "The bricks are laying a siege... They'll send bigger and bigger bricks as time goes on", 5, "If they manage to move to the bottom of the screen, we're toast.", 100)
+                    -- add "you're our only hope soldier. MAKE ME PROUD"
+                end,
+                animateFunc = nil
             },
             ["firstLevelUp"] = {
-
+                uses = 1,
+                callFunc = function()
+                    Crooky:setAnimation('idle')
+                    Crooky:setSpeechBubble("Welcome to the armory son! This is where you'll be doing all that upgrading to make you stronger", 1.5, "Your money is on the top left, There is an item shop to the top right and your weapons are at the bottom right", 2, "Your weapons each have a few stats, if you hover over them you will see their name. If you hover over an item, it will explain its effect", 100)
+                end,
+                animateFunc = nil
+            },
+            ["firstLevelUpEnd"] = {
+                uses = 1,
+                callFunc = function()
+                    Crooky:setAnimation('idle')
+                    Crooky:setSpeechBubble("I won't lie soldier, you probably won't make it out alive", 1.5, "But if you can buy even a few seconds to help the paddle women and children flee, that will be a death worthy of a warrior", 1.5, "NOW FIGHT SOLDIER!", 2)
+                end,
+                animateFunc = nil
             },
             ["death"] = {
                 
@@ -527,8 +542,9 @@ function Crooky:draw()
         return
     end
 
-    love.graphics.setColor(0.8,0.8,0.8)
-    love.graphics.draw(Textures.getTexture('crooky/background'), self.x, self.y)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.draw(drillSergeantImg, self.x, self.y, 0, 0.5)
+    -- love.graphics.draw(Textures.getTexture('crooky/background'), self.x, self.y)
 
     love.graphics.setColor(1,1,1)
 
@@ -541,7 +557,7 @@ function Crooky:draw()
     local w = cur[3]
     local h = cur[4]
 
-    love.graphics.draw(Textures.getTexture('crooky/body_back'), tx + 9 * w, ty + 2 * h, 0, w,h, 10,64)
+    --[[love.graphics.draw(Textures.getTexture('crooky/body_back'), tx + 9 * w, ty + 2 * h, 0, w,h, 10,64)
 
     love.graphics.draw(Textures.getTexture('crooky/eye'), tx + cur[6] * w, ty + cur[7] * h, 0, w,h, 10,64)
     love.graphics.draw(Textures.getTexture('crooky/eye'), tx + cur[9] * w, ty + cur[10] * h, 0, w,h, 10,64)
@@ -554,7 +570,7 @@ function Crooky:draw()
 
     love.graphics.draw(Textures.getTexture('crooky/mouth_' .. tostring(cur[17] or self.talkAnim)), tx + 3 * w, ty + 33 * h, 0, w,h, 10,64)
 
-    love.graphics.draw(Textures.getTexture('crooky/body_front'), tx, ty, 0, w,h, 10,64)
+    love.graphics.draw(Textures.getTexture('crooky/body_front'), tx, ty, 0, w,h, 10,64)]]
 
     if self.talking then
         love.graphics.draw(self.speechBubble, self.x - self.textW + 3, self.y - self.textObj:getHeight() - 3)

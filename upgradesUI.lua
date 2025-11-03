@@ -26,7 +26,7 @@ local queuedUpgradeAnimations = {}
 
 -- items list
 longTermInvestment = {}
-longTermInvestment.value = 1
+longTermInvestment.value = 0
 permanentItemBonuses = {}
 
 _G.Items = require("items");
@@ -52,6 +52,16 @@ function hasItem(itemName)
         end
     end
     return false
+end
+
+function itemCount(itemName)
+    local count = 0
+    for _, item in ipairs(Player.items) do
+        if item.name == itemName then
+            count = count + 1
+        end
+    end
+    return count
 end
 
 function getItemsIncomeBonus()
@@ -105,8 +115,6 @@ function getStatItemBonusNoDouble(statName, weapon)
     return totalBonus
 end
 
-statDoubled = nil
-accelerationOn = false
 function getStatItemsBonus(statName, weapon)
     if statDoubled ~= nil then
         print("current stat doubled : " .. statDoubled)
@@ -131,59 +139,7 @@ function getStatItemsBonus(statName, weapon)
             end
         end
     end
-    
-    -- Apply minimum value logic only if weapon is provided
-    if weapon then
-        local weaponStatValue = 0
-        if statName == "amount" and not weapon.noAmount then
-            weaponStatValue = weapon.ballAmount
-        elseif weapon.stats[statName] then
-            weaponStatValue = weapon.stats[statName]
-        end
-        
-        -- Calculate what the total would be with current bonus
-        local permanentBonus = Player.permanentUpgrades[statName] or 0
-        local currentStatValue = weaponStatValue + permanentBonus + totalBonus
-        
-        -- If the total would be less than 1, adjust the bonus to make it exactly 1
-        local targetValue = statName == "speed" and 50 or 1
-        targetValue = statName == "cooldown" and 0 or 1
-        if currentStatValue < targetValue then
-            totalBonus = targetValue - weaponStatValue - permanentBonus
-        end
-    end
 
-    if statDoubled == statName or ((statName == "fireRate" or statName == "speed") and accelerationOn) then
-        if weapon then
-            print("totalBonus before doubling for " .. (weapon.name or "") .. " " .. statName .." : " .. totalBonus)
-        end
-    end
-
-    -- logic for doubling powerups. Kind of bootleg that its here, should be in getStat but its too late to go back now
-    if statDoubled == statName or ((statName == "fireRate" or statName == "speed") and accelerationOn) then
-        if weapon then
-            -- Get the base weapon stat value
-            local weaponStatValue = 0
-            if statName == "amount" and not weapon.noAmount then
-                weaponStatValue = weapon.ballAmount
-            elseif weapon.stats[statName] then
-                weaponStatValue = weapon.stats[statName]
-            end
-            if statName == "speed" then
-                weaponStatValue = weaponStatValue / 50
-            end
-            
-            -- Get permanent upgrades
-            local permanentBonus = Player.permanentUpgrades[statName] or 0
-            
-            -- Current total WITH item bonuses: weaponStatValue + permanentBonus + totalBonus
-            totalBonus = totalBonus + weaponStatValue + permanentBonus
-        end
-    end
-
-    if statDoubled == statName or ((statName == "fireRate" or statName == "speed") and accelerationOn) then
-        print("totalBonus after doubling : " .. totalBonus)
-    end
     return totalBonus
 end
 
@@ -273,33 +229,33 @@ local function drawPlayerStats()
     local definition = suit.layout:cols(statsLayout) -- Create a column layout for the stats
 
     setFont(80)
-    x,y = statsWidth/2 - getTextSize(formatNumber(Player.getMoney()))/2 - 100, 175 - love.graphics.getFont():getHeight()/2
+    x,y = statsWidth/2 - getTextSize(formatNumber(Player.realMoney))/2 - 100, 175 - love.graphics.getFont():getHeight()/2
 
     -- Popup on hover: explain interest system
-    local moneyBoxW = getTextSize(formatNumber(Player.getMoney()) .. "$")
+    local moneyBoxW = getTextSize(formatNumber(Player.realMoney) .. "$")
     local moneyBoxH = love.graphics.getFont():getHeight()
     local mouseX, mouseY = love.mouse.getPosition()
     local interestValue = 0--math.floor(math.min(Player.money, Player.currentCore == "Economy Core" and 50 or 25)/5)
-    local gainValue = 5
-    if Player.currentCore == "Economy Core" then
-        gainValue = 12
+    local gainValue = 5 + longTermInvestment.value
+    if Player.currentCore == "Loan Core" then
+        gainValue = 3 + longTermInvestment.value
     end
-    local popupText = "At the start of the level up phase, gain <color=money><font=big>" .. gainValue .. "$"-- </color=money></font=big><color=white><font=default> + </font=default></color=white><font=big><color=money>1$ </color=money></font=big><color=white><font=default>for every <font=big><color=money>5$</color=money></font=big><color=white><font=default> you have, max </color=white></font=default><color=money><font=big>10$ </color=money></font=big><color=white><font=default><font=default><color=white>"
-    if Player.currentCore == "Economy Core" then
-        popupText = "At the start of the level up phase, gain <color=money><font=big>8$"
+    local popupText = "At the start of the level up phase, gain <color=money><font=big>" .. gainValue .. "$ <font=default><color=white>interest"-- </color=money></font=big><color=white><font=default> + </font=default></color=white><font=big><color=money>1$ </color=money></font=big><color=white><font=default>for every <font=big><color=money>5$</color=money></font=big><color=white><font=default> you have, max </color=white></font=default><color=money><font=big>10$ </color=money></font=big><color=white><font=default><font=default><color=white>"
+    if Player.currentCore == "Loan Core" then
+        popupText = "At the start of the level up phase, gain <color=money><font=big>".. gainValue .."$ <font=default><color=white>interest"
     end
     if popupFancyText == nil then
         popupFancyText = FancyText.new(popupText, 20, 15, 350, 20, "left", playerStatsPointers.default, playerStatsPointers)
     else
-        popupFancyText:setText(popupText);
+        popupFancyText:setText(popupText); 
     end
     love.graphics.setColor(1,1,1,1)
     popupFancyText:draw()
 
     -- render interest if player has not finished leveling up
     local interestValue = 5 -- + math.floor(math.min(Player.money, Player.currentCore == "Economy Core" and 50 or 25)/5) + getItemsIncomeBonus()
-    if Player.currentCore == "Economy Core" then
-        interestValue = 8
+    if Player.currentCore == gainValue then
+        interestValue = 3
     end
     --[[if Player.levelingUp and interestValue > 0 then
         setFont(45)
@@ -309,7 +265,7 @@ local function drawPlayerStats()
     end]]
 
     if Player.currentCore and Player.levelingUp and not Player.choosingUpgrade then
-        setFont(38)
+        --[[setFont(38)
         local coreText = tostring(Player.currentCore)
         love.graphics.setColor(0, 0, 0, 0.7)
         local tw = love.graphics.getFont():getWidth(coreText)
@@ -317,7 +273,7 @@ local function drawPlayerStats()
         -- Centered under Bricks Destroyed (which is at x=40, y=40)
         love.graphics.setColor(0.9, 0.9, 0.9, 1)
         love.graphics.print(coreText, screenWidth/2 - tw/2, screenHeight - th - 15)
-        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setColor(1, 1, 1, 1)]]
     end
 
     if Player.score then
@@ -343,17 +299,17 @@ end
 
 local function getRarityDistributionByLevel()
     local level = Player.level
-    if level < 5 then
+    if level < 4 then
         return {common = 1, uncommon = 0, rare = 0.0, legendary = 0.0}
-    elseif level < 8 then
+    elseif level < 7 then
         return {common = 0.88, uncommon = 0.1, rare = 0.02, legendary = 0.0}
-    elseif level < 13 then
+    elseif level < 11 then
         return {common = 0.75, uncommon = 0.2, rare  = 0.05, legendary = 0}
-    elseif level < 18 then
+    elseif level < 15 then
         return {common = 0.625, uncommon = 0.3, rare = 0.075, legendary = 0}
-    elseif level < 22 then
+    elseif level < 18 then
         return {common = 0.53, uncommon = 0.35, rare = 0.1, legendary = 0.02}
-    elseif level < 26 then
+    elseif level < 23 then
         return {common = 0.485, uncommon = 0.35, rare = 0.125, legendary = 0.04}  
     else
         return {common = 0.4, uncommon = 0.39, rare = 0.15, legendary = 0.06}
@@ -519,7 +475,7 @@ local function drawPlayerUpgrades()
             local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(math.ceil(Player.bonusPrice[bonusName]))) / 2
             love.graphics.setColor(0,0,0,1)
             love.graphics.print(formatNumber(math.ceil(Player.bonusPrice[bonusName])) .. "$", x + 104 + moneyOffsetX, y+4, math.rad(5))
-            local moneyColor = Player.getMoney() >= Player.bonusPrice[bonusName] and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
+            local moneyColor = Player.realMoney >= Player.bonusPrice[bonusName] and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
             love.graphics.setColor(moneyColor)
             love.graphics.print(formatNumber(math.ceil(Player.bonusPrice[bonusName])) .. "$", x + 100 + moneyOffsetX, y, math.rad(5))
             love.graphics.setColor(1,1,1,1)
@@ -558,8 +514,8 @@ local function drawPlayerUpgrades()
                     upgradeQueued = true
                 end
             end
-            if upgradeStatButton.hit or (upgradeQueued and Player.getMoney() >= math.ceil(Player.bonusPrice[bonusName])) and (usingMoneySystem or Player.levelingUp) then
-                if Player.getMoney() < math.ceil(Player.bonusPrice[bonusName]) then
+            if upgradeStatButton.hit or (upgradeQueued and Player.realMoney >= math.ceil(Player.bonusPrice[bonusName])) and (usingMoneySystem or Player.levelingUp) then
+                if Player.realMoney < math.ceil(Player.bonusPrice[bonusName]) then
                     if usingMoneySystem then
                         print("Not enough money to upgrade " .. bonusName)
                         table.insert(Player.queuedUpgrades, bonusName)
@@ -979,11 +935,11 @@ local function drawBallStats()
                 if hoverButton.hovered then
                     -- local mouseX, mouseY = love.mouse.getPosition()
                     setFont(35)
-                    dress:Label(statName, {align = "center", color = {normal = {fg = statColor[statName]}}}, statsX - 100, labelY + 100, cellWidth + 180, 150)
-                    dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 98, labelY + 98, cellWidth + 180, 150)
-                    dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 102, labelY + 98, cellWidth + 180, 150)
-                    dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 98, labelY + 102, cellWidth + 180, 150)
-                    dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 102, labelY + 102, cellWidth + 180, 150)
+                    dress:Label(statName, {align = "center", color = {normal = {fg = statColor[statName]}}}, statsX - 90, labelY + 100, cellWidth + 180, 150)
+                    dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 88, labelY + 98, cellWidth + 180, 150)
+                    dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 92, labelY + 98, cellWidth + 180, 150)
+                    dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 88, labelY + 102, cellWidth + 180, 150)
+                    dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 92, labelY + 102, cellWidth + 180, 150)
                     -- drawTextCenteredWithScale(statName, mouseX, mouseY, 1, 300, {1,1,1,1})
                 end
             end
@@ -1002,7 +958,7 @@ local function drawBallStats()
         labelY = bruhY - love.graphics.getFont():getHeight()/2 + 25
         love.graphics.setColor(0,0,0,1)
         love.graphics.print(formatNumber(math.ceil(ballType.price)) .. "$",currentX + statsWidth/2 + 104 +moneyOffsetX, labelY+4, math.rad(5))
-        local moneyColor = Player.getMoney() >= math.ceil(ballType.price) and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
+        local moneyColor = Player.realMoney >= math.ceil(ballType.price) and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
         love.graphics.setColor(moneyColor)
         love.graphics.print(formatNumber(math.ceil(ballType.price)) .. "$",currentX + statsWidth/2 + 100 +moneyOffsetX, labelY, math.rad(5))
         love.graphics.setColor(1,1,1,1)
@@ -1011,7 +967,7 @@ local function drawBallStats()
         local buttonId = ballType.name .. "_upgradeButton"
         local upgradeStatButton = dress:Button("", {color = invisButtonColor, id = buttonId}, currentX + 10, y + 15, getRarityWindow("common"):getWidth() - 30, getRarityWindow("common"):getHeight()/2 - 30)
         if upgradeStatButton.hit then
-            if Player.getMoney() < math.ceil(ballType.price) then
+            if Player.realMoney < math.ceil(ballType.price) then
                 -- does nothing
             else
                 playSoundEffect(upgradeSFX, 0.5, 0.95, false)
@@ -1181,9 +1137,7 @@ function drawLevelUpShop()
             -- Button clicked: apply the effect and close the shop
             print("Clicked on upgrade: " .. currentUpgrade.name)
             currentUpgrade.effect() -- Apply the effect of the upgrade
-            Timer.after(15, function() 
-                if Player.choosingUpgrade then Player.choosingUpgrade = false end
-            end)
+            Player.onLevelUp()
             Player.choosingUpgrade = false
             if not usingMoneySystem then
                 uiOffset.x = 0
@@ -1234,11 +1188,11 @@ function setItemShop(forcedItems)
     forcedItems = forcedItems or {}
 
     for i, v in ipairs(displayedItems) do -- when rolling past an item let it be roled into again
-        Items.removeVisibleItem(v.filteredName);
+        Items.removeInvisibleItem(v.filteredName);
     end
 
     displayedItems = {}
-    for i=1, Player.currentCore == "Collector's Core" and 3 or 3 do
+    for i=1, 3 do
         local itemToDisplay = nil
         if forcedItems[i] then
             itemToDisplay = forcedItems[i]
@@ -1259,7 +1213,7 @@ function setItemShop(forcedItems)
         displayedItems[i] = Items.getRandomItem().new();
         
         ::continue::
-        Items.addVisibleItem(displayedItems[i].filteredName);
+        Items.addInvisibleItem(displayedItems[i].filteredName);
     end
 end
 
@@ -1296,14 +1250,14 @@ local function drawItemShop()
             itemX = centerX - windowW/2
             itemY = centerY - windowH/2
 
-            local upgradePrice = item.rarity == "common" and 10 or item.rarity == "uncommon" and 15 or item.rarity == "rare" and 20 or item.rarity == "legendary" and 25 or 0
+            local upgradePrice = item.rarity == "common" and 8 or item.rarity == "uncommon" and 16 or item.rarity == "rare" and 24 or item.rarity == "legendary" and 30 or 0
             if item.consumable then
-                upgradePrice = item.rarity == "common" and 4 or item.rarity == "uncommon" and 8 or item.rarity == "rare" and 10 or item.rarity == "legendary" and 12 or 0
+                upgradePrice = item.rarity == "common" and 5 or item.rarity == "uncommon" and 9 or item.rarity == "rare" and 12 or item.rarity == "legendary" and 15 or 0
             end
             if hasItem("Elon's Shmuck") then
                 upgradePrice = 2
             end
-            if hasItem("Coupon Collector") then
+            for i=1, itemCount("Coupon Collector") do
                 upgradePrice = math.max(upgradePrice - 1, 0)
             end
 
@@ -1366,7 +1320,7 @@ local function drawItemShop()
             if buyButton.hit then
                 print("button working")
                 -- if (#Player.items < maxItems or item.consumable) and Player.money >= upgradePrice then
-                if Player.getMoney() >= upgradePrice then
+                if Player.realMoney >= upgradePrice then
                     Player.pay(upgradePrice)
                     playSoundEffect(upgradeSFX, 0.5, 0.95)
                     table.remove(displayedItems, i)
@@ -1380,6 +1334,8 @@ local function drawItemShop()
                         table.insert(Player.items, item);
                         Player.items[#Player.items].id = item.name .. tostring(currentItemId);
                         currentItemId = currentItemId + 1;
+                        -- Keep Player.items grouped so identical items are adjacent
+                        if reorderPlayerItems then reorderPlayerItems() end
                     end
                     if item.stats.amount then
                         Balls.amountIncrease(item.stats.amount)
@@ -1405,7 +1361,7 @@ local function drawItemShop()
             end
             local moneyXoffset = item.consumable and -65 or 0
             local moneyYoffset = item.consumable and -25 or 0
-            printMoney(upgradePrice, itemX + uiBigWindowImg:getWidth() * 0.75 - 40 - getTextSize(upgradePrice .. "$")/2 + moneyXoffset, itemY + uiBigWindowImg:getHeight() * 0.65/2 - 85 + moneyYoffset, math.rad(4), Player.getMoney() >= upgradePrice, 50)
+            printMoney(upgradePrice, itemX + uiBigWindowImg:getWidth() * 0.75 - 40 - getTextSize(upgradePrice .. "$")/2 + moneyXoffset, itemY + uiBigWindowImg:getHeight() * 0.65/2 - 85 + moneyYoffset, math.rad(4), Player.realMoney >= upgradePrice, 50)
 
             i = i + 1
         end
@@ -1416,9 +1372,9 @@ local function drawItemShop()
             actualRerollPrice = 2
         end
         if suit.Button("Reroll", {id = "reroll_items", color = invisButtonColor}, screenWidth - 260, 50 + uiBigWindowImg:getHeight() * 0.65/2 - 57, uiLabelImg:getWidth() - 30, uiLabelImg:getHeight() - 6).hit then
-            if Player.getMoney() >= actualRerollPrice then
+            if Player.realMoney >= actualRerollPrice then
                 Player.pay(actualRerollPrice)
-                playSoundEffect(upgradeSFX, 0.5, 0.95)
+                -- playSoundEffect(upgradeSFX, 0.5, 0.95)
                 setItemShop()
                 if Player.currentCore ~= "Picky Core" then
                     rerollPrice = rerollPrice + 1
@@ -1426,7 +1382,7 @@ local function drawItemShop()
                 
             end
         end
-        printMoney(actualRerollPrice, screenWidth - 40 - getTextSize(actualRerollPrice .. "$")/2, 30 + uiBigWindowImg:getHeight() * 0.65/2 - 60, math.rad(4), Player.getMoney() >= actualRerollPrice, 40)
+        printMoney(actualRerollPrice, screenWidth - 40 - getTextSize(actualRerollPrice .. "$")/2, 30 + uiBigWindowImg:getHeight() * 0.65/2 - 60, math.rad(4), Player.realMoney >= actualRerollPrice, 40)
     end
 end
 
@@ -1434,13 +1390,31 @@ local function drawPlayerItems()
     if Player.levelingUp and not Player.choosingUpgrade then
 
         -- print title
-        love.graphics.setColor(1,1,1,1)               
+        love.graphics.setColor(1,1,1,1)
         love.graphics.print("Items", 200 - getTextSize("Items")/2, 400)
-        
+
+        -- Aggregate duplicates so we only draw each unique item once
+        local uniqueMap = {}
+        local uniqueOrder = {}
+        for _, item in ipairs(Player.items) do
+            local key = item.filteredName or item.templateFilteredName or item.name or tostring(item)
+            if not uniqueMap[key] then
+                uniqueMap[key] = {sample = item, count = 1, ids = {item.id}}
+                table.insert(uniqueOrder, key)
+            else
+                uniqueMap[key].count = uniqueMap[key].count + 1
+                table.insert(uniqueMap[key].ids, item.id)
+            end
+        end
+
         local hoveredItem = nil
         local hoveredItemIndex = nil
 
-        for index, item in ipairs(Player.items) do            
+        -- Draw each unique item once
+        for index, key in ipairs(uniqueOrder) do
+            local entry = uniqueMap[key]
+            local item = entry.sample
+
             -- Keep original row-based positioning, just scaled
             local itemWidth = 140
             local itemHeight = 125
@@ -1448,17 +1422,44 @@ local function drawPlayerItems()
             local startingY = screenHeight/2 - 85 -- Don't scale the starting Y
             local itemY = startingY + math.floor((index - 1)/3) * itemHeight
 
-
+            if not item.image then
+                item.image = defaultItemImage
+            end
             if item.image then
                 local imgScaleMult = 1
-                if visualItemValues[item.name] then
-                    local imgScaleMult = visualItemValues[item.name]
+                local representativeName = entry.sample.filteredName or entry.sample.templateFilteredName or entry.sample.name
+                if representativeName and visualItemValues[representativeName] then
+                    imgScaleMult = visualItemValues[representativeName].scale
+                else
+                    -- fallback: try using the sample item's name
+                    if item.name and visualItemValues[item.name] then
+                        imgScaleMult = visualItemValues[item.name].scale
+                    end
                 end
-                local xOffset, yOffset = -(imgScaleMult-1) * itemWidth * 0.25, -(imgScaleMult-1) * itemHeight * 0.25
+                local xOffset, yOffset = -(imgScaleMult-1) * itemWidth * 0.5, -(imgScaleMult-1) * itemHeight * 0.5
                 love.graphics.draw(item.image, itemX + xOffset, itemY + yOffset, 0, 0.5 * imgScaleMult, 0.5 * imgScaleMult)
             end
-            
-            -- Check if mouse is hovering over this item
+
+            -- Draw counter badge if owning more than one
+            if entry.count and entry.count > 1 then
+                local badgeX = itemX + itemWidth * 3/4
+                local badgeY = itemY + 30
+                local badgeRadius = 14
+                
+                setFont(28)
+                local countText = "x"..tostring(entry.count)
+                local tw = love.graphics.getFont():getWidth(countText)
+                local th = love.graphics.getFont():getHeight()
+                love.graphics.setColor(0, 0, 0, 1)
+                love.graphics.print(countText, badgeX - tw/2 - 1, badgeY - th/2 - 1)
+                love.graphics.print(countText, badgeX - tw/2 + 1, badgeY - th/2 - 1)
+                love.graphics.print(countText, badgeX - tw/2 - 1, badgeY - th/2 + 1)
+                love.graphics.print(countText, badgeX - tw/2 + 1, badgeY - th/2 + 1)
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.print(countText, badgeX - tw/2, badgeY - th/2)
+            end
+
+            -- Check if mouse is hovering over this (unique) item
             local mouseX, mouseY = love.mouse.getPosition()
             if mouseX >= itemX and mouseX <= itemX + itemWidth and
                mouseY >= itemY and mouseY <= itemY + itemHeight then
@@ -1467,6 +1468,7 @@ local function drawPlayerItems()
             end
         end
 
+        -- Show description for hovered unique item
         if hoveredItem then
             local item = hoveredItem
             local index = hoveredItemIndex
@@ -1482,27 +1484,11 @@ local function drawPlayerItems()
             setFont(18)
             drawTextCenteredWithScale(item.name or "Unknown", itemX + 12, itemY + 15, 1, (uiBigWindowImg:getWidth() - 20)/2, {1,1,1,1})
 
-            local function getValue()
-                return longTermInvestment.value
-            end
-            --[[local pointers = {
-                default = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 18),
-                big = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 23),
-                bold = love.graphics.newFont("assets/Fonts/KenneyFutureBold.ttf", 25),
-                longTermValue = getValue
-            }
-            if item.descriptionPointers then
-                for pointerName, pointerFunc in pairs(item.descriptionPointers) do
-                    pointers[pointerName] = pointerFunc
-                end
-            end]]
             local id = "fancyText, player.items" .. index .. item.name:gsub("%s+", "_") .. (item.id or "")
             if fancyTexts[id] then
-                -- fancyTexts[id]:update()
                 fancyTexts[id]:draw()
             else
-                local text
-                text = getItemFullDescription(item) or ""
+                local text = getItemFullDescription(item) or ""
                 local fancyText = FancyText.new(text, itemX + 15, itemY + 70, (uiBigWindowImg:getWidth() - 25)/2, 12, "center", item.descriptionPointers.default, item.descriptionPointers)
                 fancyTexts[id] = fancyText
 
@@ -1516,7 +1502,7 @@ playerMoneyBoost = {alpha = 0}
 local function drawPlayerMoney()
     -- render money
     local opacity = 1
-    if not (Player.levelingUp and not Player.choosingUpgrade) then
+    if not Player.levelingUp then
         opacity = playerMoneyBoost.alpha
     end
     local x, y, w, h = 965, 930, 210, 30
@@ -1530,30 +1516,31 @@ local function drawPlayerMoney()
     love.graphics.print(formatNumber(Player.getMoney()) .. "$",x + 100, y + 1, math.rad(1.5))
 end
 
+local function drawFinishUpgradingButton()
+    if Player.levelingUp and not Player.choosingUpgrade then
+        local buttonW, buttonH = 400, 120
+        local buttonX = screenWidth/2 - buttonW/2
+        local buttonY = screenHeight - buttonH - 10
+        setFont(30)
+        love.graphics.setColor(0,0,0,0.6)
+        love.graphics.rectangle("fill", screenWidth/2 - buttonW/2, screenHeight - buttonH + 10, buttonW, buttonH)
+        love.graphics.setColor(1,1,1,1)
+        drawTextCenteredWithScale("Press [SPACE] to Finish Upgrading", screenWidth/2 - buttonW/2, screenHeight - buttonH + 35, 1, buttonW, {1,1,1,1})
+        --[[if suit.Button("Finish Upgrading", {id="finishUpgrading", valign = "top"}, buttonX, buttonY, buttonW, buttonH).hit then
+            finishUpgrading()
+        end]]
+    end
+end
+
 function upgradesUI.draw()
 
-    
+    drawCooldownVFXs()
     drawPlayerStats() -- Draw the player stats table
     drawPlayerMoney()
-    --[[
-    drawPlayerUpgrades() -- Draw the player upgrades table
-    ]]
     drawBallStats() -- Draw the ball stats table
     drawItemShop()
     drawPlayerItems()
-
-    -- Draw separator lines
-    --[[if usingMoneySystem then
-        love.graphics.setColor(0.6, 0.6, 0.6, 0.6*math.max(math.min(math.max(0, 1-math.abs(Balls.getMinX()-statsWidth)/100), 1),math.min(math.max(0, 1-math.max(paddle.x-statsWidth,0)/100), 1))) -- Light gray
-        love.graphics.rectangle("fill", statsWidth, 0, 1, screenHeight) -- Separator line
-        love.graphics.setColor(0.6, 0.6, 0.6, 0.6*math.max(math.min(math.max(0, 1-math.abs(Balls.getMaxX()-(screenWidth - statsWidth))/100), 1), math.min(math.max(0, 1-math.max((screenWidth - statsWidth) - (paddle.x + paddle.width),0)/100))))
-        love.graphics.rectangle("fill", screenWidth - statsWidth, 0, 1, screenHeight)
-        love.graphics.setColor(0.6, 0.6, 0.6, 0.6* mapRangeClamped(math.abs(getHighestBrickY() + brickHeight - paddle.y), 0, 150, 1, 0)) -- Reset color to white
-        love.graphics.rectangle("fill", statsWidth, paddle.y, screenWidth - statsWidth * 2, 1) -- Draw the paddle area
-        love.graphics.setColor(1, 1, 1, 1) -- Reset color to white   
-    end]]
-    
-    -- Draw Player.bricksDestroyed at the bottom left of the screen
+    drawFinishUpgradingButton()
 
     -- Draw stat hover label if hovering a stat
     if hoveredStatName and Player.levelingUp then
@@ -1570,7 +1557,7 @@ function upgradesUI.draw()
 end
 
 function upgradesUI.update(dt)
-    
+    updateCooldownTimers(dt)
 end
 
 return upgradesUI

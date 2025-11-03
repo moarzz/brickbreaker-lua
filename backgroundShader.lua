@@ -76,6 +76,13 @@ function BackgroundShader.setBrightness(newBrightness)
         v:send("brightness", newBrightness);
     end
 end
+function BackgroundShader.setFinalMult(newFinalMult)
+    self.finalMult = newFinalMult;
+
+    for _, v in ipairs(self.shaders) do
+        v:send("finalMult", newFinalMult);
+    end
+end
 
 function BackgroundShader.draw()
     if self.fadePerun < 1 then
