@@ -29,6 +29,7 @@ VFX = require("VFX") -- VFX library
 local KeySys = require("KeywordSystem") -- Keyword system for text parsing
 local Explosion = require("particleSystems.explosion") -- Explosion particle system
 BackgroundShader = require("backgroundShader");
+TextBatching = require("textBatching");
 
 usingMoneySystem = false
 usingNormalXpSystem = true
@@ -1592,6 +1593,9 @@ function drawBricks()
 
     
     brickBatch:clear();
+    TextBatching.clear();
+
+    local texHeight = love.graphics.getFont():getHeight() / 2;
     
     local brickWidth, brickHeight = brickImg:getDimensions();
     local defColour = {1,1,1,1};
@@ -1616,10 +1620,29 @@ function drawBricks()
                 brick.height / brickHeight
             );
         end
+        
+        if brick.destroyed or brick.type == "gold" or brick.type == "fast" then
+            --? dont draw a brick if its been destroyed
+        else -- brick is not gold
+            local text = tostring(brick.health);
+
+            TextBatching.addText(
+                text,
+                brick.x + brick.width / 2 + (brick.drawOffsetX or 0),
+                brick.y + brick.height / 2 + (brick.drawOffsetY or 0),
+                0,
+                1,
+                1,
+                love.graphics.getFont():getWidth(text) / 2,
+                texHeight
+            );
+        end
+        
         ::continue::
     end
     
     love.graphics.draw(brickBatch);
+    TextBatching.draw();
 
     for _, brick in ipairs(goldBricksToDraw) do
         love.graphics.setColor(1,1,1,1);
@@ -1634,7 +1657,7 @@ function drawBricks()
     end
     
     
-    setFont(18);
+    --[[setFont(18);
     love.graphics.setColor(1,1,1); -- white
 
     local texHeight = love.graphics.getFont():getHeight() / 2;
@@ -1647,7 +1670,7 @@ function drawBricks()
         else -- brick is not gold
             local text = tostring(brick.health);
             love.graphics.print(
-                text,
+                 text,
                 brick.x + brick.width / 2 + (brick.drawOffsetX or 0),
                 brick.y + brick.height / 2 + (brick.drawOffsetY or 0),
                 0,
@@ -1657,7 +1680,7 @@ function drawBricks()
                 texHeight
             );
         end
-    end
+    end]]
 
     -- Draw all gold bricks
     for _, brick in ipairs(goldBricksToDraw) do
