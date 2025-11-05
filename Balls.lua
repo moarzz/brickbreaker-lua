@@ -362,6 +362,12 @@ local function brickDestroyed(brick)
     end
 end
 
+function BrickDestroyedGlobal(brick)
+    brick.health = 0
+    brickDestroyed(brick)
+    brick = nil
+end
+
 function Balls.reduceCooldown(typeName) 
     --unlockedBallTypes[typeName].currentCooldown = math.max(0, unlockedBallTypes[typeName].currentCooldown - 1)
 end
@@ -2051,6 +2057,7 @@ local commonWeapons = {}
 local uncommonWeapons = {}
 local addBallsQueued = false
 local function speedCoreInitialize()
+    creatingFastBricks = false
     powerupPopup = {startTime = 0, type = nil, scale = 0, angle = 0}
     Player.setMoney(50);
     -- Player.money = 50
@@ -3973,7 +3980,7 @@ function Balls.update(dt, paddle, bricks)
         -- wall bounce logic
         if orb.x < 0 then orb.speedX = -orb.speedX end
         if orb.x > screenWidth then orb.speedX = -orb.speedX end
-        if orb.y > screenHeight then
+        --[[if orb.y > screenHeight then
             if orb.bounceAmount > 0 then
                 orb.y = screenHeight
                 orb.speedY = math.min(-orb.speedY * 0.85, -500)
@@ -3981,8 +3988,15 @@ function Balls.update(dt, paddle, bricks)
             else
                 table.remove(powerups, i)
             end
+        end]]
+        if paddle.x < orb.x and orb.x < paddle.x + paddle.width then
+            local attractionStrength = 1100
+            local angle = math.atan2((paddle.y + paddle.height/2) - orb.y, (paddle.x + paddle.width/2) - orb.x)
+            orb.speedX = orb.speedX + math.cos(angle) * attractionStrength * dt
+            orb.speedY = orb.speedY + math.sin(angle) * attractionStrength * dt
+        else
+            orb.speedY = math.min(orb.speedY + 300 * dt, 300) -- gravity effect
         end
-        orb.speedY = math.min(orb.speedY + 300 * dt, 300) -- gravity effect
 
         orb.angle = (orb.angle or 0) + dt * 1
 

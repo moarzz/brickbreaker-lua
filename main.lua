@@ -433,6 +433,43 @@ function resetGoldBricksValues()
     totalGoldBricksGeneratedThisRun = 0
 end
 
+local fastBricks = {}
+local lastFastBrickCreateTime = 0
+local function createFastBrick()
+    local brickHealth = math.ceil(currentRowPopulation/40)
+    local brickColor = getBrickColor(brickHealth)
+    local fastBrick ={
+        type = "fast",
+        id = brickId,
+        x = math.random(5, screenWidth - brickWidth - 5),
+        y = -brickHeight * 2,
+        drawOffsetX = 0,
+        drawOffsetY = 0,
+        drawOffsetRot = 0,
+        drawScale = 1,
+        width = brickWidth,
+        height = brickHeight,
+        destroyed = false,
+        health = math.ceil(currentRowPopulation/35),
+        maxHealth = brickHealth,
+        color = {brickColor[1], brickColor[2], brickColor[3], 1},
+        hitLastFrame = false,
+        lastHitVfxTime = 0,
+        trail = {},
+        speedMult = 2.5,
+    }
+    table.insert(bricks,1, fastBrick)
+    table.insert(fastBricks, fastBrick)
+    lastFastBrickCreateTime = gameTime
+    brickId = brickId + 1
+end
+
+local function createFastBrickUpdate()
+    if gameTime > 30 and gameTime - lastFastBrickCreateTime >= mapRangeClamped(gameTime, 120, 600, 8, 3) then
+        createFastBrick()
+    end
+end
+
 local healBricks = {}
 local unavailableXpos = {}
 local bossRows = {}
@@ -591,7 +628,7 @@ local function generateRow(brickCount, yPos)
                         lastSparkleTime = 0
                     }
                     table.insert(bricks, goldBrick)
-                    brickId = brickId + 1
+                    brickId = brickId + 1                    
                 else
                     local brickColor = getBrickColor(brickHealth)
                     table.insert(bricks, {
@@ -848,7 +885,7 @@ brickFreeze = false
 brickFreezeTime = gameTime
 function getBrickSpeedByTime()
     -- Scale speed from 0.5 to 3 over 30 minutes
-    local returnValue = mapRange(gameTime, 0, 2000, 0.3, 3) * (Player.currentCore == "Madness Core" and 2 or 1)
+    local returnValue = mapRange(gameTime, 0, 2000, 0.45, 3) * (Player.currentCore == "Madness Core" and 2 or 1)
     if brickFreeze == true then
         if gameTime - brickFreezeTime > 20 then
             brickFreeze = false
@@ -924,6 +961,8 @@ local function moveBricksDown(dt)
             end
             if brick.type == "boss" then
                 brick.y = brick.y + brickSpeed.value * dt * speedMult * mapRangeClamped(brick.y, - boss.height * 1.5, -boss.height, 5, 0.5)
+            elseif brick.type == "fast" then
+                brick.y = brick.y + dt * mapRangeClamped(brick.y, 0, screenHeight, 70, 20)
             else
                 brick.y = brick.y + brickSpeed.value * dt * speedMult * (brick.speedMult or 1)
             end
@@ -975,7 +1014,7 @@ function changeMusic(newMusicStage)
     if newMusicStage == "menu" then
         ref = "assets/SFX/inGame1.mp3";
         targetMusicPitch = 1;
-        BackgroundShader.changeShader(4); -- vexel
+        BackgroundShader.changeShader(1); -- vexel
     elseif newMusicStage == "calm" then
         ref = "assets/SFX/inGame1.mp3";
         BackgroundShader.changeShader(1); -- vexel
@@ -1147,21 +1186,24 @@ local function gameFixedUpdate(dt)
             dt = 0
         end
 
-        if UtilityFunction.freeze then
-            dt = 0 -- Freeze the game if UtilityFunction.freeze is true
-        end
-        Timer.update(dt) -- Update the timer
-
-        local function updateGameTime(dt)
-            if not UtilityFunction.freeze and not (Player.choosingUpgrade or Player.levelingUp) then
-                gameTime = gameTime + dt / 0.7
-            end
-        end
-        
-        updateGameTime(dt)
-
         -- Standard Play logic
         if not Player.choosingUpgrade and not UtilityFunction.freeze and not Player.levelingUp then
+
+            -- Freeze the game if UtilityFunction.freeze and update in game timers
+            if UtilityFunction.freeze then
+                dt = 0 -- Freeze the game if UtilityFunction.freeze is true
+            end
+            Timer.update(dt) -- Update the timer
+            local function updateGameTime(dt)
+                if not UtilityFunction.freeze and not (Player.choosingUpgrade or Player.levelingUp) then
+                    gameTime = gameTime + dt / 0.7
+                end
+            end
+            updateGameTime(dt)
+
+            -- fast brick logic
+            createFastBrickUpdate()
+
             -- Paddle movement
             local moveX, moveY = 0, 0
             if love.keyboard.isDown("left") or love.keyboard.isDown("a") then
@@ -1556,9 +1598,11 @@ function drawBricks()
     local goldBricksToDraw = {};
     local bossBrick
     for _, brick in ipairs(bricks) do
-        if brick.destroyed then
-            --? dont draw a brick if its been destroyed
-        elseif brick.type == "gold" then
+        -- skip fast bricks
+        if brick.type == "fast" or brick.destroyed then
+            goto continue
+        end
+        if brick.type == "gold" then
             table.insert(goldBricksToDraw, brick);
         elseif brick.type == "boss" then
             bossBrick = brick
@@ -1572,6 +1616,7 @@ function drawBricks()
                 brick.height / brickHeight
             );
         end
+        ::continue::
     end
     
     love.graphics.draw(brickBatch);
@@ -1588,6 +1633,7 @@ function drawBricks()
         );
     end
     
+    
     setFont(18);
     love.graphics.setColor(1,1,1); -- white
 
@@ -1596,10 +1642,8 @@ function drawBricks()
     local goldBricktextToDraw = {};
 
     for _, brick in ipairs(bricks) do
-        if brick.destroyed then
+        if brick.destroyed or brick.type == "gold" or brick.type == "fast" then
             --? dont draw a brick if its been destroyed
-        elseif brick.type == "gold" then
-            -- print("Milo:3 didn't handle gold bricks being drawn");
         else -- brick is not gold
             local text = tostring(brick.health);
             love.graphics.print(
@@ -1671,59 +1715,36 @@ function drawBricks()
         drawImageCentered(crownImg, centerX, centerY - brick.height / 2, crownImg:getWidth()/2.5, crownImg:getHeight()/2.5)
     end
 
+    -- draw fastBricks
+
     -- Reset color
     love.graphics.setColor(1, 1, 1, 1)
 
-    -- Cache text objects and widths
-    --[[local textCache = {}
-    local widthCache = {}
-    
-    -- Group text by same health values
-    local healthGroups = {}
-    -- Create/get cached text objects
-    for health, positions in pairs(healthGroups) do
-        if not textCache[health] then
-            local text = tostring(health)
-            textCache[health] = love.graphics.newText(font, text)
-            widthCache[health] = font:getWidth(text)
-        end
-    end]]
-
-    -- Draw all black outlines in one batch
-    --[[love.graphics.setColor(0, 0, 0, 1)
-    for health, positions in pairs(healthGroups) do
-        local text = textCache[health]
-        local width = widthCache[health]
-        for _, pos in ipairs(positions) do
-            love.graphics.draw(text, 
-                pos.centerX + 2, 
-                pos.centerY + 2, 
-                0, 
-                1, 
-                1, 
-                width/2, 
-                fontHeight/2
-            )
+    for _, fastBrick in ipairs(fastBricks) do
+        if not fastBrick.destroyed then
+            love.graphics.setColor(fastBrick.color);
+            love.graphics.draw(
+                brickImg,
+                fastBrick.x + (fastBrick.drawOffsetX or 0),
+                fastBrick.y + (fastBrick.drawOffsetY or 0),
+                0,
+                fastBrick.width / brickWidth,
+                fastBrick.height / brickHeight
+            );
+            local text = tostring(fastBrick.health);
+            love.graphics.setColor(1,1,1,1)
+            love.graphics.print(
+                text,
+                fastBrick.x + fastBrick.width / 2 + (fastBrick.drawOffsetX or 0),
+                fastBrick.y + fastBrick.height / 2 + (fastBrick.drawOffsetY or 0),
+                0,
+                1,
+                1,
+                love.graphics.getFont():getWidth(text) / 2,
+                texHeight
+            );
         end
     end
-
-    -- Draw all white text in one batch
-    love.graphics.setColor(1, 1, 1, 1)
-    for health, positions in pairs(healthGroups) do
-        local text = textCache[health]
-        local width = widthCache[health]
-        for _, pos in ipairs(positions) do
-            love.graphics.draw(text, 
-                pos.centerX, 
-                pos.centerY, 
-                0, 
-                1, 
-                1, 
-                width/2, 
-                fontHeight/2
-            )
-        end
-    end]]
 
     -- draw heal symbol on healBricks
     for i = #healBricks, 1, -1 do
@@ -1739,35 +1760,7 @@ function drawBricks()
         drawImageCentered(healAuraImg, brick.x + brick.width/2, brick.y + brick.height/2,brick.width * 3.25, brick.width * 3.25)
     end
 
-    -- Draw boss bricks last (not batched)
-    --[[for _, brick in ipairs(bricks) do
-        if brick.type == "boss" and not brick.destroyed and brick.y + brick.height > screenTop - 10 and brick.y < screenBottom + 10 then
-            local color = brick.color or {1, 1, 1, 1}
-            love.graphics.setColor(color)
-            local scale = brick.drawScale or 1
-            local scaleX = scale * (brick.width / brickImg:getWidth())
-            local scaleY = scale * (brick.height / brickImg:getHeight())
-            local centerX = brick.x + brick.width / 2 + brick.drawOffsetX
-            local centerY = brick.y + brick.height / 2 + brick.drawOffsetY
-            love.graphics.draw(
-                brickImg,
-                centerX,
-                centerY,
-                brick.drawOffsetRot,
-                scaleX,
-                scaleY + 0.1,
-                brickImg:getWidth() / 2,
-                brickImg:getHeight() / 2
-            )
-            local hpText = tostring(brick.health or 0)
-            setFont(35)
-            local font = love.graphics.getFont()
-            love.graphics.setColor(0, 0, 0, 1)
-            love.graphics.print(hpText, centerX+1, centerY+1, 0, 1, 1, font:getWidth(hpText)/2, font:getHeight()/2)
-            love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.print(hpText, centerX, centerY, 0, 1, 1, font:getWidth(hpText)/2, font:getHeight()/2)
-        end
-    end]]
+    -- draw shield auras
 
     -- Draw brick pieces (not batched)
     for _, brickPiece in ipairs(brickPieces) do
@@ -2449,11 +2442,21 @@ function love.keypressed(key)
             end
         end
 
+        -- destroy all bricks under half screen Height
+        if key == "0" then
+            for i= #bricks, 1, -1 do
+                local brick = bricks[i]
+                if not brick.destroyed and brick.y > screenHeight/2 then
+                    BrickDestroyedGlobal(brick)
+                    table.remove(bricks, i)
+                end
+            end
+        end
 
         -----------------------------------
 
         if key == "1" then
-            BackgroundShader.changeShader(4)
+            firstRunCompleted = true
         end
         if key == "2" then
             BackgroundShader.changeShader(1)

@@ -302,15 +302,15 @@ local function getRarityDistributionByLevel()
     if level < 4 then
         return {common = 1, uncommon = 0, rare = 0.0, legendary = 0.0}
     elseif level < 7 then
-        return {common = 0.88, uncommon = 0.1, rare = 0.02, legendary = 0.0}
+        return {common = 0.83, uncommon = 0.15, rare = 0.02, legendary = 0.0}
     elseif level < 11 then
-        return {common = 0.75, uncommon = 0.2, rare  = 0.05, legendary = 0}
+        return {common = 0.675, uncommon = 0.25, rare  = 0.075, legendary = 0}
     elseif level < 15 then
-        return {common = 0.625, uncommon = 0.3, rare = 0.075, legendary = 0}
+        return {common = 0.6, uncommon = 0.3, rare = 0.1, legendary = 0}
     elseif level < 18 then
-        return {common = 0.53, uncommon = 0.35, rare = 0.1, legendary = 0.02}
+        return {common = 0.5, uncommon = 0.35, rare = 0.125, legendary = 0.025}
     elseif level < 23 then
-        return {common = 0.485, uncommon = 0.35, rare = 0.125, legendary = 0.04}  
+        return {common = 0.475, uncommon = 0.35, rare = 0.125, legendary = 0.05}  
     else
         return {common = 0.4, uncommon = 0.39, rare = 0.15, legendary = 0.06}
     end
@@ -608,16 +608,22 @@ local function drawPlayerUpgrades()
     end
 end
 
-local function getRarityWindow(rarity, windowType)
+local function getRarityColor(rarity)
     if rarity == "common" then
-        love.graphics.setColor(0, 150/255, 1)
+        return {0, 150/255, 1}
     elseif rarity == "uncommon" then
-        love.graphics.setColor(1, 0, 200/255)
+        return {1, 0, 200/255}
     elseif rarity == "rare" then
-        love.graphics.setColor(1, 0, 0)
+        return {1, 0, 0}
     elseif rarity == "legendary" then
-        love.graphics.setColor(1, 200/255, 0)
+        return {1, 200/255, 0}
     end
+    return {1,1,1}
+
+end
+
+local function getRarityWindow(rarity, windowType)
+    love.graphics.setColor(getRarityColor(rarity))
     if windowType == "small" then
         return uiSmallWindowImg
     elseif windowType == "mid" then
@@ -1238,6 +1244,8 @@ local function drawItemShop()
     if Player.levelingUp and not Player.choosingUpgrade then
         setFont(60)
         for i=#displayedItems,1,-1 do
+
+            -- set appropriate values
             local item = displayedItems[i]
             local scale = item.consumable and 0.8 or 1.0
             local windowW = uiBigWindowImg:getWidth() * 0.75 * scale
@@ -1249,10 +1257,9 @@ local function drawItemShop()
             local centerY = itemY + uiBigWindowImg:getHeight()*0.65/2
             itemX = centerX - windowW/2
             itemY = centerY - windowH/2
-
             local upgradePrice = item.rarity == "common" and 8 or item.rarity == "uncommon" and 16 or item.rarity == "rare" and 24 or item.rarity == "legendary" and 30 or 0
             if item.consumable then
-                upgradePrice = item.rarity == "common" and 5 or item.rarity == "uncommon" and 9 or item.rarity == "rare" and 12 or item.rarity == "legendary" and 15 or 0
+                upgradePrice = item.rarity == "common" and 4 or item.rarity == "uncommon" and 7 or item.rarity == "rare" and 10 or item.rarity == "legendary" and 13 or 0
             end
             if hasItem("Elon's Shmuck") then
                 upgradePrice = 2
@@ -1260,6 +1267,7 @@ local function drawItemShop()
             for i=1, itemCount("Coupon Collector") do
                 upgradePrice = math.max(upgradePrice - 1, 0)
             end
+
 
             --description display when hovered
             local buyButton = dress:Button("", {id = "bruhdmsavklsam" .. i .. item.name, color = invisButtonColor}, itemX + 10, itemY + 12, windowW - 20, windowH - 24)
@@ -1276,12 +1284,24 @@ local function drawItemShop()
 
                     fancyText:draw()
                 end
+                love.graphics.setColor(1, 1, 1, 1)
+
+                -- draw item rarity
+                local fontSize = item.rarity == "common" and 18 or item.rarity == "uncommon" and 20 or item.rarity == "rare" and 22 or item.rarity == "legendary" and 24 or 18
+                setFont(fontSize)
+                local rarityX = centerX - uiBigWindowImg:getWidth() * 0.55 * scale/2
+                local rarityY = itemY + windowH - 60
+                love.graphics.print("cacacca", rarityX - 2, rarityY - 2) -- black outline
+                drawTextCenteredWithScale((item.rarity or "common"):gsub("^%l", string.upper), itemX, itemY + uiBigWindowImg:getHeight() - 20, 1, windowW, getRarityColor(item.rarity or "common"))
+
             end
 
-            -- local color = (tableLength(Player.items) >= maxItems and not item.consumable) and {0.6, 0.6, 0.6, 1} or {1, 1, 1, 1}
+            -- draw main window
             local color = {1, 1, 1, 1}
             love.graphics.setColor(color)
             love.graphics.draw(getRarityWindow(item.rarity or "common"), itemX, itemY, 0, 0.75 * scale, 0.65 * scale)
+
+            -- draw item name
             setFont(27)
             drawTextCenteredWithScale(item.name or "Unknown", itemX + 10 * scale, itemY + 30 * scale, scale, windowW - 20 * scale, color)
             
