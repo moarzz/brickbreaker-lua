@@ -436,14 +436,18 @@ end
 
 local fastBricks = {}
 local lastFastBrickCreateTime = 0
+function fastBricksReset()
+    fastBricks = {}
+    lastFastBrickCreateTime = 0
+end
 local function createFastBrick()
-    local brickHealth = math.ceil(currentRowPopulation/40)
+    local brickHealth = math.max(math.floor(currentRowPopulation/50), 1)
     local brickColor = getBrickColor(brickHealth)
     local fastBrick ={
         type = "fast",
         id = brickId,
         x = math.random(5, screenWidth - brickWidth - 5),
-        y = -brickHeight * 2,
+        y = -brickHeight,
         drawOffsetX = 0,
         drawOffsetY = 0,
         drawOffsetRot = 0,
@@ -457,8 +461,14 @@ local function createFastBrick()
         hitLastFrame = false,
         lastHitVfxTime = 0,
         trail = {},
-        speedMult = 2.5,
+        speedMult = math.random(85,125)/100,
     }
+    function fastBrick:addTrailPoint(x,y)
+        table.insert(self.trail, 1, {x = x, y = y})
+        if #self.trail > 15 then
+            table.remove(self.trail, #self.trail)
+        end
+    end
     table.insert(bricks,1, fastBrick)
     table.insert(fastBricks, fastBrick)
     lastFastBrickCreateTime = gameTime
@@ -466,8 +476,20 @@ local function createFastBrick()
 end
 
 local function createFastBrickUpdate()
-    if gameTime > 30 and gameTime - lastFastBrickCreateTime >= mapRangeClamped(gameTime, 120, 600, 8, 3) then
+    if Player.level >= 5 and gameTime - lastFastBrickCreateTime >= mapRangeClamped(gameTime, 90, 600, 18, 5) then
         createFastBrick()
+    end
+end
+
+local function fastBricksUpdate()
+    for _, brick in ipairs(fastBricks) do
+        if not brick.lastTrailUpdateTime then
+            brick.lastTrailUpdateTime = gameTime
+        end
+        if gameTime - brick.lastTrailUpdateTime >= 0.075 then
+            brick:addTrailPoint(brick.x, brick.y)
+            brick.lastTrailUpdateTime = gameTime
+        end
     end
 end
 
@@ -562,8 +584,8 @@ local function generateRow(brickCount, yPos)
                         brickId = brickId + 1
                         nextRowDebuff = brickHealth + row[xPos+1]
                     end
-                elseif math.random(1, 100) < math.floor(mapRangeClamped(brickCount, 1, 1000, 0, 6)) and brickHealth >= 15 and not bossSpawned 
-                    and not (row.healBrickPositions and (row.healBrickPositions[xPos-1] or row.healBrickPositions[xPos+1])) then
+                elseif Player.level >= 10 and math.random(1, 250) <= math.floor(mapRangeClamped(Player.level, 8, 25, 1, 8)) 
+                and not (row.healBrickPositions and (row.healBrickPositions[xPos-1] or row.healBrickPositions[xPos+1])) then
                     if not row.healBrickPositions then row.healBrickPositions = {} end
                     row.healBrickPositions[xPos] = true
                     local brickColor = getBrickColor(brickHealth)
@@ -607,6 +629,7 @@ local function generateRow(brickCount, yPos)
                     if canHeal then
                         Timer.after(1.75 + math.random(1,175)/100, function() healSelf(healBrick) end)
                     end
+                elseif Player.level >= 15 and math.random(1, 250) <= math.floor(mapRangeClamped(Player.level, 12, 25, 1, 6)) and false then
                 elseif (totalGoldBricksGeneratedThisRun < math.floor((gameTime + 25)/100)) then
                     totalGoldBricksGeneratedThisRun = totalGoldBricksGeneratedThisRun + 1
                     local goldBrick = {
@@ -963,7 +986,7 @@ local function moveBricksDown(dt)
             if brick.type == "boss" then
                 brick.y = brick.y + brickSpeed.value * dt * speedMult * mapRangeClamped(brick.y, - boss.height * 1.5, -boss.height, 5, 0.5)
             elseif brick.type == "fast" then
-                brick.y = brick.y + dt * mapRangeClamped(brick.y, 0, screenHeight, 70, 20)
+                brick.y = brick.y + dt * mapRangeClamped(brick.y, 0, screenHeight, 70, 20) * (brick.speedMult or 1)
             else
                 brick.y = brick.y + brickSpeed.value * dt * speedMult * (brick.speedMult or 1)
             end
@@ -1204,6 +1227,7 @@ local function gameFixedUpdate(dt)
 
             -- fast brick logic
             createFastBrickUpdate()
+            fastBricksUpdate()
 
             -- Paddle movement
             local moveX, moveY = 0, 0
@@ -1640,7 +1664,7 @@ function drawBricks()
         
         ::continue::
     end
-    
+    -- setfont(
     love.graphics.draw(brickBatch);
     TextBatching.draw();
 
@@ -1656,31 +1680,6 @@ function drawBricks()
         );
     end
     
-    
-    --[[setFont(18);
-    love.graphics.setColor(1,1,1); -- white
-
-    local texHeight = love.graphics.getFont():getHeight() / 2;
-
-    local goldBricktextToDraw = {};
-
-    for _, brick in ipairs(bricks) do
-        if brick.destroyed or brick.type == "gold" or brick.type == "fast" then
-            --? dont draw a brick if its been destroyed
-        else -- brick is not gold
-            local text = tostring(brick.health);
-            love.graphics.print(
-                 text,
-                brick.x + brick.width / 2 + (brick.drawOffsetX or 0),
-                brick.y + brick.height / 2 + (brick.drawOffsetY or 0),
-                0,
-                1,
-                1,
-                love.graphics.getFont():getWidth(text) / 2,
-                texHeight
-            );
-        end
-    end]]
 
     -- Draw all gold bricks
     for _, brick in ipairs(goldBricksToDraw) do
@@ -1739,11 +1738,32 @@ function drawBricks()
     end
 
     -- draw fastBricks
-
+    setFont(18);
     -- Reset color
     love.graphics.setColor(1, 1, 1, 1)
 
     for _, fastBrick in ipairs(fastBricks) do
+        if fastBrick.health <= 0 or fastBrick.destroyed then
+            goto continue
+        end
+        -- draw trail
+        -- draw fading trail
+        if fastBrick.trail and #fastBrick.trail > 0 then
+            local trailCount = #fastBrick.trail
+            local baseColor = {fastBrick.color[1], fastBrick.color[2], fastBrick.color[3], 1}
+            for i, pt in ipairs(fastBrick.trail) do
+                local t = 1 - (i - 1) / trailCount -- 1 = newest, 0 = oldest
+
+                local alpha = 0.2 * t -- fade from subtle to strong
+                local realW = fastBrick.width
+                local w = fastBrick.width * t * 0.9
+                local h = fastBrick.height * t
+                love.graphics.setColor(baseColor[1], baseColor[2], baseColor[3], alpha)
+                love.graphics.rectangle("fill", pt.x + (realW - w)/2, pt.y, w, h)
+            end
+            love.graphics.setColor(1, 1, 1, 1)
+        end
+
         if not fastBrick.destroyed then
             love.graphics.setColor(fastBrick.color);
             love.graphics.draw(
@@ -1767,6 +1787,7 @@ function drawBricks()
                 texHeight
             );
         end
+        ::continue::
     end
 
     -- draw heal symbol on healBricks

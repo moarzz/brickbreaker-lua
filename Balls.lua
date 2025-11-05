@@ -2056,48 +2056,13 @@ end
 local commonWeapons = {}
 local uncommonWeapons = {}
 local addBallsQueued = false
-local function speedCoreInitialize()
-    creatingFastBricks = false
-    powerupPopup = {startTime = 0, type = nil, scale = 0, angle = 0}
-    Player.setMoney(50);
-    -- Player.money = 50
-    Player.level = 4
-    commonWeapons = {}
-    uncommonWeapons = {}
-    for _, ballType in pairs(ballList) do
-        if ballType.rarity == "common" then
-            if ballType.canBuy then
-                if not ballType:canBuy() then
-                    goto continue
-                end
-            end
-            table.insert(commonWeapons, ballType.name)
-            ::continue::
-        elseif ballType.rarity == "uncommon" then
-            if ballType.canBuy then
-                if not ballType:canBuy() then
-                    goto continue2
-                end
-            end
-            table.insert(uncommonWeapons, ballType.name)
-            ::continue2::
-        end
-    end
-    currentRowPopulation = 100
-    Player.xpForNextLevel = 80
-    addBallsQueued = true
-end
 
 -- calls ballListInit and adds a ball to it
 function Balls.initialize()
+    fastBricksReset()
     Player.setMoney(0);
     -- initializeRarityItemLists()
     longTermInvestment.value = 0
-    if Player.currentCore == "Collector's Core" then
-        setMaxItems(5)
-    else
-        setMaxItems(4)
-    end
     Player.items = {}
     Player.levelingUp = false
     Player.choosingUpgrade = false
