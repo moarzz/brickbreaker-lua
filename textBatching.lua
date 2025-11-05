@@ -85,7 +85,7 @@ function TextBatching.generateQuads()
     self.quads = {}; -- table of quads to each sub sprite
 
     for i = 1, 10 do
-        self.quads[tostring(i % 10)] = love.graphics.newQuad((i - 1) * self.fontWidth[11], 0, self.fontWidth[i], self.fontHeight, self.image);
+        self.quads[tostring(i % 10)] = love.graphics.newQuad((i - 1) * self.fontWidth[11], 0, self.fontWidth[11], self.fontHeight, self.image);
     end
 end
 
