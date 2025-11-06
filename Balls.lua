@@ -355,7 +355,7 @@ local function brickDestroyed(brick)
     local chanceMult = 1
     if hasItem("Scavenger") then
         for i=1, itemCount("Scavenger") do
-            chanceMult = chanceMult + 0.35
+            chanceMult = chanceMult + 0.40
         end
     end
     if math.random(1,4000)/chanceMult <= currentMoneyDropChance then

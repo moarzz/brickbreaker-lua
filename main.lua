@@ -196,6 +196,7 @@ function resetGame()
     
     -- Clear any existing bricks
     bricks = {}
+    shieldAuras = {}
     brickBatch = love.graphics.newSpriteBatch(brickImg, 700, "stream");
     
     -- Reset all Player stats and values
@@ -264,6 +265,7 @@ local function loadAssets()
     vignetteImg = love.graphics.newImage("assets/sprites/vignette.png")
     drillSergeantImg = love.graphics.newImage("assets/sprites/drillSergeant.png")
     healAuraImg = love.graphics.newImage("assets/sprites/healAura.png")
+    shieldAuraImg = love.graphics.newImage("assets/sprites/shieldAura.png")
     defaultItemImage = love.graphics.newImage("assets/sprites/UI/ItemIcons/default.png")
 
     -- UI
@@ -349,7 +351,7 @@ local boss = nil
 local function spawnBoss()
     targetMusicVolume = 0
     -- Center the boss brick at the top
-    Timer.after(4, function()
+    Timer.after(8, function()
         targetMusicVolume = 1
         changeMusic("boss")
     end)
@@ -376,7 +378,7 @@ local function spawnBoss()
     }
     table.insert(bricks, boss)
     brickId = brickId + 1
-    bossBrickSpawnTimer = Timer.every(1.25, function() 
+    --[[bossBrickSpawnTimer = Timer.every(1.25, function() 
         if boss.y >= -bossHeight + 150 then
             bossSpawnSwitch = not bossSpawnSwitch
             local bossPosY
@@ -407,7 +409,7 @@ local function spawnBoss()
             })
             brickId = brickId + 1
         end
-    end)
+    end)]]
     local bossHealTimer = Timer.every(2, function()
         if boss.y >= -bossHeight + 150 and canHeal then
 
@@ -441,7 +443,7 @@ function fastBricksReset()
     lastFastBrickCreateTime = 0
 end
 local function createFastBrick()
-    local brickHealth = math.max(math.floor(currentRowPopulation/50), 1)
+    local brickHealth = math.max(math.floor(currentRowPopulation/45), 1)
     local brickColor = getBrickColor(brickHealth)
     local fastBrick ={
         type = "fast",
@@ -476,7 +478,13 @@ local function createFastBrick()
 end
 
 local function createFastBrickUpdate()
-    if Player.level >= 4 and gameTime - lastFastBrickCreateTime >= mapRangeClamped(Player.level, 5, 20, 11, 2.5) then
+    local fastBrickTimer = false
+    if bossSpawned then 
+        fastBrickTimer = gameTime - lastFastBrickCreateTime >= 0.75
+    else
+        fastBrickTimer = gameTime - lastFastBrickCreateTime >= mapRangeClamped(Player.level, 4, 20, 11, 2.5)
+    end
+    if Player.level >= 4 and fastBrickTimer then
         createFastBrick()
     end
 end
@@ -629,7 +637,7 @@ local function generateRow(brickCount, yPos)
                     if canHeal then
                         Timer.after(1.75 + math.random(1,175)/100, function() healSelf(healBrick) end)
                     end
-                elseif Player.level >= 12 and math.random(1, 300) <= math.floor(mapRangeClamped(Player.level, 12, 25, 1, 4)) and false then
+                elseif Player.level >= 12 and math.random(1, 10) <= math.floor(mapRangeClamped(Player.level, 12, 25, 1, 4)) and false then
                     -- make shield bricks
                     local shieldAura = {
                         type = "shield",
@@ -650,7 +658,7 @@ local function generateRow(brickCount, yPos)
                         lastHitVfxTime = 0,
                         lastSparkleTime = 0
                     }
-                    table.insert(bricks, shieldAura)
+                    table.insert(shieldAuras, shieldAura)
                     brickId = brickId + 1
                 elseif (totalGoldBricksGeneratedThisRun < math.floor((gameTime + 25)/100)) then
                     totalGoldBricksGeneratedThisRun = totalGoldBricksGeneratedThisRun + 1
@@ -767,6 +775,7 @@ function initializeBricks()
     bossRows = {}
     -- Bricks
     bricks = {}
+    shieldAuras = {}
     healBricks = {}
     brickWidth = 75
     brickHeight = 30
@@ -1827,6 +1836,12 @@ function drawBricks()
     end
 
     -- draw shield auras
+    for _, aura in ipairs(shieldAuras) do
+        love.graphics.setColor(0,104/255,161/255,1)
+        drawImageCentered(healAuraImg, aura.x + aura.width/2, aura.y + aura.height/2,aura.width * 5, aura.width * 5)
+        drawImageCentered(shieldAuraImg, aura.x + aura.width/2, aura.y + aura.height/2, brickWidth, brickHeight)
+        print("drawing shield aura!! at location ", aura.x, aura.y)
+    end
 
     -- Draw brick pieces (not batched)
     for _, brickPiece in ipairs(brickPieces) do
