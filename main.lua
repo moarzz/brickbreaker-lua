@@ -476,7 +476,7 @@ local function createFastBrick()
 end
 
 local function createFastBrickUpdate()
-    if Player.level >= 4 and gameTime - lastFastBrickCreateTime >= mapRangeClamped(Player.level, 4, 20, 16, 3) then
+    if Player.level >= 5 and gameTime - lastFastBrickCreateTime >= mapRangeClamped(Player.level, 5, 20, 11, 2.5) then
         createFastBrick()
     end
 end
@@ -584,7 +584,7 @@ local function generateRow(brickCount, yPos)
                         brickId = brickId + 1
                         nextRowDebuff = brickHealth + row[xPos+1]
                     end
-                elseif Player.level >= 10 and math.random(1, 500) <= math.floor(mapRangeClamped(Player.level, 10, 25, 1, 5)) 
+                elseif Player.level >= 9 and math.random(1, 250) <= math.floor(mapRangeClamped(Player.level, 10, 25, 1, 8)) 
                 and not (row.healBrickPositions and (row.healBrickPositions[xPos-1] or row.healBrickPositions[xPos+1])) then
                     if not row.healBrickPositions then row.healBrickPositions = {} end
                     row.healBrickPositions[xPos] = true
@@ -629,7 +629,7 @@ local function generateRow(brickCount, yPos)
                     if canHeal then
                         Timer.after(1.75 + math.random(1,175)/100, function() healSelf(healBrick) end)
                     end
-                elseif Player.level >= 15 and math.random(1, 250) <= math.floor(mapRangeClamped(Player.level, 12, 25, 1, 6)) and false then
+                elseif Player.level >= 13 and math.random(1, 250) <= math.floor(mapRangeClamped(Player.level, 12, 25, 1, 6)) and false then
                 elseif (totalGoldBricksGeneratedThisRun < math.floor((gameTime + 25)/100)) then
                     totalGoldBricksGeneratedThisRun = totalGoldBricksGeneratedThisRun + 1
                     local goldBrick = {
@@ -986,7 +986,7 @@ local function moveBricksDown(dt)
             if brick.type == "boss" then
                 brick.y = brick.y + brickSpeed.value * dt * speedMult * mapRangeClamped(brick.y, - boss.height * 1.5, -boss.height, 5, 0.5)
             elseif brick.type == "fast" then
-                brick.y = brick.y + dt * mapRangeClamped(brick.y, 0, screenHeight, 70, 20) * (brick.speedMult or 1)
+                brick.y = brick.y + dt * mapRangeClamped(brick.y, 0, screenHeight, 80, 25) * (brick.speedMult or 1)
             else
                 brick.y = brick.y + brickSpeed.value * dt * speedMult * (brick.speedMult or 1)
             end

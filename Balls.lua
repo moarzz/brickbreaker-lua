@@ -3973,15 +3973,9 @@ function Balls.update(dt, paddle, bricks)
         -- wall bounce logic
         if orb.x < 0 then orb.speedX = -orb.speedX end
         if orb.x > screenWidth then orb.speedX = -orb.speedX end
-        --[[if orb.y > screenHeight then
-            if orb.bounceAmount > 0 then
-                orb.y = screenHeight
-                orb.speedY = math.min(-orb.speedY * 0.85, -500)
-                orb.bounceAmount = orb.bounceAmount - 1
-            else
-                table.remove(powerups, i)
-            end
-        end]]
+        if orb.y > screenHeight + 25 then
+            table.remove(powerups, i)
+        end
         if paddle.x < orb.x and orb.x < paddle.x + paddle.width then
             local attractionStrength = 1100
             local angle = math.atan2((paddle.y + paddle.height/2) - orb.y, (paddle.x + paddle.width/2) - orb.x)
