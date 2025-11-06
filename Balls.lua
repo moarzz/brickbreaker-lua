@@ -1257,6 +1257,8 @@ local lastFireballsCastTime = 0
 local lightningSFXCooldown = 0
 local lightBeamOpacity = {a = 0}
 local lightBeamAngle = 0
+local shadowballId = 0
+local lightBeamId = 0
 local function cast(spellName, brick, forcedDamage)
     if Player.dead then
         return
@@ -1266,6 +1268,7 @@ local function cast(spellName, brick, forcedDamage)
         local speed = 350
         local range = 1.5 + getStat("Shadow Ball", "range") * 0.5
         local shadowBall = {
+            id = shadowballId,
             name = "Shadow Ball",
             x = paddle.x + paddle.width / 2 + paddle.width * ((angle/math.pi)-0.5)* -0.5,
             y = paddle.y,
@@ -1278,6 +1281,7 @@ local function cast(spellName, brick, forcedDamage)
             trail = {},
             dead = false
         }
+        shadowballId = shadowballId + 1
         -- Removed shadowBall hit sound effect
         table.insert(shadowBalls, shadowBall)
         local shadowBallStartTween = tween.new(0.25, shadowBalls[#shadowBalls], {radius = 5 * range}, tween.outExpo)
@@ -1328,10 +1332,12 @@ local function cast(spellName, brick, forcedDamage)
             Timer.after(i * 0.2, function()
                 local angle = math.pi + math.random(-10, 10)/100 * math.pi
                 local lightBeam = {
+                    id = lightBeamId,
                     angle = angle,
                     opacity = 0,
                     bricksCD = {},
                 }
+                lightBeamId = lightBeamId + 1
                 table.insert(lightBeams, lightBeam)
                 local tweenStart = tween.new(0.05, lightBeam, {opacity = 1}, tween.outExpo)
                 addTweenToUpdate(tweenStart)
@@ -1344,6 +1350,14 @@ local function cast(spellName, brick, forcedDamage)
                     end
                     local tweenEnd = tween.new(0.15, lightBeam, {opacity = 0}, tween.outExpo)
                     addTweenToUpdate(tweenEnd)
+                    Timer.after(0.15, function()
+                        for i, lb in ipairs(lightBeams) do
+                            if lb.id == lightBeam.id then
+                                table.remove(lightBeams, i)
+                                break
+                            end
+                        end
+                    end)
                 end)
             end)        end
         local cooldownValue = getStat("Light Beam", "cooldown") * 1.5
@@ -2948,12 +2962,16 @@ local function techUpdate(dt)
     end
 end
 
-local function updateshadowBall(shadowBall, dt)
+local function updateShadowBall(shadowBall, dt, id)
     -- Update position
     if hasItem("Homing Bullets") then
         -- Find nearest brick
         local nearestBrick = nil
         local minDist = math.huge
+
+        if shadowBall.y < -100 then
+            shadowBall.dead = true
+        end
         
         for _, brick in ipairs(bricks) do  -- Use visibleBricks for performance
             if not brick.destroyed and brick.health > 0 then
@@ -3150,8 +3168,12 @@ local lightBeamDmgCD = 0.35
 local function spellsUpdate(dt)
 
     -- Update shadowBalls
-    for _, shadowBall in ipairs(shadowBalls) do
-        updateshadowBall(shadowBall, dt)
+    for i = #shadowBalls, 1, -1 do
+        local shadowBall = shadowBalls[i]
+        updateShadowBall(shadowBall, dt, i)
+        if shadowBall.dead then
+            table.remove(shadowBalls, i)
+        end
     end
 
     -- Update arcane missiles

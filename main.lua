@@ -476,7 +476,7 @@ local function createFastBrick()
 end
 
 local function createFastBrickUpdate()
-    if Player.level >= 4 and gameTime - lastFastBrickCreateTime >= mapRangeClamped(Player.level, 4, 20, 18, 5) then
+    if Player.level >= 4 and gameTime - lastFastBrickCreateTime >= mapRangeClamped(Player.level, 4, 20, 16, 3) then
         createFastBrick()
     end
 end
@@ -2530,7 +2530,7 @@ function love.keypressed(key)
         end
 
         if key == "7" then
-            Balls.addBall("Phantom Ball")
+            Balls.addBall("Shadow Ball")
         end
 
         if key == "8" then
