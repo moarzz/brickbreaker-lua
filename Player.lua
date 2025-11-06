@@ -320,7 +320,7 @@ Player.coreDescriptions = {
     ["Spray and Pray Core"] = "gain +1 fireRate for every 5 Player level",
     ["Fast Study Core"] = "gain +5% experience gain per Player Level",
     ["Hacker Core"] = "All Weapons start with an upgradePrice of 0",
-    ["Loan Core"] = "start with 25$. gain 3$ instead of 5$ on level up.",
+    ["Loan Core"] = "start with 20$. gain 3$ instead of 5$ on level up.",
     ["Farm Core"] = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown)\nIt takes 100% more xp for you to level up and bricks grow in health 100% faster",
     --["Madness Core"] = "Damage and cooldown are reduced by 50%.\nevery other stat is doubled. bricks go twice as fast\n(can break the game)."
 }

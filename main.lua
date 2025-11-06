@@ -461,7 +461,7 @@ local function createFastBrick()
         hitLastFrame = false,
         lastHitVfxTime = 0,
         trail = {},
-        speedMult = math.random(85,125)/100,
+        speedMult = 1,
     }
     function fastBrick:addTrailPoint(x,y)
         table.insert(self.trail, 1, {x = x, y = y})
@@ -476,7 +476,7 @@ local function createFastBrick()
 end
 
 local function createFastBrickUpdate()
-    if Player.level >= 5 and gameTime - lastFastBrickCreateTime >= mapRangeClamped(gameTime, 90, 600, 18, 5) then
+    if Player.level >= 4 and gameTime - lastFastBrickCreateTime >= mapRangeClamped(Player.level, 4, 20, 18, 5) then
         createFastBrick()
     end
 end
@@ -584,7 +584,7 @@ local function generateRow(brickCount, yPos)
                         brickId = brickId + 1
                         nextRowDebuff = brickHealth + row[xPos+1]
                     end
-                elseif Player.level >= 10 and math.random(1, 250) <= math.floor(mapRangeClamped(Player.level, 8, 25, 1, 8)) 
+                elseif Player.level >= 10 and math.random(1, 500) <= math.floor(mapRangeClamped(Player.level, 10, 25, 1, 5)) 
                 and not (row.healBrickPositions and (row.healBrickPositions[xPos-1] or row.healBrickPositions[xPos+1])) then
                     if not row.healBrickPositions then row.healBrickPositions = {} end
                     row.healBrickPositions[xPos] = true
@@ -691,7 +691,7 @@ local function addMoreBricks()
             for i=1 , 10 do
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
                 local addBrickMult = mapRangeClamped(Player.level, 1, 20, 2, 1)
-                currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 15, 150) 
+                currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 30, 180) 
                 if spawnBossNextRow and not bossSpawned then
                     spawnBoss()
                     bossSpawned = true
@@ -909,7 +909,7 @@ brickFreeze = false
 brickFreezeTime = gameTime
 function getBrickSpeedByTime()
     -- Scale speed from 0.5 to 3 over 30 minutes
-    local returnValue = mapRange(gameTime, 0, 2000, 0.45, 3) * (Player.currentCore == "Madness Core" and 2 or 1)
+    local returnValue = mapRange(gameTime, 0, 2000, 0.375, 3) * (Player.currentCore == "Madness Core" and 2 or 1)
     if brickFreeze == true then
         if gameTime - brickFreezeTime > 20 then
             brickFreeze = false
@@ -948,7 +948,7 @@ function getBrickSpeedMult()
     else
         local posMult = 1
         local highestY = getHighestBrickY()
-        posMult = highestY < 350 and mapRangeClamped(highestY, 0, 350, startingBrickSpeed, 10) or mapRangeClamped(highestY, 350, 750, 10, 1.35)
+        posMult = highestY < 350 and mapRangeClamped(highestY, 0, 350, startingBrickSpeed, 10) or mapRangeClamped(highestY, 350, 750, 10, 1.75)
         if #bricks == 0 then
             return 1
         end
@@ -1344,7 +1344,7 @@ local function memLeakCheck(dt)
         local arcaneMissileCount = getArcaneMissileCount() or 0
 
         -- Add formatted info
-        logText = logText .. string.format("#Bricks: %d - #Brick Pieces: %d - #Brick Text Cache: %d\n", brickAmount, brickPieceAmount, brickTextCacheAmount)
+        logText = logText .. string.format("#Bricks: %d - #Brick Pieces: %d - #Brick Text Cache: %d - #fastBricks: %d\n", brickAmount, brickPieceAmount, brickTextCacheAmount, #fastBricks)
         logText = logText .. string.format("#Tweens: %d - #Visual Values: %d\n", tweenAmount, visualValuesAmount)
         logText = logText .. string.format("#Damage Numbers: %d - #Text Objects: %d\n", damageNumbersAmount, textObjectsAmount)
         logText = logText .. string.format("#Animations: %d - #Sprite Batches: %d - #Quad Cache: %d\n", animationAmount, spriteBatchesAmount, quadCacheAmount)
@@ -2530,7 +2530,7 @@ function love.keypressed(key)
         end
 
         if key == "7" then
-            Balls.addBall("Magnetic Ball")
+            Balls.addBall("Phantom Ball")
         end
 
         if key == "8" then

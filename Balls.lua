@@ -354,7 +354,13 @@ local function brickDestroyed(brick)
         createPowerup(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth, type)
     end
 
-    if math.random(1,4000) <= currentMoneyDropChance then   
+    local chanceMult = 1
+    if hasItem("Scavenger") then
+        for i=1, itemCount("Scavenger") do
+            chanceMult = chanceMult + 0.5
+        end
+    end
+    if math.random(1,4000)/chanceMult <= currentMoneyDropChance then
         createPowerup(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth, "dollarBill")
         currentMoneyDropChance = 0
     else
@@ -1551,16 +1557,16 @@ local function ballListInit()
             x = screenWidth / 2,
             y = screenHeight / 2,
             ballAmount = 1,
-            speedMult = 0.4,
+            speedMult = 0.3,
             size = 2,
             rarity = "rare",
             startingPrice = 100,
             description = "A ball that can pass through bricks.",
             color = {0.5, 0.5, 0.7, 0.6}, -- Blue color
             stats = {
-                speed = 50,
+                speed = 150,
                 damage = 1,
-                range = 2
+                range = 3
             },
         },
         ["Magnetic Ball"] = {
@@ -1655,14 +1661,14 @@ local function ballListInit()
             size = 1,
             rarity = "common",
             startingPrice = 10,
-            ammoMult = 7,
+            ammoMult = 5,
             fireRateMult = 0.325,
             description = "Fires bullets, fast fireRate",
             onBuy = function() 
                 shoot("Machine Gun")
             end,
             noAmount = true,
-            currentAmmo = 10 + ((Player.permanentUpgrades.ammo or 0)) * 5,
+            currentAmmo = 8 + ((Player.permanentUpgrades.ammo or 0)) * 5,
             bulletSpeed = 1000,
             canBuy = function() return false end,
 
@@ -2071,7 +2077,7 @@ function Balls.initialize()
     Player.xpGainMult = 1
     Player.setMoney(0);
     if Player.currentCore == "Loan Core" then
-        Player.setMoney(25)
+        Player.setMoney(20)
     end
     Player.permanentUpgrades = {}
     inGame = true
@@ -2555,7 +2561,7 @@ local function brickCollisionCheck(ball)
 end
 
 local function paddleCollisionCheck(ball, paddle)
-    local effectiveRadius = ball.name == "Phantom Ball" and getStat(ball.name, "range") * 15 or ball.radius
+    local effectiveRadius = ball.name == "Phantom Ball" and getStat(ball.name, "range") * 12 or ball.radius
     if ball.x + effectiveRadius > paddle.x and ball.x - effectiveRadius < paddle.x + paddle.width and
        ball.y + effectiveRadius > paddle.y and ball.y - effectiveRadius < paddle.y + paddle.height  and 
        ((ball.y > paddle.y + paddle.height and ball.speedY < 0) or ball.y < paddle.y + paddle.height and ball.speedY > 0) then
@@ -2654,7 +2660,7 @@ local function wallCollisionCheck(ball)
     local leftWallPosition = usingMoneySystem and statsWidth or 0
     local rightWallPosition = screenWidth - (usingMoneySystem and statsWidth or 0)
     local wallHit = false
-    local effectiveRadius = ball.name == "Phantom Ball" and getStat(ball.name, "range") * 15 or ball.radius
+    local effectiveRadius = ball.name == "Phantom Ball" and getStat(ball.name, "range") * 12 or ball.radius
     if ball.x - effectiveRadius < leftWallPosition and ball.speedX < 0 then
         ball.speedX = -ball.speedX
         ball.x = leftWallPosition + effectiveRadius -- Ensure the ball is not stuck in the wall
@@ -2684,7 +2690,7 @@ local function wallCollisionCheck(ball)
         end
         playSoundEffect(wallBoopSFX, 0.5, 0.6)
         wallHit = true
-    elseif ball.y + effectiveRadius > math.max(screenHeight, paddle.y + 200) and ball.speedY > 0 then
+    elseif ball.y + effectiveRadius > math.max(screenHeight, paddle.y + 100) and ball.speedY > 0 then
         ball.speedY = -ball.speedY
         ball.y = screenHeight - effectiveRadius
         if Player.currentCore == "Bouncy Core" or hasItem("Bouncy Walls") then
@@ -4325,7 +4331,7 @@ function Balls:draw()
             end
 
             if ball.name == "Phantom Ball" then
-                local auraSize = getStat("Phantom Ball", "auraSize") * 15
+                local auraSize = getStat("Phantom Ball", "range") * 12
                 -- Draw aura
                 love.graphics.setColor(0, 0, 1, 1)
                 drawImageCentered(auraImg, ball.x, ball.y, auraSize, auraSize)
