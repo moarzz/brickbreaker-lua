@@ -476,7 +476,7 @@ local function createFastBrick()
 end
 
 local function createFastBrickUpdate()
-    if Player.level >= 5 and gameTime - lastFastBrickCreateTime >= mapRangeClamped(Player.level, 5, 20, 11, 2.5) then
+    if Player.level >= 4 and gameTime - lastFastBrickCreateTime >= mapRangeClamped(Player.level, 5, 20, 11, 2.5) then
         createFastBrick()
     end
 end
@@ -584,7 +584,7 @@ local function generateRow(brickCount, yPos)
                         brickId = brickId + 1
                         nextRowDebuff = brickHealth + row[xPos+1]
                     end
-                elseif Player.level >= 9 and math.random(1, 250) <= math.floor(mapRangeClamped(Player.level, 10, 25, 1, 8)) 
+                elseif Player.level >= 8 and math.random(1, 250) <= math.floor(mapRangeClamped(Player.level, 8, 25, 1, 8)) 
                 and not (row.healBrickPositions and (row.healBrickPositions[xPos-1] or row.healBrickPositions[xPos+1])) then
                     if not row.healBrickPositions then row.healBrickPositions = {} end
                     row.healBrickPositions[xPos] = true
@@ -629,7 +629,29 @@ local function generateRow(brickCount, yPos)
                     if canHeal then
                         Timer.after(1.75 + math.random(1,175)/100, function() healSelf(healBrick) end)
                     end
-                elseif Player.level >= 13 and math.random(1, 250) <= math.floor(mapRangeClamped(Player.level, 12, 25, 1, 6)) and false then
+                elseif Player.level >= 12 and math.random(1, 300) <= math.floor(mapRangeClamped(Player.level, 12, 25, 1, 4)) and false then
+                    -- make shield bricks
+                    local shieldAura = {
+                        type = "shield",
+                        id = brickId,
+                        x = startLocation + (xPos - 1) * (brickWidth + brickSpacing) + 5 + rowOffset + rowXOffset,
+                        y = yPos,
+                        drawOffsetX = 0,
+                        drawOffsetY = 0,
+                        drawOffsetRot = 0,
+                        drawScale = 1,
+                        width = brickWidth,
+                        height = brickHeight,
+                        destroyed = false,
+                        health = math.ceil(brickHealth/2) * 4,
+                        maxHealth = math.ceil(brickHealth/2),
+                        color = {1, 1, 1, 1},
+                        hitLastFrame = false,
+                        lastHitVfxTime = 0,
+                        lastSparkleTime = 0
+                    }
+                    table.insert(bricks, shieldAura)
+                    brickId = brickId + 1
                 elseif (totalGoldBricksGeneratedThisRun < math.floor((gameTime + 25)/100)) then
                     totalGoldBricksGeneratedThisRun = totalGoldBricksGeneratedThisRun + 1
                     local goldBrick = {
@@ -2521,20 +2543,15 @@ function love.keypressed(key)
         end
 
         if key == "6" then
-            accelerationOn = not false
-            for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
-                if weapon.type == "ball" then
-                    Balls.adjustSpeed(weapon.name)
-                end
-            end
+            createPowerupG("acceleration")
         end
 
-        if key == "7" then
+        if key == "7" then  
             Balls.addBall("Shadow Ball")
         end
 
         if key == "8" then
-            createSpriteAnimation(paddle.x + paddle.width/2, paddle.y - 150, 3.5, slashVFX, 150, 150, 0.025, 0, false, 1, 0.7, -90)
+            Player.level = Player.level - 1
         end
 
         if key == "9" then

@@ -276,10 +276,8 @@ local function createPowerup(x, y, amount, type)
     table.insert(powerups, powerup)
 end
 
-function createPowerupss(amount)
-    for i=1, amount do
-        createPowerup(math.random(100, screenWidth-100), math.random(100, screenHeight-100), math.random(1, 100))
-    end
+function createPowerupG(Type)
+    createPowerup(math.random(100, screenWidth-100), math.random(100, screenHeight-100), math.random(1, 100), Type)
 end
 
 local function getRandomPowerupType()
@@ -357,7 +355,7 @@ local function brickDestroyed(brick)
     local chanceMult = 1
     if hasItem("Scavenger") then
         for i=1, itemCount("Scavenger") do
-            chanceMult = chanceMult + 0.5
+            chanceMult = chanceMult + 0.35
         end
     end
     if math.random(1,4000)/chanceMult <= currentMoneyDropChance then
@@ -891,26 +889,33 @@ local function shoot(gunName, ball)
                 local normalizedSpeedX, normalizedSpeedY = normalizeVector(speedXref, -math.sqrt(bulletSpeed^2 - speedXref^2))
                 muzzleFlash(xBruh, paddle.y, -math.acos(normalizedSpeedX))
             end
-            if gun.name == "Minigun" then
-                local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
-                local timeUntilNextShot = gun.fireRateMult * (mapRangeClamped(getStat("Minigun", "ammo") - gun.currentAmmo, 0, 25, 4, 0.5) * (spray and sprayMult or 1))/(getStat(gun.name, "fireRate") * bulletStormMult)
-                Timer.after(timeUntilNextShot, function() shoot(gunName) end)
-                -- createCooldownVFX(cooldownValue)
-            else
-                local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
-                local timeUntilNextShot = (gun.fireRateMult * 3.0 * (spray and sprayMult or 1))/(getStat(gun.name, "fireRate") * bulletStormMult)
-                Timer.after(timeUntilNextShot, function() shoot(gunName) end)
-                -- createCooldownVFX(cooldownValue)
-            end
-        else
-            gun.currentAmmo = getStat(gun.name, "ammo")
 
-            local cooldownValue = getStat(gun.name, "cooldown") * 0.5
-            if accelerationOn then
-                cooldownValue = cooldownValue * 0.5
+            -- ammo logic
+            if gun.currentAmmo > 0 then
+                if gun.name == "Minigun" then
+                    local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
+                    local timeUntilNextShot = gun.fireRateMult * (mapRangeClamped(getStat("Minigun", "ammo") - gun.currentAmmo, 0, 25, 4, 0.5) * (spray and sprayMult or 1))/(getStat(gun.name, "fireRate") * bulletStormMult)
+                    Timer.after(timeUntilNextShot, function() shoot(gunName) end)
+                    createFireRateVFX(timeUntilNextShot)
+                    -- createCooldownVFX(cooldownValue)
+                else
+                    local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
+                    local timeUntilNextShot = (gun.fireRateMult * 3.0 * (spray and sprayMult or 1))/(getStat(gun.name, "fireRate") * bulletStormMult)
+                    Timer.after(timeUntilNextShot, function() shoot(gunName) end)
+                    createFireRateVFX(timeUntilNextShot)
+                    -- createCooldownVFX(cooldownValue)
+                end
+            else
+                
+                gun.currentAmmo = getStat(gun.name, "ammo")
+
+                local cooldownValue = getStat(gun.name, "cooldown") * 0.5
+                if accelerationOn then
+                    cooldownValue = cooldownValue * 0.5
+                end
+                Timer.after(cooldownValue, function() shoot(gunName) end)
+                createCooldownVFX(cooldownValue)
             end
-            Timer.after(cooldownValue, function() shoot(gunName) end)
-            createCooldownVFX(cooldownValue)
         end
     else 
         print("Error: gun is not unlocked but shoot is being called.")
@@ -1105,13 +1110,14 @@ fire = function(techName)
                 if accelerationOn then
                     cooldownValue = cooldownValue * 0.5
                 end
-                Timer.after(math.max(cooldownValue, 6/getStat("Rocket Launcher", "fireRate")), function()
+                local timeUntilNextShot = math.max(cooldownValue, 6/getStat("Rocket Launcher", "fireRate"))
+                Timer.after(timeUntilNextShot, function()
                     unlockedBallTypes["Rocket Launcher"].currentAmmo = getStat("Rocket Launcher", "ammo")
                     fire("Rocket Launcher")
                 end)
                 createCooldownVFX(cooldownValue)
             else
-                local timerLength = (Player.currentCore == "Madness Core" and 0.5 or 1) * 6/getStat("Rocket Launcher", "fireRate")
+                local timerLength = 6/getStat("Rocket Launcher", "fireRate")
                 if hasItem("Spray and Pray") then
                     local timerMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
                     timerLength = timerLength * timerMult
@@ -1119,6 +1125,7 @@ fire = function(techName)
                 Timer.after(timerLength, function()
                     fire("Rocket Launcher")
                 end)
+                createFireRateVFX(timerLength)
             end
         end
     end
@@ -1286,12 +1293,13 @@ local function cast(spellName, brick, forcedDamage)
         table.insert(shadowBalls, shadowBall)
         local shadowBallStartTween = tween.new(0.25, shadowBalls[#shadowBalls], {radius = 5 * range}, tween.outExpo)
         addTweenToUpdate(shadowBallStartTween)
-        local sprayCooldown = hasItem("Four Leafed Clover") and 10 or 13.34 -- this is correct, stop tweaking and changing it
-        local cooldownLength = hasItem("Spray and Pray") and sprayCooldown/(getStat("Shadow Ball", "fireRate") + 2) or 20/(getStat("Shadow Ball", "fireRate"))
+        local sprayCooldown = hasItem("Four Leafed Clover") and 7.5 or 10 -- this is correct, stop tweaking and changing it
+        local cooldownLength = (hasItem("Spray and Pray") and sprayCooldown/(getStat("Shadow Ball", "fireRate")) or 15/(getStat("Shadow Ball", "fireRate"))) + 2
         Timer.after(cooldownLength, function()
             -- Refill shadowBall spell after cooldown
             cast("Shadow Ball")
         end)
+        createFireRateVFX(cooldownLength)
     end
     if spellName == "Fireballs" then
         print("Casting Fireballs")
@@ -1945,7 +1953,7 @@ local function ballListInit()
             stats = {
                 damage = 1,
                 range = 2,
-                fireRate = 1,
+                fireRate = 3,
             }
         },
         ["Fireballs"] = {
@@ -2091,7 +2099,7 @@ function Balls.initialize()
     Player.xpGainMult = 1
     Player.setMoney(0);
     if Player.currentCore == "Loan Core" then
-        Player.setMoney(20)
+        Player.setMoney(25)
     end
     Player.permanentUpgrades = {}
     inGame = true
@@ -3369,7 +3377,28 @@ local function incrediBallColorUpdate(alpha)
     
 end
 
-function powerupPickup(powerup)
+local goalAccelerationBoostEndTime = 0
+local function accelerationBoost(length)
+    accelerationOn = true
+    for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
+        if weapon.type == "ball" then
+            Balls.adjustSpeed(weapon.name)
+        end
+    end
+    Timer.after(length, function() 
+        if gameTime < goalAccelerationBoostEndTime + 0.1 then
+            return
+        end
+        local outTween = tween.new(0.15, powerupPopup, {scale = 0}, tween.easing.inCirc)
+        addTweenToUpdate(outTween)
+        Timer.after(0.15, function()
+            powerupPopup.type = nil
+        end)
+        accelerationOn = false
+    end)
+end
+
+function powerupPickup(powerup, length)
     playSoundEffect(lvlUpSFX, 0.55, 1, false)   
     
     if powerup.type ~= "nuke" and powerup.type ~= "moneyBag" and powerup.type ~= "dollarBill" then
@@ -3386,6 +3415,9 @@ function powerupPickup(powerup)
         end          
         Player.changeMoney(moneyGain);
         createMoneyPopup(moneyGain, paddle.x + paddle.width/2, paddle.y)
+        if hasItem("Money Crazy") then
+            powerupPickup({type="acceleration"}, 2)
+        end
     elseif powerup.type == "moneyBag" then
         local moneyGain = math.random(3,5)
         Player.changeMoney(moneyGain)
@@ -3408,20 +3440,7 @@ function powerupPickup(powerup)
             accelerationOn = false
         end)
     elseif powerup.type == "acceleration" then
-        accelerationOn = true
-        for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
-            if weapon.type == "ball" then
-                Balls.adjustSpeed(weapon.name)
-            end
-        end
-        Timer.after(12, function() 
-            local outTween = tween.new(0.15, powerupPopup, {scale = 0}, tween.easing.inCirc)
-            addTweenToUpdate(outTween)
-            Timer.after(0.15, function()
-                powerupPopup.type = nil
-            end)
-            accelerationOn = false
-        end)
+        accelerationBoost(length or 12)
     elseif powerup.type == "doubleDamage" then
         statDoubled = "damage"
         Timer.after(8, function() 

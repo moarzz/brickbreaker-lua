@@ -919,6 +919,18 @@ function createCooldownVFX(duration)
     end)
 end
 
+local fireRateVFXs = {}
+function createFireRateVFX(duration)
+    local vfx = {
+        duration = duration,
+        timer = 0
+    }
+    table.insert(fireRateVFXs, vfx)
+    table.sort(fireRateVFXs, function(a, b)
+        return a.duration < b.duration
+    end)
+end
+
 function updateCooldownTimers(dt)
     if Player.levelingUp then return false end
 
@@ -930,7 +942,14 @@ function updateCooldownTimers(dt)
         end
         
     end
-    
+
+    for i = #fireRateVFXs, 1, -1 do
+        local vfx = fireRateVFXs[i]
+        vfx.timer = vfx.timer + dt
+        if vfx.timer >= vfx.duration then
+            table.remove(fireRateVFXs, i)
+        end
+    end
 end
 
 function drawCooldownVFXs()
@@ -940,6 +959,13 @@ function drawCooldownVFXs()
         love.graphics.setColor(1, 1, 1, 1)
         local currentWidth = 150 * alpha
         love.graphics.rectangle("fill", paddle.x + paddle.width/2 - currentWidth/2, paddle.y + paddle.height + 5 + (i-1) * 10, currentWidth, 5)
+    end
+
+    for i, vfx in ipairs(fireRateVFXs) do
+        local alpha = 1 - (vfx.timer / vfx.duration)
+        love.graphics.setColor(1, 0.5, 0, 1)
+        local currentHeight = 50 * alpha
+        love.graphics.rectangle("fill", paddle.x + (i-1) * 10 + 5, paddle.y - 5 - currentHeight, 5, currentHeight)
     end
 end
 
