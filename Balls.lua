@@ -444,6 +444,11 @@ function dealDamage(ball, brick, burnDamage)
     
     damage = math.floor(damage)
     damage = math.min(damage, brick.health)
+    local protectingAura = isBrickInShieldAura(brick)
+    if protectingAura then
+        damage = 0
+        damageAura(protectingAura)
+    end
     brick.health = math.ceil(brick.health - damage)
     
     if ball.name ~= "Gold Ball" then

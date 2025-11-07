@@ -637,8 +637,9 @@ local function generateRow(brickCount, yPos)
                     if canHeal then
                         Timer.after(1.75 + math.random(1,175)/100, function() healSelf(healBrick) end)
                     end
-                elseif Player.level >= 12 and math.random(1, 10) <= math.floor(mapRangeClamped(Player.level, 12, 25, 1, 4)) and false then
+                elseif Player.level >= 12 and math.random(1, 250) <= math.floor(mapRangeClamped(Player.level, 12, 25, 1, 4)) then
                     -- make shield bricks
+                    print("Generating shield brick")
                     local shieldAura = {
                         type = "shield",
                         id = brickId,
@@ -651,8 +652,8 @@ local function generateRow(brickCount, yPos)
                         width = brickWidth,
                         height = brickHeight,
                         destroyed = false,
-                        health = math.ceil(brickHealth/2) * 4,
-                        maxHealth = math.ceil(brickHealth/2),
+                        health = Player.level * 4,
+                        maxHealth = Player.level * 4,
                         color = {1, 1, 1, 1},
                         hitLastFrame = false,
                         lastHitVfxTime = 0,
@@ -1023,6 +1024,12 @@ local function moveBricksDown(dt)
             end
         end
     end
+
+    for _, shield in ipairs(shieldAuras) do
+        if not shield.destroyed and shield.health > 0 then
+            shield.y = shield.y + brickSpeed.value * dt * speedMult
+        end
+    end
 end
 
 local function reduceBackgroundBrightness()
@@ -1375,7 +1382,7 @@ local function memLeakCheck(dt)
         local arcaneMissileCount = getArcaneMissileCount() or 0
 
         -- Add formatted info
-        logText = logText .. string.format("#Bricks: %d - #Brick Pieces: %d - #Brick Text Cache: %d - #fastBricks: %d\n", brickAmount, brickPieceAmount, brickTextCacheAmount, #fastBricks)
+        logText = logText .. string.format("#Bricks: %d - #Brick Pieces: %d - #Brick Text Cache: %d - #fastBricks: %d - #shieldAuras: %d\n", brickAmount, brickPieceAmount, brickTextCacheAmount, #fastBricks, #shieldAuras)
         logText = logText .. string.format("#Tweens: %d - #Visual Values: %d\n", tweenAmount, visualValuesAmount)
         logText = logText .. string.format("#Damage Numbers: %d - #Text Objects: %d\n", damageNumbersAmount, textObjectsAmount)
         logText = logText .. string.format("#Animations: %d - #Sprite Batches: %d - #Quad Cache: %d\n", animationAmount, spriteBatchesAmount, quadCacheAmount)
@@ -1635,6 +1642,7 @@ local function drawStartSelect()
 end
 
 function drawBricks()
+    setFont(18)
     -- Initialize bricks if they don't exist
     if not bricks then 
         bricks = {}
@@ -1838,9 +1846,10 @@ function drawBricks()
     -- draw shield auras
     for _, aura in ipairs(shieldAuras) do
         love.graphics.setColor(0,104/255,161/255,1)
-        drawImageCentered(healAuraImg, aura.x + aura.width/2, aura.y + aura.height/2,aura.width * 5, aura.width * 5)
-        drawImageCentered(shieldAuraImg, aura.x + aura.width/2, aura.y + aura.height/2, brickWidth, brickHeight)
-        print("drawing shield aura!! at location ", aura.x, aura.y)
+        drawImageCentered(healAuraImg, aura.x + aura.width/2, aura.y + aura.height/2,aura.width * 6.5, aura.width * 6.5)
+        setFont(45)
+        love.graphics.setColor(0,174/255,211/255,1)
+        love.graphics.print(tostring(aura.health), aura.x + aura.width/2 - getTextSize(aura.health) / 2, aura.y + aura.height/2 - 20)
     end
 
     -- Draw brick pieces (not batched)
@@ -2540,7 +2549,7 @@ function love.keypressed(key)
             firstRunCompleted = true
         end
         if key == "2" then
-            BackgroundShader.changeShader(1)
+            BackgroundShader.changeShader(4)
         end
         if key == "3" then
             damageThisFrame = 50

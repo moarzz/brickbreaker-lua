@@ -781,6 +781,30 @@ function addExplosion(x, y, radius, duration, speed, color)
     table.insert(explosions, explosion) -- Add the explosion to the list
 end
 
+-- used to check if brick should be protected from damage
+function isBrickInShieldAura(brick)
+    for _, aura in ipairs(shieldAuras) do
+        if not aura.destroyed then
+            -- Calculate the closest point on the brick to the aura's center
+            local closestX = math.max(brick.x, math.min(aura.x + aura.width / 2, brick.x + brick.width))
+            local closestY = math.max(brick.y, math.min(aura.y + aura.height / 2, brick.y + brick.height))
+
+            -- Calculate the distance between the aura's center and the closest point
+            local distanceX = (aura.x + aura.width / 2) - closestX
+            local distanceY = (aura.y + aura.height / 2) - closestY
+            local distanceSquared = distanceX^2 + distanceY^2
+
+            -- Check if the distance is less than or equal to the aura's radius squared
+            if distanceSquared <= (math.max(aura.width * 5, aura.width * 5) / 2)^2 then
+                return aura
+            end
+        end
+    end
+    return false
+end
+
+
+
 -- function to calculate circle hitboxes
 function getBricksInCircle(circleX, circleY, radius)
     local bricksTouchingCircle = {}
@@ -1492,6 +1516,28 @@ local damageNumberFont = nil -- Cache the font
 local textObjects = {} -- Cache Text objects by damage value
 local lastCleanupTime = 0
 local CLEANUP_INTERVAL = 5 -- Cleanup unused text objects every 5 seconds
+
+local function createShieldDamageNumber(x,y)
+    damageNumber(1, x, y, {0,104/255,161/255,1})
+end
+
+function damageAura(aura)
+    local damage = 1
+    aura.health = math.max(aura.health - damage, 0)
+    createShieldDamageNumber(aura.x + math.random(-40,40), aura.y + math.random(-40,40))
+    if aura.health <= 0 then
+        aura.destroyed = true
+        for i=#shieldAuras, 1, -1 do
+            if shieldAuras[i].id == aura.id then
+                table.remove(shieldAuras, i)
+                break
+            end
+        end
+        -- playSoundEffect(shieldBreakSFX, 0.7, 1, false)
+    else
+        -- playSoundEffect(shieldHitSFX, 0.5, 1, false)
+    end
+end
 
 function getDamageNumbersLength()
     return #damageNumbers
