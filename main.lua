@@ -268,10 +268,10 @@ local function loadAssets()
     shieldAuraImg = love.graphics.newImage("assets/sprites/shieldAura.png")
     defaultItemImage = love.graphics.newImage("assets/sprites/UI/ItemIcons/default.png")
     defaultScreenImg = love.graphics.newImage("assets/sprites/firstUpgradeShop/defaultScreen.png")
-    screen1Img = love.graphics.newImage("assets/sprites/firstUpgradeShop/screen1.png")
-    screen2Img = love.graphics.newImage("assets/sprites/firstUpgradeShop/screen2.png")
-    screen3Img = love.graphics.newImage("assets/sprites/firstUpgradeShop/screen3.png")
-    screen4Img = love.graphics.newImage("assets/sprites/firstUpgradeShop/screen4.png")
+    tutorialScreen1Img = love.graphics.newImage("assets/sprites/firstUpgradeShop/screen1.png")
+    tutorialScreen2Img = love.graphics.newImage("assets/sprites/firstUpgradeShop/screen2.png")
+    tutorialScreen3Img = love.graphics.newImage("assets/sprites/firstUpgradeShop/screen3.png")
+    tutorialScreen4Img = love.graphics.newImage("assets/sprites/firstUpgradeShop/screen4.png")
 
     -- UI
     uiLabelImg = love.graphics.newImage("assets/sprites/UI/label.png")
@@ -2158,7 +2158,7 @@ local function fullDraw()
         drawMenu()
         -- Draw SUIT UI elements
         suit.draw()
-        if not firstRunCompleted then
+        if not firstRunCompleted and false then
             Crooky:draw()
         end
         local opacity = mapRange(love.timer.getTime() - loadTime, 0, 2.5, 1, 0)
@@ -2181,7 +2181,7 @@ local function fullDraw()
             love.mouse.setVisible(true)
         end
         suit.draw()
-        if not firstRunCompleted then
+        if not firstRunCompleted and false then
             Crooky:draw()
         end
         return
@@ -2207,7 +2207,7 @@ local function fullDraw()
             love.mouse.setVisible(true)
         end
 
-        if not firstRunCompleted then
+        if not firstRunCompleted and false then
             Crooky:draw()
         end
         return
@@ -2333,7 +2333,7 @@ local function fullDraw()
     -- Draw the UI elements using Suit
     suit.draw()
 
-    if (not firstRunCompleted) and currentGameState == GameState.PLAYING then
+    if (not firstRunCompleted) and currentGameState == GameState.PLAYING and false then
         Crooky:draw()
     end
 
@@ -2431,7 +2431,20 @@ local old_love_keypressed = love.keypressed
 moneyScale = {scale = 1}
 function love.keypressed(key)
     if key == "space" and Player.levelingUp and (not Player.choosingUpgrade) and EventQueue:isQueueFinished() then
-        finishUpgrading()
+        if currentlyOnFirstLevelUp then
+            if Player.getCurrentTutorialStep() == 2 then
+                EventQueue:addEventToQueue(EVENT_POINTERS.levelUp, 0);
+                if hasItem("Birthday Hat") then
+                    EventQueue:addEventToQueue(EVENT_POINTERS.levelUp, 0);
+                end
+                Player.InterestGain()
+            end
+            if Player.getCurrentTutorialStep() ~= 4 then
+                Player.nextTutorialStep()
+            end
+        else
+            finishUpgrading()
+        end
     end
 
     if key == "escape" then

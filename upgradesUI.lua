@@ -973,7 +973,7 @@ local function drawBallStats()
         local buttonId = ballType.name .. "_upgradeButton"
         local upgradeStatButton = dress:Button("", {color = invisButtonColor, id = buttonId}, currentX + 10, y + 15, getRarityWindow("common"):getWidth() - 30, getRarityWindow("common"):getHeight()/2 - 30)
         if upgradeStatButton.hit then
-            if Player.realMoney < math.ceil(ballType.price) then
+            if (Player.realMoney < math.ceil(ballType.price)) or (currentlyOnFirstLevelUp and Player.getCurrentTutorialStep() ~= 4) then
                 -- does nothing
             else
                 playSoundEffect(upgradeSFX, 0.5, 0.95, false)
@@ -1019,6 +1019,12 @@ local function drawBallStats()
                         end
                     end
                 end
+                if currentlyOnFirstLevelUp then
+                    if Player.getCurrentTutorialStep() == 4 then
+                        Player.nextTutorialStep()
+                        currentlyOnFirstLevelUp = false
+                    end
+                end
             end
         end
         
@@ -1038,22 +1044,18 @@ local function drawBallStats()
         currentX = startX
         y = y + 300 -- Move to next row
     end
-    
-    suit.layout:reset(currentX, y, padding, padding)
-    love.graphics.draw(uiSmallWindowImg, currentX-25, y) -- Draw the background window image
-    -- Button to unlock a new ball type
-    setFont(30)
-    local angle = angle or math.rad(1.5) -- Default angle if not provided
-    love.graphics.setColor(1, 1, 1, 1)
-    setFont(35)
-    local levelRequirement = Player.level + (3 - ((Player.level - 1) % 3))
 
-    drawTextCenteredWithScale("unlock new weapon at lvl " .. levelRequirement, currentX, y + 50, 1, uiSmallWindowImg:getWidth() - 40)
-    if unlockNewWeaponQueued then
-        --[[ Balls.NextBallPriceIncrease()
-        setLevelUpShop(true) -- Set the level up shop with ball unlockedBallTypes
-        Player.choosingUpgrade = true -- Set the flag to indicate leveling up
-        -- unlockNewWeaponQueued = false]]
+    suit.layout:reset(currentX, y, padding, padding)
+    if not (currentlyOnFirstLevelUp and Player.getCurrentTutorialStep() == 4) then
+        love.graphics.draw(uiSmallWindowImg, currentX-25, y) -- Draw the background window image
+        -- Button to unlock a new ball type
+        setFont(30)
+        local angle = angle or math.rad(1.5) -- Default angle if not provided
+        love.graphics.setColor(1, 1, 1, 1)
+        setFont(35)
+        local levelRequirement = Player.level + (3 - ((Player.level - 1) % 3))
+
+        drawTextCenteredWithScale("unlock new weapon at lvl " .. levelRequirement, currentX, y + 50, 1, uiSmallWindowImg:getWidth() - 40)
     end
 
     -- Add DOWN and UP buttons to the bottom of the area, side by side (no logic inside)
@@ -1355,7 +1357,7 @@ local function drawItemShop()
                 end
             end
 
-            if buyButton.hit then
+            if buyButton.hit and not (currentlyOnFirstLevelUp) then
                 print("button working")
                 -- if (#Player.items < maxItems or item.consumable) and Player.money >= upgradePrice then
                 if Player.realMoney >= upgradePrice then
@@ -1584,22 +1586,26 @@ local function drawPlayerMoney()
     love.graphics.print(formatNumber(Player.getMoney()) .. "$",x + 100, y + 1, math.rad(1.5))
 end
 
-local function drawFinishUpgradingButton()
+local function drawUpgradesUiOverlay()
     if Player.levelingUp and not Player.choosingUpgrade then
         love.graphics.setColor(1,1,1,1)
-        love.graphics.draw(defaultScreenImg, 0, 0, 0)
-        --[[
-        local buttonW, buttonH = 400, 120
-        local buttonX = screenWidth/2 - buttonW/2
-        local buttonY = screenHeight - buttonH - 10
-        setFont(30)
-        love.graphics.setColor(0,0,0,0.6)
-        love.graphics.rectangle("fill", screenWidth/2 - buttonW/2, screenHeight - buttonH + 10, buttonW, buttonH)
-        love.graphics.setColor(1,1,1,1)]]
-        -- drawTextCenteredWithScale("Press [SPACE] to Finish Upgrading", screenWidth/2 - buttonW/2, screenHeight - buttonH + 35, 1, buttonW, {1,1,1,1})
-        --[[if suit.Button("Finish Upgrading", {id="finishUpgrading", valign = "top"}, buttonX, buttonY, buttonW, buttonH).hit then
-            finishUpgrading()
-        end]]
+        if currentlyOnFirstLevelUp then
+            print("drawing tutorial screen for step " .. Player.getCurrentTutorialStep())
+            if Player.getCurrentTutorialStep() == 1 then
+                love.graphics.draw(tutorialScreen1Img,0,0,0)
+            elseif Player.getCurrentTutorialStep() == 2 then
+                love.graphics.draw(tutorialScreen2Img,0,0,0)
+                drawPlayerMoney()
+            elseif Player.getCurrentTutorialStep() == 3 then
+                love.graphics.draw(tutorialScreen3Img,0,0,0)
+                drawItemShop()
+            elseif Player.getCurrentTutorialStep() == 4 then     
+                love.graphics.draw(tutorialScreen4Img,0,0,0)
+                drawBallStats()
+            end
+        else
+            love.graphics.draw(defaultScreenImg, 0, 0, 0)
+        end
     end
 end
 
@@ -1608,10 +1614,12 @@ function upgradesUI.draw()
     drawCooldownVFXs()
     drawPlayerStats() -- Draw the player stats table
     drawPlayerMoney()
-    drawBallStats() -- Draw the ball stats table
+    if not (currentlyOnFirstLevelUp and Player.getCurrentTutorialStep() == 4) then
+        drawBallStats() -- Draw the ball stats table
+    end
     drawItemShop()
     drawPlayerItems()
-    drawFinishUpgradingButton()
+    drawUpgradesUiOverlay()
 
     -- Draw stat hover label if hovering a stat
     if hoveredStatName and Player.levelingUp then

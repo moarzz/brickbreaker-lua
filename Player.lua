@@ -386,12 +386,32 @@ function Player.InterestGain()
     Player.changeMoney(moneyGain);
 end
 
-function Player.onLevelUp()
-    EventQueue:addEventToQueue(EVENT_POINTERS.levelUp, 0);
-    if hasItem("Birthday Hat") then
-        EventQueue:addEventToQueue(EVENT_POINTERS.levelUp, 0);
+-- logic for first level up tutorial
+currentlyOnFirstLevelUp = false
+local currentTutorialStep = 1
+function Player.getCurrentTutorialStep()
+    return currentTutorialStep
+end
+function Player.nextTutorialStep()
+    currentTutorialStep = currentTutorialStep + 1
+    if currentTutorialStep > 4 then
+        currentlyOnFirstLevelUp = false
+        currentTutorialStep = 1
+        saveGameData()
     end
-    Player.InterestGain()
+end
+
+function Player.onLevelUp()
+    if not firstRunCompleted and Player.level == 2 then
+        currentTutorialStep = 1
+        currentlyOnFirstLevelUp = true
+    else
+        EventQueue:addEventToQueue(EVENT_POINTERS.levelUp, 0);
+        if hasItem("Birthday Hat") then
+            EventQueue:addEventToQueue(EVENT_POINTERS.levelUp, 0);
+        end
+        Player.InterestGain()
+    end
 end
 
 function Player.levelUp()
@@ -484,6 +504,9 @@ function Player.levelUp()
         -- end
     else
         setItemShop()
+    end
+    if not firstRunCompleted and Player.level == 1 then
+        
     end
 end
 
@@ -614,50 +637,6 @@ end
 
 function Player.pay(amount)
     Player.changeMoney(-amount);
-end
-
-function Player:save()
-    local saveData = {
-        startingMoney = self.startingMoney,
-        permanentUpgrades = {
-            moneyBonus = self.moneyBonus or 0,
-            damageBonus = self.damageBonus or 0,
-            speedBonus = self.speedBonus or 0,
-            healthBonus = self.healthBonus or 0,
-            extraBallBonus = self.extraBallBonus or 0,
-            criticalBonus = self.criticalBonus or 0,
-            --paddleSize = self.permanentUpgrades.paddleSize or 0,
-            paddleSpeed = self.permanentUpgrades.paddleSpeed or 0
-        }
-    }
-    
-    local jsonStr = json.encode(saveData, { indent = true })
-    love.filesystem.write("savedata.json", jsonStr)
-end
-
-function Player:load()
-    if love.filesystem.getInfo("savedata.json") then
-        local contents = love.filesystem.read("savedata.json")
-        local data = json.decode(contents)
-        
-        if data then
-            self.startingMoney = data.startingMoney or 0
-            self.hiddenMoney = self.startingMoney;
-            self.gold = data.gold or 0
-
-              -- Load permanent upgrades
-            if data.permanentUpgrades then
-                self.moneyBonus = data.permanentUpgrades.moneyBonus or 0
-                self.damageBonus = data.permanentUpgrades.damageBonus or 0
-                self.speedBonus = data.permanentUpgrades.speedBonus or 0
-                self.healthBonus = data.permanentUpgrades.healthBonus or 0
-                self.extraBallBonus = data.permanentUpgrades.extraBallBonus or 0
-                self.criticalBonus = data.permanentUpgrades.criticalBonus or 0
-                -- self.permanentUpgrades.paddleSize = data.permanentUpgrades.paddleSize or 0
-                -- self.permanentUpgrades.paddleSpeed = data.permanentUpgrades.paddleSpeed or 0
-            end
-        end
-    end
 end
 
 return Player
