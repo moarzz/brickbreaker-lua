@@ -1,14 +1,14 @@
-local HomingBullets = ItemBase.new();
-HomingBullets.__index = HomingBullets;
-HomingBullets.name = "Homing Bullets";
-HomingBullets.description = "<font=bold>Projectiles<font=default> will home in on the nearest brick";
-HomingBullets.rarity = "common";
-HomingBullets.imageReference = "assets/sprites/UI/ItemIcons/Homing-Bullets.png";
+local HomingProjectiles = ItemBase.new();
+HomingProjectiles.__index = HomingProjectiles;
+HomingProjectiles.name = "Homing Projectiles";
+HomingProjectiles.description = "<font=bold>Projectiles<font=default> will home in on the nearest brick";
+HomingProjectiles.rarity = "common";
+HomingProjectiles.imageReference = "assets/sprites/UI/ItemIcons/Homing-Bullets.png";
 
-HomingBullets.unique = true; -- does smthn ig
+HomingProjectiles.unique = true; -- does smthn ig
 
-function HomingBullets.new()
-    local instance = setmetatable({}, HomingBullets):init();
+function HomingProjectiles.new()
+    local instance = setmetatable({}, HomingProjectiles):init();
 
     instance.stats.fireRate = 1;
     instance.stats.ammo = 1;
@@ -17,4 +17,4 @@ function HomingBullets.new()
     return instance;
 end
 
-return HomingBullets;
+return HomingProjectiles;

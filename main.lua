@@ -946,7 +946,7 @@ brickFreeze = false
 brickFreezeTime = gameTime
 function getBrickSpeedByTime()
     -- Scale speed from 0.5 to 3 over 30 minutes
-    local returnValue = mapRange(gameTime, 0, 2000, 0.25, 3) * (Player.currentCore == "Madness Core" and 2 or 1)
+    local returnValue = mapRange(gameTime, 0, 2000, 0.225, 3) * (Player.currentCore == "Madness Core" and 2 or 1)
     if brickFreeze == true then
         if gameTime - brickFreezeTime > 20 then
             brickFreeze = false

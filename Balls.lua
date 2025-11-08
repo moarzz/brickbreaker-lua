@@ -1837,7 +1837,7 @@ local function ballListInit()
                 cooldown = 14,
             },
         },
-        ["Laser Beam"] = {
+        --[[["Laser Beam"] = {
             name = "Laser Beam",
             type = "tech",
             x = screenWidth / 2,
@@ -1877,7 +1877,7 @@ local function ballListInit()
                 cooldown = 12,
             },
             canBuy = function() return Player.currentCore ~= "Damage Core" end
-        },
+        },]]
         ["Rocket Launcher"] = {
             name = "Rocket Launcher",
             type = "tech",
@@ -1907,7 +1907,7 @@ local function ballListInit()
             type = "tech",
             size = 1,
             noAmount = true,
-            rarity = "uncommon",
+            rarity = "rare",
             startingPrice = 100,
             description = "Creates deadly Saw Blades that orbit around your paddle, damaging any bricks they touch",
             color = {0.7, 0.7, 0.7, 1}, -- Grey color theme
@@ -1948,7 +1948,7 @@ local function ballListInit()
                 damage = 1,
             },
         },
-        ["Shadow Ball"] = {
+        --[[["Shadow Ball"] = {
             name = "Shadow Ball",
             type = "spell",
             x = screenWidth / 2,
@@ -1970,7 +1970,7 @@ local function ballListInit()
                 range = 2,
                 fireRate = 3,
             }
-        },
+        },]]
         ["Fireballs"] = {
             name = "Fireballs",
             type = "spell",
@@ -1993,7 +1993,7 @@ local function ballListInit()
                 range = 2
             },
         },
-        ["Light Beam"] = {
+        --[[["Light Beam"] = {
             name = "Light Beam",
             type = "spell",
             x = screenWidth / 2,
@@ -2032,7 +2032,7 @@ local function ballListInit()
                 damage = 2,
                 amount = 2, -- Amount of Lightning Pulses
             },
-        },
+        },]]
         --[[["Gun Ball Gun"] = {
             name = "Gun Ball Gun",
             type = "gun",
@@ -3064,7 +3064,7 @@ end
 
 local function updateShadowBall(shadowBall, dt, id)
     -- Update position
-    if hasItem("Homing Bullets") then
+    if hasItem("Homing Projectiles") then
         -- Find nearest brick
         local nearestBrick = nil
         local minDist = math.huge
@@ -3365,7 +3365,7 @@ local function spellsUpdate(dt)
         end
         for i = #fireballs, 1, -1 do
             local fireball = fireballs[i]
-            if hasItem("Homing Bullets") then
+            if hasItem("Homing Projectiles") then
                 -- Find nearest brick
                 local nearestBrick = nil
                 local minDist = math.huge
@@ -3623,7 +3623,7 @@ function Balls.update(dt, paddle, bricks)
     -- Update rockets
     for i = #rockets, 1, -1 do
         local rocket = rockets[i]
-        if hasItem("Homing Bullets") then
+        if hasItem("Homing Projectiles") then
             -- Find nearest brick
             local nearestBrick = nil
             local minDist = math.huge
@@ -3860,8 +3860,8 @@ function Balls.update(dt, paddle, bricks)
         bullet.distanceTraveled = bullet.distanceTraveled or 0
         bullet.hasSplit = bullet.hasSplit or false
         
-        -- Handle Homing Bullets
-        if hasItem("Homing Bullets") then
+        -- Handle Homing Projectiles
+        if hasItem("Homing Projectiles") then
             -- Find nearest brick
             local nearestBrick = nil
             local minDist = math.huge
