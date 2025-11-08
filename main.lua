@@ -267,6 +267,11 @@ local function loadAssets()
     healAuraImg = love.graphics.newImage("assets/sprites/healAura.png")
     shieldAuraImg = love.graphics.newImage("assets/sprites/shieldAura.png")
     defaultItemImage = love.graphics.newImage("assets/sprites/UI/ItemIcons/default.png")
+    defaultScreenImg = love.graphics.newImage("assets/sprites/firstUpgradeShop/defaultScreen.png")
+    screen1Img = love.graphics.newImage("assets/sprites/firstUpgradeShop/screen1.png")
+    screen2Img = love.graphics.newImage("assets/sprites/firstUpgradeShop/screen2.png")
+    screen3Img = love.graphics.newImage("assets/sprites/firstUpgradeShop/screen3.png")
+    screen4Img = love.graphics.newImage("assets/sprites/firstUpgradeShop/screen4.png")
 
     -- UI
     uiLabelImg = love.graphics.newImage("assets/sprites/UI/label.png")
@@ -481,7 +486,7 @@ end
 local function createFastBrickUpdate()
     local fastBrickTimer = false
     if bossSpawned then 
-        fastBrickTimer = gameTime - lastFastBrickCreateTime >= 0.75
+        fastBrickTimer = gameTime - lastFastBrickCreateTime >= 2
     else
         fastBrickTimer = gameTime - lastFastBrickCreateTime >= mapRangeClamped(Player.level, 5, 20, 11, 2.5)
     end
@@ -593,7 +598,7 @@ local function generateRow(brickCount, yPos)
                         brickId = brickId + 1
                         nextRowDebuff = brickHealth + row[xPos+1]
                     end
-                elseif Player.level >= 8 and math.random(1, 250) <= math.floor(mapRangeClamped(Player.level, 8, 25, 1, 8)) 
+                elseif Player.level >= 8 and math.random(1, 250) <= math.floor(mapRangeClamped(Player.level, 8, 25, 1, 6)) 
                 and not (row.healBrickPositions and (row.healBrickPositions[xPos-1] or row.healBrickPositions[xPos+1])) then
                     if not row.healBrickPositions then row.healBrickPositions = {} end
                     row.healBrickPositions[xPos] = true
@@ -941,7 +946,7 @@ brickFreeze = false
 brickFreezeTime = gameTime
 function getBrickSpeedByTime()
     -- Scale speed from 0.5 to 3 over 30 minutes
-    local returnValue = mapRange(gameTime, 0, 2000, 0.375, 3) * (Player.currentCore == "Madness Core" and 2 or 1)
+    local returnValue = mapRange(gameTime, 0, 2000, 0.25, 3) * (Player.currentCore == "Madness Core" and 2 or 1)
     if brickFreeze == true then
         if gameTime - brickFreezeTime > 20 then
             brickFreeze = false

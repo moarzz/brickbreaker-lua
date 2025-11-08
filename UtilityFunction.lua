@@ -1518,7 +1518,7 @@ local lastCleanupTime = 0
 local CLEANUP_INTERVAL = 5 -- Cleanup unused text objects every 5 seconds
 
 local function createShieldDamageNumber(x,y)
-    damageNumber(1, x, y, {0,104/255,161/255,1})
+    damageNumber(1, x, y, {0,110/255,204/255,1})
 end
 
 function damageAura(aura)

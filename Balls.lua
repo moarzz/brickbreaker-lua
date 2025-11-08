@@ -2033,7 +2033,7 @@ local function ballListInit()
                 amount = 2, -- Amount of Lightning Pulses
             },
         },
-        ["Gun Ball Gun"] = {
+        --[[["Gun Ball Gun"] = {
             name = "Gun Ball Gun",
             type = "gun",
             x = screenWidth / 2,
@@ -2069,7 +2069,7 @@ local function ballListInit()
             onBuy = function()
                 shoot("Gun Ball Gun")
             end,
-        }
+        }]]
 
     }
     for _, ball in pairs(ballList) do

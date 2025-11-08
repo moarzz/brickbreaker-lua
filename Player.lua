@@ -12,7 +12,7 @@ function loadGameData()
         gold = 0,
         startingMoney = 0,
         permanentUpgrades = {},
-        paddleCores = {["Size Core"] = true},  -- Initialize paddleCores
+        paddleCores = {["Amount Core"] = true},  -- Initialize paddleCores
         permanentUpgradePrices = {
             amount = 100,
             speed = 100,
@@ -36,7 +36,7 @@ function loadGameData()
                 data.gold = fileData.gold or 0
                 data.startingMoney = fileData.startingMoney or 0
                 -- data.permanentUpgrades = fileData.permanentUpgrades or {}
-                data.paddleCores = fileData.paddleCores or { ["Size Core"] = true }
+                data.paddleCores = fileData.paddleCores or { ["Amount Core"] = true }
                 -- data.permanentUpgradePrices = fileData.permanentUpgradePrices or data.permanentUpgradePrices
                 data.startingItems = fileData.startingItems or data.startingItems
                 data.fastestTime = fileData.fastestTime or 100000000000
@@ -94,12 +94,12 @@ Player = {
     fastestTime = 1000000, -- in seconds
     bricksDestroyed = 0,
     lives = 1,
-    currentCore = "Size Core",
+    currentCore = "Amount Core",
     levelingUp = false,
     choosingUpgrade = false,
     price = 1,
     newUpgradePrice = 100,
-    selectedPaddleCore = "Size Core",
+    selectedPaddleCore = "Amount Core",
     upgradePriceMultScaling = 10,
     dead = false,
     lastHitTime = 0,
@@ -118,7 +118,7 @@ Player = {
     xp = 0,
     xpGainMult = 1,
     levelThreshold = 50, -- XP needed for each level
-    paddleCores = {["Size Core"] = true},  -- Stores unlockedpaddle cores
+    paddleCores = {["Amount Core"] = true},  -- Stores unlockedpaddle cores
 }
 
 function Player.initialize() 
@@ -134,14 +134,14 @@ function saveGameData()
     local hasBasicCore = false
     if Player.paddleCores then
         for core, _ in pairs(Player.paddleCores) do
-            if core == "Size Core" then
+            if core == "Amount Core" then
                 hasBasicCore = true
                 break
             end
         end
     end
     if not hasBasicCore then
-        Player.paddleCores["Size Core"] = true  -- Ensure Basic Core is always present
+        Player.paddleCores["Amount Core"] = true  -- Ensure Basic Core is always present
     end
 
 
@@ -164,7 +164,7 @@ function saveGameData()
             amount = Player.permanentUpgrades.amount or 0,
             health = Player.permanentUpgrades.health or 0,
         },]]
-        paddleCores = Player.paddleCores or {["Size Core"] = true},  -- Change this line
+        paddleCores = Player.paddleCores or {["Amount Core"] = true},  -- Change this line
         -- permanentUpgradePrices = Player.permanentUpgradePrices,
         startingItems = Player.startingItems or {"Ball"},
         settings = {
@@ -274,11 +274,12 @@ Player.upgradePaddle = {
 
 Player.availableCores = {
     {
-        name = "Size Core",
-        description = "gain 8% paddle size per level",
+        name = "Amount Core",
+        description = "+1 amount for every 5 player level",
         price = 0,
         startingItem = "ball",
     },
+    
     {
         name = "Spray and Pray Core",
         description = "gain +1 fireRate for every 5 Player level.",
@@ -302,6 +303,12 @@ Player.availableCores = {
         description = "gain 10$ instead of 6$ on level up. There are no items that give money in the shop",
         price = 1000,
     },
+    {
+        name = "Size Core",
+        description = "gain 8% paddle size per level",
+        price = 1250,
+        startingItem = "ball",
+    },
     --[[{
         name = "Farm Core",
         description = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown).\nIt takes 100% more xp for you to level up",
@@ -316,11 +323,12 @@ Player.availableCores = {
 }
 
 Player.coreDescriptions = {
-    ["Size Core"] = "gain 8% paddle size per level",
+    ["Amount Core"] = "+1 amount for every 5 player level",
     ["Spray and Pray Core"] = "gain +1 fireRate for every 5 Player level",
     ["Fast Study Core"] = "gain +5% experience gain per Player Level",
     ["Hacker Core"] = "All Weapons start with an upgradePrice of 0",
     ["Loan Core"] = "start with 25$. gain 3$ instead of 5$ on level up.",
+    ["Size Core"] = "gain 8% paddle size per level",
     ["Farm Core"] = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown)\nIt takes 100% more xp for you to level up and bricks grow in health 100% faster",
     --["Madness Core"] = "Damage and coldown are reduced by 50%.\nevery other stat is doubled. bricks go twice as fast\n(can break the game)."
 }
@@ -416,7 +424,7 @@ function Player.levelUp()
         if Player.level < 5 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 2)
         elseif Player.level < 10 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.6)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.65)
         elseif Player.level < 15 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.5)
         elseif Player.level < 20 then
@@ -445,6 +453,14 @@ function Player.levelUp()
         Player.xpGainMult = Player.xpGainMult + 0.05
     elseif Player.level % 5 == 0 and Player.currentCore == "Spray and Pray Core" then -- THIS IS NOT AN ERROR
         Player.permanentUpgrades.fireRate = (Player.permanentUpgrades.fireRate or 0) + 1
+    elseif "Amount Core" == Player.currentCore and Player.level % 5 == 0 then
+        Player.permanentUpgrades.amount = (Player.permanentUpgrades.amount or 0) + 1
+        for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
+            if weapon.type == "ball" then
+                Balls.addBall(weapon.name, true)
+                -- weapon.ballAmount = (weapon.ballAmount or 0) + 1
+            end
+        end
     end
     if (not usingMoneySystem) then
         Player.levelingUp = true
@@ -559,7 +575,7 @@ end
 
 local function checkForHit()
     for _, brick in ipairs(bricks) do
-        if paddle.y > screenHeight + 25 then
+        if paddle.y > screenHeight + 40 then
             Player.hit()
             damageScreenVisuals(0.25, 100)
         end

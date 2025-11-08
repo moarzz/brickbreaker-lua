@@ -1200,6 +1200,7 @@ function setItemShop(forcedItems)
     displayedItems = {}
     for i=1, 3 do
         local itemToDisplay = nil
+        local itemIsGood = false
         if forcedItems[i] then
             itemToDisplay = forcedItems[i]
             if itemToDisplay then
@@ -1215,11 +1216,23 @@ function setItemShop(forcedItems)
 
             goto continue
         end
-
-        displayedItems[i] = Items.getRandomItem().new();
         
+        while not itemIsGood do
+            itemToDisplay = Items.getRandomItem()
+            itemIsGood = true
+            if i > 1 then
+                for j=1, i-1 do
+                    if itemToDisplay.name == displayedItems[j].name then
+                        itemIsGood = false
+                        break
+                    end
+                end
+            end
+        end
+        displayedItems[i] = itemToDisplay.new();
+
         ::continue::
-        Items.addInvisibleItem(displayedItems[i].filteredName);
+        Items.addInvisibleItem(itemToDisplay.filteredName);
     end
 end
 
@@ -1292,10 +1305,13 @@ local function drawItemShop()
                 local rarityX = centerX - uiBigWindowImg:getWidth() * 0.55 * scale/2
                 local rarityY = itemY + windowH - 60
                 if item.consumable then
-                    drawTextCenteredWithScale((item.rarity or "common"):gsub("^%l", string.upper), itemX, itemY + uiBigWindowImg:getHeight() * 0.8 +0, 1, windowW, getRarityColor(item.rarity or "common"))
+                    drawTextCenteredWithScale((item.rarity or "common"):gsub("^%l", string.upper), itemX, itemY + uiBigWindowImg:getHeight() * 0.8 - 10, 1, windowW, getRarityColor(item.rarity or "common"))
+                    setFont(21)
+                    drawTextCenteredWithScale("consumable", itemX, itemY + uiBigWindowImg:getHeight() * 0.8 + 15, 1, windowW, {0.85,0.85,0.85,1})
                 else
                     drawTextCenteredWithScale((item.rarity or "common"):gsub("^%l", string.upper), itemX, itemY + uiBigWindowImg:getHeight() - 20, 1, windowW, getRarityColor(item.rarity or "common"))
                 end
+
             end
 
             -- draw main window
@@ -1570,14 +1586,17 @@ end
 
 local function drawFinishUpgradingButton()
     if Player.levelingUp and not Player.choosingUpgrade then
+        love.graphics.setColor(1,1,1,1)
+        love.graphics.draw(defaultScreenImg, 0, 0, 0)
+        --[[
         local buttonW, buttonH = 400, 120
         local buttonX = screenWidth/2 - buttonW/2
         local buttonY = screenHeight - buttonH - 10
         setFont(30)
         love.graphics.setColor(0,0,0,0.6)
         love.graphics.rectangle("fill", screenWidth/2 - buttonW/2, screenHeight - buttonH + 10, buttonW, buttonH)
-        love.graphics.setColor(1,1,1,1)
-        drawTextCenteredWithScale("Press [SPACE] to Finish Upgrading", screenWidth/2 - buttonW/2, screenHeight - buttonH + 35, 1, buttonW, {1,1,1,1})
+        love.graphics.setColor(1,1,1,1)]]
+        -- drawTextCenteredWithScale("Press [SPACE] to Finish Upgrading", screenWidth/2 - buttonW/2, screenHeight - buttonH + 35, 1, buttonW, {1,1,1,1})
         --[[if suit.Button("Finish Upgrading", {id="finishUpgrading", valign = "top"}, buttonX, buttonY, buttonW, buttonH).hit then
             finishUpgrading()
         end]]
