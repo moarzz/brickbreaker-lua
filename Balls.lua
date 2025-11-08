@@ -1173,7 +1173,7 @@ fire = function(techName)
                         flamethrower.currentAmmo = getStat("Flamethrower", "ammo")
                         fire("Flamethrower")
                     end)
-                    createCooldownVFX(cooldownValue)
+                    createCooldownVFX(cooldownValue * 0.6)
                 end
             end)
         end

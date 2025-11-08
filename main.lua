@@ -635,9 +635,7 @@ local function generateRow(brickCount, yPos)
                             Timer.after(1.75, function() healSelf(healBrick) end)
                         end
                     end
-                    if canHeal then
-                        Timer.after(1.75 + math.random(1,175)/100, function() healSelf(healBrick) end)
-                    end
+                    Timer.after(1.75 + math.random(1,175)/100, function() healSelf(healBrick) end)
                 elseif Player.level >= 12 and math.random(1, 250) <= math.floor(mapRangeClamped(Player.level, 12, 25, 1, 3)) then
                     -- make shield bricks
                     print("Generating shield brick")
@@ -2581,7 +2579,7 @@ function love.keypressed(key)
 
         -- add weapon
         if key == "7" then  
-            Balls.addBall("Gun Ball Gun")
+            Balls.addBall("Shadow Ball")
         end
 
         if key == "8" then

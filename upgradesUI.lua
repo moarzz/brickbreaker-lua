@@ -1272,7 +1272,7 @@ local function drawItemShop()
             --description display when hovered
             local buyButton = dress:Button("", {id = "bruhdmsavklsam" .. i .. item.name, color = invisButtonColor}, itemX + 10, itemY + 12, windowW - 20, windowH - 24)
             if buyButton.hovered and item.image then
-                love.graphics.draw(getRarityWindow(item.rarity or "common"), centerX - uiBigWindowImg:getWidth() * 0.65 * scale/2, itemY + windowH - 85, 0, 0.65 * scale, 0.55 * scale)
+                love.graphics.draw(getRarityWindow(item.rarity or "common"), centerX - uiBigWindowImg:getWidth() * 0.65 * scale/2, itemY + windowH - 85, 0, 0.65 * scale, 0.55 * scale * (item.consumable and 1.25 or 1))
                 local id = "fancyText" .. i .. item.name:gsub("%s+", "_")
                 if fancyTexts[id] then
                     -- fancyTexts[id]:update()
@@ -1291,9 +1291,11 @@ local function drawItemShop()
                 setFont(fontSize)
                 local rarityX = centerX - uiBigWindowImg:getWidth() * 0.55 * scale/2
                 local rarityY = itemY + windowH - 60
-                love.graphics.print("cacacca", rarityX - 2, rarityY - 2) -- black outline
-                drawTextCenteredWithScale((item.rarity or "common"):gsub("^%l", string.upper), itemX, itemY + uiBigWindowImg:getHeight() - 20, 1, windowW, getRarityColor(item.rarity or "common"))
-
+                if item.consumable then
+                    drawTextCenteredWithScale((item.rarity or "common"):gsub("^%l", string.upper), itemX, itemY + uiBigWindowImg:getHeight() * 0.8 +0, 1, windowW, getRarityColor(item.rarity or "common"))
+                else
+                    drawTextCenteredWithScale((item.rarity or "common"):gsub("^%l", string.upper), itemX, itemY + uiBigWindowImg:getHeight() - 20, 1, windowW, getRarityColor(item.rarity or "common"))
+                end
             end
 
             -- draw main window
