@@ -1,7 +1,7 @@
 local HomingBullets = ItemBase.new();
 HomingBullets.__index = HomingBullets;
 HomingBullets.name = "Homing Bullets";
-HomingBullets.description = "Bullets will home in on the nearest brick";
+HomingBullets.description = "<font=bold>Projectiles<font=default> will home in on the nearest brick";
 HomingBullets.rarity = "common";
 HomingBullets.imageReference = "assets/sprites/UI/ItemIcons/Homing-Bullets.png";
 

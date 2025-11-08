@@ -408,7 +408,7 @@ function dealDamage(ball, brick, burnDamage)
     
     local damage = ball.stats.damage
     if unlockedBallTypes[ball.name] then
-        damage = damage + getStatItemsBonus(statName, ballList[ball.name]) + (Player.permanentUpgrades["damage"] or 0)
+        damage = damage + getStatItemsBonus("damage", ballList[ball.name]) + (Player.permanentUpgrades["damage"] or 0)
     end
     
     local isPhantomBullet = ball.type == "bullet" and hasItem("Phantom Bullets")
@@ -2608,10 +2608,69 @@ end
 
 local function paddleCollisionCheck(ball, paddle)
     local effectiveRadius = ball.name == "Phantom Ball" and getStat(ball.name, "range") * 8 or ball.radius
-    if ball.x + effectiveRadius > paddle.x and ball.x - effectiveRadius < paddle.x + paddle.width and
-       ball.y + effectiveRadius > paddle.y and ball.y - effectiveRadius < paddle.y + paddle.height  and 
-       ((ball.y > paddle.y + paddle.height and ball.speedY < 0) or ball.y < paddle.y + paddle.height and ball.speedY > 0) then
-        playSoundEffect(paddleBoopSFX, 0.4, 0.8, false, true)   
+    
+    -- Paddle bounds
+    local paddleLeft = paddle.x
+    local paddleRight = paddle.x + paddle.width
+    local paddleTop = paddle.y - 10
+    local paddleBottom = paddle.y + paddle.height + 10
+    
+    -- First, do a basic AABB collision check (for normal speed balls)
+    local basicCollision = ball.x + effectiveRadius > paddleLeft and 
+                          ball.x - effectiveRadius < paddleRight and
+                          ball.y + effectiveRadius > paddleTop and 
+                          ball.y - effectiveRadius < paddleBottom
+    
+    -- Check if ball is moving in the right direction
+    local correctDirection = (ball.y > paddleBottom and ball.speedY < 0) or 
+                            (ball.y < paddleTop and ball.speedY > 0)
+    
+    -- If basic collision and correct direction, we have a hit
+    local collision = false
+    
+    if basicCollision and correctDirection then
+        collision = true
+    else
+        -- If no basic collision, try sweep test for high-speed balls
+        -- Calculate where the ball was based on its speed
+        local lookbackTime = 0.05 -- Look back 50ms
+        local prevX = ball.x - ball.speedX * lookbackTime
+        local prevY = ball.y - ball.speedY * lookbackTime
+        
+        -- Determine which paddle face to check
+        local targetY
+        if ball.speedY < 0 and ball.y > paddleTop then
+            -- Ball moving up, check bottom face of paddle
+            targetY = paddleBottom + effectiveRadius
+        elseif ball.speedY > 0 and ball.y < paddleBottom then
+            -- Ball moving down, check top face of paddle
+            targetY = paddleTop - effectiveRadius
+        end
+        
+        if targetY and ball.speedY ~= 0 then
+            -- Check if ball path crossed the paddle plane
+            if (prevY - targetY) * (ball.y - targetY) <= 0 then
+                -- Calculate intersection point
+                local t = (targetY - prevY) / (ball.y - prevY)
+                local intersectX = prevX + (ball.x - prevX) * t
+                
+                -- Check if intersection is within paddle horizontal bounds
+                if intersectX + effectiveRadius >= paddleLeft and 
+                   intersectX - effectiveRadius <= paddleRight and
+                   t >= 0 and t <= 1 then
+                    collision = true
+                    -- Move ball to collision point
+                    ball.x = intersectX
+                    ball.y = targetY
+                end
+            end
+        end
+    end
+    
+    -- If we detected a collision, process it
+    if collision then
+        playSoundEffect(paddleBoopSFX, 0.4, 0.8, false, true)
+        
         if hasItem("Paddle Defense System") then
             local bulletSpeed = 1500
             local speedX = math.random(-500,500)
@@ -2645,7 +2704,7 @@ local function paddleCollisionCheck(ball, paddle)
                     drawSizeBoost = 1,
                     drawSizeMult = 0.5,
                     drawSizeBoostTweens = {},
-                    onBounce = ballTemplate.onBounce or nil, -- Function to call when the ball bounces off a brick
+                    onBounce = ballTemplate.onBounce or nil,
                     currentlyOverlappingBricks = {},
                     attractionStrength = ballTemplate.attractionStrength or nil,
                     stats = ballTemplate.stats,
@@ -2685,7 +2744,7 @@ local function paddleCollisionCheck(ball, paddle)
         
         for _, ballType in pairs(unlockedBallTypes) do
             if ballType.onPaddleBounce then
-                ballType.onPaddleBounce() -- Call the onPaddleBounce function if it exists
+                ballType.onPaddleBounce()
                 if Player.perks.paddleSquared then
                     ballType.onPaddleBounce()
                 end
@@ -2695,10 +2754,11 @@ local function paddleCollisionCheck(ball, paddle)
             ball.onBounce(ball)
         end
         if ball.name == "Ping-Pong ball" then
-            ball.speedY = ball.speedY - 150 -- Increase speedY for Ping-Pong ball
+            ball.speedY = ball.speedY - 150
         end
         return true
-        end
+    end
+    
     return false
 end
 
@@ -3027,16 +3087,34 @@ local function updateShadowBall(shadowBall, dt, id)
             -- Normalize direction
             dx = dx / dist
             dy = dy / dist
+
+            -- Bias horizontal component so bullets prefer left/right steering
+            local horizontalBias = 1.75 -- >1 = stronger horizontal attraction, <1 = weaker
+            -- Optionally reduce bias when target is mostly vertical
+            local absDx = math.abs((nearestBrick.x + nearestBrick.width/2) - shadowBall.x)
+            local absDy = math.abs((nearestBrick.y + nearestBrick.height/2) - shadowBall.y)
+            if absDy > 0 and absDx / absDy < 0.35 then
+                horizontalBias = 2 -- don't bias when target is primarily above/below
+            end
+
+            dx = dx * horizontalBias
+
+            -- Renormalize after biasing
+            local len = math.sqrt(dx*dx + dy*dy)
+            if len > 0 then
+                dx = dx / len
+                dy = dy / len
+            end
             
             -- Calculate homing strength (adjust this value to change how aggressive the homing is)
             local homingStrength = 1200 -- pixels per second
             
             -- Adjust velocity (with smooth turning)
-            local turnSpeed = 10 -- Lower = more gradual turning, Higher = sharper turning
+            local turnSpeed = 3 -- Lower = more gradual turning, Higher = sharper turning
             shadowBall.speedX = shadowBall.speedX + (dx * homingStrength - shadowBall.speedX) * dt * turnSpeed
             shadowBall.speedY = -math.abs(shadowBall.speedY + (dy * homingStrength - shadowBall.speedY) * dt * turnSpeed)
             local currentSpeed =  math.sqrt(shadowBall.speedX^2 + shadowBall.speedY^2)
-            if currentSpeed < 400 then
+            if currentSpeed ~= 400 then
                 shadowBall.speedX = shadowBall.speedX * (400 / currentSpeed)
                 shadowBall.speedY = shadowBall.speedY * (400 / currentSpeed)
             end
@@ -3080,7 +3158,7 @@ local function updateShadowBall(shadowBall, dt, id)
         shadowBall.speedX = -shadowBall.speedX
         shadowBall.x = screenWidth - (usingMoneySystem and statsWidth or 0) - shadowBall.radius
     end
-    if shadowBall.y < 0 or shadowBall.y > screenHeight then
+    if shadowBall.y < -150 then
         shadowBall.dead = true
     end
 
@@ -3132,7 +3210,7 @@ local function updateDeadBullets(dt)
         bullet.y = bullet.y + bullet.speedY * dt
         
         -- Remove bullets that go off screen
-        if bullet.y < 50 or bullet.x < -100 or bullet.x > screenWidth + 100 or bullet.y > math.max(paddle.y + 50, screenHeight + 50) then
+        if bullet.y < -50 or bullet.x < -100 or bullet.x > screenWidth + 100 or bullet.y > math.max(paddle.y + 100, screenHeight + 100) then
             bullet.trailFade = 1
             bullet.deathTime = love.timer.getTime()
             table.insert(deadBullets, bullet)
@@ -3435,14 +3513,14 @@ function powerupPickup(powerup, length)
     end
     print("powerup type : " .. powerup.type)
     if powerup.type == "dollarBill" then
-        local moneyGain = math.random(1,6)
+        local moneyGain = math.random(1,5)
         if moneyGain > 2 then
             moneyGain = 1
         end          
         Player.changeMoney(moneyGain);
         createMoneyPopup(moneyGain, paddle.x + paddle.width/2, paddle.y)
         if hasItem("Money Crazy") then
-            powerupPickup({type="acceleration"}, 2.5)
+            powerupPickup({type="acceleration"}, 2.25)
         end
     elseif powerup.type == "moneyBag" then
         local moneyGain = math.random(3,5)

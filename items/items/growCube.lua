@@ -1,8 +1,8 @@
 local GrowCube = ItemBase.new();
 GrowCube.__index = GrowCube;
 GrowCube.name = "Grow Cube";
-GrowCube.description = "<font=bold>On Level Up<font=default>this Item gains +1 to a random stat";
-GrowCube.rarity = "rare";
+GrowCube.description = "<font=bold>On Level Up<font=default>pay 1$ and this Item gains +1 to a random stat";
+GrowCube.rarity = "uncommon";
 GrowCube.imageReference = "assets/sprites/UI/ItemIcons/Grow-Cube.png";
 
 function GrowCube.new()
@@ -12,7 +12,8 @@ function GrowCube.new()
 end
 
 function GrowCube.events:levelUp()
-    itemTriggerAnimation(self.name)
+    Player.changeMoney(-1, self.id);
+    itemTriggerAnimation(self.name);
     local statNames = {"damage", "speed", "amount", "ammo", "fireRate", "cooldown", "range"};
     local randomStatName = table.remove(statNames, math.random(1, #statNames));
 
