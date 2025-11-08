@@ -99,13 +99,13 @@ function Items.parseItem(file)
 
     obj.filteredName = filteredName; -- for calling events internally
     obj.id = getNextItemId()
-    if not obj.unique then
+    --if not obj.unique then
         if obj.rarity == "common" then
             obj.instancesLeft = 3
         elseif obj.rarity =="uncommon" then
             obj.instancesLeft = 2
         end
-    end
+    --end
 
     if obj.consumable then
         self.consumableIndices[filteredName] = {
@@ -353,13 +353,13 @@ function Items.setAllVisible(visible)
         for i = 1, #list do
             self.itemsVisible[rarity][i] = val
             local item = self.allItems[rarity][i]
-            if not item.unique then
+            --if not item.unique then
                 if rarity == "common" then
                     item.instancesLeft = 3
                 elseif rarity == "uncommon" then
                     item.instancesLeft = 2
                 end
-            end
+            --end
         end
     end
     for rarity, list in pairs(self.consumablesVisible) do

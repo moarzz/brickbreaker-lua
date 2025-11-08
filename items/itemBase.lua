@@ -122,6 +122,9 @@ function ItemBase:buy(...)
     if template and template.instancesLeft then
         template.instancesLeft = template.instancesLeft - 1
         print("Instances left for item " .. (template.name or tostring(self.name)) .. ": " .. template.instancesLeft)
+        if self.unique then
+            template.instancesLeft = 0
+        end
     end
 
     if not self.unique then

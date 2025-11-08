@@ -382,6 +382,17 @@ function Balls.reduceAllCooldowns()
     end]]
 end
 
+local function getGoldenBulletChance()
+    if hasItem("Phantom Bullets") then
+        if hasItem("Four Leafed Clover") then
+            return 20
+        else
+            return 10
+        end
+    else
+        return 0
+    end
+end
 
 
 -- reduce trail length to make draw cheaper (was 35)
@@ -411,12 +422,8 @@ function dealDamage(ball, brick, burnDamage)
         damage = damage + getStatItemsBonus("damage", ballList[ball.name]) + (Player.permanentUpgrades["damage"] or 0)
     end
     
-    local isPhantomBullet = ball.type == "bullet" and hasItem("Phantom Bullets")
     if ball.type == "bullet" then
         damage = ball.stats.damage
-        if isPhantomBullet then
-            damage = math.max(math.ceil(damage / 2), 1)
-        end
     end
     
     if (Player.currentCore == "Brickbreaker Core" or hasItem("Brickbreaker")) and brick.type ~= "boss" then
@@ -485,7 +492,7 @@ function dealDamage(ball, brick, burnDamage)
         brick.destroyed = true
         
         if ball.type == "bullet" and not ball.golden then
-            if (not (ball.name == "Golden Gun" or ball.golden or Player.currentCore == "Phantom Core")) then
+            if (not (ball.name == "Golden Gun" or ball.golden)) then
                 ball.stats.damage = ball.stats.damage - damage
                 if ball.stats.damage <= 0 then
                     kill = false
@@ -531,7 +538,7 @@ local function shoot(gunName, ball)
             end
             local critChance = hasItem("Four Leafed Clover") and 50 or 25
             table.insert(bullets, {
-                name = "Gun Ball",
+                name = gunName,
                 type = "bullet",
                 x = ball.x,
                 y = ball.y,
@@ -541,7 +548,7 @@ local function shoot(gunName, ball)
                 stats = {damage = bulletDamage * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1)},
                 hasSplit = false,
                 hasTriggeredOnBulletHit = false,
-                golden = (Player.currentCore == "Phantom Core" or hasItem("Phantom Bullets")),
+                golden = math.random(1,100) <= getGoldenBulletChance(),
             })
             local chance = hasItem("Four Leafed Clover") and 20 or 10
             if math.random(1,100) <= chance and hasItem("Sudden Mitosis") then
@@ -667,9 +674,9 @@ local function shoot(gunName, ball)
                     local speedX = math.random(-totalSpeed * 0.6, totalSpeed * 0.6)
                     local speedY = -math.sqrt(math.max(0.01, totalSpeed^2 - speedX^2))
                     local ballTemplate = unlockedBallTypes[gunName]
-                    local newBall = {
+                    local bulletBall = {
                         type = "ball",
-                        name = "Gun Ball",
+                        name = "Gun Ball Gun",
                         x = paddle.x + paddle.width / 2,
                         y = paddle.y - 6,
                         speedMult = ballTemplate.speedMult or 1,
@@ -686,22 +693,25 @@ local function shoot(gunName, ball)
                         speedY = speedY,
                         dead = false,
                         trail = {},
-                        speedMultiplier = 1
+                        speedMultiplier = 1,
+                        timeCreated = love.timer.getTime() -- Add creation timestamp
                     }
-                    table.insert(Balls, newBall)
-                    local ballSpawnTween = tween.new(0.2, newBall, {drawSizeMult = 0.5}, tween.outCubic)
+                    table.insert(Balls, bulletBall)
+                    local ballSpawnTween = tween.new(0.2, bulletBall, {drawSizeMult = 0.5}, tween.outCubic)
                     addTweenToUpdate(ballSpawnTween)
                     Timer.after(6, function()
-                        local ballDeathTween = tween.new(0.5, newBall, {drawSizeMult = 0}, tween.outCubic)
-                        addTweenToUpdate(ballDeathTween)
-                        Timer.after(0.5, function()
-                            for i, b in ipairs(Balls) do
-                                if b == newBall then
-                                    table.remove(Balls, i)
-                                    break
-                                end
-                            end 
-                        end)
+                        if not bulletBall.dead then  -- Only remove if ball hasn't been marked as dead
+                            local ballDeathTween = tween.new(0.5, bulletBall, {drawSizeMult = 0}, tween.outCubic)
+                            addTweenToUpdate(ballDeathTween)
+                            Timer.after(0.5, function()
+                                for i, b in ipairs(Balls) do
+                                    if b == bulletBall and not b.dead and love.timer.getTime() - b.timeCreated >= 6 then  -- Check creation time
+                                        table.remove(Balls, i)
+                                        break
+                                    end
+                                end 
+                            end)
+                        end
                     end)
                 end
             elseif gun.name == "Shotgun" then
@@ -719,7 +729,7 @@ local function shoot(gunName, ball)
                         stats = {damage = bulletDamage * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1)},
                         hasSplit = false,
                         hasTriggeredOnBulletHit = false,
-                        golden = (gun.name == "Golden Gun" or (Player.currentCore == "Phantom Core" or hasItem("Phantom Bullets"))),
+                        golden = math.random(1,100) <= getGoldenBulletChance(),
                     })
                 end
                 local chance = hasItem("Four Leafed Clover") and 20 or 10
@@ -792,7 +802,7 @@ local function shoot(gunName, ball)
                     stats = {damage = bulletDamage * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1)},
                     hasSplit = false,
                     hasTriggeredOnBulletHit = false,
-                    golden = ((Player.currentCore == "Phantom Core" or hasItem("Phantom Bullets"))),
+                    golden = math.random(1,100) <= getGoldenBulletChance(),
                 })
                 local chance = hasItem("Four Leafed Clover") and 20 or 10
                 if math.random(1,100) <= chance and hasItem("Sudden Mitosis") then
@@ -849,7 +859,7 @@ local function shoot(gunName, ball)
                     stats = {damage = bulletDamage * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1)},
                     hasSplit = false,
                     hasTriggeredOnBulletHit = false,
-                    golden = (gun.name == "Golden Gun" or (Player.currentCore == "Phantom Core" or hasItem("Phantom Bullets"))),
+                    golden = math.random(1,100) <= getGoldenBulletChance(),
                 })
                 local chance = hasItem("Four Leafed Clover") and 20 or 10
                 if math.random(1,100) <= chance and hasItem("Sudden Mitosis")then
@@ -982,7 +992,7 @@ local function turretShoot(turret)
             stats = {damage = bulletDamage * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1), type = "tech"},
             name = "Gun Turrets",
             type = "bullet",
-            golden = (Player.currentCore == "Phantom Core" or hasItem("Phantom Bullets"))
+            golden = math.random(1,100) <= getGoldenBulletChance(),
         }
         table.insert(bullets, bullet)
         local chance = hasItem("Four Leafed Clover") and 20 or 10
@@ -2394,6 +2404,7 @@ function Balls.adjustSpeed(ballName)
             local normalisedSpeedX, normalisedSpeedY = normalizeVector(ball.speedX, ball.speedY)
             -- Calculate total speed by adding all bonuses first, then multiply by base speed
             local totalSpeed = getStat(ballName, "speed")
+            print("Adjusting speed for " .. ballName .. ": totalSpeed = " .. totalSpeed)
             ball.speedX = totalSpeed * normalisedSpeedX
             ball.speedY = totalSpeed * normalisedSpeedY
         end
@@ -2685,7 +2696,7 @@ local function paddleCollisionCheck(ball, paddle)
                 stats = {damage = getStat(ball.name, "damage") * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1), type = "gun"},
                 name = "Paddle Defense System",
                 type = "bullet",
-                golden = (Player.currentCore == "Phantom Core" or hasItem("Phantom Bullets"))
+                golden = math.random(1,100) <= getGoldenBulletChance(),
             }
             table.insert(bullets, bullet)
             local chance = hasItem("Four Leafed Clover") and 20 or 10
@@ -2745,9 +2756,6 @@ local function paddleCollisionCheck(ball, paddle)
         for _, ballType in pairs(unlockedBallTypes) do
             if ballType.onPaddleBounce then
                 ballType.onPaddleBounce()
-                if Player.perks.paddleSquared then
-                    ballType.onPaddleBounce()
-                end
             end
         end
         if ball.onBounce then

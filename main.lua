@@ -2581,7 +2581,7 @@ function love.keypressed(key)
 
         -- add weapon
         if key == "7" then  
-            Balls.addBall("Shadow Ball")
+            Balls.addBall("Gun Ball Gun")
         end
 
         if key == "8" then
