@@ -25,7 +25,7 @@ function BackgroundShader.init()
 
     self.fadeInOutShader = love.graphics.newShader("fadeInOut", "Shaders/fadeInOut.frag");
 
-    self.activeShader = 4; -- index to the current shader
+    self.activeShader = 1; -- index to the current shader
     self.prevActiveShader = 0; -- index to the previous shader (for fading)
 
     self.fadePerun = 1; -- perun from prevActiveShader to activeShader

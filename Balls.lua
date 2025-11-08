@@ -1334,7 +1334,7 @@ local function cast(spellName, brick, forcedDamage)
         Timer.after(timeUntilNextCast, function()
             cast("Fireballs")
         end)
-        createCooldownVFX(cooldownValue)
+        createFireRateVFX(timeUntilNextCast)
     end
     if spellName == "Light Beam" then        
         local ammoValue = getStat("Light Beam", "ammo")
@@ -2473,20 +2473,38 @@ local function brickCollisionEffects(ball, brick)
     end
 end
 
-local function brickCollisionCheck(ball)
+local function brickCollisionCheck(ball, bricksToCheck)
     local hitAnyBrick = false
+    local bricksList = bricksToCheck or bricks
 
-    -- Special handling for phantom ball - needs to check ALL bricks
+    -- Special handling for phantom ball - needs to check nearby bricks only
     if ball.name == "Phantom Ball" then
         -- Initialize overlap tracking table if it doesn't exist
         ball.currentlyOverlappingBricks = ball.currentlyOverlappingBricks or {}
 
-        for _, brick in ipairs(bricks) do
-            if not brick.destroyed then
-                local wasOverlapping = ball.currentlyOverlappingBricks[brick.id] or false
-                local range = getStat(ball.name, "range") * 0.35
+        -- Cull checks by distance to avoid iterating all bricks
+        local rangeStat = getStat(ball.name, "range") or 1
+        -- convert stat to pixels (match draw aura scale: range * 12)
+        local maxCull = math.max(500, rangeStat * 24)
+        local maxCullSq = maxCull * maxCull
 
-                -- Check current overlap state
+        for _, brick in ipairs(bricksList) do
+            if not brick.destroyed then
+                -- distance cull using brick center
+                local bx = brick.x + (brick.width or 0) * 0.5
+                local by = brick.y + (brick.height or 0) * 0.5
+                local dx = bx - ball.x
+                local dy = by - ball.y
+                local distSq = dx * dx + dy * dy
+                if distSq > maxCullSq then
+                    goto continue_phantom
+                end
+
+                local key = brick.id or brick
+                local wasOverlapping = ball.currentlyOverlappingBricks[key] or false
+                local range = rangeStat * 0.35
+
+                -- Check current overlap state (AABB test with scaled radius)
                 local isOverlapping = ball.x + ball.radius * range > brick.x and 
                                     ball.x - ball.radius * range < brick.x + brick.width and
                                     ball.y + ball.radius * range > brick.y and 
@@ -2494,16 +2512,17 @@ local function brickCollisionCheck(ball)
 
                 if not wasOverlapping and isOverlapping then
                     -- Only deal damage on first overlap
-                    ball.currentlyOverlappingBricks[brick.id] = true
+                    ball.currentlyOverlappingBricks[key] = true
                     dealDamage(ball, brick)
                     hitAnyBrick = true
                 elseif wasOverlapping and not isOverlapping then
                     -- Clear the overlap state when no longer overlapping
-                    ball.currentlyOverlappingBricks[brick.id] = nil
+                    ball.currentlyOverlappingBricks[key] = nil
                 end
             end
+            ::continue_phantom::
         end
-        
+
         return hitAnyBrick
     end
     
@@ -2588,7 +2607,7 @@ local function brickCollisionCheck(ball)
 end
 
 local function paddleCollisionCheck(ball, paddle)
-    local effectiveRadius = ball.name == "Phantom Ball" and getStat(ball.name, "range") * 12 or ball.radius
+    local effectiveRadius = ball.name == "Phantom Ball" and getStat(ball.name, "range") * 8 or ball.radius
     if ball.x + effectiveRadius > paddle.x and ball.x - effectiveRadius < paddle.x + paddle.width and
        ball.y + effectiveRadius > paddle.y and ball.y - effectiveRadius < paddle.y + paddle.height  and 
        ((ball.y > paddle.y + paddle.height and ball.speedY < 0) or ball.y < paddle.y + paddle.height and ball.speedY > 0) then
@@ -2687,7 +2706,7 @@ local function wallCollisionCheck(ball)
     local leftWallPosition = usingMoneySystem and statsWidth or 0
     local rightWallPosition = screenWidth - (usingMoneySystem and statsWidth or 0)
     local wallHit = false
-    local effectiveRadius = ball.name == "Phantom Ball" and getStat(ball.name, "range") * 12 or ball.radius
+    local effectiveRadius = ball.name == "Phantom Ball" and getStat(ball.name, "range") * 8 or ball.radius
     if ball.x - effectiveRadius < leftWallPosition and ball.speedX < 0 then
         ball.speedX = -ball.speedX
         ball.x = leftWallPosition + effectiveRadius -- Ensure the ball is not stuck in the wall
@@ -3113,8 +3132,7 @@ local function updateDeadBullets(dt)
         bullet.y = bullet.y + bullet.speedY * dt
         
         -- Remove bullets that go off screen
-        if bullet.y < 0 or bullet.y > love.graphics.getHeight() or
-            bullet.x < 0 or bullet.x > screenWidth then
+        if bullet.y < 50 or bullet.x < -100 or bullet.x > screenWidth + 100 or bullet.y > math.max(paddle.y + 50, screenHeight + 50) then
             bullet.trailFade = 1
             bullet.deathTime = love.timer.getTime()
             table.insert(deadBullets, bullet)
@@ -3390,8 +3408,11 @@ local function accelerationBoost(length)
             Balls.adjustSpeed(weapon.name)
         end
     end
+    -- Update the end time to be later of current end time + length or now + length
+    goalAccelerationBoostEndTime = math.max(goalAccelerationBoostEndTime, gameTime) + length
     Timer.after(length, function() 
-        if gameTime < goalAccelerationBoostEndTime + 0.1 then
+        -- Only end acceleration if we've reached the final end time
+        if gameTime < goalAccelerationBoostEndTime then
             return
         end
         local outTween = tween.new(0.15, powerupPopup, {scale = 0}, tween.easing.inCirc)
@@ -3421,7 +3442,7 @@ function powerupPickup(powerup, length)
         Player.changeMoney(moneyGain);
         createMoneyPopup(moneyGain, paddle.x + paddle.width/2, paddle.y)
         if hasItem("Money Crazy") then
-            powerupPickup({type="acceleration"}, 2)
+            powerupPickup({type="acceleration"}, 2.5)
         end
     elseif powerup.type == "moneyBag" then
         local moneyGain = math.random(3,5)
@@ -4371,7 +4392,7 @@ function Balls:draw()
             end
 
             if ball.name == "Phantom Ball" then
-                local auraSize = getStat("Phantom Ball", "range") * 12
+                local auraSize = getStat("Phantom Ball", "range") * 16
                 -- Draw aura
                 love.graphics.setColor(0, 0, 1, 1)
                 drawImageCentered(auraImg, ball.x, ball.y, auraSize, auraSize)

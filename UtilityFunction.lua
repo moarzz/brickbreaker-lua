@@ -1533,9 +1533,9 @@ function damageAura(aura)
                 break
             end
         end
-        -- playSoundEffect(shieldBreakSFX, 0.7, 1, false)
+        playSoundEffect(shieldBlockSFX, 0.7, 1, false)
     else
-        -- playSoundEffect(shieldHitSFX, 0.5, 1, false)
+        playSoundEffect(shieldBlockSFX, 0.5, 1, false)
     end
 end
 

@@ -311,6 +311,7 @@ local function loadAssets()
     lightningSFX = love.audio.newSource("assets/SFX/lightning.mp3", "static")
     lightBeamSFX = love.audio.newSource("assets/SFX/lightBeam.mp3", "static")
     gainXpSFX = love.audio.newSource("assets/SFX/gainXp.mp3", "static")
+    shieldBlockSFX = love.audio.newSource("assets/SFX/shieldBlock.mp3", "static")
 
 
     -- load shaders
@@ -482,9 +483,9 @@ local function createFastBrickUpdate()
     if bossSpawned then 
         fastBrickTimer = gameTime - lastFastBrickCreateTime >= 0.75
     else
-        fastBrickTimer = gameTime - lastFastBrickCreateTime >= mapRangeClamped(Player.level, 4, 20, 11, 2.5)
+        fastBrickTimer = gameTime - lastFastBrickCreateTime >= mapRangeClamped(Player.level, 5, 20, 11, 2.5)
     end
-    if Player.level >= 4 and fastBrickTimer then
+    if Player.level >= 5 and fastBrickTimer then
         createFastBrick()
     end
 end
@@ -637,9 +638,10 @@ local function generateRow(brickCount, yPos)
                     if canHeal then
                         Timer.after(1.75 + math.random(1,175)/100, function() healSelf(healBrick) end)
                     end
-                elseif Player.level >= 12 and math.random(1, 250) <= math.floor(mapRangeClamped(Player.level, 12, 25, 1, 4)) then
+                elseif Player.level >= 12 and math.random(1, 250) <= math.floor(mapRangeClamped(Player.level, 12, 25, 1, 3)) then
                     -- make shield bricks
                     print("Generating shield brick")
+                    local shieldHealth = math.ceil(Player.level * 7 + math.random(-100,100)/100 * Player.level)
                     local shieldAura = {
                         type = "shield",
                         id = brickId,
@@ -652,8 +654,8 @@ local function generateRow(brickCount, yPos)
                         width = brickWidth,
                         height = brickHeight,
                         destroyed = false,
-                        health = Player.level * 4,
-                        maxHealth = Player.level * 4,
+                        health = shieldHealth,
+                        maxHealth = shieldHealth,
                         color = {1, 1, 1, 1},
                         hitLastFrame = false,
                         lastHitVfxTime = 0,
@@ -1018,7 +1020,7 @@ local function moveBricksDown(dt)
             if brick.type == "boss" then
                 brick.y = brick.y + brickSpeed.value * dt * speedMult * mapRangeClamped(brick.y, - boss.height * 1.5, -boss.height, 5, 0.5)
             elseif brick.type == "fast" then
-                brick.y = brick.y + dt * mapRangeClamped(brick.y, 0, screenHeight, 80, 25) * (brick.speedMult or 1)
+                brick.y = brick.y + dt * mapRangeClamped(brick.y, 0, screenHeight, 80, 20) * (brick.speedMult or 1)
             else
                 brick.y = brick.y + brickSpeed.value * dt * speedMult * (brick.speedMult or 1)
             end
@@ -1380,9 +1382,10 @@ local function memLeakCheck(dt)
         local fireballCount = getFireballCount() or 0
         local lightBeamCount = getLightBeamCount() or 0
         local arcaneMissileCount = getArcaneMissileCount() or 0
+        local shieldAurasAmount = shieldAuras and #shieldAuras or 0
 
         -- Add formatted info
-        logText = logText .. string.format("#Bricks: %d - #Brick Pieces: %d - #Brick Text Cache: %d - #fastBricks: %d - #shieldAuras: %d\n", brickAmount, brickPieceAmount, brickTextCacheAmount, #fastBricks, #shieldAuras)
+        logText = logText .. string.format("#Bricks: %d - #Brick Pieces: %d - #Brick Text Cache: %d - #fastBricks: %d - #shieldAuras: %d\n", brickAmount, brickPieceAmount, brickTextCacheAmount, #fastBricks, shieldAurasAmount)
         logText = logText .. string.format("#Tweens: %d - #Visual Values: %d\n", tweenAmount, visualValuesAmount)
         logText = logText .. string.format("#Damage Numbers: %d - #Text Objects: %d\n", damageNumbersAmount, textObjectsAmount)
         logText = logText .. string.format("#Animations: %d - #Sprite Batches: %d - #Quad Cache: %d\n", animationAmount, spriteBatchesAmount, quadCacheAmount)
@@ -1848,6 +1851,11 @@ function drawBricks()
         love.graphics.setColor(0,104/255,161/255,1)
         drawImageCentered(healAuraImg, aura.x + aura.width/2, aura.y + aura.height/2,aura.width * 6.5, aura.width * 6.5)
         setFont(45)
+        love.graphics.setColor(0,0,0,1)
+        love.graphics.print(tostring(aura.health), aura.x + aura.width/2 - getTextSize(aura.health) / 2 -1, aura.y + aura.height/2 - 21)
+        love.graphics.print(tostring(aura.health), aura.x + aura.width/2 - getTextSize(aura.health) / 2 -1, aura.y + aura.height/2 - 19)
+        love.graphics.print(tostring(aura.health), aura.x + aura.width/2 - getTextSize(aura.health) / 2 +1, aura.y + aura.height/2 - 21)
+        love.graphics.print(tostring(aura.health), aura.x + aura.width/2 - getTextSize(aura.health) / 2 +1, aura.y + aura.height/2 - 19)
         love.graphics.setColor(0,174/255,211/255,1)
         love.graphics.print(tostring(aura.health), aura.x + aura.width/2 - getTextSize(aura.health) / 2, aura.y + aura.height/2 - 20)
     end
@@ -2566,12 +2574,14 @@ function love.keypressed(key)
             powerupPickup(powerup)
         end
 
+        -- create powerup
         if key == "6" then
             createPowerupG("acceleration")
         end
 
+        -- add weapon
         if key == "7" then  
-            Balls.addBall("Shadow Ball")
+            Balls.addBall("Gun Ball Gun")
         end
 
         if key == "8" then
@@ -2699,10 +2709,20 @@ end
 
 function love.mousepressed(x, y, button)
     if button == 2 then
-        addRipplePoint()
-        -- Handle UI upgrade click
-        --[[if currentlyHoveredButton then
-            upgradesUI.queueUpgrade(currentlyHoveredButton)
-        end]]
+        if hoveringPlayerItem then
+            print("Selling item: " .. hoveringPlayerItem)
+            for i, item in ipairs(Player.items) do
+                if item.id == hoveringPlayerItem or item.name == hoveringPlayerItem then
+                    local sellValue = item.rarity == "common" and 4 or
+                                      item.rarity == "uncommon" and 8 or
+                                      item.rarity == "rare" and 12 or
+                                      item.rarity == "legendary" and 16 or 0
+                    Player.changeMoney(sellValue)
+                    playSoundEffect(selectSFX, 1, 0.8)
+                    table.remove(Player.items, i)
+                    break
+                end
+            end
+        end
     end
 end

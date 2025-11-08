@@ -1406,6 +1406,17 @@ local function drawItemShop()
     end
 end
 
+function deletePlayerItemById(itemId)
+    for i, item in ipairs(Player.items) do
+        if item.id == itemId then
+            table.remove(Player.items, i)
+            return
+        end
+    end
+    error("Warning: Tried to delete player item with id " .. tostring(itemId) .. " but it was not found.")
+end
+
+hoveringPlayerItem = nil
 local function drawPlayerItems()
     if Player.levelingUp and not Player.choosingUpgrade then
 
@@ -1490,6 +1501,7 @@ local function drawPlayerItems()
 
         -- Show description for hovered unique item
         if hoveredItem then
+            hoveringPlayerItem = hoveredItem.id or hoveredItem.name
             local item = hoveredItem
             local index = hoveredItemIndex
             local itemWidth = 140
@@ -1514,8 +1526,26 @@ local function drawPlayerItems()
 
                 fancyText:draw()
             end
+
+            -- draw sell text
+            local id = "fancyText, player.items, sell button" .. index .. item.name:gsub("%s+", "_") .. (item.id or "")
+            local sellValue = item.rarity == "common" and 4 or item.rarity == "uncommon" and 8 or item.rarity == "rare" and 12 or item.rarity == "legendary" and 16 or 0
+            if fancyTexts[id] then
+                fancyTexts[id]:draw()
+            else
+                local text = "Right click to sell for <color=money><font=big>" .. sellValue .. "$"
+                local fancyText = FancyText.new(text, itemX + 20, itemY + itemHeight + 70, (uiBigWindowImg:getWidth() - 25)/2, 13, "center", item.descriptionPointers.default, item.descriptionPointers)
+                fancyTexts[id] = fancyText
+
+                fancyText:draw()
+            end
+        else
+            hoveringPlayerItem = nil
         end
+    else
+        hoveringPlayerItem = nil
     end
+    
 end
 
 playerMoneyBoost = {alpha = 0}
