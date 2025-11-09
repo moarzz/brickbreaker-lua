@@ -955,6 +955,11 @@ function createFireRateVFX(duration)
     end)
 end
 
+function resetAllCooldownVFXs()
+    cooldownVFXs = {}
+    fireRateVFXs = {}
+end
+
 function updateCooldownTimers(dt)
     if Player.levelingUp then return false end
 

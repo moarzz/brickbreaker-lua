@@ -302,12 +302,13 @@ Player.availableCores = {
         name = "Loan Core",
         description = "gain 10$ instead of 6$ on level up. There are no items that give money in the shop",
         price = 1000,
+        startingItem = "Magnetic Ball"
     },
     {
         name = "Size Core",
         description = "gain 8% paddle size per level",
         price = 1250,
-        startingItem = "ball",
+        startingItem = "Gun Ball",
     },
     --[[{
         name = "Farm Core",

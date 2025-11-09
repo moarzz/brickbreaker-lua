@@ -1588,7 +1588,7 @@ local function ballListInit()
                 range = 3
             },
         },
-        ["Phantom Ball"] = {
+        --[[["Phantom Ball"] = {
             name = "Phantom Ball",
             type = "ball",
             x = screenWidth / 2,
@@ -1605,7 +1605,7 @@ local function ballListInit()
                 damage = 1,
                 range = 3
             },
-        },
+        },]]
         ["Magnetic Ball"] = {
             name = "Magnetic Ball",
             type = "ball",
@@ -1948,7 +1948,7 @@ local function ballListInit()
                 damage = 1,
             },
         },
-        --[[["Shadow Ball"] = {
+        ["Shadow Ball"] = {
             name = "Shadow Ball",
             type = "spell",
             x = screenWidth / 2,
@@ -1970,7 +1970,7 @@ local function ballListInit()
                 range = 2,
                 fireRate = 3,
             }
-        },]]
+        },
         ["Fireballs"] = {
             name = "Fireballs",
             type = "spell",
@@ -2116,6 +2116,9 @@ function Balls.initialize()
     if Player.currentCore == "Loan Core" then
         Player.setMoney(25)
     end
+    if Player.currentCore == "Fast Study Core" then
+        Player.xpGainMult = 1.05
+    end
     Player.permanentUpgrades = {}
     inGame = true
     deathTimerOver = false
@@ -2124,6 +2127,7 @@ function Balls.initialize()
     ballCategories = {}
     ballList = {}   
     unlockedBallTypes = {}
+    resetAllCooldownVFXs()
     Player.xp = 0
     nextBallPrice = 100
     ballListInit()
