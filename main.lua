@@ -1457,19 +1457,13 @@ function drawMenu()
     local startY = screenHeight / 2
     
     -- Draw title
-    setFont(65)
-    local title = "BRICK BREAKER"
-    local titleWidth = love.graphics.getFont():getWidth(title)
-    love.graphics.setColor(1, 1, 1, 1)
-    -- love.graphics.print(title, screenWidth/2 - titleWidth/2, startY - 260)
-    love.graphics.draw(titleImg, screenWidth/2 - titleImg:getWidth()*0.8/2, startY - 500, 0, 0.8, 0.8)
+    love.graphics.draw(titleImg, screenWidth/2 - titleImg:getWidth()*0.65/2, startY - 500, 0, 0.65, 0.65)
 
     -- Play button
     local buttonID = generateNextButtonID()
     love.graphics.draw(uiBigWindowImg, screenWidth/2 - uiBigWindowImg:getWidth()/2, startY - 25)
     setFont(50)
     love.graphics.print("Play", screenWidth/2 - getTextSize("Play")/2, startY + 25)
-    --suit.Label("Play", {id=buttonID}, screenWidth/2 - buttonWidth * 0.35, startY, buttonWidth*0.7, buttonHeight*1.5)
     -- logic for choosing paddle core
     local paddleCores = {}
     for _, core in ipairs(Player.availableCores) do
