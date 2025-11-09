@@ -3439,16 +3439,17 @@ local function spellsUpdate(dt)
             end
             -- Fireball collision with bricks
             for _, brick in ipairs(bricks) do
+                
                 if not brick.destroyed and brick.health > 0 then
                     if fireball.x + fireball.radius > brick.x and fireball.x - fireball.radius < brick.x + brick.width and
                        fireball.y + fireball.radius > brick.y and fireball.y - fireball.radius < brick.y + brick.height then
                         -- Deal damage and create explosion effect
                         dealDamage(unlockedBallTypes["Fireballs"], brick)
-                        local scale = getStat("Fireballs", "range") * 0.5
+                        local scale = getStat("Fireballs", "range") * 0.325
                         createSpriteAnimation(fireball.x, fireball.y, scale, explosionVFX, 512, 512, 0.01, 5)
                         playSoundEffect(explosionSFX, 0.5, 1, false, true)
                         -- Area damage to nearby bricks
-                        local area = scale * 24
+                        local area = scale * 50
                         local bricksTouchingCircle = getBricksInCircle(fireball.x, fireball.y, area)
                         for _, touchingBrick in ipairs(bricksTouchingCircle) do
                             if touchingBrick and touchingBrick ~= brick and touchingBrick.health > 0 then
