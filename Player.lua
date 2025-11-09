@@ -324,7 +324,7 @@ Player.availableCores = {
 }
 
 Player.coreDescriptions = {
-    ["Amount Core"] = "+1 amount for every 5 player level",
+    ["Amount Core"] = "gain +1 amount for every 5 player level",
     ["Spray and Pray Core"] = "gain +1 fireRate for every 5 Player level",
     ["Fast Study Core"] = "gain +5% experience gain per Player Level",
     ["Hacker Core"] = "All Weapons start with an upgradePrice of 0",

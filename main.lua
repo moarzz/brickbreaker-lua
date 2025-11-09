@@ -281,6 +281,7 @@ local function loadAssets()
     uiBigWindowImg = love.graphics.newImage("assets/sprites/UI/windowTall.png")
     leftArrowImg = love.graphics.newImage("assets/sprites/UI/leftArrow.png")
     rightArrowImg = love.graphics.newImage("assets/sprites/UI/rightArrow.png")
+    titleImg = love.graphics.newImage("assets/sprites/BreakLoop_Title.png")
     --Icons
     iconsImg = {
         amount = love.graphics.newImage("assets/sprites/UI/icons/New/amount.png"),
@@ -1460,7 +1461,8 @@ function drawMenu()
     local title = "BRICK BREAKER"
     local titleWidth = love.graphics.getFont():getWidth(title)
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.print(title, screenWidth/2 - titleWidth/2, startY - 260)
+    -- love.graphics.print(title, screenWidth/2 - titleWidth/2, startY - 260)
+    love.graphics.draw(titleImg, screenWidth/2 - titleImg:getWidth()*0.8/2, startY - 500, 0, 0.8, 0.8)
 
     -- Play button
     local buttonID = generateNextButtonID()
