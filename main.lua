@@ -272,13 +272,15 @@ local function loadAssets()
     tutorialScreen2Img = love.graphics.newImage("assets/sprites/firstUpgradeShop/screen2.png")
     tutorialScreen3Img = love.graphics.newImage("assets/sprites/firstUpgradeShop/screen3.png")
     tutorialScreen4Img = love.graphics.newImage("assets/sprites/firstUpgradeShop/screen4.png")
+    lightBeamImg = love.graphics.newImage("assets/sprites/lightBeam.png")
 
     -- UI
     uiLabelImg = love.graphics.newImage("assets/sprites/UI/label.png")
     uiSmallWindowImg = love.graphics.newImage("assets/sprites/UI/windowSmall.png")
     uiWindowImg = love.graphics.newImage("assets/sprites/UI/window.png")
     uiBigWindowImg = love.graphics.newImage("assets/sprites/UI/windowTall.png")
-    lightBeamImg = love.graphics.newImage("assets/sprites/lightBeam.png")
+    leftArrowImg = love.graphics.newImage("assets/sprites/UI/leftArrow.png")
+    rightArrowImg = love.graphics.newImage("assets/sprites/UI/rightArrow.png")
     --Icons
     iconsImg = {
         amount = love.graphics.newImage("assets/sprites/UI/icons/New/amount.png"),
@@ -847,9 +849,6 @@ function love.load()
 
     dress = suit.new()
     loadAssets() -- Load assets
-
-    KeywordSystem = KeySys.new()
-    KeywordSystem:loadKeywordImages()
 
     -- start menu music
     changeMusic("menu")
@@ -1450,22 +1449,25 @@ function getCurrentSelectedCore()
     end 
     return presetPaddleCores[currentSelectedCoreID]
 end
-function newDrawMenu()
+
+function drawMenu()
     -- Calculate center positions
     local centerX = screenWidth / 2 - buttonWidth / 2
-    local startY = screenHeight / 2 - (buttonHeight * 3 + buttonSpacing * 2) / 2
+    local startY = screenHeight / 2
     
     -- Draw title
-    setFont(48)
+    setFont(65)
     local title = "BRICK BREAKER"
     local titleWidth = love.graphics.getFont():getWidth(title)
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.print(title, screenWidth/2 - titleWidth/2, startY - 100)
+    love.graphics.print(title, screenWidth/2 - titleWidth/2, startY - 260)
 
     -- Play button
     local buttonID = generateNextButtonID()
     love.graphics.draw(uiBigWindowImg, screenWidth/2 - uiBigWindowImg:getWidth()/2, startY - 25)
-    suit.Label("Play", {id=buttonID}, screenWidth/2 - buttonWidth * 0.35, startY, buttonWidth*0.7, buttonHeight*1.5)
+    setFont(50)
+    love.graphics.print("Play", screenWidth/2 - getTextSize("Play")/2, startY + 25)
+    --suit.Label("Play", {id=buttonID}, screenWidth/2 - buttonWidth * 0.35, startY, buttonWidth*0.7, buttonHeight*1.5)
     -- logic for choosing paddle core
     local paddleCores = {}
     for _, core in ipairs(Player.availableCores) do
@@ -1474,21 +1476,34 @@ function newDrawMenu()
             table.insert(paddleCores, coreName)
         end
     end 
-    local btnY = startY + 110
+    local btnY = startY + 125
     setFont(36)
     --suit.Label("Choose your paddle core", {align = "center"}, screenWidth / 2 - getTextSize("Choose your") / 2, btnY - 100)
     local currentSelectedCore = paddleCores[currentSelectedCoreID]
     if not currentSelectedCoreID then currentSelectedCoreID = 1 end
     if not currentSelectedCore then currentSelectedCore = (paddleCores[currentSelectedCoreID] and paddleCores[currentSelectedCoreID].name or "Bouncy Core") end
-    local btn2 = suit.Label(currentSelectedCore, centerX, btnY, buttonWidth, buttonHeight)
+    setFont(28)
+    love.graphics.print(currentSelectedCore, screenWidth/2 - getTextSize(currentSelectedCore) / 2, btnY)
+    -- local btn2 = suit.Label(currentSelectedCore, centerX, btnY, buttonWidth, buttonHeight)
     
     setFont(28)
     local core = paddleCores[currentSelectedCoreID]
 
-    love.graphics.draw(uiWindowImg, centerX - 245, btnY, 0, 200 / uiWindowImg:getWidth(), 100 / uiWindowImg:getHeight())
-    local btn2Before = suit.Button("Previous Core", {id = "back_core", color = invisButtonColor, valign = "center"}, centerX - 235, btnY, 190, 100)
-    love.graphics.draw(uiWindowImg, centerX + buttonWidth + 40, btnY, 0, 200 / uiWindowImg:getWidth(), 100 / uiWindowImg:getHeight())
-    local btn2Next = suit.Button("Next Core", {id = "next_core", color = invisButtonColor}, centerX + buttonWidth + 50, btnY, 180, 100)
+    -- previous core button
+    --love.graphics.draw(uiWindowImg, centerX - 140, btnY, 0, 100 / uiWindowImg:getWidth(), 100 / uiWindowImg:getHeight())
+    love.graphics.setColor(0.75,0.75,0.75,1)
+    love.graphics.draw(leftArrowImg, centerX - 140, btnY, 0, 100 / leftArrowImg:getWidth(), 100 / leftArrowImg:getHeight())
+    love.graphics.setColor(1,1,1,1)
+    local btn2Before = suit.Button("", {id = "back_core", color = invisButtonColor, valign = "center"}, centerX - 130, btnY, 100, 100)
+
+    -- next core button
+    --love.graphics.draw(uiWindowImg, centerX + buttonWidth + 40, btnY, 0, 100 / uiWindowImg:getWidth(), 100 / uiWindowImg:getHeight())
+    love.graphics.setColor(0.75,0.75,0.75,1)
+    love.graphics.draw(rightArrowImg, centerX + buttonWidth + 40, btnY, 0, 100 / rightArrowImg:getWidth(), 100 / rightArrowImg:getHeight())
+    love.graphics.setColor(1,1,1,1)
+    local btn2Next = suit.Button("", {id = "next_core", color = invisButtonColor}, centerX + buttonWidth + 35, btnY, 100, 100)
+    
+    -- buttons hit logic
     if btn2Next.hit then
         playSoundEffect(selectSFX, 1, 0.8)
         currentSelectedCoreID = currentSelectedCoreID + 1
@@ -1507,6 +1522,7 @@ function newDrawMenu()
         core = paddleCores[currentSelectedCoreID]
         currentSelectedCore = core.name
     end
+
     local btnY = btnY + buttonHeight + 80
     local coreDescription = Player.coreDescriptions[core] and Player.coreDescriptions[core] or "No description available"
     suit.Label(coreDescription, {align = "center"}, screenWidth / 2 - 225, btnY - 60, 450, 100)
@@ -1519,7 +1535,9 @@ function newDrawMenu()
             break
         end
     end
-    suit.Label(startingItem, {align = "center"}, screenWidth / 2 - 225, btnY + 60, 450, 100)
+    love.graphics.print(startingItem, screenWidth/2 - getTextSize(startingItem) / 2, playBtnY - 65)
+    -- suit.Label(startingItem, {align = "center"}, screenWidth / 2 - 225, btnY + 60, 450, 100)
+    buttonID = generateNextButtonID()
     if suit.Button("", {id=buttonID, color = invisButtonColor}, screenWidth/2 - uiBigWindowImg:getWidth()/2, startY - 25, uiBigWindowImg:getWidth(), uiBigWindowImg:getHeight()).hit then
         playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.START_SELECT -- Go to selection screen
@@ -1545,81 +1563,30 @@ function newDrawMenu()
     end
 
     -- Settings button
-    if suit.Button("Settings", {id="menu settings buttons"}, centerX - screenWidth/4 - 80 + buttonWidth * 0.05, startY + (buttonHeight + buttonSpacing) * 1.5, buttonWidth * 0.9, buttonHeight).hit then
+    love.graphics.draw(uiWindowImg, centerX - screenWidth/4 - 135 + buttonWidth * 0.15,  startY - 40, 0, buttonWidth * 0.7/uiWindowImg:getWidth(), buttonHeight * 1.5/uiWindowImg:getHeight())
+    if suit.Button("Settings", {id="menu settings buttons", valign = "middle", color = invisButtonColor}, centerX - screenWidth/4 - 135 + buttonWidth * 0.15, startY - 40, buttonWidth * 0.7, buttonHeight * 1.5).hit then
         playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.SETTINGS
         love.mouse.setVisible(true)
     end
 
     -- Upgrades button
-    if suit.Button("Shop", {id="menu shop button", valign = "middle"}, centerX + screenWidth/4 + 80 + buttonWidth * 0.15, startY + (buttonHeight + buttonSpacing) * 1.5 - buttonHeight * 0.25, buttonWidth * 0.7, buttonHeight * 1.5).hit then
+    love.graphics.draw(uiWindowImg, centerX + screenWidth/4 + 135 + buttonWidth * 0.15, startY - 40, 0, buttonWidth * 0.7/uiWindowImg:getWidth(), buttonHeight * 1.5/uiWindowImg:getHeight())
+    if suit.Button("Shop", {id="menu shop button", valign = "middle", color = invisButtonColor}, centerX + screenWidth/4 + 135 + buttonWidth * 0.15, startY - 40, buttonWidth * 0.7, buttonHeight * 1.5).hit then
         playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.UPGRADES
         love.mouse.setVisible(true)
         loadGameData() -- Load game data when entering upgrades screen
     end
 
-    -- Wishlist button
+    --[[ Wishlist button
     if suit.Button("Wishlist on steam!", {id="wishlist button", align = "center", valign = "middle"}, centerX + buttonWidth * 0.05, startY + (buttonHeight + buttonSpacing) * 3.25, buttonWidth, buttonHeight * 2).hit then
         playSoundEffect(selectSFX, 1, 0.8)
         openBrowser("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
-    end
+    end]]
 
     -- draw highscore
     suit.Label("Highscore : " .. formatNumber(Player.highScore), {align = "center"}, 50, 50)
-    local fastestTime = Player.fastestTime or 1000000
-    if fastestTime > 10000 then
-        return
-    end
-    local minutes = math.floor(fastestTime / 60)
-    local seconds = math.floor(fastestTime % 60)
-    local fastestTimeString = string.format("%02d:%02d", minutes, seconds)
-    -- suit.Label(fastestTimeString, {align = "center"}, 100, 150, 200, 30) -- Added position and size parameters
-end
-function drawMenu()
-    -- Calculate center positions
-    local centerX = screenWidth / 2 - buttonWidth / 2
-    local startY = screenHeight / 2 - (buttonHeight * 3 + buttonSpacing * 2) / 2
-    
-    -- Draw title
-    setFont(48)
-    local title = "BRICK BREAKER"
-    local titleWidth = love.graphics.getFont():getWidth(title)
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.print(title, screenWidth/2 - titleWidth/2, startY - 100)
-
-    -- Play button
-    local buttonID = generateNextButtonID()
-    if suit.Button("Play", {id=buttonID}, centerX, startY, buttonWidth, buttonHeight).hit then
-        playSoundEffect(selectSFX, 1, 0.8)
-        currentGameState = GameState.START_SELECT -- Go to selection screen
-        love.mouse.setVisible(true)
-        -- Crooky:giveInfo("game", "startSelect")
-    end
-
-    -- Settings button
-    if suit.Button("Settings", {id="menu settings buttons"}, centerX, startY + (buttonHeight + buttonSpacing), buttonWidth, buttonHeight).hit then
-        playSoundEffect(selectSFX, 1, 0.8)
-        currentGameState = GameState.SETTINGS
-        love.mouse.setVisible(true)
-    end
-
-    -- Upgrades button
-    if suit.Button("Shop", {id="menu shop button"}, centerX, startY + (buttonHeight + buttonSpacing) * 2, buttonWidth, buttonHeight).hit then
-        playSoundEffect(selectSFX, 1, 0.8)
-        currentGameState = GameState.UPGRADES
-        love.mouse.setVisible(true)
-        loadGameData() -- Load game data when entering upgrades screen
-    end
-
-    -- Wishlist button
-    if suit.Button("Wishlist on steam!", {id="wishlist button", align = "center", valign = "middle"}, centerX, startY + (buttonHeight + buttonSpacing) * 3.25, buttonWidth, buttonHeight * 2).hit then
-        playSoundEffect(selectSFX, 1, 0.8)
-        openBrowser("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
-    end
-
-    -- draw highscore
-    suit.Label("Highscore : " .. formatNumber(Player.highScore), {align = "center"}, 100, 100)
     local fastestTime = Player.fastestTime or 1000000
     if fastestTime > 10000 then
         return
@@ -2291,7 +2258,7 @@ local function fullDraw()
     if currentGameState == GameState.MENU then
         
         -- Draw menu
-        newDrawMenu()
+        drawMenu()
         -- Draw SUIT UI elements
         suit.draw()
         if not firstRunCompleted and false then
@@ -2468,6 +2435,7 @@ local function fullDraw()
 
     -- Draw the UI elements using Suit
     suit.draw()
+    dress:draw()    -- Draw tooltip last (on top of everything)
 
     if (not firstRunCompleted) and currentGameState == GameState.PLAYING and false then
         Crooky:draw()
@@ -2489,7 +2457,6 @@ local function fullDraw()
     if Player.choosingUpgrade then
         drawLevelUpShop()
     end
-    dress:draw()    -- Draw tooltip last (on top of everything)
     KeywordSystem:drawTooltip()
     confetti:draw()
 
