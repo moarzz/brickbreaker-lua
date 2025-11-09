@@ -1552,7 +1552,7 @@ local function ballListInit()
                 speed = 150,
                 damage = 1,
             },
-            canBuy = function() return false end,
+            canBuy = function() return true end,
         },
         --[[["Sword"] = {
             name = "Sword",

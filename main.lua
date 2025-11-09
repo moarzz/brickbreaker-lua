@@ -26,7 +26,7 @@ shaders = require("shaders") -- shader logic
 suit = require("Libraries.Suit") -- UI library
 tween = require("Libraries.tween") -- tweening library
 VFX = require("VFX") -- VFX library
-local KeySys = require("KeywordSystem") -- Keyword system for text parsing
+local KeywordSystem = require("KeywordSystem") -- Keyword system for text parsing
 local Explosion = require("particleSystems.explosion") -- Explosion particle system
 BackgroundShader = require("backgroundShader");
 TextBatching = require("textBatching");
@@ -1215,7 +1215,7 @@ local function gameFixedUpdate(dt)
     
     if currentGameState == GameState.PLAYING then
         
-        KeywordSystem:update() -- Update the keyword system
+        -- KeywordSystem:update() -- Update the keyword system
 
         if currentScreenShakeIntensity > 0 then
             screenShakeIntensityDeprecation(dt)
@@ -1525,7 +1525,7 @@ function drawMenu()
 
     local btnY = btnY + buttonHeight + 80
     local coreDescription = Player.coreDescriptions[core] and Player.coreDescriptions[core] or "No description available"
-    suit.Label(coreDescription, {align = "center"}, screenWidth / 2 - 225, btnY - 60, 450, 100)
+    suit.Label(coreDescription, {align = "center"}, screenWidth / 2 - 210, btnY - 60, 420, 100)
     local playBtnY = btnY + buttonHeight + 100
     setFont(35)
     local startingItem = "ball"
@@ -1556,6 +1556,7 @@ function drawMenu()
         Player.bricksDestroyed = 0 -- Reset bricks destroyed count
         if startingItem ~= "Nothing" and Player.currentCore ~= "Speed Core" then
             Balls.addBall(startingItem)
+            print("Adding weapon : " .. startingItem)
         end
 
         -- crooky logic
@@ -2328,7 +2329,7 @@ local function fullDraw()
     end
 
     -- reset keyword system tooltip each frame
-    KeywordSystem:resetTooltip()
+    -- KeywordSystem:resetTooltip()
 
     -- First render the game to the game canvas
     WindowCorrector.startDrawingToCanvas(gameCanvas);
@@ -2435,7 +2436,7 @@ local function fullDraw()
 
     -- Draw the UI elements using Suit
     suit.draw()
-    dress:draw()    -- Draw tooltip last (on top of everything)
+    
 
     if (not firstRunCompleted) and currentGameState == GameState.PLAYING and false then
         Crooky:draw()
@@ -2457,7 +2458,9 @@ local function fullDraw()
     if Player.choosingUpgrade then
         drawLevelUpShop()
     end
-    KeywordSystem:drawTooltip()
+
+    dress:draw()    -- Draw tooltip last (on top of everything)
+    -- KeywordSystem:drawTooltip()
     confetti:draw()
 
     -- draw borders for when the game is in windowed mode

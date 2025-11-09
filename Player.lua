@@ -277,7 +277,7 @@ Player.availableCores = {
         name = "Amount Core",
         description = "+1 amount for every 5 player level",
         price = 0,
-        startingItem = "ball",
+        startingItem = "Ball",
     },
     
     {
