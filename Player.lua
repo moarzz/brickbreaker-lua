@@ -518,6 +518,7 @@ function resetXpStuff()
     cumulatedXp = 0
 end
 function Player.gain(amount)
+    amount = math.floor(amount)
     amount = amount * Player.xpGainMult
     Player.score = Player.score + amount
     Player.xp = Player.xp + amount -- XP follows score

@@ -925,6 +925,9 @@ local function shoot(gunName, ball)
                 gun.currentAmmo = getStat(gun.name, "ammo")
 
                 local cooldownValue = getStat(gun.name, "cooldown") * 0.5
+                if gun.name == "Minigun" then
+                    cooldownValue = cooldownValue * 2
+                end
                 if accelerationOn then
                     cooldownValue = cooldownValue * 0.5
                 end
@@ -1622,7 +1625,7 @@ local function ballListInit()
                 speed = 150,
                 damage = 1,
             },
-            attractionStrength = 500
+            attractionStrength = 400
         },
         ["Lightning Ball"] = {
             name = "Lightning Ball",
@@ -3820,8 +3823,10 @@ function Balls.update(dt, paddle, bricks)
                 if ball.cachedNearestBrick then
                     local nearestBrick = ball.cachedNearestBrick
                     local dist = math.sqrt(ball.cachedNearestDistSq)
-                    
-                    local attractionStrength = ball.attractionStrength or 425
+                    local attractionStrength = ball.attractionStrength or 200
+                    if hasItem("Electromagnetic Alignment") and (not ball.name == "Magnetic Ball") then
+                        attractionStrength = math.max(200 * itemCount("Electromagnetic Alignment"), 200)
+                    end
                     local dx = (nearestBrick.x + nearestBrick.width/2) - ball.x
                     local dy = (nearestBrick.y + nearestBrick.height/2) - ball.y
                     -- Recalculate dist for current frame (brick might have moved slightly)
@@ -4012,7 +4017,8 @@ function Balls.update(dt, paddle, bricks)
                         if hasItem("Phantom Bullets") then
                             bullet.stats.damage = bullet.stats.damage - 2
                         end
-                        if (not kill and (not bullet.golden)) or (hasItem("Phantom Bullets") and bullet.stats.damage <= 0) then
+                        if ((not kill) and (not (bullet.golden or bullet.name == "Golden Gun"))) or bullet.stats.damage <= 0 then
+                            print("KILLING BULLET")
                             shouldRemoveBullet = true
                             break -- Exit brick loop once we know bullet should be removed
                         end

@@ -7,8 +7,11 @@ brainEnhancementBracelet.imageReference = "assets/sprites/UI/ItemIcons/Brain-Enh
 
 function brainEnhancementBracelet.new()
     local instance = setmetatable({}, brainEnhancementBracelet):init();
-    Player.xpGainMult = Player.xpGainMult + 0.18
     return instance;
+end
+
+function brainEnhancementBracelet:purchase()
+    Player.xpGainMult = Player.xpGainMult + 0.18
 end
 
 return brainEnhancementBracelet;

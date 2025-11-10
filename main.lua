@@ -452,7 +452,7 @@ function fastBricksReset()
     lastFastBrickCreateTime = 0
 end
 local function createFastBrick()
-    local brickHealth = math.max(math.floor(currentRowPopulation/45), 1)
+    local brickHealth = math.max(math.floor(currentRowPopulation/35), 1)
     local brickColor = getBrickColor(brickHealth)
     local fastBrick ={
         type = "fast",
@@ -466,7 +466,7 @@ local function createFastBrick()
         width = brickWidth,
         height = brickHeight,
         destroyed = false,
-        health = math.ceil(currentRowPopulation/35),
+        health = brickHealth,
         maxHealth = brickHealth,
         color = {brickColor[1], brickColor[2], brickColor[3], 1},
         hitLastFrame = false,
@@ -491,7 +491,7 @@ local function createFastBrickUpdate()
     if bossSpawned then 
         fastBrickTimer = gameTime - lastFastBrickCreateTime >= 2
     else
-        fastBrickTimer = gameTime - lastFastBrickCreateTime >= mapRangeClamped(Player.level, 5, 20, 11, 2.5)
+        fastBrickTimer = gameTime - lastFastBrickCreateTime >= mapRangeClamped(Player.level, 5, 20, 8, 2)
     end
     if Player.level >= 5 and fastBrickTimer then
         createFastBrick()
@@ -684,7 +684,7 @@ local function generateRow(brickCount, yPos)
                         height = brickHeight,
                         destroyed = false,
                         health = math.ceil(brickHealth/2) * 4,
-                        maxHealth = math.ceil(brickHealth/2),
+                        maxHealth = math.ceil(brickHealth/2) * 4,
                         color = {1, 1, 1, 1},
                         hitLastFrame = false,
                         lastHitVfxTime = 0,
@@ -1023,6 +1023,12 @@ local function moveBricksDown(dt)
             if brick.type == "boss" then
                 brick.y = brick.y + brickSpeed.value * dt * speedMult * mapRangeClamped(brick.y, - boss.height * 1.5, -boss.height, 5, 0.5)
             elseif brick.type == "fast" then
+                local fastSpeed
+                if brick.y <= screenHeight - 300 then     
+                    fastSpeed = mapRangeClamped(brick.y, 0, screenHeight/2, 100, 50)
+                else
+                    fastSpeed = mapRangeClamped(brick.y, screenHeight/2, screenHeight, 50, 30)
+                end
                 brick.y = brick.y + dt * mapRangeClamped(brick.y, 0, screenHeight, 80, 20) * (brick.speedMult or 1)
             else
                 brick.y = brick.y + brickSpeed.value * dt * speedMult * (brick.speedMult or 1)
@@ -2699,7 +2705,7 @@ function love.keypressed(key)
 
         -- add weapon
         if key == "7" then  
-            Balls.addBall("Fireballs")
+            Balls.addBall("Golden Gun")
         end
 
         if key == "8" then

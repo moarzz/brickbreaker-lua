@@ -5,7 +5,7 @@ ElectromagneticAlignment.description = "Balls gain a small homing effect towards
 ElectromagneticAlignment.rarity = "uncommon";
 -- ElectromagneticAlignment.imageReference = "assets/sprites/UI/ItemIcons/Homing-Bullets.png";
 
-ElectromagneticAlignment.unique = true; -- does smthn ig
+-- ElectromagneticAlignment.unique = true; -- does smthn ig
 
 function ElectromagneticAlignment.new()
     local instance = setmetatable({}, ElectromagneticAlignment):init();
