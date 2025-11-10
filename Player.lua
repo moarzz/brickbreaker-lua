@@ -290,13 +290,13 @@ Player.availableCores = {
         name = "Fast Study Core",
         description = "gain +5% experience gain per Player Level",
         price = 500,
-        startingItem = "Shadow Ball"
+        startingItem = "Rocket Launcher"
     },
     {
         name = "Hacker Core",
         description = "All Weapons start with an upgradePrice of 0",
         price = 750,
-        startingItem = "Laser Beam"
+        startingItem = "Shotgun"
     },
     {
         name = "Loan Core",
