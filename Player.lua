@@ -290,7 +290,7 @@ Player.availableCores = {
         name = "Fast Study Core",
         description = "gain +5% experience gain per Player Level",
         price = 500,
-        startingItem = "Rocket Launcher"
+        startingItem = "Magnetic Ball"
     },
     {
         name = "Hacker Core",
@@ -302,7 +302,7 @@ Player.availableCores = {
         name = "Loan Core",
         description = "gain 10$ instead of 6$ on level up. There are no items that give money in the shop",
         price = 1000,
-        startingItem = "Magnetic Ball"
+        startingItem = "Rocket Launcher"
     },
     {
         name = "Size Core",
@@ -422,11 +422,8 @@ function Player.levelUp()
     Player.level = Player.level + 1
 
     -- should player unlock new weapon?
-    if (Player.level) % 4 == 0 and tableLength(Balls.getUnlockedBallTypes()) < 6 then
-        if usingMoneySystem then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.2)
-        end
-        Player.newWeaponLevelRequirement = Player.newWeaponLevelRequirement + 5
+    local weaponAmount = tableLength(Balls.getUnlockedBallTypes())
+    if weaponAmount < math.ceil((Player.level + 1) / 4) and weaponAmount < 6 then
         setLevelUpShop(true) -- Set the level up shop with ball unlockedBallTypes
         Player.choosingUpgrade = true -- Set the flag to indicate leveling up
     else
@@ -447,9 +444,9 @@ function Player.levelUp()
         elseif Player.level < 10 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.65)
         elseif Player.level < 15 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.5)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.525)
         elseif Player.level < 20 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.4)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.45)
         elseif Player.level < 25 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.3)
         elseif Player.level < 30 then

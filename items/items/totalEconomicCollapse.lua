@@ -3,6 +3,7 @@ TotalEconomicCollapse.__index = TotalEconomicCollapse;
 TotalEconomicCollapse.name = "Total Economic Collapse";
 TotalEconomicCollapse.description = "When you buy this, set the upgrade price of all weapons to 0";
 TotalEconomicCollapse.rarity = "legendary";
+TotalEconomicCollapse.imageReference = "assets/sprites/UI/ItemIcons/Total-Economic-Collapse.png";
 
 TotalEconomicCollapse.consumable = true; -- does smthn ig
 

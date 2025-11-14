@@ -3,6 +3,7 @@ InsiderTrading.__index = InsiderTrading;
 InsiderTrading.name = "Insider Trading";
 InsiderTrading.description = "+<color=money>3$<color=white> interest per level";
 InsiderTrading.rarity = "rare";
+InsiderTrading.imageReference = "assets/sprites/UI/ItemIcons/Insider-Trading.png";
 
 InsiderTrading.consumable = true; -- does smthn ig
 

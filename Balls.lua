@@ -355,7 +355,11 @@ local function brickDestroyed(brick)
     local chanceMult = 1
     if hasItem("Scavenger") then
         for i=1, itemCount("Scavenger") do
-            chanceMult = chanceMult + 0.40
+            if hasItem("Four Leafed Clover") then
+                chanceMult = chanceMult + 0.8
+            else
+                chanceMult = chanceMult + 0.4
+            end
         end
     end
     if math.random(1,4000)/chanceMult <= currentMoneyDropChance then
@@ -1650,7 +1654,7 @@ local function ballListInit()
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
-            speedMult = 1,
+            speedMult = 0.9,
             size = 1,
             rarity = "common",
             startingPrice = 50,
@@ -1663,7 +1667,7 @@ local function ballListInit()
                 shoot("Gun Ball", ball)
             end,
             stats = {
-                speed = 100,
+                speed = 150,
                 damage = 1,
             },
         },
@@ -1673,7 +1677,6 @@ local function ballListInit()
             x = screenWidth / 2,
             y = screenHeight / 2,
             speedMult = 1.25,
-            noAmount = true,
             size = 1,
             rarity = "legendary",
             startingPrice = 50,
@@ -1686,12 +1689,12 @@ local function ballListInit()
                 shoot("Incrediball", ball)
             end,
             stats = {
-                speed = 100,
+                speed = 50,
                 damage = 1,
-                range = 2,
+                range = 1,
             },
             canBuy = function() return hasItem("Superhero t-shirt") end,
-            attractionStrength = 2000
+            attractionStrength = 600
         },
         ["Machine Gun"] = {
             name = "Machine Gun",
@@ -1901,7 +1904,7 @@ local function ballListInit()
                 damage = 2,
                 ammo = 4,
                 cooldown = 11,
-                fireRate = 1,
+                fireRate = 2,
                 range = 3
             }
         },
@@ -3536,7 +3539,7 @@ function powerupPickup(powerup, length)
         Player.changeMoney(moneyGain);
         createMoneyPopup(moneyGain, paddle.x + paddle.width/2, paddle.y)
         if hasItem("Money Crazy") then
-            powerupPickup({type="acceleration"}, 2.25)
+            powerupPickup({type="acceleration"}, 3)
         end
     elseif powerup.type == "moneyBag" then
         local moneyGain = math.random(3,5)
@@ -4115,7 +4118,7 @@ function Balls.update(dt, paddle, bricks)
         -- wall bounce logic
         if orb.x < 0 then orb.speedX = -orb.speedX end
         if orb.x > screenWidth then orb.speedX = -orb.speedX end
-        if orb.y > screenHeight + 25 then
+        if orb.y > screenHeight + 50 then
             table.remove(powerups, i)
         end
         if paddle.x < orb.x and orb.x < paddle.x + paddle.width then
@@ -4124,7 +4127,7 @@ function Balls.update(dt, paddle, bricks)
             orb.speedX = orb.speedX + math.cos(angle) * attractionStrength * dt
             orb.speedY = orb.speedY + math.sin(angle) * attractionStrength * dt
         else
-            orb.speedY = math.min(orb.speedY + 300 * dt, 300) -- gravity effect
+            orb.speedY = math.min(orb.speedY + 200 * dt, 200) -- gravity effect
         end
 
         orb.angle = (orb.angle or 0) + dt * 1

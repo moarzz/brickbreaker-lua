@@ -17,7 +17,7 @@ end
 
 function LongTermInvestment:purchase()
 
-    longTermInvestment.value = math.min(10, longTermInvestment.value + 1);
+    longTermInvestment.value = longTermInvestment.value + 1;
     print("Long Term Investment value increased to " .. longTermInvestment.value);
 end
 

@@ -1024,10 +1024,10 @@ local function moveBricksDown(dt)
                 brick.y = brick.y + brickSpeed.value * dt * speedMult * mapRangeClamped(brick.y, - boss.height * 1.5, -boss.height, 5, 0.5)
             elseif brick.type == "fast" then
                 local fastSpeed
-                if brick.y <= screenHeight - 300 then     
+                if brick.y <= screenHeight/2 then     
                     fastSpeed = mapRangeClamped(brick.y, 0, screenHeight/2, 100, 50)
                 else
-                    fastSpeed = mapRangeClamped(brick.y, screenHeight/2, screenHeight, 50, 30)
+                    fastSpeed = mapRangeClamped(brick.y, screenHeight/2, screenHeight, 50, 12)
                 end
                 brick.y = brick.y + dt * mapRangeClamped(brick.y, 0, screenHeight, 80, 20) * (brick.speedMult or 1)
             else

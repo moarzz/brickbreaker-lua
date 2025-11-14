@@ -3,7 +3,7 @@ ElectromagneticAlignment.__index = ElectromagneticAlignment;
 ElectromagneticAlignment.name = "Electromagnetic Alignment";
 ElectromagneticAlignment.description = "Balls gain a small homing effect towards the nearest brick";
 ElectromagneticAlignment.rarity = "uncommon";
--- ElectromagneticAlignment.imageReference = "assets/sprites/UI/ItemIcons/Homing-Bullets.png";
+ElectromagneticAlignment.imageReference = "assets/sprites/UI/ItemIcons/Electromagnetic-Alignment.png";
 
 -- ElectromagneticAlignment.unique = true; -- does smthn ig
 

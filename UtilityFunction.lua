@@ -993,8 +993,8 @@ function drawCooldownVFXs()
     for i, vfx in ipairs(fireRateVFXs) do
         local alpha = 1 - (vfx.timer / vfx.duration)
         love.graphics.setColor(1, 0.5, 0, 1)
-        local currentHeight = 65 * alpha
-        love.graphics.rectangle("fill", paddle.x + (i-1) * 10 + 5, paddle.y - 5 - currentHeight, 5, currentHeight)
+        local currentWidth = 120 * alpha
+        love.graphics.rectangle("fill", paddle.x + paddle.width/2 - currentWidth/2, paddle.y - 10 - (i-1) * 10, currentWidth, 5)
     end
 end
 
