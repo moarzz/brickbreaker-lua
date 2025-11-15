@@ -1,6 +1,6 @@
 local PlusFourBuff = ItemBase.new();
 PlusFourBuff.__index = PlusFourBuff;
-PlusFourBuff.name = "Plus Six Buff";
+PlusFourBuff.name = "Plus Four Buff";
 PlusFourBuff.description = "";
 PlusFourBuff.rarity = "uncommon";
 

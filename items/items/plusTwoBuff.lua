@@ -1,6 +1,6 @@
 local PlusTwoBuff = ItemBase.new();
 PlusTwoBuff.__index = PlusTwoBuff;
-PlusTwoBuff.name = "Plus Three Buff";
+PlusTwoBuff.name = "Plus Two Buff";
 PlusTwoBuff.description = "";
 PlusTwoBuff.rarity = "common";
 
