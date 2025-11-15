@@ -235,6 +235,7 @@ function totalUpgrade()
 end
 
 local powerups = {}
+
 -- Powerup trail ring-buffer settings (prevents per-frame allocations and table shifting)
 local POWERUP_TRAIL_MAX = 5         -- max stored trail points per powerup
 local POWERUP_TRAIL_SPACING = 0.08  -- seconds between new trail points
@@ -1216,7 +1217,7 @@ fire = function(techName)
             Timer.after(1 + math.random(0, 100) / 100, function()
                 turretShoot(turret)
             end)
-            local cooldownValue = 1.5 + getStat("Gun Turrets", "cooldown") * 0.4
+            local cooldownValue = 1 + getStat("Gun Turrets", "cooldown") * 0.4
             if accelerationOn then
                 cooldownValue = cooldownValue * 0.5
             end
@@ -1644,9 +1645,9 @@ local function ballListInit()
             description = "Creates a damaging electric current between bricks on hit.",
             color = {0, 170/255, 1, 1}, -- green color
             stats = {
-                speed = 150,
+                speed = 100,
                 damage = 1,
-                range = 1
+                range = 2
             },
         },
         ["Gun Ball"] = {
@@ -1654,9 +1655,9 @@ local function ballListInit()
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
-            speedMult = 0.9,
+            speedMult = 1,
             size = 1,
-            rarity = "common",
+            rarity = "uncommon",
             startingPrice = 50,
             ballAmount = 1,
             description = "A ball that shoots bullets in a random direction like a gun on bounce.",
@@ -1781,20 +1782,20 @@ local function ballListInit()
             size = 1,
             rarity = "uncommon",
             startingPrice = 50,
-            ammoMult = 20,
+            ammoMult = 15,
             fireRateMult = 1.2,
             description = "Fires bullets at an accelerating rate of fire. very long cooldown",
             onBuy = function() 
                 shoot("Minigun")
             end,
             noAmount = true,
-            currentAmmo = 100 + ((Player.permanentUpgrades.ammo or 0)) * 20,
+            currentAmmo = 75 + ((Player.permanentUpgrades.ammo or 0)) * 15,
             bulletSpeed = 1000,
             stats = {
-                damage = 2,
+                damage = 1,
                 cooldown = 12,
-                ammo = 100,
-                fireRate = 6,
+                ammo = 75,
+                fireRate = 5,
             },
         },
         ["Golden Gun"] = {
@@ -2108,9 +2109,9 @@ local addBallsQueued = false
 
 -- calls ballListInit and adds a ball to it
 function Balls.initialize()
+    -- clean code/s
     fastBricksReset()
     Player.setMoney(0);
-    -- initializeRarityItemLists()
     longTermInvestment.value = 0
     Player.items = {}
     Player.levelingUp = false
@@ -2136,6 +2137,7 @@ function Balls.initialize()
     resetAllCooldownVFXs()
     Player.xp = 0
     nextBallPrice = 100
+    powerups = {}
     ballListInit()
     if Player.currentCore == "Speed Core" then
         speedCoreInitialize()
@@ -2351,7 +2353,7 @@ function Balls.addBall(ballName, singleBall)
                     type = "ball",
                     name = ballTemplate.name,
                     x = screenWidth / 2 + math.random(-50, 50),
-                    y = math.max(getHighestBrickY() + ballTemplate.radius + 10, screenHeight/4) + math.random(-50, 50),
+                    y = math.max(getHighestBrickY() + ballTemplate.radius + 10 + brickHeight, screenHeight/4) + math.random(-50, 50),
                     speedMult = ballTemplate.speedMult or 1,
                     radius = ballTemplate.radius * 1.5,
                     drawSizeBoost = ballTemplate.drawSizeBoost or 1,
@@ -3369,10 +3371,10 @@ local function spellsUpdate(dt)
     end
 
     if unlockedBallTypes["Fireballs"] then
-        local fireballsCooldown = 20/getStat("Fireballs", "fireRate")
+        --[[local fireballsCooldown = 20/getStat("Fireballs", "fireRate")
         if gameTime - lastFireballsCastTime >= fireballsCooldown then
             cast("Fireballs")
-        end
+        end]]
         for i = #fireballs, 1, -1 do
             local fireball = fireballs[i]
             if hasItem("Homing Projectiles") then

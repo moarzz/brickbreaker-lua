@@ -601,7 +601,7 @@ local function generateRow(brickCount, yPos)
                         brickId = brickId + 1
                         nextRowDebuff = brickHealth + row[xPos+1]
                     end
-                elseif Player.level >= 8 and math.random(1, 250) <= math.floor(mapRangeClamped(Player.level, 8, 25, 1, 6)) 
+                elseif Player.level >= 8 and math.random(1, 250) <= math.floor(mapRangeClamped(Player.level, 8, 25, 1, 12)) 
                 and not (row.healBrickPositions and (row.healBrickPositions[xPos-1] or row.healBrickPositions[xPos+1])) then
                     if not row.healBrickPositions then row.healBrickPositions = {} end
                     row.healBrickPositions[xPos] = true
@@ -644,7 +644,7 @@ local function generateRow(brickCount, yPos)
                         end
                     end
                     Timer.after(1.75 + math.random(1,175)/100, function() healSelf(healBrick) end)
-                elseif Player.level >= 12 and math.random(1, 250) <= math.floor(mapRangeClamped(Player.level, 12, 25, 1, 3)) then
+                elseif Player.level >= 12 and math.random(1, 250) <= math.floor(mapRangeClamped(Player.level, 12, 25, 1, 5)) then
                     -- make shield bricks
                     print("Generating shield brick")
                     local shieldHealth = math.ceil(Player.level * 7 + math.random(-100,100)/100 * Player.level)
@@ -935,7 +935,7 @@ function getHighestBrickY(lowestInstead)
             end
         else
             if not brick.destroyed and brick.y > highestY then
-                highestY = brick.y + brick.height
+                highestY = brick.y -- + brick.height
             end
         end
     end

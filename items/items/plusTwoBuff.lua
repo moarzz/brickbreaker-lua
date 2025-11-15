@@ -1,11 +1,11 @@
-local PlusThreeBuff = ItemBase.new();
-PlusThreeBuff.__index = PlusThreeBuff;
-PlusThreeBuff.name = "Plus Three Buff";
-PlusThreeBuff.description = "";
-PlusThreeBuff.rarity = "common";
+local PlusTwoBuff = ItemBase.new();
+PlusTwoBuff.__index = PlusTwoBuff;
+PlusTwoBuff.name = "Plus Three Buff";
+PlusTwoBuff.description = "";
+PlusTwoBuff.rarity = "common";
 
-function PlusThreeBuff.new()
-    local instance = setmetatable({}, PlusThreeBuff):init();
+function PlusTwoBuff.new()
+    local instance = setmetatable({}, PlusTwoBuff):init();
 
     local itemStats = {
         "damage";
@@ -32,11 +32,11 @@ function PlusThreeBuff.new()
     local randStat = itemStats[itemVersion];
 
     instance.name = itemNames[itemVersion];
-    instance.stats[randStat] = randStat == "cooldown" and -3 or (randStat == "damage" and 2 or 3);
+    instance.stats[randStat] = randStat == "cooldown" and -2 or (randStat == "damage" and 1 or 2);
     instance.imageReference = "assets/sprites/UI/ItemIcons/" .. randStat .. (randStat == "cooldown" and "-.png" or "+.png")
     instance.image = love.graphics.newImage(instance.imageReference);
 
     return instance;
 end
 
-return PlusThreeBuff;
+return PlusTwoBuff;
