@@ -8,7 +8,7 @@ Scavenger.imageReference = "assets/sprites/UI/ItemIcons/Scavenger.png";
 function Scavenger.new()
     local instance = setmetatable({}, Scavenger):init();
     instance.descriptionPointers = {
-        scavengerChance = hasItem("Four Leafed Clover") and 80 or 40;
+        scavengerChance = hasItem("Four Leafed Clover") and 100 or 50;
     };
 
     return instance;

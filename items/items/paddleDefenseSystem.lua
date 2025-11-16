@@ -10,7 +10,7 @@ PaddleDefenseSystem.unique = true; -- does smthn ig
 function PaddleDefenseSystem.new()
     local instance = setmetatable({}, PaddleDefenseSystem):init();
 
-    instance.stats.speed = 2;
+    instance.stats.speed = 1;
 
     return instance;
 end

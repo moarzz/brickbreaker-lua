@@ -357,13 +357,13 @@ local function brickDestroyed(brick)
     if hasItem("Scavenger") then
         for i=1, itemCount("Scavenger") do
             if hasItem("Four Leafed Clover") then
-                chanceMult = chanceMult + 0.8
+                chanceMult = chanceMult + 1
             else
-                chanceMult = chanceMult + 0.4
+                chanceMult = chanceMult + 0.5
             end
         end
     end
-    if math.random(1,4000)/chanceMult <= currentMoneyDropChance then
+    if math.random(1,5000)/chanceMult <= currentMoneyDropChance then
         createPowerup(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth, "dollarBill")
         currentMoneyDropChance = 0
     else
@@ -930,9 +930,6 @@ local function shoot(gunName, ball)
                 gun.currentAmmo = getStat(gun.name, "ammo")
 
                 local cooldownValue = getStat(gun.name, "cooldown") * 0.5
-                if gun.name == "Minigun" then
-                    cooldownValue = cooldownValue * 2
-                end
                 if accelerationOn then
                     cooldownValue = cooldownValue * 0.5
                 end
@@ -1731,7 +1728,7 @@ local function ballListInit()
             size = 1,
             rarity = "common",
             ammoMult = 2,
-            fireRateMult = 1.8,
+            fireRateMult = 2,
             startingPrice = 25,
             description = "Fire bullets that die on impact in bursts.",
             onBuy = function() 
@@ -1782,19 +1779,19 @@ local function ballListInit()
             size = 1,
             rarity = "uncommon",
             startingPrice = 50,
-            ammoMult = 15,
-            fireRateMult = 1.2,
+            ammoMult = 20,
+            fireRateMult = 1.3,
             description = "Fires bullets at an accelerating rate of fire. very long cooldown",
             onBuy = function() 
                 shoot("Minigun")
             end,
             noAmount = true,
-            currentAmmo = 75 + ((Player.permanentUpgrades.ammo or 0)) * 15,
+            currentAmmo = 100 + ((Player.permanentUpgrades.ammo or 0)) * 15,
             bulletSpeed = 1000,
             stats = {
                 damage = 1,
-                cooldown = 12,
-                ammo = 75,
+                cooldown = 18,
+                ammo = 100,
                 fireRate = 5,
             },
         },
@@ -3511,9 +3508,9 @@ local function accelerationBoost(length)
     goalAccelerationBoostEndTime = math.max(goalAccelerationBoostEndTime, gameTime) + length
     Timer.after(length, function() 
         -- Only end acceleration if we've reached the final end time
-        if gameTime < goalAccelerationBoostEndTime then
+        --[[if gameTime < goalAccelerationBoostEndTime then
             return
-        end
+        end]]
         local outTween = tween.new(0.15, powerupPopup, {scale = 0}, tween.easing.inCirc)
         addTweenToUpdate(outTween)
         Timer.after(0.15, function()
@@ -3534,10 +3531,10 @@ function powerupPickup(powerup, length)
     end
     print("powerup type : " .. powerup.type)
     if powerup.type == "dollarBill" then
-        local moneyGain = math.random(1,5)
+        local moneyGain = math.random(1,7)
         if moneyGain > 2 then
             moneyGain = 1
-        end          
+        end   
         Player.changeMoney(moneyGain);
         createMoneyPopup(moneyGain, paddle.x + paddle.width/2, paddle.y)
         if hasItem("Money Crazy") then

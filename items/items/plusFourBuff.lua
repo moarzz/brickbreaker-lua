@@ -8,7 +8,7 @@ function PlusFourBuff.new()
     local instance = setmetatable({}, PlusFourBuff):init();
 
     local itemStats = {
-        "damage";
+        --"damage";
         "speed";
         "amount";
         "ammo";
@@ -18,7 +18,7 @@ function PlusFourBuff.new()
     };
 
     local itemNames = {
-        "Kitchen Knife +";
+        --"Kitchen Knife +";
         "Running Shoes +";
         "Two for One Meal Ticket +";
         "Extended Magazine +";
@@ -32,7 +32,7 @@ function PlusFourBuff.new()
     local randStat = itemStats[itemVersion];
 
     instance.name = itemNames[itemVersion];
-    instance.stats[randStat] = randStat == "cooldown" and -4 or (randStat == "damage" and 2 or 4);
+    instance.stats[randStat] = randStat == "cooldown" and -4 or (randStat == "damage" and 3 or 4);
     instance.imageReference = "assets/sprites/UI/ItemIcons/" .. randStat .. (randStat == "cooldown" and "-.png" or "+.png")
     instance.image = love.graphics.newImage(instance.imageReference);
 

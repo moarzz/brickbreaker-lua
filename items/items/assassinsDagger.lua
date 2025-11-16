@@ -12,7 +12,7 @@ function AssassinsDagger.new()
     local instance = setmetatable({}, AssassinsDagger):init();
 
     instance.descriptionPointers = {
-        critChance = hasItem("Four Leafed Clover") and 70 or 35;
+        critChance = hasItem("Four Leafed Clover") and 50 or 25;
     };
 
     instance.stats.damage = 2;
@@ -21,11 +21,11 @@ function AssassinsDagger.new()
 end
 
 function AssassinsDagger.events:item_purchase_FourLeafedClover()
-    self.descriptionPointers.critChance = 70;
+    self.descriptionPointers.critChance = 50;
 end
 
 function AssassinsDagger.events:item_sell_FourLeafedClover()
-    self.descriptionPointers.critChance = 35;
+    self.descriptionPointers.critChance = 25;
 end
 
 return AssassinsDagger;

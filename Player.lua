@@ -306,7 +306,7 @@ Player.availableCores = {
     },
     {
         name = "Size Core",
-        description = "gain 5% paddle size per level",
+        description = "gain 7% paddle size per level",
         price = 1250,
         startingItem = "Gun Ball",
     },
@@ -329,7 +329,7 @@ Player.coreDescriptions = {
     ["Fast Study Core"] = "gain +5% experience gain per Player Level",
     ["Hacker Core"] = "All Weapons start with an upgradePrice of 0",
     ["Loan Core"] = "start with 25$. gain 3$ instead of 5$ on level up.",
-    ["Size Core"] = "gain 5% paddle size per level",
+    ["Size Core"] = "gain 7% paddle size per level",
     ["Farm Core"] = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown)\nIt takes 100% more xp for you to level up and bricks grow in health 100% faster",
     --["Madness Core"] = "Damage and coldown are reduced by 50%.\nevery other stat is doubled. bricks go twice as fast\n(can break the game)."
 }
@@ -466,7 +466,7 @@ function Player.levelUp()
             FarmCoreUpgrade() -- Trigger a second time if the player has the Birthday Hat
         end
     elseif Player.currentCore == "Size Core" then
-        paddle.width = paddle.width + 15
+        paddle.width = paddle.width + 20
     elseif Player.currentCore == "Fast Study Core" then
         Player.xpGainMult = Player.xpGainMult + 0.05
     elseif Player.level % 5 == 0 and Player.currentCore == "Spray and Pray Core" then -- THIS IS NOT AN ERROR

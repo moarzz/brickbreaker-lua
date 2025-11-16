@@ -1285,9 +1285,10 @@ local function drawItemShop()
 
 
             --description display when hovered
+            love.graphics.setColor(1,1,1,1 )
             local buyButton = dress:Button("", {id = "bruhdmsavklsam" .. i .. item.name, color = invisButtonColor}, itemX + 10, itemY + 12, windowW - 20, windowH - 24)
             if buyButton.hovered and item.image then
-                love.graphics.draw(getRarityWindow(item.rarity or "common"), centerX - uiBigWindowImg:getWidth() * 0.65 * scale/2, itemY + windowH - 85, 0, 0.65 * scale, 0.55 * scale * (item.consumable and 1.25 or 1))
+                love.graphics.draw(uiBigWindowImg, centerX - uiBigWindowImg:getWidth() * 0.65 * scale/2, itemY + windowH - 85, 0, 0.65 * scale, 0.55 * scale * (item.consumable and 1.25 or 1))
                 local id = "fancyText" .. i .. item.name:gsub("%s+", "_")
                 if fancyTexts[id] then
                     -- fancyTexts[id]:update()
@@ -1307,11 +1308,17 @@ local function drawItemShop()
                 local rarityX = centerX - uiBigWindowImg:getWidth() * 0.55 * scale/2
                 local rarityY = itemY + windowH - 60
                 if item.consumable then
-                    drawTextCenteredWithScale((item.rarity or "common"):gsub("^%l", string.upper), itemX, itemY + uiBigWindowImg:getHeight() * 0.8 - 10, 1, windowW, getRarityColor(item.rarity or "common"))
+                    -- love.graphics.setColor(getRarityColor(item.rarity))
+                    love.graphics.draw(uiLabelImg, itemX + windowW/2 - uiLabelImg:getWidth() * 0.8/2, itemY + uiBigWindowImg:getHeight() * 0.8 +20, 0, 0.8,0.8)
+                    drawTextCenteredWithScale((item.rarity or "common"):gsub("^%l", string.upper), itemX, itemY + uiBigWindowImg:getHeight() * 0.8 + 35, 1, windowW, getRarityColor(item.rarity or "common"))
                     setFont(21)
-                    drawTextCenteredWithScale("consumable", itemX, itemY + uiBigWindowImg:getHeight() * 0.8 + 15, 1, windowW, {0.85,0.85,0.85,1})
+                    love.graphics.setColor(1,1,1,1)
+                    love.graphics.draw(uiLabelImg, itemX + windowW/2 - uiLabelImg:getWidth() * 0.8/2, itemY + uiBigWindowImg:getHeight() * 0.8 + 60, 0, 0.8,0.8)
+                    drawTextCenteredWithScale("consumable", itemX, itemY + uiBigWindowImg:getHeight() * 0.8 + 75, 1, windowW, {0.85,0.85,0.85,1})
                 else
-                    drawTextCenteredWithScale((item.rarity or "common"):gsub("^%l", string.upper), itemX, itemY + uiBigWindowImg:getHeight() - 20, 1, windowW, getRarityColor(item.rarity or "common"))
+                    -- love.graphics.setColor(getRarityColor(item.rarity))
+                    love.graphics.draw(uiLabelImg, itemX + windowW/2 - uiLabelImg:getWidth() * 0.8/2, itemY + uiBigWindowImg:getHeight() - 15, 0, 0.8,0.8)
+                    drawTextCenteredWithScale((item.rarity or "common"):gsub("^%l", string.upper), itemX, itemY + uiBigWindowImg:getHeight() + 3, 1, windowW, getRarityColor(item.rarity or "common"))
                 end
 
             end

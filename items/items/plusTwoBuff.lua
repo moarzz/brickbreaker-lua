@@ -8,7 +8,7 @@ function PlusTwoBuff.new()
     local instance = setmetatable({}, PlusTwoBuff):init();
 
     local itemStats = {
-        "damage";
+        --"damage";
         "speed";
         "amount";
         "ammo";
@@ -18,7 +18,7 @@ function PlusTwoBuff.new()
     };
 
     local itemNames = {
-        "Kitchen Knife";
+        --"Kitchen Knife";
         "Running Shoes";
         "Two for One Meal Ticket";
         "Extended Magazine";
