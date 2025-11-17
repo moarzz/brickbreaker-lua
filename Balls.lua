@@ -100,7 +100,13 @@ local function burnBrick(brick, damage, length, name)
     end)]]
 end
 
+local bossWidth, bossHeight = 500, 300
 local function bossDestroyed(bossBrick)
+    fakeBossValues.on = true
+    fakeBossValues.boost = 0
+    fakeBossValues.x = bossBrick.x
+    fakeBossValues.y = bossBrick.y
+    bossBrick.destroyed = true
     if victoryAchieved then return end
     inGame = false
     firstRunCompleted = true
@@ -131,42 +137,42 @@ local function bossDestroyed(bossBrick)
     if saveGameData then saveGameData() end
     if savePermanentUpgrades then savePermanentUpgrades() end
     bossBrick = bricks[bossBrickId]
-    local bossDeathTweenStart = tween.new(0.85, bossBrick, {x = screenWidth/2 - bossBrick.width/2, y = screenHeight/2 - bossBrick.height/2, color = {1,1,1,1}}, tween.easing.outCirc)
-    local bossDeathTweenStart2 = tween.new(0.85, bossOverlayBoost, {boost = 1}, tween.easing.outCirc)
+    --local bossDeathTweenStart = tween.new(0.85, bossBrick, {x = screenWidth/2 - bossBrick.width/2, y = screenHeight/2 - bossBrick.height/2, color = {1,1,1,1}}, tween.easing.outCirc)
+    local bossDeathTweenStart = tween.new(0.85, fakeBossValues, {boost = 1, x = screenWidth/2 - bossBrick.width/2, y = screenHeight/2 - bossBrick.height/2}, tween.easing.outCirc)
     addTweenToUpdate(bossDeathTweenStart)
-    addTweenToUpdate(bossDeathTweenStart2)
+    --addTweenToUpdate(bossDeathTweenStart2)
     Timer.after(1, function()
-        bossOverlayBoost.boost = 0
-        local brick = bossBrick
+        fakeBossValues.on = false
+        fakeBossValues.boost = 0
         -- boss explodes
         local brickPiece1 = {
-            x = brick.x,
-            y = brick.y,
+            x = fakeBossValues.x,
+            y = fakeBossValues.y,
             speedX = math.random(-100, -50), -- Random speed for the piece
             speedY = -math.random(50, 100), -- Random speed for the piece
             img = brickPiece1Img,
-            width = brick.width,
-            height = brick.height / 2,
+            width = bossWidth,
+            height = bossHeight,
             color = {0.75, 0.75, 0.75, 1}
         }
         local brickPiece2 = {
-            x = brick.x,
-            y = brick.y + brick.height / 2,
+            x = fakeBossValues.x,
+            y = fakeBossValues.y + bossHeight / 8,
             speedX = math.random(-25, 50), -- Random speed for the piece
             speedY = -math.random(50, 100), -- Random speed for the piece
             img = brickPiece2Img,
-            width = brick.width,
-            height = brick.height / 2,
+            width = bossWidth,
+            height = bossHeight,
             color = {0.75, 0.75, 0.75, 1}
         }
         local brickPiece3 = {
-            x = brick.x + brick.width / 2,
-            y = brick.y,
+            x = fakeBossValues.x + bossHeight / 8,
+            y = fakeBossValues.y,
             speedX = math.random(50, 100), -- Random speed for the piece
             speedY = -math.random(50, 100), -- Random speed for the piece
             img = brickPiece3Img,
-            width = brick.width / 2,
-            height = brick.height,
+            width = bossWidth,
+            height = bossHeight,
             color = {0.75, 0.75, 0.75, 1}
         }
         local tween1 = tween.new(0.8, brickPiece1, {color = {0.75, 0.75, 0.75, 0}}, tween.outCubic)
@@ -581,9 +587,7 @@ function dealDamage(ball, brick, burnDamage)
     
     if kill then
         brickDestroyed(brick)
-        if brick.type ~= "boss" then
-            brick = nil
-        end
+         brick = nil
     elseif brick and brick.health <= 0 then
         brickDestroyed(brick)
         if brick.type ~= "boss" then
@@ -2189,6 +2193,7 @@ function Balls.initialize()
     Player.setMoney(0);
     longTermInvestment.value = 0
     Player.items = {}
+    fakeBossValues = {boost = 0, x = 0, y = 0, on = false}
     Player.levelingUp = false
     Player.choosingUpgrade = false
     Player.upgradePriceMultScaling = 2
@@ -2208,7 +2213,7 @@ function Balls.initialize()
     deathTweenValues = {speed = 1, overlayOpacity = 0}
     Player.level = 1
     ballCategories = {}
-    bossOverlayBoost.boost = 0
+    fakeBossValues.boost = 0
     ballList = {}   
     unlockedBallTypes = {}
     resetAllCooldownVFXs()
@@ -2650,7 +2655,7 @@ local function brickCollisionCheck(ball, bricksToCheck)
                 
                 -- Apply your existing effects
                 if Player.currentCore == "Bouncy Core" then
-                    ball.speedExtra = math.min((ball.speedExtra or 1) + 4, 12)
+                    ball.speedExtra = math.max(math.min((ball.speedExtra or 1) + 4, 8), ball.speedExtra)
                 end
                 
                 brickCollisionEffects(ball, brick)
@@ -2838,7 +2843,7 @@ local function paddleCollisionCheck(ball, paddle)
         local speedYSquared = math.max(0, ballSpeed^2 - ball.speedX^2)
         ball.speedY = math.sqrt(speedYSquared) * (ball.speedY > 0 and 1 or -1)
         
-        ball.speedExtra = math.min((ball.speedExtra or 1) + 5, 12)
+        ball.speedExtra = math.min((ball.speedExtra or 1) + 5, 8)
 
         Balls.adjustSpeed(ball.name)
         
@@ -3576,8 +3581,12 @@ local function incrediBallColorUpdate(alpha)
     
 end
 
+local accelerationEndTween = nil
 local goalAccelerationBoostEndTime = 0
 local function accelerationBoost(length)
+    if accelerationEndTween then
+        accelerationEndTween:cancel(false)
+    end
     accelerationOn = true
     for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
         if weapon.type == "ball" then
@@ -3586,18 +3595,24 @@ local function accelerationBoost(length)
     end
     -- Update the end time to be later of current end time + length or now + length
     goalAccelerationBoostEndTime = math.max(goalAccelerationBoostEndTime, gameTime) + length
-    Timer.after(length, function() 
-        -- Only end acceleration if we've reached the final end time
-        --[[if gameTime < goalAccelerationBoostEndTime then
-            return
-        end]]
-        local outTween = tween.new(0.15, powerupPopup, {scale = 0}, tween.easing.inCirc)
-        addTweenToUpdate(outTween)
+end
+
+local function accelerationEndCheck()
+    if accelerationOn and goalAccelerationBoostEndTime < gameTime then
+        --[[accelerationEndTween = tween.new(0.15, powerupPopup, {scale = 0}, tween.easing.inCirc)
+        addTweenToUpdate(accelerationEndTween)
         Timer.after(0.15, function()
             powerupPopup.type = nil
-        end)
+        end)]]
+        powerupPopup.scale = 0
+        powerupPopup.type = nil
         accelerationOn = false
-    end)
+        for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
+            if weapon.type == "ball" then
+                Balls.adjustSpeed(weapon.name)
+            end
+        end
+    end
 end
 
 function powerupPickup(powerup, length)
@@ -3606,8 +3621,9 @@ function powerupPickup(powerup, length)
     if powerup.type ~= "nuke" and powerup.type ~= "moneyBag" and powerup.type ~= "dollarBill" then
         powerupPopup.type = powerup.type
         powerupPopup.startTime = gameTime
-        local inTween = tween.new(0.15, powerupPopup, {scale = 1}, tween.easing.outCirc)
-        addTweenToUpdate(inTween)
+        -- local inTween = tween.new(0.15, powerupPopup, {scale = 1}, tween.easing.outCirc)
+        -- addTweenToUpdate(inTween)
+        powerupPopup.scale = 1
     end
     print("powerup type : " .. powerup.type)
     if powerup.type == "dollarBill" then
@@ -3663,6 +3679,8 @@ function Balls.update(dt, paddle, bricks)
     if Player.levelingUp or Player.choosingUpgrade then
         return
     end
+
+    accelerationEndCheck()
     -- Clean up expired lightning cooldowns
     for brick, lastCastTime in pairs(lightningCooldowns) do
         if love.timer.getTime() - lastCastTime > 0.2 then

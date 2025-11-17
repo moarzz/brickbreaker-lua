@@ -340,6 +340,16 @@ function Tween:set(clock)
   return self.clock >= self.duration
 end
 
+function Tween:cancel(applyTarget)
+  self.canceled = true
+  if applyTarget then
+    self.initial = self.initial or copyTables({}, self.target, self.subject)
+    copyTables(self.subject, self.target)
+    self.clock = self.duration
+  end
+  return true
+end
+
 function Tween:reset()
   return self:set(0)
 end
@@ -348,6 +358,7 @@ function Tween:update(dt)
   assert(type(dt) == 'number', "dt must be a number")
   return self:set(self.clock + dt)
 end
+
 
 
 -- Public interface

@@ -1523,6 +1523,7 @@ local function createShieldDamageNumber(x,y)
     damageNumber(1, x, y, {0,110/255,204/255,1})
 end
 
+local lastShieldSFX = 0
 function damageAura(aura)
     local damage = 1
     aura.health = math.max(aura.health - damage, 0)
@@ -1535,9 +1536,12 @@ function damageAura(aura)
                 break
             end
         end
-        playSoundEffect(shieldBlockSFX, 0.7, 1, false)
+        if gameTime - lastShieldSFX > 0.03 then
+            playSoundEffect(shieldBlockSFX, 1, 1, false)
+            lastShieldSFX = gameTime
+        end
     else
-        playSoundEffect(shieldBlockSFX, 0.5, 1, false)
+        playSoundEffect(shieldBlockSFX, 1, 1, false)
     end
 end
 

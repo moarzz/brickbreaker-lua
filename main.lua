@@ -1784,7 +1784,7 @@ local function drawStartSelect()
     end
 end
 
-bossOverlayBoost = {boost = 0}
+fakeBossValues = {boost = 0, x = 0, y = 0, on = false}
 function drawBricks()
     setFont(18)
     -- Initialize bricks if they don't exist
@@ -1907,8 +1907,8 @@ function drawBricks()
         love.graphics.setColor(color)
         -- Draw from center of image and brick
         love.graphics.draw(bossBrickImg, centerX, centerY, brick.drawOffsetRot, scaleX, scaleY, bossBrickImg:getWidth() / 2, bossBrickImg:getHeight() / 2)
-        love.graphics.setColor(1,1,1, bossOverlayBoost.boost)
-        love.graphics.draw(bossBrickOverlayImg, centerX, centerY, brick.drawOffsetRot, scaleX, scaleY, bossBrickImg:getWidth() / 2, bossBrickImg:getHeight() / 2)
+        -- love.graphics.setColor(1,1,1, fakeBossValues.boost)
+        -- love.graphics.draw(bossBrickOverlayImg, centerX, centerY, brick.drawOffsetRot, scaleX, scaleY, bossBrickImg:getWidth() / 2, bossBrickImg:getHeight() / 2)
 
         setFont(50)
         -- Draw health text (black outline)
@@ -1921,6 +1921,20 @@ function drawBricks()
         love.graphics.print(text, centerX, centerY, 0, 1, 1, love.graphics.getFont():getWidth(text) / 2, love.graphics.getFont():getHeight() / 2)
 
         drawImageCentered(crownImg, centerX, centerY - brick.height / 2, crownImg:getWidth()/2.5, crownImg:getHeight()/2.5)
+    end
+
+    if fakeBossValues.on then
+        local color = getBrickColor(1)
+        local scale = 1
+        -- Calculate scale to fit the brick width/height exactly
+        local scaleX = bossWidth / bossBrickImg:getWidth()
+        local scaleY = bossHeight / bossBrickImg:getHeight()
+        local centerX = fakeBossValues.x + bossWidth / 2 + 3
+        local centerY = fakeBossValues.y + bossHeight / 2
+        love.graphics.setColor(color)
+        love.graphics.draw(bossBrickImg, centerX, centerY, 0, scaleX, scaleY, bossBrickImg:getWidth() / 2, bossBrickImg:getHeight() / 2)
+        love.graphics.setColor(1,1,1, fakeBossValues.boost)
+        love.graphics.draw(bossBrickOverlayImg, centerX, centerY, 0, scaleX, scaleY, bossBrickImg:getWidth() / 2, bossBrickImg:getHeight() / 2)
     end
 
     -- draw fastBricks
@@ -2724,12 +2738,9 @@ function love.keypressed(key)
         end
 
         if key == "2" then
-            for _, brick in ipairs(bricks) do
-                if brick.type == "boss" then
-                    globalBossDestroyed(brick)
-                    break
-                end
-            end
+            Timer.every(0.035, function()
+                playSoundEffect(shieldBlockSFX, 1, 1, false)
+            end)
         end
         if key == "3" then
             damageThisFrame = 50
@@ -2741,9 +2752,9 @@ function love.keypressed(key)
 
         if key == "5" then
             local powerup = {
-                type = "freeze",        
+                type = "acceleration",        
             }
-            powerupPickup(powerup)
+            powerupPickup(powerup, 1)
         end
 
         -- create powerup
