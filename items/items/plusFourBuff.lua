@@ -8,7 +8,13 @@ function PlusFourBuff.new()
     local instance = setmetatable({}, PlusFourBuff):init();
 
     local itemStats = {
-        --"damage";
+        "damage";
+        "speed";
+        "amount";
+        "ammo";
+        "fireRate";
+        "cooldown";
+        "range";
         "speed";
         "amount";
         "ammo";
@@ -18,7 +24,13 @@ function PlusFourBuff.new()
     };
 
     local itemNames = {
-        --"Kitchen Knife +";
+        "Kitchen Knife +";
+        "Running Shoes +";
+        "Two for One Meal Ticket +";
+        "Extended Magazine +";
+        "Fast Hands +";
+        "Duct Tape +";
+        "Fake Pregnancy Belly +";
         "Running Shoes +";
         "Two for One Meal Ticket +";
         "Extended Magazine +";

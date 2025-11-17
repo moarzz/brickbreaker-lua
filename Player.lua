@@ -444,9 +444,9 @@ function Player.levelUp()
         elseif Player.level < 10 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.65)
         elseif Player.level < 15 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.55)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.5)
         elseif Player.level < 20 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.45)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.4)
         elseif Player.level < 25 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.3)
         elseif Player.level < 30 then
@@ -582,25 +582,12 @@ function Player.hit()
         if Player.lives <= 0 then
             Player.die()
         end
-        --[[
-        if canTakeDamage then
-            canTakeDamage = false
-            Timer.after(4, function() canTakeDamage = true end)
-            Player.lives = Player.lives - 1
-            Player.lastHitTime = love.timer.getTime()
-                brickSpeed.value = -300 / getBrickSpeedByTime()
-                brickSpeedTween = tween.new(2, brickSpeed, { value = 10 }, tween.outExpo)
-                addTweenToUpdate(brickSpeedTween)
-            end
-
-            print("Player hit! Lives left: " .. Player.lives)
-        end]]
     end
 end
 
 local function checkForHit()
     for _, brick in ipairs(bricks) do
-        if paddle.y > screenHeight + 40 then
+        if paddle.y > screenHeight + 80 then
             Player.hit()
             damageScreenVisuals(0.25, 100)
         end

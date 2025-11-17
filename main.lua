@@ -2750,6 +2750,7 @@ function love.keypressed(key)
             createMoneyPopup(3 ,paddle.x + paddle.width/2, paddle.y, 1000)
         end
 
+        -- get powerup
         if key == "5" then
             local powerup = {
                 type = "acceleration",        
@@ -2764,7 +2765,7 @@ function love.keypressed(key)
 
         -- add weapon
         if key == "7" then  
-            Balls.addBall("Golden Gun")
+            Balls.addBall("ball gun")
         end
 
         if key == "8" then

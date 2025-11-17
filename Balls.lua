@@ -734,7 +734,8 @@ local function shoot(gunName, ball)
                         speedY = speedY,
                         dead = false,
                         trail = {},
-                        speedMultiplier = 1
+                        speedMultiplier = 1,
+                        speedExtra = 4
                     }
                     table.insert(Balls, newBall)
                     local ballSpawnTween = tween.new(0.2, newBall, {drawSizeMult = 0.5}, tween.outCubic)
@@ -3661,7 +3662,7 @@ function powerupPickup(powerup, length)
         accelerationBoost(length or 12)
     elseif powerup.type == "doubleDamage" then
         statDoubled = "damage"
-        Timer.after(8, function() 
+        Timer.after(12, function() 
             local outTween = tween.new(0.15, powerupPopup, {scale = 0}, tween.easing.inCirc)
             addTweenToUpdate(outTween)
             Timer.after(0.15, function()

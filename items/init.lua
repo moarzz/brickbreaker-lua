@@ -47,8 +47,8 @@ function Items.load()
     }; -- how often should each rarity be chosen? (as a perun to be less then the number asigned)
 
     self.typeOdds = {
-        consumable = 0.2; -- 20%
-        item       = 1.00; -- 80%
+        consumable = 0.18; -- 18%
+        item       = 1.00; -- 82%
     };
 
     local allFiles = love.filesystem.getDirectoryItems(path .. "/items");
