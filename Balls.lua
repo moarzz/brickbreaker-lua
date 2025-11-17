@@ -102,6 +102,12 @@ end
 
 local bossWidth, bossHeight = 500, 300
 local function bossDestroyed(bossBrick)
+    -- setTargetMusicVolume(0)
+    changeMusic("victory")
+    if Player.levelingUp then
+        Player.levelingUp = false
+        Player.choosingUpgrade = false
+    end
     fakeBossValues.on = true
     fakeBossValues.boost = 0
     fakeBossValues.x = bossBrick.x
@@ -114,11 +120,13 @@ local function bossDestroyed(bossBrick)
     local bossBrickId
     victoryAchieved = true
     fakeBossSpawned = true
+    shieldAuras = {}
     for i, b in ipairs(bricks) do
         if b.type == "boss" then
             bossBrickId = i
         else
-            dealDamage({stats = {damage = 1000000}}, b)
+            b.destroyed = true
+            -- dealDamage({stats = {damage = 1000000}}, b)
         end
     end
     bossSpawned = false
@@ -1636,7 +1644,7 @@ local function ballListInit()
             description = "Basic ball. Very fast.",
             color = {1, 1, 1, 1}, -- White color
             stats = {
-                speed = 150,
+                speed = 200,
                 damage = 1,
             },
             canBuy = function() return true end,

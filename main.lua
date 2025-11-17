@@ -442,6 +442,13 @@ local function spawnBoss()
     end)
 end
 
+local function victoryTheme()
+    changeMusic("victory")
+    GlobalTimer.after(25, function()
+        targetMusicVolume = 0
+    end)
+end
+
 local totalGoldBricksGeneratedThisRun = 0
 function resetGoldBricksValues()
     totalGoldBricksGeneratedThisRun = 0
@@ -1115,9 +1122,11 @@ function changeMusic(newMusicStage)
         ref = "assets/SFX/inGame1.mp3";
         targetMusicPitch = 1;
         BackgroundShader.changeShader(1); -- vexel
+        targetMusicVolume = 1
     elseif newMusicStage == "calm" then
         ref = "assets/SFX/inGame1.mp3";
         BackgroundShader.changeShader(1); -- vexel
+        targetMusicVolume = 1
     elseif newMusicStage == "mid" then
         ref = "assets/SFX/inGame2.mp3";
         BackgroundShader.changeShader(2); -- acid
@@ -1127,6 +1136,9 @@ function changeMusic(newMusicStage)
     elseif newMusicStage == "boss" then
         ref = "assets/SFX/inGameBoss.mp3";
         BackgroundShader.changeShader(3); -- vexel
+    elseif newMusicStage == "victory" then
+        ref = "assets/SFX/victoryTheme.mp3"
+        targetMusicVolume = 1
     end
     if backgroundMusic then
         backgroundMusic:stop()
@@ -1173,6 +1185,11 @@ function setTargetMusicPitch(pitch)
     targetMusicPitch = pitch
 end
 
+function setTargetMusicVolume(volume)
+    targetMusicVolume = volume
+end
+
+local currentMusicVolume = 1
 local function updateMusicEffect(dt)
     if backgroundMusic then
         local currentPitch = backgroundMusic:getPitch()
@@ -1186,13 +1203,15 @@ local function updateMusicEffect(dt)
             backgroundMusic:setPitch(currentPitch)
         end
 
-        local currentVolume = backgroundMusic:getVolume()
-        if currentVolume ~= 0 and targetMusicVolume == 0 then
-            local volumeChangeRate = 0.06 -- Adjust this value to change how quickly the volume changes
-            if currentVolume > 0 then
-                currentVolume = math.max(currentVolume - volumeChangeRate * dt, 0)
+        local currentVolume = currentMusicVolume
+        if math.abs(currentPitch - targetMusicVolume) > 0.01 then
+            local volumeChangeRate = 0.5 -- Adjust this value to change how quickly the volume changes
+            if currentVolume > targetMusicVolume then
+                currentVolume = math.max(currentVolume - volumeChangeRate * dt, targetMusicVolume)
+            else
+                currentVolume = math.min(currentVolume + volumeChangeRate * dt, targetMusicVolume)
             end
-            backgroundMusic:setVolume(currentVolume)
+            backgroundMusic:setVolume(musicVolume/4 * currentVolume)
         end
     end
 end
@@ -2725,7 +2744,7 @@ function love.keypressed(key)
         if key == "0" then
             for i= #bricks, 1, -1 do
                 local brick = bricks[i]
-                if not brick.destroyed and brick.y > screenHeight/3 then
+                if not brick.destroyed and brick.y > screenHeight/5 then
                     dealDamage({stats = {damage = 10000000}}, brick)
                 end
             end
