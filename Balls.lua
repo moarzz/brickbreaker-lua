@@ -126,7 +126,6 @@ local function bossDestroyed(bossBrick)
             bossBrickId = i
         else
             b.destroyed = true
-            -- dealDamage({stats = {damage = 1000000}}, b)
         end
     end
     bossSpawned = false
@@ -1304,7 +1303,7 @@ fire = function(techName)
             Timer.after(1 + math.random(0, 100) / 100, function()
                 turretShoot(turret)
             end)
-            local cooldownValue = 1 + getStat("Gun Turrets", "cooldown") * 0.4
+            local cooldownValue = 1.5 + getStat("Gun Turrets", "cooldown") * 0.4
             if accelerationOn then
                 cooldownValue = cooldownValue * 0.5
             end
@@ -1792,20 +1791,20 @@ local function ballListInit()
             size = 1,
             rarity = "common",
             startingPrice = 10,
-            ammoMult = 5,
-            fireRateMult = 0.325,
+            ammoMult = 7,
+            fireRateMult = 0.33,
             description = "Fires bullets, fast fireRate",
             onBuy = function() 
                 shoot("Machine Gun")
             end,
             noAmount = true,
-            currentAmmo = 8 + ((Player.permanentUpgrades.ammo or 0)) * 5,
+            currentAmmo = 7 + ((Player.permanentUpgrades.ammo or 0)) * 7,
             bulletSpeed = 1000,
             canBuy = function() return false end,
 
             stats = {
                 damage = 1,
-                cooldown = 8,
+                cooldown = 7,
                 ammo = 14,
                 fireRate = 3,
             },
@@ -1818,7 +1817,7 @@ local function ballListInit()
             size = 1,
             rarity = "common",
             ammoMult = 2,
-            fireRateMult = 2,
+            fireRateMult = 1.75,
             startingPrice = 25,
             description = "Fire bullets that die on impact in bursts.",
             onBuy = function() 
@@ -1830,7 +1829,7 @@ local function ballListInit()
 
             stats = {
                 damage = 1,
-                cooldown = 10,
+                cooldown = 9,
                 ammo = 2,
                 fireRate = 1,
             },
@@ -1880,7 +1879,7 @@ local function ballListInit()
             bulletSpeed = 1000,
             stats = {
                 damage = 1,
-                cooldown = 18,
+                cooldown = 15,
                 ammo = 100,
                 fireRate = 5,
             },
@@ -1904,7 +1903,7 @@ local function ballListInit()
             bulletSpeed = 1500,
             stats = {
                 damage = 1,
-                cooldown = 10,
+                cooldown = 9,
                 ammo = 2,
                 fireRate = 1,
             },
@@ -1928,7 +1927,7 @@ local function ballListInit()
             color = {0, 1, 0, 1}, -- Green color
             stats = {
                 damage = 3,
-                cooldown = 14,
+                cooldown = 12,
             },
         },
         --[[["Laser Beam"] = {
@@ -1991,7 +1990,7 @@ local function ballListInit()
             stats = {
                 damage = 2,
                 ammo = 4,
-                cooldown = 11,
+                cooldown = 10,
                 fireRate = 2,
                 range = 3
             }
@@ -3798,7 +3797,7 @@ function Balls.update(dt, paddle, bricks)
         if bricksInEllipse(rocket.x, rocket.y, 20, 60) then
             playSoundEffect(explosionSFX, 0.5, 1, false, true)
             -- Explosion damage
-            local scale = 2 + getStat("Rocket Launcher", "range") * 0.5
+            local scale = 2.5 + getStat("Rocket Launcher", "range") * 0.5
             local explosionX, explosionY = rocket.x - math.sin(math.rad(rocket.angle)) * rocket.radius, rocket.y - math.cos(math.rad(rocket.angle)) * rocket.radius
             local touchingBricks = getBricksInCircle((explosionX), (explosionY), scale*25)
             for _, hitBrick in ipairs(touchingBricks) do
