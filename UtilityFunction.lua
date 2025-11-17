@@ -164,10 +164,7 @@ function GameOverDraw()
     
     -- Play Again button (right)
     if dress:Button("Play Again", {id = generateNextButtonID()}, startX + (buttonWidth + buttonSpacing) * 2, buttonY, buttonWidth, buttonHeight).hit then
-        changeMusic("menu")
-        resetGame()
-        currentGameState = GameState.START_SELECT
-        love.mouse.setVisible(true)
+        restartGame()
     end
 
     -- Reset the color to white

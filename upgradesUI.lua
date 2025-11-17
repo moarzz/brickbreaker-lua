@@ -1272,7 +1272,7 @@ local function drawItemShop()
             local centerY = itemY + uiBigWindowImg:getHeight()*0.65/2
             itemX = centerX - windowW/2
             itemY = centerY - windowH/2
-            local upgradePrice = item.rarity == "common" and 8 or item.rarity == "uncommon" and 15 or item.rarity == "rare" and 20 or item.rarity == "legendary" and 30 or 0
+            local upgradePrice = item.rarity == "common" and 8 or item.rarity == "uncommon" and 15 or item.rarity == "rare" and 20 or item.rarity == "legendary" and 25 or 0
             if item.consumable then
                 upgradePrice = item.rarity == "common" and 4 or item.rarity == "uncommon" and 7 or item.rarity == "rare" and 10 or item.rarity == "legendary" and 13 or 0
             end

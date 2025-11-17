@@ -47,8 +47,8 @@ function Items.load()
     }; -- how often should each rarity be chosen? (as a perun to be less then the number asigned)
 
     self.typeOdds = {
-        consumable = 0.15; -- 15%
-        item       = 1.00; -- 85%
+        consumable = 0.2; -- 20%
+        item       = 1.00; -- 80%
     };
 
     local allFiles = love.filesystem.getDirectoryItems(path .. "/items");
@@ -196,7 +196,7 @@ end
 
 --* does NOT set returned item as visible
 function Items.getRandomItem(allowInvisible)
-    --? always uses exactly 2 love.math.random calls (one for the rarity and one for the index)
+    --? always uses exactly 2 love.math.random calls (one for the rarity and one for the index) consumable
 
     local lookingInList;
     local visibilityList;

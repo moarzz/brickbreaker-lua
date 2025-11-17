@@ -100,16 +100,20 @@ local function burnBrick(brick, damage, length, name)
     end)]]
 end
 
-local function bossDestroyed()
+local function bossDestroyed(bossBrick)
     inGame = false
     firstRunCompleted = true
     print("Boss destroyed! Triggering victory.")
-    for _, b in ipairs(bricks) do
-        b.destroyed = true
-    end
+    local bossBrickId
     victoryAchieved = true
+    for i, b in ipairs(bricks) do
+        if b.type == "boss" then
+            bossBrickId = i
+        else
+            dealDamage({stats = {damage = 1000000}}, b)
+        end
+    end
     bossSpawned = false
-    currentGameState = GameState.VICTORY
     love.mouse.setVisible(true)
     -- Award gold and save data (same as game over)
     local goldEarned = 500 + Player.level * math.ceil(Player.level / 5) * 5 
@@ -124,6 +128,64 @@ local function bossDestroyed()
     end
     if saveGameData then saveGameData() end
     if savePermanentUpgrades then savePermanentUpgrades() end
+    bossBrick = bricks[bossBrickId]
+    local bossDeathTweenStart = tween.new(0.85, bossBrick, {x = screenWidth/2 - bossBrick.width/2, y = screenHeight/2 - bossBrick.height/2, color = {1,1,1,1}}, tween.easing.outCirc)
+    local bossDeathTweenStart2 = tween.new(0.85, bossOverlayBoost, {boost = 1}, tween.easing.outCirc)
+    addTweenToUpdate(bossDeathTweenStart)
+    addTweenToUpdate(bossDeathTweenStart2)
+    Timer.after(1, function()
+        bossOverlayBoost.boost = 0
+        local brick = bossBrick
+        -- boss explodes
+        local brickPiece1 = {
+            x = brick.x,
+            y = brick.y,
+            speedX = math.random(-100, -50), -- Random speed for the piece
+            speedY = -math.random(50, 100), -- Random speed for the piece
+            img = brickPiece1Img,
+            width = brick.width,
+            height = brick.height / 2,
+            color = {0.75, 0.75, 0.75, 1}
+        }
+        local brickPiece2 = {
+            x = brick.x,
+            y = brick.y + brick.height / 2,
+            speedX = math.random(-25, 50), -- Random speed for the piece
+            speedY = -math.random(50, 100), -- Random speed for the piece
+            img = brickPiece2Img,
+            width = brick.width,
+            height = brick.height / 2,
+            color = {0.75, 0.75, 0.75, 1}
+        }
+        local brickPiece3 = {
+            x = brick.x + brick.width / 2,
+            y = brick.y,
+            speedX = math.random(50, 100), -- Random speed for the piece
+            speedY = -math.random(50, 100), -- Random speed for the piece
+            img = brickPiece3Img,
+            width = brick.width / 2,
+            height = brick.height,
+            color = {0.75, 0.75, 0.75, 1}
+        }
+        local tween1 = tween.new(0.8, brickPiece1, {color = {0.75, 0.75, 0.75, 0}}, tween.outCubic)
+        local tween2 = tween.new(0.8, brickPiece2, {color = {0.75, 0.75, 0.75, 0}}, tween.outCubic)
+        local tween3 = tween.new(0.8, brickPiece3, {color = {0.75, 0.75, 0.75, 0}}, tween.outCubic)
+        addTweenToUpdate(tween1)
+        addTweenToUpdate(tween2)
+        addTweenToUpdate(tween3)
+        table.insert(brickPieces, brickPiece1)
+        table.insert(brickPieces, brickPiece2)
+        table.insert(brickPieces, brickPiece3)
+        bossBrick.destroyed = true
+
+        Timer.after(0.8, function()
+            currentGameState = GameState.VICTORY
+        end)
+    end)
+end
+
+function globalBossDestroyed(brick)
+    bossDestroyed(brick)
 end
 
 function FarmCoreUpgrade()
@@ -299,7 +361,7 @@ local function brickDestroyed(brick)
 
     -- Victory logic: if boss brick is destroyed, destroy all bricks and trigger victory
     if brick and brick.type == "boss" then
-        bossDestroyed()
+        bossDestroyed(brick)
         return
     end
     for ballName, ballType in pairs(unlockedBallTypes) do
@@ -1559,8 +1621,8 @@ local function ballListInit()
             },
             canBuy = function() return true end,
         },
-        --[[["Sword"] = {
-            name = "Sword",
+        --[[["Spear"] = {
+            name = "Spear",
             type = "tech",
             x = screenWidth / 2,
             y = screenHeight / 2,
@@ -1627,7 +1689,7 @@ local function ballListInit()
                 speed = 150,
                 damage = 1,
             },
-            attractionStrength = 400
+            attractionStrength = 450
         },
         ["Lightning Ball"] = {
             name = "Lightning Ball",
@@ -1652,9 +1714,9 @@ local function ballListInit()
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
-            speedMult = 1,
+            speedMult = 0.8,
             size = 1,
-            rarity = "uncommon",
+            rarity = "common",
             startingPrice = 50,
             ballAmount = 1,
             description = "A ball that shoots bullets in a random direction like a gun on bounce.",
@@ -1689,7 +1751,7 @@ local function ballListInit()
             stats = {
                 speed = 50,
                 damage = 1,
-                range = 1,
+                range = 2,
             },
             canBuy = function() return hasItem("Superhero t-shirt") end,
             attractionStrength = 600
@@ -1755,7 +1817,7 @@ local function ballListInit()
             rarity = "uncommon",
             speedMult = 2,
             ammoMult = 3,
-            fireRateMult = 6,
+            fireRateMult = 4.5,
             startingPrice = 50,
             description = "A gun that shoots balls. \nDoesn't need to reload. \nSlow fire rate.",
             onBuy = function() 
@@ -1906,7 +1968,7 @@ local function ballListInit()
                 range = 3
             }
         },
-        --[[["Saw Blades"] = {
+        ["Saw Blades"] = {
             name = "Saw Blades",
             type = "tech",
             size = 1,
@@ -1925,7 +1987,7 @@ local function ballListInit()
             currentAngle = 0, -- Current rotation angle
             orbitRadius = 225,
             damageCooldowns = {}, -- Add this line to track cooldowns per saw per brick
-        },]]
+        },
         ["Gun Turrets"] = {
             name = "Gun Turrets",
             type = "gun",
@@ -2044,7 +2106,7 @@ local function ballListInit()
             y = screenHeight / 2,
             size = 1,
             noAmount = true,
-            fireRateMult = 3,
+            fireRateMult = 6,
             rarity = "legendary",
             startingPrice = 500,
             description = "A powerful gun that shoots Gun Balls. \nDoesn't need to reload. \nSlow fire rate.",
@@ -2107,6 +2169,7 @@ local addBallsQueued = false
 -- calls ballListInit and adds a ball to it
 function Balls.initialize()
     -- clean code/s
+    victoryAchieved = false
     fastBricksReset()
     Player.setMoney(0);
     longTermInvestment.value = 0
@@ -2117,6 +2180,7 @@ function Balls.initialize()
     Player.xpForNextLevel = 15
     Player.xpGainMult = 1
     Player.setMoney(0);
+    bossOverwriteValues = {x = 0, y = 0, whiteBoostTween = 0}
     if Player.currentCore == "Loan Core" then
         Player.setMoney(25)
     end
@@ -2129,6 +2193,7 @@ function Balls.initialize()
     deathTweenValues = {speed = 1, overlayOpacity = 0}
     Player.level = 1
     ballCategories = {}
+    bossOverlayBoost.boost = 0
     ballList = {}   
     unlockedBallTypes = {}
     resetAllCooldownVFXs()
@@ -2441,7 +2506,7 @@ local function brickCollisionEffects(ball, brick)
     end  
     if ball.name == "Exploding Ball" or ball.name == "Incrediball" then
         -- Create explosion using new particle system
-        local scale = math.max(getStat(ball.name, "range") * 0.5, 1)
+        local scale = math.max(getStat(ball.name, "range") * 0.35 + 0.5, 1)
         -- Limit Chain Lightning sprite animations to 25 at once
         createSpriteAnimation(ball.x, ball.y, scale/2, explosionVFX, 512, 512, 0.01, 5)
 
@@ -3827,7 +3892,7 @@ function Balls.update(dt, paddle, bricks)
                     local dist = math.sqrt(ball.cachedNearestDistSq)
                     local attractionStrength = ball.attractionStrength or 200
                     if hasItem("Electromagnetic Alignment") and (not ball.name == "Magnetic Ball") then
-                        attractionStrength = math.max(200 * itemCount("Electromagnetic Alignment"), 200)
+                        attractionStrength = math.max(135 * itemCount("Electromagnetic Alignment"), 200)
                     end
                     local dx = (nearestBrick.x + nearestBrick.width/2) - ball.x
                     local dy = (nearestBrick.y + nearestBrick.height/2) - ball.y

@@ -273,6 +273,7 @@ local function loadAssets()
     tutorialScreen3Img = love.graphics.newImage("assets/sprites/firstUpgradeShop/screen3.png")
     tutorialScreen4Img = love.graphics.newImage("assets/sprites/firstUpgradeShop/screen4.png")
     lightBeamImg = love.graphics.newImage("assets/sprites/lightBeam.png")
+    bossBrickOverlayImg = love.graphics.newImage("assets/sprites/bossBrickOverlay.png")
 
     -- UI
     uiLabelImg = love.graphics.newImage("assets/sprites/UI/label.png")
@@ -358,6 +359,7 @@ local bossBrickSpawnTimer
 local bossSpawnSwitch = true
 local boss = nil
 local function spawnBoss()
+    currentRowPopulation = 900
     targetMusicVolume = 0
     -- Center the boss brick at the top
     Timer.after(8, function()
@@ -735,7 +737,6 @@ local function addMoreBricks()
                     spawnBoss()
                     bossSpawned = true
                     spawnBossNextRow = false
-                    currentRowPopulation = 1000
                 elseif not (bossSpawned or spawnBossNextRow) and gameTime >= bossSpawnTime then
                     spawnBossNextRow = true
                 end
@@ -1751,6 +1752,7 @@ local function drawStartSelect()
     end
 end
 
+bossOverlayBoost = {boost = 0}
 function drawBricks()
     setFont(18)
     -- Initialize bricks if they don't exist
@@ -1873,14 +1875,17 @@ function drawBricks()
         love.graphics.setColor(color)
         -- Draw from center of image and brick
         love.graphics.draw(bossBrickImg, centerX, centerY, brick.drawOffsetRot, scaleX, scaleY, bossBrickImg:getWidth() / 2, bossBrickImg:getHeight() / 2)
+        love.graphics.setColor(1,1,1, bossOverlayBoost.boost)
+        love.graphics.draw(bossBrickOverlayImg, centerX, centerY, brick.drawOffsetRot, scaleX, scaleY, bossBrickImg:getWidth() / 2, bossBrickImg:getHeight() / 2)
+
         setFont(50)
         -- Draw health text (black outline)
         local text = tostring(brick.health)
-        love.graphics.setColor(0, 0, 0)
+        love.graphics.setColor(0, 0, 0, 1)
         love.graphics.print(text, centerX, centerY, 0, 1, 1, love.graphics.getFont():getWidth(text) / 2, love.graphics.getFont():getHeight() / 2)
         
         -- Draw health text (white)
-        love.graphics.setColor(1, 1, 1)
+        love.graphics.setColor(1, 1, 1, 1)
         love.graphics.print(text, centerX, centerY, 0, 1, 1, love.graphics.getFont():getWidth(text) / 2, love.graphics.getFont():getHeight() / 2)
 
         drawImageCentered(crownImg, centerX, centerY - brick.height / 2, crownImg:getWidth()/2.5, crownImg:getHeight()/2.5)
@@ -2003,6 +2008,19 @@ local function drawGameTimer()
     end
 end
 
+function restartGame()
+    changeMusic("calm")
+    local goldEarned = Player.level * math.ceil(Player.level / 5) * 5 
+    local startingItem = getCoreStartingItem(Player.currentCore)
+    playSoundEffect(selectSFX, 1, 0.8)
+    Player.addGold(goldEarned)
+    saveGameData()
+    resetGame()
+    if startingItem ~= "Nothing" and Player.currentCore ~= "Speed Core" then
+        Balls.addBall(startingItem)
+    end
+    currentGameState = GameState.PLAYING 
+end
 
 function drawPauseMenu()
     local centerX = screenWidth / 2 - buttonWidth / 2
@@ -2039,14 +2057,7 @@ function drawPauseMenu()
     local restartBtn = suit.Button("Restart", {id="pause_restart"}, centerX, btnY, buttonWidth, buttonHeight)
     local goldEarned = Player.level * math.ceil(Player.level / 5) * 5 
     if restartBtn.hit then
-        playSoundEffect(selectSFX, 1, 0.8)
-        Player.addGold(goldEarned)
-        saveGameData()
-        resetGame()
-        if startingItem ~= "Nothing" and Player.currentCore ~= "Speed Core" then
-            Balls.addBall(startingItem)
-        end
-        currentGameState = GameState.PLAYING 
+        restartGame()
     end
     btnY = btnY + buttonHeight + 30
     -- Main Menu button
@@ -2680,8 +2691,14 @@ function love.keypressed(key)
         if key == "1" then
             firstRunCompleted = true
         end
+
         if key == "2" then
-            BackgroundShader.changeShader(4)
+            for _, brick in ipairs(bricks) do
+                if brick.type == "boss" then
+                    globalBossDestroyed(brick)
+                    break
+                end
+            end
         end
         if key == "3" then
             damageThisFrame = 50

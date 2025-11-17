@@ -7,7 +7,7 @@ function KeywordSystem.new()
     
     -- Keyword definitions
     self.keywords = {
-        ["sword"] = {
+        ["Spear"] = {
             image = nil, -- Will be loaded later
             description = "A sharp blade used for combat.\nDeals 10-15 damage.",
             width = 24,
@@ -64,7 +64,7 @@ function KeywordSystem:loadKeywordImages()
         love.graphics.clear(0, 0, 0, 0) -- Clear to transparent
         
         -- Draw colored rectangle based on keyword
-        if name == "sword" then
+        if name == "Spear" then
             love.graphics.setColor(0.5, 0.7, 1, 1) -- Bright blue
         elseif name == "potion" then
             love.graphics.setColor(1, 0.2, 0.2, 1) -- Bright red
