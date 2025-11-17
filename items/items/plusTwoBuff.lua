@@ -39,7 +39,7 @@ function PlusTwoBuff.new()
         "Fake Pregnancy Belly";
     };
 
-    local itemVersion = math.random(1, 6);
+    local itemVersion = math.random(1, #itemStats);
 
     local randStat = itemStats[itemVersion];
 
