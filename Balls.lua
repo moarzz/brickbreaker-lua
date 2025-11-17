@@ -3854,20 +3854,33 @@ function Balls.update(dt, paddle, bricks)
     end
 
     -- update balls
+    local substeps = 5;
     for _, ball in ipairs(Balls) do -- Corrected loop
         -- Only update non-shadowBall balls here
         if not (ball.type == "spell" and ball.name == "Shadow Ball") then
+            for i = 1, substeps do
+                local speedMultBeforeChange = ball.speedExtra or 1
+                if ball.speedExtra then
+                    ball.speedExtra = math.max(1, ball.speedExtra - math.pow(ball.speedExtra, 1.75) * (dt / substeps) * 0.5) -- Decrease speed multiplier over time
+                end
 
-            local speedMultBeforeChange = ball.speedExtra or 1
-            if ball.speedExtra then
-                ball.speedExtra = math.max(1, ball.speedExtra - math.pow(ball.speedExtra, 1.75) * dt * 0.5) -- Decrease speed multiplier over time
+                local multX, multY = normalizeVector(ball.speedX, ball.speedY)
+                local speedExtra = ((ball.name == "Magnetic Ball" or ball.name == "Incrediball") and 0.1 or 1) * (ball.speedExtra or 0)
+                local speedMult = 1
+                ball.x = ball.x + (ball.speedX + speedExtra * multX * 50) * ball.speedMult * (dt / substeps) * (Player.currentCore == "Madness Core" and 2 or 1) * speedMult
+                ball.y = ball.y + (ball.speedY + speedExtra * multY * 50) * ball.speedMult * (dt / substeps) * (Player.currentCore == "Madness Core" and 2 or 1) * speedMult
+
+                -- Ball collision with paddle
+                paddleCollisionCheck(ball, paddle)
+
+                -- Ball collision with bricks (use visibleBricks for all balls)
+                local hitBrickThisFrame = brickCollisionCheck(ball, visibleBricks, Player)
+
+                -- Ball collision with walls
+                if not hitBrickThisFrame then
+                    wallCollisionCheck(ball)
+                end
             end
-
-            local multX, multY = normalizeVector(ball.speedX, ball.speedY)
-            local speedExtra = ((ball.name == "Magnetic Ball" or ball.name == "Incrediball") and 0.1 or 1) * (ball.speedExtra or 0)
-            local speedMult = 1
-            ball.x = ball.x + (ball.speedX + speedExtra * multX * 50) * ball.speedMult * dt * (Player.currentCore == "Madness Core" and 2 or 1) * speedMult
-            ball.y = ball.y + (ball.speedY + speedExtra * multY * 50) * ball.speedMult * dt * (Player.currentCore == "Madness Core" and 2 or 1) * speedMult
 
             if ball.type == "ball" then
                 local trailSpacing = 3 -- Distance between trail points
@@ -3887,17 +3900,6 @@ function Balls.update(dt, paddle, bricks)
                 while #ball.trail > ballTrailLength do
                     table.remove(ball.trail, 1)
                 end
-            end
-
-            -- Ball collision with paddle
-            paddleCollisionCheck(ball, paddle)
-
-            -- Ball collision with bricks (use visibleBricks for all balls)
-            local hitBrickThisFrame = brickCollisionCheck(ball, visibleBricks, Player)
-
-            -- Ball collision with walls
-            if not hitBrickThisFrame then
-                wallCollisionCheck(ball)
             end
 
             -- Magnetic ball behavior (use visibleBricks)
