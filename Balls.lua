@@ -101,11 +101,13 @@ local function burnBrick(brick, damage, length, name)
 end
 
 local function bossDestroyed(bossBrick)
+    if victoryAchieved then return end
     inGame = false
     firstRunCompleted = true
     print("Boss destroyed! Triggering victory.")
     local bossBrickId
     victoryAchieved = true
+    fakeBossSpawned = true
     for i, b in ipairs(bricks) do
         if b.type == "boss" then
             bossBrickId = i
@@ -361,7 +363,7 @@ local function brickDestroyed(brick)
 
     -- Victory logic: if boss brick is destroyed, destroy all bricks and trigger victory
     if brick and brick.type == "boss" then
-        bossDestroyed(brick)
+        -- bossDestroyed(brick)
         return
     end
     for ballName, ballType in pairs(unlockedBallTypes) do
@@ -518,6 +520,7 @@ function dealDamage(ball, brick, burnDamage)
     
     damage = math.floor(damage)
     damage = math.min(damage, brick.health)
+
     local protectingAura = isBrickInShieldAura(brick)
     if protectingAura then
         damage = 0
@@ -556,7 +559,14 @@ function dealDamage(ball, brick, burnDamage)
     else
         kill = true
         brickKilledThisFrame = true
-        brick.destroyed = true
+        if brick.type ~= "boss" then
+            brick.destroyed = true
+        else
+            kill = false
+            brick.health = 1
+            brick.color = getBrickColor(brick.health, false, true)
+            bossDestroyed(brick)
+        end
         
         if ball.type == "bullet" and not ball.golden then
             if (not (ball.name == "Golden Gun" or ball.golden)) then
@@ -571,10 +581,15 @@ function dealDamage(ball, brick, burnDamage)
     
     if kill then
         brickDestroyed(brick)
-        brick = nil
+        if brick.type ~= "boss" then
+            brick = nil
+        end
     elseif brick and brick.health <= 0 then
         brickDestroyed(brick)
-        brick = nil
+        if brick.type ~= "boss" then
+            brick = nil
+            kill = true
+        end
     end
     
     return kill
@@ -1505,7 +1520,7 @@ local function cast(spellName, brick, forcedDamage)
         local ballType = unlockedBallTypes[spellName]
         
         -- Skip if brick is on cooldown
-        if brick and lightningCooldowns[brick.id] and (love.timer.getTime() - lightningCooldowns[brick.id]) < 0.2 then
+        if brick and lightningCooldowns[brick.id] and (love.timer.getTime() - lightningCooldowns[brick.id]) < 0.025 then
             return
         end
         
@@ -1689,14 +1704,14 @@ local function ballListInit()
                 speed = 150,
                 damage = 1,
             },
-            attractionStrength = 450
+            attractionStrength = 500
         },
         ["Lightning Ball"] = {
             name = "Lightning Ball",
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
-            speedMult = 1,
+            speedMult = 1.2,
             size = 1,
             ballAmount = 1,
             rarity = "uncommon",
@@ -1714,7 +1729,7 @@ local function ballListInit()
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
-            speedMult = 0.8,
+            speedMult = 0.9,
             size = 1,
             rarity = "common",
             startingPrice = 50,
@@ -4010,7 +4025,7 @@ function Balls.update(dt, paddle, bricks)
             bullet.distanceTraveled = bullet.distanceTraveled + math.sqrt(bullet.speedX^2 + bullet.speedY^2) * dt
             if not bullet.hasSplit and bullet.distanceTraveled > 50 then
                 bullet.hasSplit = true
-                local chance = hasItem("Four Leafed Clover") and 50 or 25
+                local chance = hasItem("Four Leafed Clover") and 60 or 30
                 if math.random(1,100) <= chance then
                     local angle = math.atan2(bullet.speedY, bullet.speedX)
                     local speed = math.sqrt(bullet.speedX^2 + bullet.speedY^2)

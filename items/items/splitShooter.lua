@@ -11,20 +11,20 @@ function SplitShooter.new()
     local instance = setmetatable({}, SplitShooter):init();
 
     instance.descriptionPointers = {
-        splitChance = hasItem("Four Leafed Clover") and 50 or 25;
+        splitChance = hasItem("Four Leafed Clover") and 60 or 30;
     };
 
-    instance.stats.ammo = 2;
+    instance.stats.cooldown = -2;
 
     return instance;
 end
 
 function SplitShooter.events:item_purchase_FourLeafedClover()
-    self.descriptionPointers.splitChance = 50;
+    self.descriptionPointers.splitChance = 60;
 end
 
 function SplitShooter.events:item_sell_FourLeafedClover()
-    self.descriptionPointers.splitChance = 25;
+    self.descriptionPointers.splitChance = 30;
 end
 
 return SplitShooter;

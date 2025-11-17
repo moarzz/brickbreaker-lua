@@ -514,10 +514,13 @@ end
 
 local healBricks = {}
 local unavailableXpos = {}
-local bossRows = {}
+local blockedRows = {}
 local currentRow = 1
 local nextRowDebuff = 0
 local function generateRow(brickCount, yPos)
+    if victoryAchieved then
+        return
+    end
     local rowXOffset = math.random(-15,15)
     local startLocation = usingMoneySystem and statsWidth or 30
     local columnCount = usingMoneySystem and 12 or 22
@@ -529,14 +532,37 @@ local function generateRow(brickCount, yPos)
     if bossSpawned and not bossDead then
         local num1, num2 = usingMoneySystem and 4 or 9, usingMoneySystem and 9 or 14
         for i = num1, num2 do
-            bossRows[i] = true
+            blockedRows[i] = true
+        end
+    end
+
+    if not bossSpawned then
+        local blockedRowCount = math.random(0,11)
+        if blockedRowCount ~= 0 then
+            blockedRows = {}
+            for i=1, blockedRowCount do
+                local doAgain = true
+                local iterations = 1
+                while doAgain do
+                    iterations = iterations + 1
+                    local blockedRow = math.random(1,22)
+                    if not blockedRows[blockedRow] then
+                        blockedRows[blockedRow] = true
+                        doAgain = false
+                    end
+                    if iterations >= 35 then
+                        doAgain = false
+                    end
+                end
+            end
+
         end
     end
     
     -- Pre-calculate available positions
     local availablePositions = {}
     for i = 1, columnCount do
-        if not (unavailableXpos[i] or bossRows[i]) then
+        if not (unavailableXpos[i] or blockedRows[i]) then
             table.insert(availablePositions, i)
         end
     end
@@ -782,7 +808,7 @@ function getBrickColor(health, bigBrick, boss, colorHealth)
 end
 
 function initializeBricks()
-    bossRows = {}
+    blockedRows = {}
     -- Bricks
     bricks = {}
     shieldAuras = {}
@@ -986,7 +1012,7 @@ function getBrickSpeedMult()
     else
         local posMult = 1
         local highestY = getHighestBrickY()
-        posMult = highestY < 350 and mapRangeClamped(highestY, 0, 350, startingBrickSpeed, 10) or mapRangeClamped(highestY, 350, 750, 10, 1.5)
+        posMult = highestY < 350 and mapRangeClamped(highestY, 0, 350, startingBrickSpeed, 10) or mapRangeClamped(highestY, 350, 750, 10, 1.75)
         if #bricks == 0 then
             return 1
         end
@@ -1300,7 +1326,13 @@ local function gameFixedUpdate(dt)
             local leftLimit = usingMoneySystem and statsWidth or 0
             local rightLimit = usingMoneySystem and (screenWidth - statsWidth) or screenWidth
             paddle.x = math.max(leftLimit - (paddle.width/2) + 65, math.min(rightLimit - paddle.width + (paddle.width/2) - 65, paddle.x))
-            paddle.y = Player.dead and 10000 or math.max(math.max(getHighestBrickY() + brickHeight*5, screenHeight/2 + 200), math.min(screenHeight - paddle.height - 10, paddle.y))
+            local bossY = 0
+            for _, brick in ipairs(bricks) do
+                if brick.type == "boss" then
+                    bossY = brick.y + brick.height + 10
+                end
+            end
+            paddle.y = Player.dead and 10000 or math.max(bossY, math.max(math.max(getHighestBrickY() + brickHeight*5, screenHeight/2 + 200), math.min(screenHeight - paddle.height - 10, paddle.y)))
 
             -- Update Balls
             Balls.update(dt, paddle, bricks, Player)
@@ -2679,9 +2711,8 @@ function love.keypressed(key)
         if key == "0" then
             for i= #bricks, 1, -1 do
                 local brick = bricks[i]
-                if not brick.destroyed and brick.y > screenHeight/2 then
-                    BrickDestroyedGlobal(brick)
-                    table.remove(bricks, i)
+                if not brick.destroyed and brick.y > screenHeight/3 then
+                    dealDamage({stats = {damage = 10000000}}, brick)
                 end
             end
         end
