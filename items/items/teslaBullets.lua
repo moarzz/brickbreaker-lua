@@ -11,18 +11,18 @@ function TeslaBullets.new()
     local instance = setmetatable({}, TeslaBullets):init();
 
     instance.descriptionPointers = {
-        teslaChance = hasItem("Four Leafed Clover") and 50 or 25;
+        teslaChance = hasItem("Four Leafed Clover") and 40 or 20;
     };
 
     return instance;
 end
 
 function TeslaBullets.events:item_purchase_FourLeafedClover()
-    self.descriptionPointers.teslaChance = 50;
+    self.descriptionPointers.teslaChance = 40;
 end
 
 function TeslaBullets.events:item_sell_FourLeafedClover()
-    self.descriptionPointers.teslaChance = 25;
+    self.descriptionPointers.teslaChance = 20;
 end
 
 return TeslaBullets;

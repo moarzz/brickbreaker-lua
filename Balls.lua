@@ -104,6 +104,11 @@ local bossWidth, bossHeight = 500, 300
 local function bossDestroyed(bossBrick)
     -- setTargetMusicVolume(0)
     changeMusic("victory")
+    GlobalTimer:after(25, function()
+        if currentGameState ~= GameState.PLAYING then
+            changeMusic("menu")
+        end
+    end)
     if Player.levelingUp then
         Player.levelingUp = false
         Player.choosingUpgrade = false
@@ -1792,7 +1797,7 @@ local function ballListInit()
             rarity = "common",
             startingPrice = 10,
             ammoMult = 7,
-            fireRateMult = 0.33,
+            fireRateMult = 0.35,
             description = "Fires bullets, fast fireRate",
             onBuy = function() 
                 shoot("Machine Gun")
@@ -1804,7 +1809,7 @@ local function ballListInit()
 
             stats = {
                 damage = 1,
-                cooldown = 7,
+                cooldown = 8,
                 ammo = 14,
                 fireRate = 4,
             },
@@ -1817,7 +1822,7 @@ local function ballListInit()
             size = 1,
             rarity = "common",
             ammoMult = 2,
-            fireRateMult = 1.7,
+            fireRateMult = 1.8,
             startingPrice = 25,
             description = "Fire bullets that die on impact in bursts.",
             onBuy = function() 
@@ -1844,7 +1849,7 @@ local function ballListInit()
             rarity = "uncommon",
             speedMult = 2,
             ammoMult = 3,
-            fireRateMult = 4.5,
+            fireRateMult = 6,
             startingPrice = 50,
             description = "A gun that shoots balls. \nDoesn't need to reload. \nSlow fire rate.",
             onBuy = function() 
@@ -1891,7 +1896,7 @@ local function ballListInit()
             y = screenHeight / 2,
             size = 1,
             ammoMult = 2,
-            fireRateMult = 1,
+            fireRateMult = 1.25,
             rarity = "rare",
             startingPrice = 100,
             description = "Fires golden bullets that pass through all bricks and always deal full damage.",
@@ -2028,7 +2033,7 @@ local function ballListInit()
             description = "Generates turrets that shoots bricks. \n(max 20)",
             bulletSpeed = 1500,
             color = {0.5, 0.5, 0.5, 1}, -- Grey color for Turret Generator
-            currentAmmo = 6 + ((Player.permanentUpgrades.ammo or 0)) * 3,
+            currentAmmo = 9 + ((Player.permanentUpgrades.ammo or 0)) * 3,
             onBuy = function() 
                 fire("Gun Turrets")
             end,
@@ -2037,7 +2042,7 @@ local function ballListInit()
             end,
             stats = {
                 ammo = 9,
-                cooldown = 10,
+                cooldown = 12,
                 damage = 1,
             },
         },
@@ -2906,7 +2911,7 @@ local function wallCollisionCheck(ball)
         end
         playSoundEffect(wallBoopSFX, 0.5, 0.6)
         wallHit = true
-    elseif ball.y + effectiveRadius > math.max(screenHeight, paddle.y + 100) and ball.speedY > 0 then
+    elseif ball.y + effectiveRadius > math.max(screenHeight, paddle.y + 150) and ball.speedY > 0 then
         ball.speedY = -ball.speedY
         ball.y = screenHeight - effectiveRadius
         if Player.currentCore == "Bouncy Core" or hasItem("Bouncy Walls") then
@@ -4114,7 +4119,7 @@ function Balls.update(dt, paddle, bricks)
                             end
                         end
                         if not bullet.hasTriggeredOnBulletHit then
-                            local chance = hasItem("Four Leafed Clover") and 50 or 25
+                            local chance = hasItem("Four Leafed Clover") and 40 or 20
                             if hasItem("Tesla Bullets") and math.random(1,100) <= chance then
                                 cast("Chain Lightning", brick, bullet.stats.damage)
                             end

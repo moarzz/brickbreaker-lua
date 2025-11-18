@@ -196,7 +196,7 @@ function permanentUpgrades.draw()
     local padding = 20
     local cellWidth = 200
     local x, y = padding, padding    
-    startingItemsDraw()  -- Draw the starting items menu
+    -- startingItemsDraw()  -- Draw the starting items menu
     paddleCoresDraw()
 
     -- Draw money and score at the top
@@ -226,7 +226,7 @@ function permanentUpgrades.draw()
     -- Draw rest of UI (title and upgrades)
     y = y + 90  -- Add spacing after money/score display
     setFont(28)
-    suit.Label("Stat Upgrades", {align = "center", valign = "center"}, x - 85, y, uiLabelImg:getWidth()*1.5, uiLabelImg:getHeight())
+    --[[suit.Label("Stat Upgrades", {align = "center", valign = "center"}, x - 85, y, uiLabelImg:getWidth()*1.5, uiLabelImg:getHeight())
     y = y - 120
 
     -- Draw upgrades in a grid
@@ -263,7 +263,7 @@ function permanentUpgrades.draw()
         if iconsImg[upgradeName] then
             local iconX = x + cellWidth/2 - iconsImg[upgradeName]:getWidth()*1.75/2 * 32/500
             love.graphics.draw(iconsImg[upgradeName], iconX, y + 125, 0, 1.75 * 32/500, 1.75 * 32/500)
-        end]]
+        end
 
         -- Add invisible button for upgrading (now using dress)
         local buttonID = generateNextButtonID()
@@ -294,7 +294,7 @@ function permanentUpgrades.draw()
                 print(upgradeName .. " upgraded to " .. Player.permanentUpgrades[upgradeName])
             end
         end
-    end
+    end]]
     
     -- Grid layout settings
     local gridStartX = 100

@@ -947,6 +947,7 @@ function love.load()
     })
 
     loadGameData()
+    love.audio.setVolume(globalVolume)
     Crooky:setVisible(not firstRunCompleted)
 
     backgroundMusic:setVolume(musicVolume/4)
@@ -1352,7 +1353,7 @@ local function gameFixedUpdate(dt)
                 end
             end
             paddle.y = Player.dead and 10000 or math.max(bossY, math.max(math.max(getHighestBrickY() + brickHeight*5, screenHeight/2 + 200), math.min(screenHeight - paddle.height - 10, paddle.y)))
-
+            --paddle.y = 1050
             -- Update Balls
             Balls.update(dt, paddle, bricks, Player)
 
@@ -2175,15 +2176,17 @@ function drawVictoryScreen()
     local y = screenHeight * 3/4
     setFont(36)
 
-    -- Keep Going button (new)
+    --[[ Keep Going button (new)
     if suit.Button("Keep Going", {id = "keep_going"}, startX, y, buttonW, buttonH).hit then
+        changeMusic("intense")
         playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.PLAYING  -- Set state back to playing
         love.mouse.setVisible(false)
-    end
+    end]]
 
     -- Main Menu button
     if suit.Button("Main Menu", {id = "victory_menu"}, startX + buttonW + spacing, y, buttonW, buttonH).hit then
+        -- changeMusic("menu")
         playSoundEffect(selectSFX, 1, 0.8)
         resetGame()
         currentGameState = GameState.MENU
@@ -2191,6 +2194,7 @@ function drawVictoryScreen()
     end
     -- Upgrades button
     if suit.Button("Shop", {id = "victory_upgrades"}, startX + (buttonW + spacing) * 2, y, buttonW, buttonH).hit then
+        -- changeMusic("menu")
         playSoundEffect(selectSFX, 1, 0.8)
         resetGame()
         currentGameState = GameState.UPGRADES
@@ -2211,6 +2215,7 @@ function drawVictoryScreen()
 end
 
 inGame = false
+globalVolume = 1
 -- Add a function to draw the settings menu with SUIT sliders
 function drawSettingsMenu()
     local centerX = screenWidth / 2 - buttonWidth / 2
@@ -2219,14 +2224,22 @@ function drawSettingsMenu()
     love.graphics.setColor(1, 1, 1, 1)
     local title = "Settings"
     local titleWidth = love.graphics.getFont():getWidth(title)
-    love.graphics.print(title, screenWidth/2 - titleWidth/2, startY - 100)
+    love.graphics.print(title, screenWidth/2 - titleWidth/2, startY - 125)
 
     setFont(36)
     local sliderWidth = 400
     local sliderHeight = 40
     local sliderSpacing = 80
     local sliderX = screenWidth/2 - sliderWidth/2
-    local sliderY = startY + 60
+    local sliderY = startY + 100
+
+    -- Master / global volume slider (affects all audio via the mixer)
+    suit.Label("Master Volume", {align = "left"}, sliderX, sliderY - sliderSpacing, sliderWidth, 40)
+    local masterSliderInfo = { value = globalVolume or 1 }
+    local masterSlider = suit.Slider(masterSliderInfo, { id = "master_volume_slider" }, sliderX, sliderY + 40 - sliderSpacing, sliderWidth, sliderHeight)
+    globalVolume = masterSliderInfo.value
+    -- Apply to love audio mixer so music & sfx are scaled globally
+    love.audio.setVolume(globalVolume)
 
     -- Music Volume Slider
     local musicSliderInfo = {value = musicVolume}
@@ -2385,6 +2398,7 @@ local function fullDraw()
             love.mouse.setVisible(true)
         end
         if suit.Button("Play", {color = invisButtonColor}, screenWidth - uiLabelImg:getWidth()*0.8 - 20, 20, uiLabelImg:getWidth()*0.8, uiLabelImg:getHeight()*0.8).hit then
+            changeMusic("calm")
             playSoundEffect(selectSFX, 1, 0.8)
             currentGameState = GameState.START_SELECT
             love.mouse.setVisible(true)

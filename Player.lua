@@ -21,6 +21,7 @@ function loadGameData()
         },
         startingItems = {"Ball", "Nothing"},
         settings = {
+            globalVolume = 1,
             musicVolume = 1,
             sfxVolume = 1,
             fullscreen = true,
@@ -56,6 +57,7 @@ function loadGameData()
     Player.permanentUpgradePrices = data.permanentUpgradePrices
     Player.startingItems = data.startingItems
     Player.paddleCores = data.paddleCores
+    globalVolume = data.settings.globalVolume
     musicVolume = data.settings.musicVolume
     sfxVolume = data.settings.sfxVolume
     fullScreenCheckbox = data.settings.fullscreen
@@ -168,6 +170,7 @@ function saveGameData()
         -- permanentUpgradePrices = Player.permanentUpgradePrices,
         startingItems = Player.startingItems or {"Ball"},
         settings = {
+            globalVolume = globalVolume,
             musicVolume = musicVolume,
             sfxVolume = sfxVolume,
             fullscreen = fullScreenCheckbox,

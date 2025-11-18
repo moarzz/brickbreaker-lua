@@ -985,11 +985,14 @@ local function drawBallStats()
                 if ballType.type == "ball" then
                     totalStats["amount"] = ballType.ballAmount
                 end
-                ballType.price = ballType.price + tableLength(totalStats)
+                local priceUpgradeCount = 0
                 for statName, statValue in pairs(totalStats) do
                     if statName == "cooldown" and getStat(ballName, "cooldown") <= 0 then
-                        print("cannot upgrade cooldown any further")       
+                        print("cannot upgrade cooldown any further")
+                    elseif statName == "ammo" and getStat(ballName, "cooldown") <= 0 and ballName ~= "Minigun" and ballName ~= "Gun Turrets" then
+                        print("cannot upgrade ammo any further")
                     else
+                        priceUpgradeCount = priceUpgradeCount + 1
                         if upgradeQueued then
                             for i, queuedUpgrade in ipairs(ballType.queuedUpgrades) do
                                 if queuedUpgrade == statName then
@@ -1019,6 +1022,7 @@ local function drawBallStats()
                         end
                     end
                 end
+                ballType.price = ballType.price + priceUpgradeCount
                 if currentlyOnFirstLevelUp then
                     if Player.getCurrentTutorialStep() == 4 then
                         Player.nextTutorialStep()
