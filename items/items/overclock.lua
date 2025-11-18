@@ -1,7 +1,7 @@
 local Overclock = ItemBase.new();
 Overclock.__index = Overclock;
 Overclock.name = "Overclock";
-Overclock.description = "When you buy this, all your weapons get a permanent upgrade to a random one of their stats";
+Overclock.description = "When you buy this, increase the <color=damage>damage<color=white> of all your weapons by 1";
 Overclock.rarity = "uncommon";
 Overclock.imageReference = "assets/sprites/UI/ItemIcons/Overclock.png";
 
@@ -14,7 +14,9 @@ function Overclock.new()
 end
 
 function Overclock:purchase()
-    FarmCoreUpgrade();
+    for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
+        weapon.stats.damage = weapon.stats.damage + 1
+    end
 end
 
 return Overclock;

@@ -544,7 +544,7 @@ local function generateRow(brickCount, yPos)
     end
 
     if not bossSpawned then
-        local blockedRowCount = math.random(0,11)
+        local blockedRowCount = math.random(0,13)
         if blockedRowCount ~= 0 then
             blockedRows = {}
             for i=1, blockedRowCount do
@@ -1007,7 +1007,7 @@ function getAverageBrickHealth()
     end
 end
 
-local startingBrickSpeed = 20
+local startingBrickSpeed = 50
 currentBrickSpeed = startingBrickSpeed
 deathTweenValues = {speed = 1, overlayOpacity = 0}
 function getBrickSpeedMult() 
@@ -1348,7 +1348,7 @@ local function gameFixedUpdate(dt)
             local bossY = 0
             for _, brick in ipairs(bricks) do
                 if brick.type == "boss" then
-                    bossY = brick.y + brick.height + 10
+                    bossY = brick.y + brick.height + 100
                 end
             end
             paddle.y = Player.dead and 10000 or math.max(bossY, math.max(math.max(getHighestBrickY() + brickHeight*5, screenHeight/2 + 200), math.min(screenHeight - paddle.height - 10, paddle.y)))
@@ -1785,6 +1785,7 @@ local function drawStartSelect()
     setFont(40)
     local playBtn = suit.Button("Play", {id = "start_play"}, screenWidth / 2 - buttonWidth / 2, playBtnY, buttonWidth, buttonHeight)
     if playBtn.hit then
+        changeMusic("calm")
         playSoundEffect(selectSFX, 1, 0.8)
         startingChoice = item.name
         startingItemName = item.name
@@ -2784,7 +2785,7 @@ function love.keypressed(key)
 
         -- add weapon
         if key == "7" then  
-            Balls.addBall("ball gun")
+            Balls.addBall("Golden Gun")
         end
 
         if key == "8" then

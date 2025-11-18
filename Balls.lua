@@ -440,7 +440,7 @@ local function brickDestroyed(brick)
             end
         end
     end
-    if math.random(1,5000)/chanceMult <= currentMoneyDropChance then
+    if math.random(1,4000)/chanceMult <= currentMoneyDropChance then
         createPowerup(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth, "dollarBill")
         currentMoneyDropChance = 0
     else
@@ -1400,7 +1400,7 @@ local function cast(spellName, brick, forcedDamage)
         shadowballId = shadowballId + 1
         -- Removed shadowBall hit sound effect
         table.insert(shadowBalls, shadowBall)
-        local shadowBallStartTween = tween.new(0.25, shadowBalls[#shadowBalls], {radius = 5 * range}, tween.outExpo)
+        local shadowBallStartTween = tween.new(0.25, shadowBalls[#shadowBalls], {radius = 7 * range}, tween.outExpo)
         addTweenToUpdate(shadowBallStartTween)
         local sprayCooldown = hasItem("Four Leafed Clover") and 7.5 or 10 -- this is correct, stop tweaking and changing it
         local cooldownLength = (hasItem("Spray and Pray") and sprayCooldown/(getStat("Shadow Ball", "fireRate")) or 15/(getStat("Shadow Ball", "fireRate"))) + 2
@@ -1433,7 +1433,7 @@ local function cast(spellName, brick, forcedDamage)
             local fireballStartTween = tween.new(0.25, fireball.animation, {scale = 1.5}, tween.outExpo)
             addTweenToUpdate(fireballStartTween)
         end
-        local cooldownValue = 12 / getStat("Fireballs", "fireRate")
+        local cooldownValue = 13.5 / getStat("Fireballs", "fireRate")
         local timeUntilNextCast = (3 + cooldownValue)/3
         Timer.after(timeUntilNextCast, function()
             cast("Fireballs")
@@ -1670,7 +1670,7 @@ local function ballListInit()
             x = screenWidth / 2,
             y = screenHeight / 2,
             ballAmount = 1,
-            speedMult = 1,
+            speedMult = 0.85,
             size = 1,
             rarity = "rare",
             startingPrice = 50,
@@ -1723,7 +1723,7 @@ local function ballListInit()
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
-            speedMult = 1.2,
+            speedMult = 1,
             size = 1,
             ballAmount = 1,
             rarity = "uncommon",
@@ -1806,7 +1806,7 @@ local function ballListInit()
                 damage = 1,
                 cooldown = 7,
                 ammo = 14,
-                fireRate = 3,
+                fireRate = 4,
             },
         },
         Shotgun = {
@@ -1817,7 +1817,7 @@ local function ballListInit()
             size = 1,
             rarity = "common",
             ammoMult = 2,
-            fireRateMult = 1.75,
+            fireRateMult = 1.7,
             startingPrice = 25,
             description = "Fire bullets that die on impact in bursts.",
             onBuy = function() 
@@ -1891,7 +1891,7 @@ local function ballListInit()
             y = screenHeight / 2,
             size = 1,
             ammoMult = 2,
-            fireRateMult = 1.35,
+            fireRateMult = 1,
             rarity = "rare",
             startingPrice = 100,
             description = "Fires golden bullets that pass through all bricks and always deal full damage.",
@@ -1902,8 +1902,8 @@ local function ballListInit()
             currentAmmo = 2 + ((Player.permanentUpgrades.ammo or 0)) * 2,
             bulletSpeed = 1500,
             stats = {
-                damage = 1,
-                cooldown = 9,
+                damage = 2,
+                cooldown = 8,
                 ammo = 2,
                 fireRate = 1,
             },
@@ -2081,7 +2081,7 @@ local function ballListInit()
 
             stats = {
                 amount = 1,
-                damage = 1,
+                damage = 2,
                 fireRate = 1,
                 range = 2
             },
@@ -2534,7 +2534,7 @@ local function brickCollisionEffects(ball, brick)
     end  
     if ball.name == "Exploding Ball" or ball.name == "Incrediball" then
         -- Create explosion using new particle system
-        local scale = math.max(getStat(ball.name, "range") * 0.35 + 0.5, 1)
+        local scale = math.max(getStat(ball.name, "range") * 0.3 + 0.5, 1)
         -- Limit Chain Lightning sprite animations to 25 at once
         createSpriteAnimation(ball.x, ball.y, scale/2, explosionVFX, 512, 512, 0.01, 5)
 
@@ -2696,7 +2696,7 @@ local function brickCollisionCheck(ball, bricksToCheck)
                 if ball.name == "Ping-Pong ball" and ball.speedY < 0 then
                     ball.speedY = ball.speedY - 150
                 end
-                if ball.name == "Magnetic Ball" or ball.name == "Incrediball" then
+                if ball.name == "Magnetic Ball" or ball.name == "Incrediball" or hasItem("Electromagnetic Alignment") then
                     local currentBallSpeed = (unlockedBallTypes[ball.name].stats.speed + getStatItemsBonus("speed", ballList[ball.name]) * 50 + (Player.permanentUpgrades.speed or 0) * 50) * (Player.currentCore == "Madness Core" and 2 or 1)
                     local normalizedSpeedX, normalizedSpeedY = normalizeVector(ball.x - (brick.x + brick.width/2), ball.y - (brick.y + brick.height/2))
                     local speed = math.sqrt(ball.speedX^2 + ball.speedY^2)
@@ -2881,7 +2881,7 @@ local function wallCollisionCheck(ball)
         ball.speedX = -ball.speedX
         ball.x = leftWallPosition + effectiveRadius -- Ensure the ball is not stuck in the wall
         if Player.currentCore == "Bouncy Core" or hasItem("Bouncy Walls") then
-            ball.speedExtra = math.min((ball.speedExtra or 1) + 4, 12)
+            ball.speedExtra = math.min((ball.speedExtra or 1) + 6, 12)
         end
         if ball.y < screenWidth then
             playSoundEffect(wallBoopSFX, 0.5, 0.6)
@@ -2891,7 +2891,7 @@ local function wallCollisionCheck(ball)
         ball.speedX = -ball.speedX
         ball.x = rightWallPosition - effectiveRadius -- Ensure the ball is not stuck in the 
         if Player.currentCore == "Bouncy Core" or hasItem("Bouncy Walls") then
-            ball.speedExtra = math.min((ball.speedExtra or 1) + 4, 12)
+            ball.speedExtra = math.min((ball.speedExtra or 1) + 6, 12)
         end
         if ball.y < screenWidth then
             playSoundEffect(wallBoopSFX, 0.5, 0.6)
@@ -2902,7 +2902,7 @@ local function wallCollisionCheck(ball)
         ball.speedY = -ball.speedY
         ball.y = effectiveRadius -- Ensure the ball is not stuck in the wall
         if Player.currentCore == "Bouncy Core" or hasItem("Bouncy Walls") then
-            ball.speedExtra = math.min((ball.speedExtra or 1) + 4, 12)
+            ball.speedExtra = math.min((ball.speedExtra or 1) + 6, 12)
         end
         playSoundEffect(wallBoopSFX, 0.5, 0.6)
         wallHit = true
@@ -2910,7 +2910,7 @@ local function wallCollisionCheck(ball)
         ball.speedY = -ball.speedY
         ball.y = screenHeight - effectiveRadius
         if Player.currentCore == "Bouncy Core" or hasItem("Bouncy Walls") then
-            ball.speedExtra = math.min((ball.speedExtra or 1) + 4, 12)
+            ball.speedExtra = math.min((ball.speedExtra or 1) + 6, 12)
         end
         playSoundEffect(wallBoopSFX, 0.5, 0.6)
         if ball.name == "Ping-Pong ball" and ball.speedY < 0 then
@@ -3547,7 +3547,7 @@ local function spellsUpdate(dt)
                         createSpriteAnimation(fireball.x, fireball.y, scale, explosionVFX, 512, 512, 0.01, 5)
                         playSoundEffect(explosionSFX, 0.5, 1, false, true)
                         -- Area damage to nearby bricks
-                        local area = scale * 50
+                        local area = scale * 80
                         local bricksTouchingCircle = getBricksInCircle(fireball.x, fireball.y, area)
                         for _, touchingBrick in ipairs(bricksTouchingCircle) do
                             if touchingBrick and touchingBrick ~= brick and touchingBrick.health > 0 then
@@ -3635,7 +3635,7 @@ function powerupPickup(powerup, length)
     end
     print("powerup type : " .. powerup.type)
     if powerup.type == "dollarBill" then
-        local moneyGain = math.random(1,7)
+        local moneyGain = math.random(1,5)
         if moneyGain > 2 then
             moneyGain = 1
         end   
@@ -3933,9 +3933,9 @@ function Balls.update(dt, paddle, bricks)
                 if ball.cachedNearestBrick then
                     local nearestBrick = ball.cachedNearestBrick
                     local dist = math.sqrt(ball.cachedNearestDistSq)
-                    local attractionStrength = ball.attractionStrength or 200
-                    if hasItem("Electromagnetic Alignment") and (not ball.name == "Magnetic Ball") then
-                        attractionStrength = math.max(135 * itemCount("Electromagnetic Alignment"), 200)
+                    local attractionStrength = ball.attractionStrength or 0
+                    if hasItem("Electromagnetic Alignment") then
+                        attractionStrength = math.max(200 * itemCount("Electromagnetic Alignment"), 200)
                     end
                     local dx = (nearestBrick.x + nearestBrick.width/2) - ball.x
                     local dy = (nearestBrick.y + nearestBrick.height/2) - ball.y
@@ -4124,9 +4124,9 @@ function Balls.update(dt, paddle, bricks)
                         -- Deal damage to the brick
                         local kill = dealDamage(bullet, brick)
 
-                        if hasItem("Phantom Bullets") then
+                        --[[if hasItem("Phantom Bullets") then
                             bullet.stats.damage = bullet.stats.damage - 2
-                        end
+                        end]]
                         if ((not kill) and (not (bullet.golden or bullet.name == "Golden Gun"))) or bullet.stats.damage <= 0 then
                             print("KILLING BULLET")
                             shouldRemoveBullet = true
@@ -4228,7 +4228,9 @@ function Balls.update(dt, paddle, bricks)
         if orb.y > screenHeight + 50 then
             table.remove(powerups, i)
         end
-        if paddle.x < orb.x and orb.x < paddle.x + paddle.width then
+
+        -- attraction to paddle
+        if (paddle.x < orb.x and orb.x < paddle.x + paddle.width) or orb.type ~= "dollarBill" then
             local attractionStrength = 1100
             local angle = math.atan2((paddle.y + paddle.height/2) - orb.y, (paddle.x + paddle.width/2) - orb.x)
             orb.speedX = orb.speedX + math.cos(angle) * attractionStrength * dt
