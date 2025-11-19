@@ -1117,7 +1117,14 @@ local function cleanTable(tbl, isDeadFunc)
 end
 
 local targetMusicPitch = 1
+local currentMusicRef = nil
 function changeMusic(newMusicStage)
+    if newMusicStage == currentMusicRef then
+        return
+    end
+    if (currentMusicRef == "menu" or currentMusicRef == "calm") and (newMusicStage == "menu" or newMusicStage == "calm") then
+        return
+    end
     local ref
     if newMusicStage == "menu" then
         ref = "assets/SFX/inGame1.mp3";
@@ -1153,6 +1160,7 @@ function changeMusic(newMusicStage)
         backgroundMusic:setVolume(musicVolume/4)
         backgroundMusic:play()
     end
+    currentMusicRef = newMusicStage
 end
 
 local pausedEffect = {
