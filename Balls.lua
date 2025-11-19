@@ -2201,6 +2201,8 @@ local addBallsQueued = false
 -- calls ballListInit and adds a ball to it
 function Balls.initialize()
     -- clean code/s
+    changeMusic("calm")
+    powerupPopup = {startTime = 0, type = nil, scale = 0, angle = 0}
     victoryAchieved = false
     fastBricksReset()
     Player.setMoney(0);
@@ -2541,7 +2543,7 @@ local function brickCollisionEffects(ball, brick)
         -- Create explosion using new particle system
         local scale = math.max(getStat(ball.name, "range") * 0.3 + 0.5, 1)
         -- Limit Chain Lightning sprite animations to 25 at once
-        createSpriteAnimation(ball.x, ball.y, scale/2, explosionVFX, 512, 512, 0.01, 5)
+        createSpriteAnimation(ball.x, ball.y, scale/2, explosionVFX, 512, 512, 0.01, 5, 0.9, 0.9)
 
         --Explosion.spawn(ball.x, ball.y, scale)
         
@@ -2549,7 +2551,7 @@ local function brickCollisionEffects(ball, brick)
         playSoundEffect(explosionSFX, 0.5, 1, false, true)
         
         dealDamage(ball, brick)
-        local bricksTouchingCircle = getBricksInCircle(ball.x, ball.y, getStat(ball.name, "range") * 24)
+        local bricksTouchingCircle = getBricksInCircle(ball.x, ball.y, getStat(ball.name, "range") * 15)
         for _, touchingBrick in ipairs(bricksTouchingCircle) do
             if touchingBrick and touchingBrick ~= brick then -- Ensure not nil and not the original brick
                 if touchingBrick.health > 0 then
@@ -3802,7 +3804,7 @@ function Balls.update(dt, paddle, bricks)
         if bricksInEllipse(rocket.x, rocket.y, 20, 60) then
             playSoundEffect(explosionSFX, 0.5, 1, false, true)
             -- Explosion damage
-            local scale = 2.5 + getStat("Rocket Launcher", "range") * 0.5
+            local scale = 2 + getStat("Rocket Launcher", "range") * 0.4
             local explosionX, explosionY = rocket.x - math.sin(math.rad(rocket.angle)) * rocket.radius, rocket.y - math.cos(math.rad(rocket.angle)) * rocket.radius
             local touchingBricks = getBricksInCircle((explosionX), (explosionY), scale*25)
             for _, hitBrick in ipairs(touchingBricks) do

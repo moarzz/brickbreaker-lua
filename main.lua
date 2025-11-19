@@ -1020,7 +1020,7 @@ function getBrickSpeedMult()
     else
         local posMult = 1
         local highestY = getHighestBrickY()
-        posMult = highestY < 350 and mapRangeClamped(highestY, 0, 350, startingBrickSpeed, 10) or mapRangeClamped(highestY, 350, 750, 10, 1.5)
+        posMult = highestY < 350 and mapRangeClamped(highestY, 0, 350, startingBrickSpeed, 10) or mapRangeClamped(highestY, 350, 750, 10, 1.75)
         if #bricks == 0 then
             return 1
         end
