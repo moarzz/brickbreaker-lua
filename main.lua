@@ -1020,7 +1020,7 @@ function getBrickSpeedMult()
     else
         local posMult = 1
         local highestY = getHighestBrickY()
-        posMult = highestY < 350 and mapRangeClamped(highestY, 0, 350, startingBrickSpeed, 10) or mapRangeClamped(highestY, 350, 750, 10, 1.75)
+        posMult = highestY < 350 and mapRangeClamped(highestY, 0, 350, startingBrickSpeed, 10) or mapRangeClamped(highestY, 350, 750, 10, 1.5)
         if #bricks == 0 then
             return 1
         end
@@ -1344,7 +1344,6 @@ local function gameFixedUpdate(dt)
             moveY = moveY - 0.2
 
             paddle.x = paddle.x + moveX * paddle.speed * paddle.speedMult * dt
-            paddle.y = paddle.y + moveY * paddle.speed * paddle.speedMult * dt
 
             -- Optionally update currentSpeedX/currentSpeedY for other logic
             paddle.currentSpeedX = moveX * paddle.speed * paddle.speedMult
@@ -1361,7 +1360,7 @@ local function gameFixedUpdate(dt)
                 end
             end
             paddle.y = Player.dead and 10000 or math.max(bossY, math.max(math.max(getHighestBrickY() + brickHeight*5, screenHeight/2 + 200), math.min(screenHeight - paddle.height - 10, paddle.y)))
-            --paddle.y = 1050
+            paddle.y = 1050
             -- Update Balls
             Balls.update(dt, paddle, bricks, Player)
 
@@ -2530,7 +2529,7 @@ local function fullDraw()
     drawAnimations()
     drawMuzzleFlashes()
 
-    local vignetteIntensity = mapRangeClamped(screenHeight - paddle.y, 0 , 110, 0.8, 0)
+    local vignetteIntensity = mapRangeClamped(paddle.y, screenHeight - 150 , screenHeight + 10, 0, 1)
     love.graphics.setColor(0.15, 0, 0, vignetteIntensity)
     love.graphics.draw(vignetteImg, 0, 0, 0)
     upgradesUI.draw()

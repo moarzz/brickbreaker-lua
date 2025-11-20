@@ -2788,6 +2788,7 @@ local function paddleCollisionCheck(ball, paddle)
     end
     
     -- If we detected a collision, process it
+    print("paddle collision check at time " .. gameTime .. " / collision = " .. tostring(collision))
     if collision then
         playSoundEffect(paddleBoopSFX, 0.4, 0.8, false, true)
         
@@ -2915,7 +2916,7 @@ local function wallCollisionCheck(ball)
         wallHit = true
     elseif ball.y + effectiveRadius > math.max(screenHeight, paddle.y + 150) and ball.speedY > 0 then
         ball.speedY = -ball.speedY
-        ball.y = screenHeight - effectiveRadius
+        ball.y = math.max(screenHeight, paddle.y + 150) - effectiveRadius
         if Player.currentCore == "Bouncy Core" or hasItem("Bouncy Walls") then
             ball.speedExtra = math.min((ball.speedExtra or 1) + 6, 12)
         end

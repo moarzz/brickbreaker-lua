@@ -590,7 +590,7 @@ end
 
 local function checkForHit()
     for _, brick in ipairs(bricks) do
-        if paddle.y > screenHeight + 60 then
+        if paddle.y > screenHeight + 10 then
             Player.hit()
             damageScreenVisuals(0.25, 100)
         end

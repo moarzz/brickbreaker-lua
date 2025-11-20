@@ -3,8 +3,8 @@ uniform float intensity;
 uniform float brightness;
 
 float tau = 6.28318;
-float actualIntensity = intensity/2 + 0.2;
-float actualBrightness = brightness/2 + 0.2;
+float actualIntensity = intensity * 0.6 + 0.25;
+float actualBrightness = brightness * 0.6 + 0.25;
 
 mat2 rot(float a)
 {
