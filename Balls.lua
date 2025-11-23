@@ -1723,6 +1723,24 @@ local function ballListInit()
             },
             attractionStrength = 500
         },
+        --[[["Laser Ball"] = {
+            name = "Laser Ball",
+            type = "ball",
+            x = screenWidth / 2,
+            y = screenHeight / 2,
+            speedMult = 1,
+            size = 1,
+            ballAmount = 1,
+            rarity = "uncommon",
+            startingPrice = 50,
+            description = "shoots a continuous laser beam that rotates around the ball",
+            color = {1, 0, 0, 1}, -- red color
+            stats = {
+                speed = 100,
+                damage = 1,
+                fireRate = 1,
+            },
+        },]]
         ["Lightning Ball"] = {
             name = "Lightning Ball",
             type = "ball",

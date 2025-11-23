@@ -1360,7 +1360,7 @@ local function gameFixedUpdate(dt)
                 end
             end
             paddle.y = Player.dead and 10000 or math.max(bossY, math.max(math.max(getHighestBrickY() + brickHeight*5, screenHeight/2 + 200), math.min(screenHeight - paddle.height - 10, paddle.y)))
-            paddle.y = 1050
+            -- paddle.y = 1050
             -- Update Balls
             Balls.update(dt, paddle, bricks, Player)
 
