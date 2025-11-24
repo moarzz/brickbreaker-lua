@@ -359,7 +359,7 @@ local bossBrickSpawnTimer
 local bossSpawnSwitch = true
 local boss = nil
 local function spawnBoss()
-    currentRowPopulation = 900
+    currentRowPopulation = 700
     targetMusicVolume = 0
     -- Center the boss brick at the top
     Timer.after(8, function()
@@ -537,6 +537,7 @@ local function generateRow(brickCount, yPos)
     local rowOffset = 0--mapRangeClamped(math.random(0,10),0,10, 0, brickWidth)
     
     if bossSpawned and not bossDead then
+        blockedRows = {}
         local num1, num2 = usingMoneySystem and 4 or 9, usingMoneySystem and 9 or 14
         for i = num1, num2 do
             blockedRows[i] = true
@@ -2807,7 +2808,7 @@ function love.keypressed(key)
 
         -- add weapon
         if key == "7" then  
-            Balls.addBall("Golden Gun")
+            Balls.addBall("Light Beam")
         end
 
         if key == "8" then
