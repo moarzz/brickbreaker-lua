@@ -1062,7 +1062,7 @@ local function moveBricksDown(dt)
                 if brick.y <= screenHeight/2 then     
                     fastSpeed = mapRangeClamped(brick.y, 0, screenHeight/2, 100, 50)
                 else
-                    fastSpeed = mapRangeClamped(brick.y, screenHeight/2, screenHeight, 50, 12)
+                    fastSpeed = mapRangeClamped(brick.y, screenHeight/2, screenHeight, 50, 6)
                 end
                 brick.y = brick.y + dt * mapRangeClamped(brick.y, 0, screenHeight, 80, 20) * (brick.speedMult or 1)
             else
@@ -1359,7 +1359,8 @@ local function gameFixedUpdate(dt)
                     bossY = brick.y + brick.height + 100
                 end
             end
-            paddle.y = Player.dead and 10000 or math.max(bossY, math.max(math.max(getHighestBrickY() + brickHeight*5, screenHeight/2 + 200), math.min(screenHeight - paddle.height - 10, paddle.y)))
+            local goalPaddleY = Player.dead and 10000 or math.max(bossY, math.max(math.max(getHighestBrickY() + brickHeight*5, screenHeight/2 + 200), -100))
+            paddle.y = paddle.y + (goalPaddleY - paddle.y) * math.min(10 * dt, 1)
             -- paddle.y = 1050
             -- Update Balls
             Balls.update(dt, paddle, bricks, Player)
