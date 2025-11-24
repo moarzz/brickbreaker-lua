@@ -2563,7 +2563,7 @@ local function brickCollisionEffects(ball, brick)
         -- Create explosion using new particle system
         local scale = math.max(getStat(ball.name, "range") * 0.3 + 0.5, 1)
         -- Limit Chain Lightning sprite animations to 25 at once
-        createSpriteAnimation(ball.x, ball.y, scale/2, explosionVFX, 512, 512, 0.01, 5, 0.9, 0.9)
+        createSpriteAnimation(ball.x, ball.y, scale/2, explosionVFX, 512, 512, 0.01, 5, false, 0.9, 0.9)
 
         --Explosion.spawn(ball.x, ball.y, scale)
         
