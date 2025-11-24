@@ -8,37 +8,19 @@ DoubleTroublePlus.imageReference = "assets/sprites/UI/ItemIcons/Triple-Trouble.p
 function DoubleTroublePlus.new()
     local instance = setmetatable({}, DoubleTroublePlus):init();
 
-    local itemStats = {};
-    local statUnlocked = {}
-    for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
-        for statName, _ in pairs(weapon.stats) do
-            if not statUnlocked[statName] and statName ~= "damage" then
-                table.insert(itemStats, statName);
-                table.insert(itemStats, statName);
-                statUnlocked[statName] = true
-            end
-        end
-        if weapon.type == "ball" then
-            if not statUnlocked["amount"] then
-                table.insert(itemStats, "amount");
-                table.insert(itemStats, "amount");
-                statUnlocked["amount"] = true
-            end
-        end
-    end
-    table.insert(itemStats, "damage");
-    
-    local stat1 = table.remove(itemStats, love.math.random(1, #itemStats));
-
-    for i, statName in ipairs(itemStats) do
+    local potentialStats = {"damage", "speed", "amount", "ammo", "fireRate", "cooldown", "range", "speed", "amount", "ammo", "fireRate", "cooldown", "range"};
+    local stat1 = table.remove(potentialStats, love.math.random(1, #potentialStats));
+    for i, statName in ipairs(potentialStats) do
         if statName == stat1 then
-            table.remove(itemStats, i)
+            table.remove(potentialStats, i)
         end
     end
-    local stat2 = table.remove(itemStats, love.math.random(1, #itemStats));
+    local stat2 = table.remove(potentialStats, love.math.random(1, #potentialStats));
+    --local stat3 = table.remove(potentialStats, love.math.random(1, #potentialStats));
 
     instance.stats[stat1] = stat1 == "cooldown" and -2 or 2;
     instance.stats[stat2] = stat2 == "cooldown" and -2 or 2;
+    --instance.stats[stat3] = stat3 == "cooldown" and -2 or 2;
 
     return instance;
 end
