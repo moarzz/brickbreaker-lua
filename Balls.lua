@@ -445,7 +445,7 @@ local function brickDestroyed(brick)
             end
         end
     end
-    local maxChance = mapRangeClamped(Player.level,1, 12, 2000, 4000)
+    local maxChance = mapRangeClamped(Player.level,1, 12, 1500, 4000)
     if math.random(1,maxChance)/chanceMult <= currentMoneyDropChance then
         createPowerup(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth, "dollarBill")
         currentMoneyDropChance = 0
