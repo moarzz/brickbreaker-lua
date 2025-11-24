@@ -3879,7 +3879,7 @@ function Balls.update(dt, paddle, bricks)
     end
 
     -- update balls
-    local substeps = 5;
+    local substeps = 2;
     for _, ball in ipairs(Balls) do -- Corrected loop
         -- Only update non-shadowBall balls here
         if not (ball.type == "spell" and ball.name == "Shadow Ball") then
