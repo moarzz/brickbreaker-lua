@@ -1017,7 +1017,7 @@ function getBrickSpeedMult()
     if Player.dead then
         return deathTweenValues.speed * getBrickSpeedByTime()
     elseif bossSpawned and boss.y >= -boss.height and getHighestBrickY() <= (screenHeight * 3/4 - 250) then
-        return mapRangeClamped(boss.y, -boss.height, screenHeight/3, 2.8, 1.35) * getBrickSpeedByTime()
+        return mapRangeClamped(boss.y, -boss.height, screenHeight/3, 5, 1) * getBrickSpeedByTime()
     else
         local posMult = 1
         local highestY = getHighestBrickY()

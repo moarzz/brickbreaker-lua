@@ -484,7 +484,7 @@ end
 
 
 -- reduce trail length to make draw cheaper (was 35)
-local ballTrailLength = 10   -- Length of the ball trail
+local ballTrailLength = 8   -- Length of the ball trail
 local bullets = {}
 local deadBullets = {}
 local laserBeamBrick
@@ -529,7 +529,7 @@ function dealDamage(ball, brick, burnDamage)
         damage = math.floor(damage / 2)
     end
 
-    local critChance = hasItem("Four Leafed Clover") and 50 or 25
+    local critChance = hasItem("Four Leafed Clover") and 30 or 15
     if hasItem("Assassin's Dagger") and math.random(1,100) <= critChance and ball.type ~= "bullet" then
         damage = damage * 2
     end
@@ -1676,7 +1676,7 @@ local function ballListInit()
             x = screenWidth / 2,
             y = screenHeight / 2,
             ballAmount = 1,
-            speedMult = 0.85,
+            speedMult = 1,
             size = 1,
             rarity = "rare",
             startingPrice = 50,
@@ -3884,126 +3884,153 @@ function Balls.update(dt, paddle, bricks)
     end
 
     -- update balls
-    local substeps = 2;
-    for _, ball in ipairs(Balls) do -- Corrected loop
-        -- Only update non-shadowBall balls here
-        if not (ball.type == "spell" and ball.name == "Shadow Ball") then
-            for i = 1, substeps do
-                local speedMultBeforeChange = ball.speedExtra or 1
-                if ball.speedExtra then
-                    ball.speedExtra = math.max(1, ball.speedExtra - math.pow(ball.speedExtra, 1.75) * (dt / substeps) * 0.5) -- Decrease speed multiplier over time
-                end
-
+    local substeps = 2
+    local dtStep = dt / substeps
+    local isMadnessCore = Player.currentCore == "Madness Core"
+    local coreMult = isMadnessCore and 2 or 1
+    local hasElectroItem = hasItem("Electromagnetic Alignment")
+    local electroCount = hasElectroItem and itemCount("Electromagnetic Alignment") or 0
+    local MAX_RANGE_SQ = 500 * 500
+    for _, ball in ipairs(Balls) do
+        -- Skip shadow balls early
+        if ball.type == "spell" and ball.name == "Shadow Ball" then
+            goto continue
+        end
+        
+        -- Cache ball properties
+        local ballName = ball.name
+        local isMagnetic = ballName == "Magnetic Ball"
+        local isIncrediball = ballName == "Incrediball"
+        local needsMagnetism = isMagnetic or isIncrediball or hasElectroItem
+        local magneticSpeedMult = (isMagnetic or isIncrediball) and 0.1 or 1
+        
+        -- Physics substeps
+        for i = 1, substeps do
+            -- Speed decay
+            if ball.speedExtra then
+                ball.speedExtra = math.max(1, ball.speedExtra - math.pow(ball.speedExtra, 1.75) * dtStep * 0.5)
+            end
+            
+            -- Movement calculation
+            local speedExtra = magneticSpeedMult * (ball.speedExtra or 0)
+            if speedExtra > 0 then
                 local multX, multY = normalizeVector(ball.speedX, ball.speedY)
-                local speedExtra = ((ball.name == "Magnetic Ball" or ball.name == "Incrediball") and 0.1 or 1) * (ball.speedExtra or 0)
-                local speedMult = 1
-                ball.x = ball.x + (ball.speedX + speedExtra * multX * 50) * ball.speedMult * (dt / substeps) * (Player.currentCore == "Madness Core" and 2 or 1) * speedMult
-                ball.y = ball.y + (ball.speedY + speedExtra * multY * 50) * ball.speedMult * (dt / substeps) * (Player.currentCore == "Madness Core" and 2 or 1) * speedMult
-
-                -- Ball collision with paddle
-                paddleCollisionCheck(ball, paddle)
-
-                -- Ball collision with bricks (use visibleBricks for all balls)
-                local hitBrickThisFrame = brickCollisionCheck(ball, visibleBricks, Player)
-
-                -- Ball collision with walls
-                if not hitBrickThisFrame then
-                    wallCollisionCheck(ball)
-                end
+                local extraX = speedExtra * multX * 50
+                local extraY = speedExtra * multY * 50
+                ball.x = ball.x + (ball.speedX + extraX) * ball.speedMult * dtStep * coreMult
+                ball.y = ball.y + (ball.speedY + extraY) * ball.speedMult * dtStep * coreMult
+            else
+                ball.x = ball.x + ball.speedX * ball.speedMult * dtStep * coreMult
+                ball.y = ball.y + ball.speedY * ball.speedMult * dtStep * coreMult
             end
-
-            -- trail logic
-            if ball.type == "ball" then
-                ball.trailCD = 2
-                if not ball.lastTrailPos then
-                    ball.lastTrailPos = {x = ball.x, y = ball.y}
-                    table.insert(ball.trail, {x = ball.x, y = ball.y})
-                else
-                    local dx = ball.x - ball.lastTrailPos.x
-                    local dy = ball.y - ball.lastTrailPos.y
-                    local distanceMoved = math.sqrt(dx * dx + dy * dy)
-                    table.insert(ball.trail, {x = ball.x, y = ball.y})
-                    ball.lastTrailPos.x = ball.x
-                    ball.lastTrailPos.y = ball.y
-                end
-
-                -- Limit the trail length
-                while #ball.trail > ballTrailLength do
-                    table.remove(ball.trail, 1)
-                end
+            
+            -- Collision checks
+            paddleCollisionCheck(ball, paddle)
+            local hitBrickThisFrame = brickCollisionCheck(ball, visibleBricks, Player)
+            if not hitBrickThisFrame then
+                wallCollisionCheck(ball)
             end
-
-            -- Magnetic ball behavior (use visibleBricks)
-            if ball.name == "Magnetic Ball" or hasItem("Electromagnetic Alignment") or ball.name == "Incrediball" then
-                -- Update nearest brick every 0.1 seconds instead of every frame
-                ball.magneticUpdateTimer = (ball.magneticUpdateTimer or 0) + dt
-                if ball.magneticUpdateTimer >= 0.1 then
-                    ball.magneticUpdateTimer = 0
-                    
-                    local nearestBrick = nil
-                    local minDistSq = math.huge
-                    local MAX_RANGE_SQ = 500 * 500 -- Only check bricks within 500 units
-                    
-                    for _, brick in ipairs(visibleBricks) do
-                        if not brick.destroyed and brick.health > 0 and brick.y > -brick.height/2 then
-                            local dx = (brick.x + brick.width/2) - ball.x
-                            local dy = (brick.y + brick.height/2) - ball.y
-                            local distSq = dx*dx + dy*dy
-                            
-                            if distSq < MAX_RANGE_SQ and distSq < minDistSq then
-                                minDistSq = distSq
-                                nearestBrick = brick
-                            end
+        end
+        
+        -- Trail logic (only for ball type)
+        if ball.type == "ball" then
+            if not ball.lastTrailPos then
+                ball.lastTrailPos = {x = ball.x, y = ball.y}
+            else
+                ball.lastTrailPos.x = ball.x
+                ball.lastTrailPos.y = ball.y
+            end
+            
+            local trail = ball.trail
+            trail[#trail + 1] = {x = ball.x, y = ball.y}
+            
+            -- Remove old trail points
+            if #trail > ballTrailLength then
+                table.remove(trail, 1)
+            end
+        end
+        
+        -- Magnetic attraction
+        if needsMagnetism then
+            ball.magneticUpdateTimer = (ball.magneticUpdateTimer or 0) + dt
+            
+            -- Update nearest brick cache periodically
+            if ball.magneticUpdateTimer >= 0.1 then
+                ball.magneticUpdateTimer = 0
+                
+                local nearestBrick = nil
+                local minDistSq = math.huge
+                
+                for _, brick in ipairs(visibleBricks) do
+                    if not brick.destroyed and brick.health > 0 and brick.y > -brick.height * 0.5 then
+                        local dx = (brick.x + brick.width * 0.5) - ball.x
+                        local dy = (brick.y + brick.height * 0.5) - ball.y
+                        local distSq = dx * dx + dy * dy
+                        
+                        if distSq < MAX_RANGE_SQ and distSq < minDistSq then
+                            minDistSq = distSq
+                            nearestBrick = brick
                         end
                     end
-                    
-                    ball.cachedNearestBrick = nearestBrick
-                    ball.cachedNearestDistSq = minDistSq
                 end
                 
-                -- Apply magnetic attraction using cached brick
-                if ball.cachedNearestBrick then
-                    local nearestBrick = ball.cachedNearestBrick
-                    local dist = math.sqrt(ball.cachedNearestDistSq)
-                    local attractionStrength = ball.attractionStrength or 0
-                    if hasItem("Electromagnetic Alignment") then
-                        attractionStrength = math.max(200 * itemCount("Electromagnetic Alignment"), 200)
-                    end
-                    local dx = (nearestBrick.x + nearestBrick.width/2) - ball.x
-                    local dy = (nearestBrick.y + nearestBrick.height/2) - ball.y
-                    -- Recalculate dist for current frame (brick might have moved slightly)
-                    dist = math.sqrt(dx*dx + dy*dy)
+                ball.cachedNearestBrick = nearestBrick
+                ball.cachedNearestDistSq = minDistSq
+            end
+            
+            -- Apply magnetic force
+            local nearestBrick = ball.cachedNearestBrick
+            if nearestBrick then
+                local dx = (nearestBrick.x + nearestBrick.width * 0.5) - ball.x
+                local dy = (nearestBrick.y + nearestBrick.height * 0.5) - ball.y
+                local dist = math.sqrt(dx * dx + dy * dy)
+                
+                -- Calculate attraction
+                local attractionStrength = ball.attractionStrength or 0
+                if hasElectroItem then
+                    attractionStrength = math.max(200 * electroCount, 200)
+                end
+                
+                local ballSpeed = ball.stats.speed + getStatItemsBonus("speed", ball) * 50 + (ball.speedExtra or 0) * 15
+                ballSpeed = ballSpeed * coreMult
+                local attraction = mapRange((attractionStrength / math.max(dist, 10)) * math.pow(ballSpeed, 1.45), 1, 10, 1, 20) * 0.0175
+                attraction = attraction * mapRangeClamped(ballSpeed, 1, 500, 0.5, 2)
+                
+                local angle = math.atan2(dy, dx)
+                ball.speedX = ball.speedX + math.cos(angle) * attraction * dt
+                ball.speedY = ball.speedY + math.sin(angle) * attraction * dt
+                
+                -- Velocity normalization
+                local speed = math.sqrt(ball.speedX * ball.speedX + ball.speedY * ball.speedY)
+                local originalSpeed = getStat(ballName, "speed")
+                
+                if speed > originalSpeed then
+                    local scale = originalSpeed / speed
+                    local dampDt = dt * 200
                     
-                    local attraction = mapRange((attractionStrength / math.max(dist, 10)) * math.pow((ball.stats.speed + getStatItemsBonus("speed", ball) * 50 + (ball.speedExtra or 0) * 15) * (Player.currentCore == "Madness Core" and 2 or 1), 1.45), 1, 10, 1, 20) * 0.0175
-                    attraction = attraction * mapRangeClamped(ball.stats.speed + getStatItemsBonus("speed", ball) * 50 + (ball.speedExtra or 0)*10, 1, 500, 0.5, 2)
-                    local angle = math.atan2(dy, dx)
-                    ball.speedX = ball.speedX + math.cos(angle) * attraction * dt
-                    ball.speedY = ball.speedY + math.sin(angle) * attraction * dt
+                    if ball.speedX > 0 then
+                        ball.speedX = math.max(ball.speedX * scale, ball.speedX - dampDt * mapRange(math.abs(ball.speedX * (1 - scale)), 0, 1000, 1, 10))
+                    else
+                        ball.speedX = math.min(ball.speedX * scale, ball.speedX + dampDt * mapRange(math.abs(ball.speedX * (1 - scale)), 0, 1000, 1, 10))
+                    end
                     
-                    -- Normalize velocity to maintain ball speed
-                    local speed = math.sqrt(ball.speedX * ball.speedX + ball.speedY * ball.speedY)
-                    local originalSpeed = getStat(ball.name, "speed")
-                    if speed > originalSpeed then
-                        local scale = originalSpeed / speed
-                        if ball.speedX > 0 then
-                            ball.speedX = math.max(ball.speedX * scale, ball.speedX - dt*200 * mapRange(math.abs(ball.speedX - ball.speedX * scale), 0, 1000, 1, 10))
-                        else
-                            ball.speedX = math.min(ball.speedX * scale, ball.speedX + dt*200 * mapRange(math.abs(ball.speedX - ball.speedX * scale), 0, 1000, 1, 10))
-                        end
-                        if ball.speedY > 0 then
-                            ball.speedY = math.max(ball.speedY * scale, ball.speedY - dt*200 * mapRange(math.abs(ball.speedY - ball.speedY * scale), 0, 1000, 1, 10))
-                        else
-                            ball.speedY = math.min(ball.speedY * scale, ball.speedY + dt*200 * mapRange(math.abs(ball.speedY - ball.speedY * scale), 0, 1000, 1, 10))
-                        end
+                    if ball.speedY > 0 then
+                        ball.speedY = math.max(ball.speedY * scale, ball.speedY - dampDt * mapRange(math.abs(ball.speedY * (1 - scale)), 0, 1000, 1, 10))
+                    else
+                        ball.speedY = math.min(ball.speedY * scale, ball.speedY + dampDt * mapRange(math.abs(ball.speedY * (1 - scale)), 0, 1000, 1, 10))
                     end
-                    if speed > originalSpeed * 1.5 then
-                        local scale = (originalSpeed * 1.5) / speed
-                        ball.speedX = ball.speedX * scale
-                        ball.speedY = ball.speedY * scale
-                    end
+                end
+                
+                -- Hard cap on speed
+                if speed > originalSpeed * 1.5 then
+                    local scale = (originalSpeed * 1.5) / speed
+                    ball.speedX = ball.speedX * scale
+                    ball.speedY = ball.speedY * scale
                 end
             end
         end
+        
+        ::continue::
     end
 
     -- Update bullets
@@ -4581,73 +4608,101 @@ function Balls:draw()
     spellDraw()
     
     -- Draw balls
+    local screenLeft = -64
+    local screenRight = screenWidth + 64
+    local screenTop = -64
+    local screenBottom = screenHeight + 64
+    local invBallTrailLength = 1 / math.max(1, ballTrailLength)
     for _, ball in ipairs(Balls) do
         if ball.type == "spell" then
             drawShadowBall(ball)
-        else
-            -- Draw the trail
-            local ballColor = ballList[ball.name].color or {1,1,1,1}
-            if ball.name == "Incrediball" then
-                ballColor = incrediballColor
-            end
-            local sizeBoost = 1
-            if not ball.dead and ball.name ~= "Phantom Ball" then
-                local trail = ball.trail or {}
+            goto continue
+        end
+        
+        local ballName = ball.name
+        local ballX, ballY = ball.x, ball.y
+        local ballRadius = ball.radius or 10
+        
+        -- Draw trail (skip for phantom balls or dead balls)
+        if not ball.dead and ballName ~= "Phantom Ball" then
+            local trail = ball.trail
+            if trail then
                 local trailLen = #trail
-                -- cheap offscreen cull (skip full trail draw if ball offscreen)
-                local bx, by, br = ball.x, ball.y, ball.radius or 10
-                if bx + br >= -64 and bx - br <= (screenWidth + 64) and by + br >= -64 and by - br <= (screenHeight + 64) and trailLen > 1 then
-                    -- sample the trail to at most sampleMax segments (reduces draw calls)
+                
+                -- Quick offscreen culling
+                if ballX + ballRadius >= screenLeft and ballX - ballRadius <= screenRight and
+                ballY + ballRadius >= screenTop and ballY - ballRadius <= screenBottom and
+                trailLen > 1 then
+                    
+                    -- Get ball color
+                    local ballColor = ballList[ballName].color or {1, 1, 1, 1}
+                    if ballName == "Incrediball" then
+                        ballColor = incrediballColor
+                    end
+                    
+                    -- Cache color components
+                    local r, g, b = ballColor[1], ballColor[2], ballColor[3]
+                    
+                    -- Sample trail to reduce draw calls
                     local sampleMax = 8
                     local step = math.max(1, math.floor(trailLen / sampleMax))
-
-                    -- cache locals for speed
-                    local r, g, b = ballColor[1], ballColor[2], ballColor[3]
-                    local invTrailLen = 1 / math.max(1, ballTrailLength)
-
-                    -- cache ball radius and size calculations
-                    local startRadius = math.max(1, (ball.radius or 10) * (ball.drawSizeBoost or 1))
+                    
+                    -- Cache radius calculations
+                    local drawSizeBoost = ball.drawSizeBoost or 1
+                    local drawSizeMult = ball.drawSizeMult or 1
+                    local startRadius = math.max(1, ballRadius * drawSizeBoost)
                     local minRadius = startRadius * 0.15
-
-                    -- Draw circles from oldest to newest for proper layering
+                    local radiusRange = startRadius - minRadius
+                    
+                    -- Draw trail segments (oldest to newest)
                     for i = trailLen - 1, 1, -step do
                         local p = trail[i]
                         if p then
-                            -- segment position (1 = near ball, 0 = tail)
-                            local segmentPos = (i / math.max(1, trailLen))
+                            local segmentPos = i / trailLen
                             local segmentPosSq = segmentPos * segmentPos
-
-                            -- compute radius that tapers from ball radius -> small
-                            local segRadius = minRadius + (startRadius - minRadius) * segmentPos
-                            segRadius = segRadius * (ball.drawSizeMult or 1)
-
-                            -- alpha that eases out towards tail with quadratic falloff
+                            
+                            -- Calculate radius and alpha with cached values
+                            local segRadius = (minRadius + radiusRange * segmentPos) * drawSizeMult
                             local alpha = math.max(0.04, segmentPosSq * (p.alpha or 1))
+                            
                             love.graphics.setColor(r, g, b, alpha)
                             love.graphics.circle("fill", p.x, p.y, segRadius)
                         end
                     end
-
-                    love.graphics.setColor(1,1,1,1)
+                    
+                    love.graphics.setColor(1, 1, 1, 1)
                 end
-            end
-
-            if ball.name == "Phantom Ball" then
-                local auraSize = getStat("Phantom Ball", "range") * 16
-                -- Draw aura
-                love.graphics.setColor(0, 0, 1, 1)
-                drawImageCentered(auraImg, ball.x, ball.y, auraSize, auraSize)
-                -- Make ball match the aura size
-                love.graphics.setColor(0.25, 0.25, 1, 0.25)
-                love.graphics.circle("fill", ball.x, ball.y, auraSize/2)
-            else
-                love.graphics.setColor(unlockedBallTypes[ball.name] and unlockedBallTypes[ball.name].color or {1, 1, 1, 1})
-                if ball.name == "Incrediball" then
-                    love.graphics.setColor(incrediballColor[1], incrediballColor[2], incrediballColor[3], incrediballColor[4])
-                end
-                love.graphics.circle("fill", ball.x, ball.y, (ball.radius or 10) * (ball.drawSizeBoost or 1) * sizeBoost * (ball.drawSizeMult or 1))
             end
         end
+        
+        -- Draw ball
+        if ballName == "Phantom Ball" then
+            local auraSize = getStat("Phantom Ball", "range") * 16
+            love.graphics.setColor(0, 0, 1, 1)
+            drawImageCentered(auraImg, ballX, ballY, auraSize, auraSize)
+            love.graphics.setColor(0.25, 0.25, 1, 0.25)
+            love.graphics.circle("fill", ballX, ballY, auraSize * 0.5)
+        else
+            -- Set ball color
+            local ballData = unlockedBallTypes[ballName]
+            if ballData then
+                local c = ballData.color
+                love.graphics.setColor(c[1], c[2], c[3], c[4])
+            else
+                love.graphics.setColor(1, 1, 1, 1)
+            end
+            
+            if ballName == "Incrediball" then
+                local ic = incrediballColor
+                love.graphics.setColor(ic[1], ic[2], ic[3], ic[4])
+            end
+            
+            -- Draw ball circle
+            local finalRadius = ballRadius * (ball.drawSizeBoost or 1) * (ball.drawSizeMult or 1)
+            love.graphics.circle("fill", ballX, ballY, finalRadius)
+        end
+        
+        ::continue::
     end
 
     -- Draw arcane missiles
