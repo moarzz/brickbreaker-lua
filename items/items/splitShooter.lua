@@ -11,7 +11,7 @@ function SplitShooter.new()
     local instance = setmetatable({}, SplitShooter):init();
 
     instance.descriptionPointers = {
-        splitChance = hasItem("Four Leafed Clover") and 60 or 30;
+        splitChance = hasItem("Four Leafed Clover") and 70 or 35;
     };
 
     instance.stats.cooldown = -2;

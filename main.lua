@@ -359,7 +359,7 @@ local bossBrickSpawnTimer
 local bossSpawnSwitch = true
 local boss = nil
 local function spawnBoss()
-    currentRowPopulation = 700
+    currentRowPopulation = 850
     targetMusicVolume = 0
     -- Center the boss brick at the top
     Timer.after(8, function()

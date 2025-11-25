@@ -439,9 +439,9 @@ local function brickDestroyed(brick)
     if hasItem("Scavenger") then
         for i=1, itemCount("Scavenger") do
             if hasItem("Four Leafed Clover") then
-                chanceMult = chanceMult + 1
+                chanceMult = chanceMult + 1.2
             else
-                chanceMult = chanceMult + 0.5
+                chanceMult = chanceMult + 0.6
             end
         end
     end
@@ -1893,7 +1893,7 @@ local function ballListInit()
             rarity = "uncommon",
             startingPrice = 50,
             ammoMult = 20,
-            fireRateMult = 1.3,
+            fireRateMult = 1.05,
             description = "Fires bullets at an accelerating rate of fire. very long cooldown",
             onBuy = function() 
                 shoot("Minigun")
@@ -2218,6 +2218,8 @@ local commonWeapons = {}
 local uncommonWeapons = {}
 local addBallsQueued = false
 
+statDoubled = nil
+accelerationOn = false
 -- calls ballListInit and adds a ball to it
 function Balls.initialize()
     -- clean code/s
@@ -2225,6 +2227,8 @@ function Balls.initialize()
     powerupPopup = {startTime = 0, type = nil, scale = 0, angle = 0}
     victoryAchieved = false
     fastBricksReset()
+    statDoubled = nil
+    accelerationOn = false
     Player.setMoney(0);
     longTermInvestment.value = 0
     Player.items = {}
@@ -2342,8 +2346,7 @@ function Balls.clear()
     darts = {}
 end
 
-statDoubled = nil
-accelerationOn = false
+
 function getStat(ballTypeName, statName)
     if unlockedBallTypes[ballTypeName] then
         local baseValue = unlockedBallTypes[ballTypeName].stats[statName] or 0
@@ -4082,7 +4085,7 @@ function Balls.update(dt, paddle, bricks)
             bullet.distanceTraveled = bullet.distanceTraveled + math.sqrt(bullet.speedX^2 + bullet.speedY^2) * dt
             if not bullet.hasSplit and bullet.distanceTraveled > 50 then
                 bullet.hasSplit = true
-                local chance = hasItem("Four Leafed Clover") and 60 or 30
+                local chance = hasItem("Four Leafed Clover") and 70 or 35
                 if math.random(1,100) <= chance then
                     local angle = math.atan2(bullet.speedY, bullet.speedX)
                     local speed = math.sqrt(bullet.speedX^2 + bullet.speedY^2)
@@ -4143,7 +4146,7 @@ function Balls.update(dt, paddle, bricks)
                             end
                         end
                         if not bullet.hasTriggeredOnBulletHit then
-                            local chance = hasItem("Four Leafed Clover") and 40 or 20
+                            local chance = hasItem("Four Leafed Clover") and 50 or 25
                             if hasItem("Tesla Bullets") and math.random(1,100) <= chance then
                                 cast("Chain Lightning", brick, bullet.stats.damage)
                             end
