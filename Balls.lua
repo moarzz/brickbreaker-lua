@@ -5,7 +5,7 @@ local Explosion = require("particleSystems.explosion")
 local ArcaneMissile = require("particleSystems.arcaneMissile")
 local FlameBurst = require("particleSystems.flameBurst")
 
-local Trail = require("trail");
+_G.Trail = require("trail");
 
 startingBall = "Machine Gun" -- The first ball that is added to the game 
 local Balls = {}
