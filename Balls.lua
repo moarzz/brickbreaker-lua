@@ -2967,7 +2967,7 @@ local function techUpdate(dt)
     if unlockedBallTypes["Laser"] then
         if unlockedBallTypes["Laser"].charging then
             unlockedBallTypes["Laser"].currentChargeTime = unlockedBallTypes["Laser"].currentChargeTime + dt
-            local cooldownValue = (Player.currentCore == "Madness Core" and 0.5 or 1) * math.max(getStat("Laser", "cooldown") + 1, 1)
+            local cooldownValue = (Player.currentCore == "Madness Core" and 0.5 or 1) * math.max(getStat("Laser", "cooldown") + 1.75, 1)
             if accelerationOn then
                 cooldownValue = cooldownValue * 0.5
             end

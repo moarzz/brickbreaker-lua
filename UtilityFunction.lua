@@ -783,8 +783,8 @@ function isBrickInShieldAura(brick)
     for _, aura in ipairs(shieldAuras) do
         if not aura.destroyed then
             -- Calculate the closest point on the brick to the aura's center
-            local closestX = math.max(brick.x, math.min(aura.x + aura.width / 2, brick.x + brick.width))
-            local closestY = math.max(brick.y, math.min(aura.y + aura.height / 2, brick.y + brick.height))
+            local closestX = math.max(brick.x + brick.width / 2, math.min(aura.x + aura.width / 2, brick.x + brick.width / 2))
+            local closestY = math.max(brick.y + brick.height / 2, math.min(aura.y + aura.height / 2, brick.y + brick.height / 2))
 
             -- Calculate the distance between the aura's center and the closest point
             local distanceX = (aura.x + aura.width / 2) - closestX

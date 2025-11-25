@@ -5,7 +5,7 @@ PlusSixBuff.description = "";
 PlusSixBuff.rarity = "rare";
 
 function PlusSixBuff.new()
-    local instance = setmetatable({}, PlusTwoBuff):init();
+    local instance = setmetatable({}, PlusSixBuff):init();
 
     local itemStats = {};
     local statUnlocked = {}

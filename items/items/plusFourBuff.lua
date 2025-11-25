@@ -5,7 +5,7 @@ PlusFourBuff.description = "";
 PlusFourBuff.rarity = "uncommon";
 
 function PlusFourBuff.new()
-    local instance = setmetatable({}, PlusTwoBuff):init();
+    local instance = setmetatable({}, PlusFourBuff):init();
 
     local itemStats = {};
     local statUnlocked = {}
