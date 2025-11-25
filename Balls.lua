@@ -5,6 +5,8 @@ local Explosion = require("particleSystems.explosion")
 local ArcaneMissile = require("particleSystems.arcaneMissile")
 local FlameBurst = require("particleSystems.flameBurst")
 
+local Trail = require("trail");
+
 startingBall = "Machine Gun" -- The first ball that is added to the game 
 local Balls = {}
 local ballCategories = {}
@@ -345,17 +347,17 @@ local function createPowerup(x, y, amount, type)
         speedY = -250,
         gravity = 400,
         lifetime = 10,
-        trail = {}, -- preallocated below
+        trail = Trail.new(10, POWERUP_TRAIL_MAX),--{}, -- preallocated below
         creationTime = gameTime,
         -- ring-buffer metadata
-        _trailHead = 1,
-        _trailCount = 0,
-        _lastTrailTime = 0,
+        -- _trailHead = 1,
+        -- _trailCount = 0,
+        -- _lastTrailTime = 0,
     }
     -- pre-allocate small point tables to avoid per-frame allocations
-    for i = 1, POWERUP_TRAIL_MAX do
-        powerup.trail[i] = { x = 0, y = 0, alpha = 0 }
-    end
+    -- for i = 1, POWERUP_TRAIL_MAX do
+        -- powerup.trail[i] = { x = 0, y = 0, alpha = 0 }
+    -- end
     table.insert(powerups, powerup)
 end
 
@@ -672,7 +674,7 @@ local function shoot(gunName, ball)
                     speedX = speedX,
                     speedY = speedY,
                     dead = false,
-                    trail = {},
+                    trail = Trail.new(ballTemplate.trail:getTrailData()),--{},
                     speedMultiplier = 1
                 }
                 table.insert(Balls, newBall)
@@ -746,7 +748,7 @@ local function shoot(gunName, ball)
                         speedX = speedX,
                         speedY = speedY,
                         dead = false,
-                        trail = {},
+                        trail = Trail.new(ballTemplate.trail:getTrailData()),
                         speedMultiplier = 1,
                         speedExtra = 4
                     }
@@ -792,7 +794,7 @@ local function shoot(gunName, ball)
                         speedX = speedX,
                         speedY = speedY,
                         dead = false,
-                        trail = {},
+                        trail = Trail.new(ballTemplate.trail:getTrailData()),
                         speedMultiplier = 1,
                         timeCreated = love.timer.getTime() -- Add creation timestamp
                     }
@@ -855,7 +857,7 @@ local function shoot(gunName, ball)
                         speedX = speedX,
                         speedY = speedY,
                         dead = false,
-                        trail = {},
+                        trail = Trail.new(ballTemplate.trail:getTrailData()),
                         speedMultiplier = 1
                     }
                     table.insert(Balls, newBall)
@@ -927,7 +929,7 @@ local function shoot(gunName, ball)
                         speedX = speedX,
                         speedY = speedY,
                         dead = false,
-                        trail = {},
+                        trail = Trail.new(ballTemplate.trail:getTrailData()),
                         speedMultiplier = 1
                     }
                     table.insert(Balls, newBall)
@@ -984,7 +986,7 @@ local function shoot(gunName, ball)
                         speedX = speedX,
                         speedY = speedY,
                         dead = false,
-                        trail = {},
+                        trail = Trail.new(ballTemplate.trail:getTrailData()),
                         speedMultiplier = 1
                     }
                     table.insert(Balls, newBall)
@@ -1118,7 +1120,7 @@ local function turretShoot(turret)
                 speedX = speedX,
                 speedY = speedY,
                 dead = false,
-                trail = {},
+                trail = Trail.new(ballTemplate.trail:getTrailData()),
                 speedMultiplier = 1
             }
             table.insert(Balls, newBall)
@@ -1400,7 +1402,7 @@ local function cast(spellName, brick, forcedDamage)
             stats = unlockedBallTypes["Shadow Ball"].stats,
             damage = getStat("Shadow Ball", "damage"),
             range = range,
-            trail = {},
+            trail = Trail.new(10, 50),
             dead = false
         }
         shadowballId = shadowballId + 1
@@ -1652,6 +1654,7 @@ local function ballListInit()
                 speed = 200,
                 damage = 1,
             },
+            trail = Trail.new(10, 50),
             canBuy = function() return true end,
         },
         --[[["Spear"] = {
@@ -1687,6 +1690,7 @@ local function ballListInit()
                 damage = 1,
                 range = 3
             },
+            trail = Trail.new(10, 50),
         },
         --[[["Phantom Ball"] = {
             name = "Phantom Ball",
@@ -1722,6 +1726,7 @@ local function ballListInit()
                 speed = 150,
                 damage = 1,
             },
+            trail = Trail.new(10, 50),
             attractionStrength = 500
         },
         --[[["Laser Ball"] = {
@@ -1759,6 +1764,7 @@ local function ballListInit()
                 damage = 1,
                 range = 2
             },
+            trail = Trail.new(10, 50),
         },
         ["Gun Ball"] = {
             name = "Gun Ball",
@@ -1781,6 +1787,7 @@ local function ballListInit()
                 speed = 150,
                 damage = 1,
             },
+            trail = Trail.new(10, 50),
         },
         ["Incrediball"] = {
             name = "Incrediball",
@@ -1804,6 +1811,7 @@ local function ballListInit()
                 damage = 1,
                 range = 2,
             },
+            trail = Trail.new(10, 50),
             canBuy = function() return hasItem("Superhero t-shirt") end,
             attractionStrength = 600
         },
@@ -1825,7 +1833,7 @@ local function ballListInit()
             currentAmmo = 7 + ((Player.permanentUpgrades.ammo or 0)) * 7,
             bulletSpeed = 1000,
             canBuy = function() return false end,
-
+            trail = Trail.new(10, 50),
             stats = {
                 damage = 1,
                 cooldown = 8,
@@ -1850,7 +1858,7 @@ local function ballListInit()
             noAmount = true,
             currentAmmo = 2 + ((Player.permanentUpgrades.ammo or 0)) * 2,
             bulletSpeed = 1500,
-
+            trail = Trail.new(10, 50),
             stats = {
                 damage = 1,
                 cooldown = 9,
@@ -1883,6 +1891,7 @@ local function ballListInit()
                 fireRate = 2,
                 speed = 150
             },
+            trail = Trail.new(10, 50),
         },
         Minigun = {
             name = "Minigun",
@@ -1907,6 +1916,7 @@ local function ballListInit()
                 ammo = 100,
                 fireRate = 5,
             },
+            trail = Trail.new(10, 50),
         },
         ["Golden Gun"] = {
             name = "Golden Gun",
@@ -1931,6 +1941,7 @@ local function ballListInit()
                 ammo = 2,
                 fireRate = 1,
             },
+            trail = Trail.new(10, 50),
             canBuy = function()
                 return Player.currentCore ~= "Phantom Core"
             end,
@@ -1953,6 +1964,7 @@ local function ballListInit()
                 damage = 3,
                 cooldown = 12,
             },
+            trail = Trail.new(10, 50),
         },
         --[[["Laser Beam"] = {
             name = "Laser Beam",
@@ -2017,7 +2029,8 @@ local function ballListInit()
                 cooldown = 10,
                 fireRate = 2,
                 range = 3
-            }
+            },
+            trail = Trail.new(10, 50),
         },
         --[[["Saw Blades"] = {
             name = "Saw Blades",
@@ -2064,6 +2077,7 @@ local function ballListInit()
                 cooldown = 12,
                 damage = 1,
             },
+            trail = Trail.new(10, 50),
         },
         ["Shadow Ball"] = {
             name = "Shadow Ball",
@@ -2086,7 +2100,8 @@ local function ballListInit()
                 damage = 1,
                 range = 2,
                 fireRate = 3,
-            }
+            },
+            trail = Trail.new(10, 50),
         },
         ["Fireballs"] = {
             name = "Fireballs",
@@ -2109,6 +2124,7 @@ local function ballListInit()
                 fireRate = 1,
                 range = 2
             },
+            trail = Trail.new(10, 50),
         },
         ["Light Beam"] = {
             name = "Light Beam",
@@ -2129,6 +2145,7 @@ local function ballListInit()
             onBuy = function()
                 cast("Light Beam")
             end,
+            trail = Trail.new(10, 50),
         },
         --[[
         ["Lightning Pulse"] = {
@@ -2485,7 +2502,7 @@ function Balls.addBall(ballName, singleBall)
                     speedX = speedX,
                     speedY = speedY,
                     dead = false,
-                    trail = {},
+                    trail = Trail.new(ballTemplate.trail:getTrailData()),
                     speedMultiplier = 1
                 }
                 local ballAmount = 0
@@ -2855,7 +2872,7 @@ local function paddleCollisionCheck(ball, paddle)
                     speedX = speedX,
                     speedY = speedY,
                     dead = false,
-                    trail = {},
+                    trail = Trail.new(ballTemplate.trail:getTrailData()),
                     speedMultiplier = 1
                 }
                 table.insert(Balls, newBall)
@@ -3305,12 +3322,13 @@ local function updateShadowBall(shadowBall, dt, id)
 
     -- Update trail
     if not shadowBall.trail then
-        shadowBall.trail = {}
+        shadowBall.trail = Trail.new(10, 50)
     end
-    table.insert(shadowBall.trail, {x = shadowBall.x, y = shadowBall.y})
-    if #shadowBall.trail > 65 then -- Shorter trail than regular balls
-        table.remove(shadowBall.trail, 1)
-    end
+    shadowBall.trail:addPosition(shadowBall.x, shadowBall.y);
+    -- table.insert(shadowBall.trail, {x = shadowBall.x, y = shadowBall.y})
+    -- if #shadowBall.trail > 65 then -- Shorter trail than regular balls
+        -- table.remove(shadowBall.trail, 1)
+    -- end
 end
 
 -- Add near the top with other local functions
@@ -3368,16 +3386,19 @@ local function updateDeadBullets(dt)
         local elapsed = love.timer.getTime() - bullet.deathTime
         local fade = 1 - math.min(elapsed, 1)
         bullet.trailFade = fade
-        if bullet.trail and #bullet.trail > 1 then
-            local moveFrac = dt / 0.5
-            for j = 1, #bullet.trail - 1 do
-                local p = bullet.trail[j]
-                local nextP = bullet.trail[j+1]
-                p.x = p.x + (nextP.x - p.x) * moveFrac
-                p.y = p.y + (nextP.y - p.y) * moveFrac
+        if bullet.trail then-- and #bullet.trail > 1 then
+            if bullet.trail:kick() then
+                bullet.trail = nil;
             end
+            -- local moveFrac = dt / 0.5
+            -- for j = 1, #bullet.trail - 1 do
+                -- local p = bullet.trail[j]
+                -- local nextP = bullet.trail[j+1]
+                -- p.x = p.x + (nextP.x - p.x) * moveFrac
+                -- p.y = p.y + (nextP.y - p.y) * moveFrac
+            -- end
             -- Remove only one point per frame for smoother fade
-            table.remove(bullet.trail, 1)
+            -- table.remove(bullet.trail, 1)
         end
         -- Remove the bullet when the trail is gone or after 1s
         if fade <= 0 or not bullet.trail or #bullet.trail < 2 then
@@ -3394,15 +3415,18 @@ local function drawShadowBall(shadowBall)
     love.graphics.setColor(0.2, 0, 0.2, 0.65) -- Orange glow
     love.graphics.circle("fill", shadowBall.x, shadowBall.y, shadowBall.radius * 1.6)
 
+    -- love.graphics.setColor(t * 0.6, 0, t * 0.6);
+    love.graphics.setColor(0.6, 0, 0.6);
+    shadowBall.trail:draw();
+
     -- Draw trail
-    for i = 1, #(shadowBall.trail or {}) do
-        local p = shadowBall.trail[i]
-        local t = i / #shadowBall.trail
-        local trailRadius = shadowBall.radius * math.pow(t, 2.3)
+    -- for i = 1, #(shadowBall.trail or {}) do
+        -- local p = shadowBall.trail[i]
+        -- local t = i / #shadowBall.trail
+        -- local trailRadius = shadowBall.radius * math.pow(t, 2.3)
         -- Gradient from yellow to red
-        love.graphics.setColor(t * 0.6, 0, t * 0.6, math.pow(t, 1.25))
-        love.graphics.circle("fill", p.x, p.y, trailRadius)
-    end
+        -- love.graphics.circle("fill", p.x, p.y, trailRadius)
+    -- end
 
     -- draw ball
     love.graphics.setColor(120/255, 0, 120/255, 1) -- 
@@ -3940,14 +3964,16 @@ function Balls.update(dt, paddle, bricks)
                 ball.lastTrailPos.x = ball.x
                 ball.lastTrailPos.y = ball.y
             end
+
+            ball.trail:addPosition(ball.x, ball.y);
             
-            local trail = ball.trail
-            trail[#trail + 1] = {x = ball.x, y = ball.y}
+            -- local trail = ball.trail
+            -- trail[#trail + 1] = {x = ball.x, y = ball.y}
             
             -- Remove old trail points
-            if #trail > ballTrailLength then
-                table.remove(trail, 1)
-            end
+            -- if #trail > ballTrailLength then
+                -- table.remove(trail, 1)
+            -- end
         end
         
         -- Magnetic attraction
@@ -4094,19 +4120,21 @@ function Balls.update(dt, paddle, bricks)
         -- Number of collision checks along the path (more for faster bullets)
         local steps = math.max(1, math.ceil(math.sqrt(moveX * moveX + moveY * moveY) / bullet.radius))
         -- Bullet trail logic (longer, smoother)
-        bullet.trail = bullet.trail or {}
+        bullet.trail = bullet.trail or Trail.new(10, 15);
         -- Insert at the end for natural order (oldest at 1, newest at #trail)
         -- Add interpolated point between last and current if possible
-        if #bullet.trail > 0 then
-            local last = bullet.trail[#bullet.trail]
-            local mid = {x = (last.x + bullet.x) * 0.5, y = (last.y + bullet.y) * 0.5}
-            table.insert(bullet.trail, mid)
-        end
-        table.insert(bullet.trail, {x = bullet.x, y = bullet.y})
-        local maxTrail = 15
-        while #bullet.trail > maxTrail do
-            table.remove(bullet.trail, 1)
-        end
+
+        -- if #bullet.trail > 0 then
+            -- local last = bullet.trail[#bullet.trail]
+            -- local mid = {x = (last.x + bullet.x) * 0.5, y = (last.y + bullet.y) * 0.5}
+            -- table.insert(bullet.trail, mid)
+        -- end
+        -- table.insert(bullet.trail, {x = bullet.x, y = bullet.y})
+        bullet.trail:addPosition(bullet.x, bullet.y);
+        -- local maxTrail = 15
+        -- while #bullet.trail > maxTrail do
+            -- table.remove(bullet.trail, 1)
+        -- end
         -- multishot logic
         if Player.perks.multishot or hasItem("Split Shooter") then
             bullet.distanceTraveled = bullet.distanceTraveled + math.sqrt(bullet.speedX^2 + bullet.speedY^2) * dt
@@ -4131,10 +4159,10 @@ function Balls.update(dt, paddle, bricks)
                         for k,v in pairs(bullet.stats or {}) do newBullet.stats[k]=v end
                         -- Deep copy trail so each split bullet has its own trail
                         if bullet.trail then
-                            newBullet.trail = {}
-                            for i, pt in ipairs(bullet.trail) do
-                                newBullet.trail[i] = {x = pt.x, y = pt.y}
-                            end
+                            newBullet.trail = Trail.new(bullet.trail:getTrailData());
+                            -- for i, pt in ipairs(bullet.trail) do
+                                -- newBullet.trail[i] = {x = pt.x, y = pt.y}
+                            -- end
                         end
                         -- Ensure golden property is preserved for Golden Gun
                         if bullet.golden or bullet.name == "Golden Gun" then
@@ -4326,7 +4354,8 @@ function Balls.update(dt, paddle, bricks)
 
         -- trail logic (ring-buffer to avoid allocations and table shifting)
         orb._lastTrailTime = orb._lastTrailTime or 0
-        if gameTime - orb._lastTrailTime >= POWERUP_TRAIL_SPACING then -- Add trail points at controlled spacing
+        orb.trail:addPosition(orb.x, orb.y);
+        --[[if gameTime - orb._lastTrailTime >= POWERUP_TRAIL_SPACING then -- Add trail points at controlled spacing
             orb._lastTrailTime = gameTime
             -- compute insertion index (newest)
             local insertIndex = ((orb._trailHead + orb._trailCount - 1) % POWERUP_TRAIL_MAX) + 1
@@ -4336,19 +4365,19 @@ function Balls.update(dt, paddle, bricks)
             else
                 orb._trailCount = orb._trailCount + 1
             end
-            local pt = orb.trail[insertIndex]
-            pt.x = orb.x
-            pt.y = orb.y
-            pt.alpha = 1
-        end
+            -- local pt = orb.trail[insertIndex]
+            -- pt.x = orb.x
+            -- pt.y = orb.y
+            -- pt.alpha = 1
+        end]]
         -- fade all points (no removals)
-        for k = 1, POWERUP_TRAIL_MAX do
-            local pt = orb.trail[k]
-            if pt and pt.alpha and pt.alpha > 0 then
-                pt.alpha = pt.alpha - dt * 3
-                if pt.alpha < 0 then pt.alpha = 0 end
-            end
-        end
+        -- for k = 1, POWERUP_TRAIL_MAX do
+            -- local pt = orb.trail[k]
+            -- if pt and pt.alpha and pt.alpha > 0 then
+                -- pt.alpha = pt.alpha - dt * 3
+                -- if pt.alpha < 0 then pt.alpha = 0 end
+            -- end
+        -- end
     end
 end
 
@@ -4372,9 +4401,10 @@ local function drawBullets()
     for _, bullet in ipairs(bullets) do
         local scale = 1
         if bullet.trail then
-            local trailLen = #bullet.trail
-            local step = 2
-            for i = trailLen, 2, -step do
+            bullet.trail:draw();
+            -- local trailLen = #bullet.trail
+            -- local step = 2
+            --[[for i = trailLen, 2, -step do
                 local p1 = bullet.trail[i]
                 local p2 = bullet.trail[math.max(i-step, 1)]
                 if p1 and p2 then
@@ -4396,7 +4426,7 @@ local function drawBullets()
                     love.graphics.setLineWidth(radius * 1.5)
                     love.graphics.line(p1.x, p1.y, p2.x, p2.y)
                 end
-            end
+            end]]
         end
         -- Draw the bullets themselves
         local radius = (bullet.radius or 5)/2
@@ -4411,7 +4441,8 @@ local function drawBullets()
     for _, bullet in ipairs(deadBullets) do
         local fade = bullet.trailFade or 1
         if bullet.trail then
-            local trailLen = #bullet.trail
+            bullet.trail:draw();
+            --[[local trailLen = #bullet.trail
             for i = trailLen, 2, -1 do
                 local p1 = bullet.trail[i]
                 local p2 = bullet.trail[i-1]
@@ -4438,7 +4469,7 @@ local function drawBullets()
                     love.graphics.setLineWidth(radius * 1.5)
                     love.graphics.line(p1.x, p1.y, p2.x, p2.y)
                 end
-            end
+            end]]
         end
         -- Fade out the bullet core as well
         if bullet.trailFade then
@@ -4625,14 +4656,16 @@ function Balls:draw()
         
         -- Draw trail (skip for phantom balls or dead balls)
         if not ball.dead and ballName ~= "Phantom Ball" then
-            local trail = ball.trail
+            if ball.trail then
+                ball.trail:draw();
+            end
+            --[[local trail = ball.trail
             if trail then
-                local trailLen = #trail
+                --local trailLen = #trail
                 
                 -- Quick offscreen culling
                 if ballX + ballRadius >= screenLeft and ballX - ballRadius <= screenRight and
-                ballY + ballRadius >= screenTop and ballY - ballRadius <= screenBottom and
-                trailLen > 1 then
+                ballY + ballRadius >= screenTop and ballY - ballRadius <= screenBottom then
                     
                     -- Get ball color
                     local ballColor = ballList[ballName].color or {1, 1, 1, 1}
@@ -4672,7 +4705,7 @@ function Balls:draw()
                     
                     love.graphics.setColor(1, 1, 1, 1)
                 end
-            end
+            end]]
         end
         
         -- Draw ball
@@ -4736,7 +4769,7 @@ function Balls:draw()
         -- draw powerups
         for _, powerup in ipairs(powerups) do
             -- draw trail from oldest -> newest using ring buffer
-            local head = powerup._trailHead or 1
+            --[[local head = powerup._trailHead or 1
             local count = powerup._trailCount or 0
             if count > 0 then
                 local startRadius = powerup.radius * 0.6
@@ -4752,7 +4785,9 @@ function Balls:draw()
                         love.graphics.circle("fill", p.x, p.y, radius)
                     end
                 end
-            end
+            end]]
+            powerup.trail:draw();
+
 
             -- draw powerup image (always)
             love.graphics.setColor(1,1,1,1)

@@ -1,98 +1,97 @@
-local lily = require('lily')
+local lily = require("lily");
 
-local Textures = {}
+local Textures = {};
+local self = Textures; -- for readability
 
-local textures = {
-    ['no_texture'] = love.graphics.newImage('assets/sprites/no_texture.png')
-}
+local LOADING = "l"; -- enum
 
-textures['no_texture']:setFilter('nearest', 'nearest')
+local function insertTexture(name, nearestNeighbor)
+    self.textures[name] = LOADING;
+
+    return function(userdata, image)
+        if self.textures[name] ~= LOADING then
+            image:release();
+            return;
+        end
+
+        self.textures[name] = image;
+
+        if nearestNeighbor then
+            image:setFilter("nearest", "nearest");
+        end
+    end
+end
+
+function Textures.init()
+    self.textures = {};
+
+    insertTexture("no_texture", true)(nil, love.graphics.newImage("assets/sprites/no_texture.png"));
+end
 
 function Textures.getTexture(name, nearestNeighbor, urgent)
     if urgent then
-        if textures[name] and textures[name] ~= 'l' then
-            return textures[name]
+        if self.textures[name] and self.textures[name] ~= LOADING then
+            return self.textures[name];
         end
 
-        if love.filesystem.getInfo(name .. '.png') then
-            textures[name] = love.graphics.newImage(name .. '.png')
-        else
-            textures[name] = love.graphics.newImage(name .. '.png')
-        end
+        insertTexture(name, nearestNeighbor)(nil, love.graphics.newImage(name .. ".png"));
 
-        if nearestNeighbor then
-            textures[name]:setFilter('nearest', 'nearest')
-        end
-
-        return textures[name]
+        return self.textures[name];
     end
 
-    if textures[name] then
-        if textures[name] == 'l' then
-            return textures['no_texture'], true
+    if self.textures[name] then
+        if self.textures[name] == LOADING then
+            return self.textures["no_texture"], true;
         end
 
-        return textures[name], false
+        return self.textures[name];
     end
 
-    if love.filesystem.getInfo(name .. '.png') then
-        textures[name] = 'l'
-        local completed = function(userdata, image)
-            textures[name] = image
+    lily.newImage(name .. ".png"):onComplete(insertTexture(name, nearestNeighbor));
 
-            if nearestNeighbor then
-                image:setFilter('nearest', 'nearest')
-            end
-        end
-
-        lily.newImage(name .. '.png'):onComplete(completed)
-
-        --textures[name] = love.graphics.newImage(name .. '.png')
-    else
-        textures[name] = 'l'
-        local completed = function(userdata, image)
-            textures[name] = image
-
-            if nearestNeighbor then
-                image:setFilter('nearest', 'nearest')
-            end
-        end
-
-        lily.newImage(name .. '.png'):onComplete(completed)
-        --textures[name] = love.graphics.newImage(name .. '.png')
-    end
-
-    return textures['no_texture'], true
+    return self.textures["no_texture"], true;
 end
 
 function Textures.unloadTextures(...)
-    local args = {...}
+    local args = {...};
 
-    for i, v in ipairs(args) do
-        if textures[v] and textures[v] ~= 'l' then
-            textures[v]:release()
-            textures[v] = nil
+    for _, v in ipairs(args) do
+        if self.textures[v] then
+            if self.textures[v] == LOADING then
+                self.textures[v] = nil;
+            else
+                self.textures[v]:release();
+                self.textures[v] = nil;
+            end
         end
     end
 end
 
+-- [nearest neighbor], tex1, tex2, ...
 function Textures.loadTextures(...)
-    local args = {...}
+    local args = {...};
+    local nearestNeighbor = type(args[1]) == "bool" and table.remove(args, 1);
 
-    for i, v in ipairs(args) do
-        if not textures[v] then
-            if love.filesystem.getInfo(v .. '.png') then
-                textures[v] = love.graphics.newImage(v .. '.png')
-            else
-                textures[v] = love.graphics.newImage(v .. '.png')
-            end
+    for _, v in ipairs(args) do
+        if not self.textures[v] then
+            lily.newImage(v .. ".png"):onComplete(insertTexture(v, nearestNeighbor));
         end
     end
 end
 
 function Textures.unloadTexture(name)
-    textures[name]:release()
-    textures[name] = nil
+    if not self.textures[name] then
+        return;
+    end
+
+    if self.textures[name] == LOADING then
+        self.textures[name] = nil;
+        return;
+    end
+
+    self.textures[name]:release();
+    self.textures[name] = nil;
 end
 
-return Textures
+Textures.init(); -- call init on require
+return Textures;
