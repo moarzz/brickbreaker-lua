@@ -19,6 +19,8 @@ ExplodingBall.ballAmount = 1;
 function ExplodingBall.new()
     local instance = setmetatable({}, ExplodingBall):init();
 
+    instance.radius = ExplodingBall.size * 10;
+
     return instance;
 end
 

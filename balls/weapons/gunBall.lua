@@ -20,6 +20,8 @@ GunBall.bulletSpeed = 1000;
 function GunBall.new()
     local instance = setmetatable({}, GunBall):init();
 
+    instance.radius = GunBall.size * 10;
+
     return instance;
 end
 

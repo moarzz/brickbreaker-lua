@@ -19,6 +19,8 @@ MagneticBall.attractionStrength = 500;
 function MagneticBall.new()
     local instance = setmetatable({}, MagneticBall):init();
 
+    instance.radius = MagneticBall.size * 10;
+
     return instance;
 end
 

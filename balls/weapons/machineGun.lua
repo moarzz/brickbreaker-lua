@@ -14,7 +14,6 @@ MachineGun.stats = {
 };
 
 MachineGun.trail = Trail.new(10, 50);
-MachineGun.currentAmmo = 7 + ((Player.permanentUpgrades.ammo or 0)) * 7;
 MachineGun.bulletSpeed = 1000;
 MachineGun.ammoMult = 7;
 MachineGun.fireRateMult = 0.35;
@@ -22,6 +21,8 @@ MachineGun.noAmount = true;
 
 function MachineGun.new()
     local instance = setmetatable({}, MachineGun):init();
+    
+    instance.currentAmmo = 7 + ((Player.permanentUpgrades.ammo or 0)) * 7;
 
     return instance;
 end

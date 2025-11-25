@@ -14,7 +14,6 @@ GoldenGun.stats = {
 };
 
 GoldenGun.trail = Trail.new(10, 50);
-GoldenGun.currentAmmo = 2 + ((Player.permanentUpgrades.ammo or 0)) * 2;
 GoldenGun.bulletSpeed = 1500;
 GoldenGun.ammoMult = 2;
 GoldenGun.fireRateMult = 1.25;
@@ -22,6 +21,8 @@ GoldenGun.noAmount = true;
 
 function GoldenGun.new()
     local instance = setmetatable({}, GoldenGun):init();
+
+    instance.currentAmmo = 2 + ((Player.permanentUpgrades.ammo or 0)) * 2;
 
     return instance;
 end

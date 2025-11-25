@@ -22,6 +22,8 @@ Incrediball.attractionStrength = 600;
 function Incrediball.new()
     local instance = setmetatable({}, Incrediball):init();
 
+    instance.radius = Incrediball.size * 10;
+
     return instance;
 end
 

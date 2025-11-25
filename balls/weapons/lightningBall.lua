@@ -19,6 +19,8 @@ LightningBall.ballAmount = 1;
 function LightningBall.new()
     local instance = setmetatable({}, LightningBall):init();
 
+    instance.radius = LightningBall.size * 10;
+
     return instance;
 end
 

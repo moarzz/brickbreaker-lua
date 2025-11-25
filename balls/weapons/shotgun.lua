@@ -14,7 +14,6 @@ Shotgun.stats = {
 };
 
 Shotgun.trail = Trail.new(10, 50);
-Shotgun.currentAmmo = 2 + ((Player.permanentUpgrades.ammo or 0)) * 2;
 Shotgun.bulletSpeed = 1500;
 Shotgun.ammoMult = 2;
 Shotgun.fireRateMult = 1.8;
@@ -22,6 +21,8 @@ Shotgun.noAmount = true;
 
 function Shotgun.new()
     local instance = setmetatable({}, Shotgun):init();
+
+    instance.currentAmmo = 2 + ((Player.permanentUpgrades.ammo or 0)) * 2;
 
     return instance;
 end

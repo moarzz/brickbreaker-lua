@@ -14,7 +14,6 @@ Minigun.stats = {
 };
 
 Minigun.trail = Trail.new(10, 50);
-Minigun.currentAmmo = 100 + ((Player.permanentUpgrades.ammo or 0)) * 15;
 Minigun.bulletSpeed = 1000;
 Minigun.ammoMult = 20;
 Minigun.fireRateMult = 1.05;
@@ -22,6 +21,8 @@ Minigun.noAmount = true;
 
 function Minigun.new()
     local instance = setmetatable({}, Minigun):init();
+    
+    instance.currentAmmo = 100 + ((Player.permanentUpgrades.ammo or 0)) * 15;
 
     return instance;
 end

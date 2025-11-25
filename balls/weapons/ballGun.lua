@@ -15,7 +15,6 @@ BallGun.stats = {
 
 BallGun.speedMult = 2;
 BallGun.trail = Trail.new(10, 50);
-BallGun.currentAmmo = 3 + ((Player.permanentUpgrades.ammo or 0)) * 3;
 BallGun.bulletSpeed = 1250;
 BallGun.ammoMult = 3;
 BallGun.fireRateMult = 6;
@@ -24,6 +23,8 @@ BallGun.radius = 10;
 
 function BallGun.new()
     local instance = setmetatable({}, BallGun):init();
+
+    instance.currentAmmo = 3 + ((Player.permanentUpgrades.ammo or 0)) * 3;
 
     return instance;
 end

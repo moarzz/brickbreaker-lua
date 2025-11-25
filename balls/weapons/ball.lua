@@ -18,6 +18,8 @@ Ball.ballAmount = 1;
 function Ball.new()
     local instance = setmetatable({}, Ball):init();
 
+    instance.radius = Ball.size * 10;
+
     return instance;
 end
 
