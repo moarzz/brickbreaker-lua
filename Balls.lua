@@ -445,7 +445,8 @@ local function brickDestroyed(brick)
             end
         end
     end
-    if math.random(1,4000)/chanceMult <= currentMoneyDropChance then
+    local maxChance = mapRangeClamped(Player.level,1, 12, 1500, 4000)
+    if math.random(1,maxChance)/chanceMult <= currentMoneyDropChance then
         createPowerup(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth, "dollarBill")
         currentMoneyDropChance = 0
     else
@@ -483,7 +484,7 @@ end
 
 
 -- reduce trail length to make draw cheaper (was 35)
-local ballTrailLength = 15   -- Length of the ball trail
+local ballTrailLength = 10   -- Length of the ball trail
 local bullets = {}
 local deadBullets = {}
 local laserBeamBrick
@@ -1446,7 +1447,7 @@ local function cast(spellName, brick, forcedDamage)
         createFireRateVFX(timeUntilNextCast)
     end
     if spellName == "Light Beam" then        
-        local ammoValue = getStat("Light Beam", "ammo")
+        local ammoValue = getStat("Light Beam", "amount")
         for i=1, ammoValue do
             Timer.after((i-1) * 0.2 + 0.05, function()
                 playSoundEffect(lightBeamSFX, 0.2, 0.6)
@@ -2018,7 +2019,7 @@ local function ballListInit()
                 range = 3
             }
         },
-        ["Saw Blades"] = {
+        --[[["Saw Blades"] = {
             name = "Saw Blades",
             type = "tech",
             size = 1,
@@ -2037,7 +2038,7 @@ local function ballListInit()
             currentAngle = 0, -- Current rotation angle
             orbitRadius = 225,
             damageCooldowns = {}, -- Add this line to track cooldowns per saw per brick
-        },
+        },]]
         ["Gun Turrets"] = {
             name = "Gun Turrets",
             type = "gun",
@@ -2109,7 +2110,7 @@ local function ballListInit()
                 range = 2
             },
         },
-        --[[["Light Beam"] = {
+        ["Light Beam"] = {
             name = "Light Beam",
             type = "spell",
             x = screenWidth / 2,
@@ -2122,13 +2123,14 @@ local function ballListInit()
             color = {1, 1, 0.5, 1}, -- Yellow color for Light Beam
             stats = {
                 damage = 2,
-                ammo = 2,
+                amount = 2,
                 cooldown = 12
             },
             onBuy = function()
                 cast("Light Beam")
             end,
         },
+        --[[
         ["Lightning Pulse"] = {
             name = "Lightning Pulse",
             type = "spell",
@@ -2561,7 +2563,7 @@ local function brickCollisionEffects(ball, brick)
         -- Create explosion using new particle system
         local scale = math.max(getStat(ball.name, "range") * 0.3 + 0.5, 1)
         -- Limit Chain Lightning sprite animations to 25 at once
-        createSpriteAnimation(ball.x, ball.y, scale/2, explosionVFX, 512, 512, 0.01, 5, 0.9, 0.9)
+        createSpriteAnimation(ball.x, ball.y, scale/2, explosionVFX, 512, 512, 0.01, 5, false, 0.9, 0.9)
 
         --Explosion.spawn(ball.x, ball.y, scale)
         
@@ -2962,7 +2964,7 @@ local function techUpdate(dt)
     if unlockedBallTypes["Laser"] then
         if unlockedBallTypes["Laser"].charging then
             unlockedBallTypes["Laser"].currentChargeTime = unlockedBallTypes["Laser"].currentChargeTime + dt
-            local cooldownValue = Player.currentCore == "Cooldown Core" and 2 or (Player.currentCore == "Madness Core" and 0.5 or 1) * math.max(getStat("Laser", "cooldown") + 2, 1)
+            local cooldownValue = (Player.currentCore == "Madness Core" and 0.5 or 1) * math.max(getStat("Laser", "cooldown") + 1, 1)
             if accelerationOn then
                 cooldownValue = cooldownValue * 0.5
             end
@@ -3879,7 +3881,7 @@ function Balls.update(dt, paddle, bricks)
     end
 
     -- update balls
-    local substeps = 5;
+    local substeps = 2;
     for _, ball in ipairs(Balls) do -- Corrected loop
         -- Only update non-shadowBall balls here
         if not (ball.type == "spell" and ball.name == "Shadow Ball") then
@@ -3907,8 +3909,9 @@ function Balls.update(dt, paddle, bricks)
                 end
             end
 
+            -- trail logic
             if ball.type == "ball" then
-                local trailSpacing = 3 -- Distance between trail points
+                ball.trailCD = 2
                 if not ball.lastTrailPos then
                     ball.lastTrailPos = {x = ball.x, y = ball.y}
                     table.insert(ball.trail, {x = ball.x, y = ball.y})

@@ -40,8 +40,15 @@ function Mechanic.events:levelUp()
     for statName, _ in pairs(selectedWeapon.stats) do
         table.insert(statList, statName)
     end
-        for i=1, 2 do
-        local statToUpgrade = statList[math.random(1, #statList)]
+    for i=1, 2 do
+        local statNotAmmo = true;
+        local statToUpgrade = "damage"
+        while statNotAmmo do
+            statToUpgrade = statList[math.random(1, #statList)];
+            if statToUpgrade ~= "ammo" then
+                statNotAmmo = false;
+            end
+        end
 
         gainStatWithAnimation(statToUpgrade, selectedWeapon.name, self.id)
 
