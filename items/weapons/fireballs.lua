@@ -1,4 +1,4 @@
-local Fireballs = BallBase.new();
+local Fireballs = WeaponBase.new();
 Fireballs.__index = Fireballs;
 Fireballs.name = "Fireballs";
 Fireballs.type = "spell";

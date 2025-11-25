@@ -1,4 +1,4 @@
-local Minigun = BallBase.new();
+local Minigun = WeaponBase.new();
 Minigun.__index = Minigun;
 Minigun.name = "Minigun";
 Minigun.type = "gun";

@@ -1,4 +1,4 @@
-local LightBeam = BallBase.new();
+local LightBeam = WeaponBase.new();
 LightBeam.__index = LightBeam;
 LightBeam.name = "Light Beam";
 LightBeam.type = "spell";

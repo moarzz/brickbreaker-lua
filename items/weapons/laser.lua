@@ -1,4 +1,4 @@
-local Laser = BallBase.new();
+local Laser = WeaponBase.new();
 Laser.__index = Laser;
 Laser.name = "Laser";
 Laser.type = "tech";

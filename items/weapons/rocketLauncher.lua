@@ -1,4 +1,4 @@
-local RocketLauncher = BallBase.new();
+local RocketLauncher = WeaponBase.new();
 RocketLauncher.__index = RocketLauncher;
 RocketLauncher.name = "Rocket Launcher";
 RocketLauncher.type = "tech";

@@ -1,4 +1,4 @@
-local ExplodingBall = BallBase.new();
+local ExplodingBall = WeaponBase.new();
 ExplodingBall.__index = ExplodingBall;
 ExplodingBall.name = "Exploding Ball";
 ExplodingBall.type = "ball";

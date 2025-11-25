@@ -1,4 +1,4 @@
-local ShadownBall = BallBase.new();
+local ShadownBall = WeaponBase.new();
 ShadownBall.__index = ShadownBall;
 ShadownBall.name = "Shadow Ball";
 ShadownBall.type = "spell";

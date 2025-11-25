@@ -1,5 +1,5 @@
-local BallBase = {};
-BallBase.__index = BallBase;
+local WeaponBase = {};
+WeaponBase.__index = WeaponBase;
 
 local eventMeta = {};
 
@@ -24,15 +24,15 @@ function eventMeta:__newindex(key, val)
     rawset(self, "_" .. key, val); -- successfully set event
 end
 
-function BallBase:__newindex(key, val)
+function WeaponBase:__newindex(key, val)
     assert(type(key) == "string", "cannot use numbered indices variable in item");
     assert(string.find(key, "|") == nil, "cannot make a variable in an item that contains the character '|'");
 
     rawset(self, key, val);
 end
 
-function BallBase.new()
-    local instance = setmetatable({}, BallBase);
+function WeaponBase.new()
+    local instance = setmetatable({}, WeaponBase);
 
     instance.events = setmetatable({}, eventMeta);
 
@@ -44,7 +44,7 @@ function BallBase.new()
 end
 
 -- seperated from the .new() function to make all variables exist in the highest level of the item
-function BallBase:init()
+function WeaponBase:init()
     assert(self.name ~= nil, "'name' must be set before creating instance of an ball");
     assert(self.rarity ~= nil, "'rarity' must be set before creating instance of an ball");
     assert(self.type ~= nil, "'type' must be set before creating instance of an ball");
@@ -76,21 +76,21 @@ function BallBase:init()
     return self;
 end
 
-function BallBase:setDescription(description)
+function WeaponBase:setDescription(description)
     self.description = description;
 end
-function BallBase:setName(name)
+function WeaponBase:setName(name)
     self.name = name;
 
 end
-function BallBase:getName()
+function WeaponBase:getName()
     return self.name;
 end
 
-function BallBase:getDataAsString()
+function WeaponBase:getDataAsString()
     local ret = "v0.1\n"; -- version
 
-    local defaultItem = BallBase.new();
+    local defaultItem = WeaponBase.new();
 
     for k, v in pairs(self) do
         if type(v) ~= "function" and k ~= "events" and not defaultItem[k] then
@@ -107,7 +107,7 @@ function BallBase:getDataAsString()
     return ret;
 end
 
-function BallBase:loadFromData(str)
+function WeaponBase:loadFromData(str)
     local version, data = string.match(str, "^(v[%d.]*)\n(.*)$");
     assert(version and data, "save data corrupted, error from item");
 
@@ -142,4 +142,4 @@ function BallBase:loadFromData(str)
     end
 end
 
-return BallBase;
+return WeaponBase;

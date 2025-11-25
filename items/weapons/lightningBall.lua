@@ -1,4 +1,4 @@
-local LightningBall = BallBase.new();
+local LightningBall = WeaponBase.new();
 LightningBall.__index = LightningBall;
 LightningBall.name = "Lightning Ball";
 LightningBall.type = "ball";

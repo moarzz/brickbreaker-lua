@@ -1,4 +1,4 @@
-local BallGun = BallBase.new();
+local BallGun = WeaponBase.new();
 BallGun.__index = BallGun;
 BallGun.name = "Ball Gun";
 BallGun.type = "gun";

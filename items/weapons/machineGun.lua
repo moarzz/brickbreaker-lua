@@ -1,4 +1,4 @@
-local MachineGun = BallBase.new();
+local MachineGun = WeaponBase.new();
 MachineGun.__index = MachineGun;
 MachineGun.name = "Machine Gun";
 MachineGun.type = "gun";

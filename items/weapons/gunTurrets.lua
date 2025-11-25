@@ -1,4 +1,4 @@
-local GunTurrets = BallBase.new();
+local GunTurrets = WeaponBase.new();
 GunTurrets.__index = GunTurrets;
 GunTurrets.name = "Gun Turrets";
 GunTurrets.type = "tech";

@@ -1,4 +1,4 @@
-local Incrediball = BallBase.new();
+local Incrediball = WeaponBase.new();
 Incrediball.__index = Incrediball;
 Incrediball.name = "Incrediball";
 Incrediball.type = "ball";

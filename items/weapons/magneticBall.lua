@@ -1,4 +1,4 @@
-local MagneticBall = BallBase.new();
+local MagneticBall = WeaponBase.new();
 MagneticBall.__index = MagneticBall;
 MagneticBall.name = "Magnetic Ball";
 MagneticBall.type = "ball";
