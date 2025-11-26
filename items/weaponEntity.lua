@@ -93,7 +93,7 @@ function WeaponEntity:collidePaddle()
     local playerPaddle = _G.paddle;
 
     local closestX = math.min(math.max(playerPaddle.x, self.x), playerPaddle.x + playerPaddle.width);
-    local closestY = math.min(math.max(playerPaddle.y - 10, self.y), playerPaddle.y + 10);
+    local closestY = math.min(math.max(playerPaddle.y - 2, self.y), playerPaddle.y + 22);
 
     local dx = self.x - closestX;
     local dy = self.y - closestY;
@@ -112,23 +112,23 @@ function WeaponEntity:collidePaddle()
         end
 
         if self.yn > 0 then -- if collided w/ the top of the paddle
-            self.y = playerPaddle.y - 10 - self.radius;
-            self.yn = math.abs(self.yn);
-        else
-            self.y = playerPaddle.y + 10 + self.radius;
+            self.y = playerPaddle.y - 2 - self.radius;
             self.yn = -math.abs(self.yn);
+        else
+            self.y = playerPaddle.y + 22 + self.radius;
+            self.yn = math.abs(self.yn);
         end
 
         local hitPerun = (self.x - playerPaddle.x) / (playerPaddle.width + self.radius) * 2 - 1;
 
-        local newDir = hitPerun * math.pi / 2 * 0.95;
+        local newDir = hitPerun * math.pi / 2 * 0.95 - math.pi / 2;
 
-        if self.yn < 0 then
-            newDir = newDir + math.pi;
+        if self.yn > 0 then
+            newDir = -(newDir + math.pi / 2) + math.pi / 2;
         end
 
         self:setDirection(newDir);
-        self:addExtraSpeed(5);
+        self:addExtraSpeed(250);
 
         playSoundEffect(paddleBoopSFX, 0.4, 0.8, false, true);
 
@@ -259,8 +259,14 @@ function WeaponEntity:collideWalls()
 end
 
 function WeaponEntity:substep(dt)
-    self.x = self.x + self.xn * (self.speed + self.extraSpeed) * dt;
-    self.y = self.y + self.yn * (self.speed + self.extraSpeed) * dt;
+    -- split speed into 2 sections bcs thats how calculus works
+    self.x = self.x + self.xn * (self.speed + self.extraSpeed) * dt / 2;
+    self.y = self.y + self.yn * (self.speed + self.extraSpeed) * dt / 2;
+
+    self.extraSpeed = self.extraSpeed * (0.8 ^ dt); -- translates to: multiply extraSpeed by 0.8 every second
+
+    self.x = self.x + self.xn * (self.speed + self.extraSpeed) * dt / 2;
+    self.y = self.y + self.yn * (self.speed + self.extraSpeed) * dt / 2;
 
     -- check collision
 

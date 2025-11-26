@@ -32,7 +32,7 @@ function Ball:checkAddBalls()
         local newBall = WeaponEntity.new(screenWidth / 2, math.max(screenHeight / 4, getHighestBrickY() + self.radius), self.radius);
 
         newBall:setSpeed(self.stats.speed);
-        newBall:setDirection((math.random() - 0.5) * math.pi * 0.8); -- random angle facing upwards and not too sideways
+        newBall:setDirection((math.random() - 0.5) * math.pi * 0.8 - math.pi / 2); -- random angle facing upwards and not too sideways
         newBall:setBrickCallback(
             function(...)
                 self:hitBrick(...);
@@ -54,7 +54,7 @@ function Ball:update(dt)
 end
 
 function Ball:hitBrick(ball, brick)
-    brick.health = brick.health - self.stats.damage;
+    dealDamage(self, brick);
 end
 
 function Ball:draw()
