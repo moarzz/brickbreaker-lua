@@ -209,7 +209,7 @@ end
 ]]
 
 function Trail:draw()
-    love.graphics.setColor(1,1,1); -- white
+    -- love.graphics.setColor(1,1,1); -- white
 
     self.shader:send("points_x", unpack(self.prevXCoords));
     self.shader:send("points_y", unpack(self.prevYCoords));

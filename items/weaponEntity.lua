@@ -34,6 +34,9 @@ end
 function WeaponEntity:destroy()
     self.destroyed = true;
 end
+function WeaponEntity:isDestroyed()
+    return self.destroyed;
+end
 
 function WeaponEntity:ignoreWalls()
     self.doesIgnoreWalls = true;
