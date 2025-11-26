@@ -14,7 +14,7 @@ function TotalEconomicCollapse.new()
 end
 
 function TotalEconomicCollapse:purchase()
-    for _, weaponType in pairs(Balls.getUnlockedBallTypes()) do
+    for _, weaponType in ipairs(WeaponHandler.getActiveWeapons()) do
         weaponType.price = 0;
     end
 end

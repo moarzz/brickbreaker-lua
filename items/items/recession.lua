@@ -14,7 +14,7 @@ function Recession.new()
 end
 
 function Recession.events:levelUp()
-    for _, weaponType in pairs(Balls.getUnlockedBallTypes()) do
+    for _, weaponType in ipairs(WeaponHandler.getActiveWeapons()) do
         reducePriceWithAnimations(1, weaponType.name, self.id);
     end
 end

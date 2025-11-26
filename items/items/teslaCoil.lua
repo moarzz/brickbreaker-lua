@@ -12,10 +12,11 @@ function TeslaCoil.new()
 end
 
 function TeslaCoil.events:levelUp()
-    local randomWeaponId = math.random(1, tableLength(Balls.getUnlockedBallTypes()));
+    local weapons = WeaponHandler.getActiveWeapons();
+    local randomWeaponId = math.random(1, #weapons);
     local i = 1;
 
-    for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
+    for i, weapon in ipairs(weapons) do
         local statNames = {};
 
         for statName, statValue in pairs(weapon.stats) do
@@ -31,8 +32,6 @@ function TeslaCoil.events:levelUp()
                 gainStatWithAnimation(statName, weapon.name, self.id);
             end
         end
-
-        i = i + 1;
     end
 end
 

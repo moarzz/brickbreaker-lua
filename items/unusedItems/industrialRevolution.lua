@@ -29,10 +29,10 @@ end
 
 function industrialRevolution.events:levelUp()
     if math.random(1,100) <= self.descriptionPointers.nirvanaChance then
-        for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
+        for _, weapon in ipairs(WeaponHandler.getActiveWeapons()) do
             if not weapon.noAmount and weapon.type == "ball" then
                 weapon.ballAmount = weapon.ballAmount + 1;
-                Balls.addBall(weapon.name, true);
+                --Balls.addBall(weapon.name, true);
             end
 
             for statName, statValue in pairs(weapon.stats) do

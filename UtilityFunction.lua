@@ -51,10 +51,10 @@ function restartGame()
     Player.reset()
 
     -- Reset Balls
-    for i=1, #Balls, 1 do
-        table.remove(Balls, _)
-    end
-    Balls.initialize() -- Assuming you have an `initialize` function for Balls
+    -- for i=1, #Balls, 1 do
+        -- table.remove(Balls, _)
+    -- end
+    -- Balls.initialize() -- Assuming you have an `initialize` function for Balls
 
     -- Reset other game states (e.g., bricks, score)
     initializeBricks()
@@ -322,7 +322,7 @@ end
 visualUpgradePriceValues = {}
 function reducePriceWithAnimations(reductionAmount, weaponName, itemID)  -- Accept weapon object
     local weapon
-    for _, weaponn in pairs(Balls.getUnlockedBallTypes()) do
+    for _, weaponn in ipairs(WeaponHandler.getActiveWeapons()) do
         if weaponn.name == weaponName then
             weapon = weaponn
         end
@@ -373,7 +373,11 @@ function gainStatWithAnimation(statName, weaponName, itemID)
         end
         local inTween = tween.new(0.075, visualStatValues[weaponName][statName], {scale = 1.6}, tween.easing.outCirc)
         addTweenToUpdate(inTween)
-        local selectedWeapon = Balls.getUnlockedBallTypes()[weaponName]
+
+        error("doing something we shouldnt");
+        
+        
+        --[[local selectedWeapon = Balls.getUnlockedBallTypes()[weaponName]
         if statName == "cooldown" then
             selectedWeapon.stats.cooldown = math.max(1, (selectedWeapon.stats.cooldown or 1) - 1)
         elseif statName == "speed" then
@@ -385,7 +389,7 @@ function gainStatWithAnimation(statName, weaponName, itemID)
             selectedWeapon.stats.ammo = (selectedWeapon.stats.ammo or 0) + selectedWeapon.ammoMult or 1
         else
             selectedWeapon.stats[statName] = (selectedWeapon.stats[statName] or 0) + 1
-        end
+        end]]
     end)
     EventQueue:addEventToQueue(EVENT_POINTERS.empty, 0.225, function() 
         local outTween = tween.new(0.225, visualStatValues[weaponName][statName], {scale = 1}, tween.easing.inCirc)

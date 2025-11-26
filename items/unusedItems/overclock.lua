@@ -14,7 +14,7 @@ function Overclock.new()
 end
 
 function Overclock:purchase()
-    for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
+    for _, weapon in ipairs(WeaponHandler.getActiveWeapons()) do
         weapon.stats.damage = weapon.stats.damage + 1
     end
 end

@@ -9,7 +9,7 @@ function PlusSixBuff.new()
 
     local itemStats = {};
     local statUnlocked = {}
-    for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
+    for _, weapon in ipairs(WeaponHandler.getActiveWeapons()) do
         for statName, _ in pairs(weapon.stats) do
             if not statUnlocked[statName] and statName ~= "damage" then
                 table.insert(itemStats, statName);

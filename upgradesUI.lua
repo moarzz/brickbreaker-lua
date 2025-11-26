@@ -2,17 +2,6 @@
 Player = Player or {currentCore = "Bouncy Core"} -- Ensure Player table exists
 local newSpellPrice = 10000
 
--- Helper: get unlocked spells (assuming Balls.getUnlockedBallTypes returns all, filter for type=="spell")
-local function getUnlockedSpells()
-    local spells = {}
-    for _, ballType in pairs(Balls.getUnlockedBallTypes()) do
-        if ballType.type == "spell" then
-            table.insert(spells, ballType)
-        end
-    end
-    return spells
-end
-
 local suit = require("Libraries.Suit") -- UI library
 local upgradesUI = {}
 
@@ -291,130 +280,30 @@ local function drawPlayerStats()
     local x,y = suit.layout:nextRow(),y
 end
 
-local function drawInterestUpgrade()
-    --[[local xOffset = -uiOffset.x
-    love.graphics.draw(uiWindowImg, xOffset + uiWindowImg:getWidth(), 100, 0, 0.5, 0.65)
-    love.graphics.draw(uiLabelImg, xOffset + uiWindowImg:getWidth() * 1.25 - uiLabelImg:getWidth()*0.65/2, 80, 0, 0.65, 1)]]
-end
-
-local function getRarityDistributionByLevel()
-    local level = Player.level
-    if level < 4 then
-        return {common = 1, uncommon = 0, rare = 0.0, legendary = 0.0}
-    elseif level < 7 then
-        return {common = 0.83, uncommon = 0.15, rare = 0.02, legendary = 0.0}
-    elseif level < 11 then
-        return {common = 0.675, uncommon = 0.25, rare  = 0.075, legendary = 0}
-    elseif level < 15 then
-        return {common = 0.6, uncommon = 0.3, rare = 0.1, legendary = 0}
-    elseif level < 18 then
-        return {common = 0.5, uncommon = 0.35, rare = 0.125, legendary = 0.025}
-    elseif level < 23 then
-        return {common = 0.475, uncommon = 0.35, rare = 0.125, legendary = 0.05}  
-    else
-        return {common = 0.4, uncommon = 0.39, rare = 0.15, legendary = 0.06}
-    end
-end
-
-local function getRandomWeaponOfRarity(rarity)
-    consumable = consumable or false
-    local rarityList = {}   
-    if rarity == "common" then
-        rarityList = commonWeapons
-    elseif rarity == "uncommon" then
-        rarityList = uncommonWeapons
-    elseif rarity == "rare" then
-        rarityList = rareWeapons
-    elseif rarity == "legendary" then
-        rarityList = legendaryWeapons
-    end
-    if #rarityList == 0 then
-        print("Error: No items available for rarity " .. rarity .. " with consumable = " .. tostring(consumable))
-        local item = getRandomWeaponOfRarity("common")
-        return item
-    else
-        print("Choosing from " .. #rarityList .. " items of rarity " .. rarity .. " with consumable = " .. tostring(consumable))
-    end
-    local weapon = rarityList[math.random(1, #rarityList)]
-    return weapon
-end
-
 local levelUpShopType = "weapon"
 local displayedUpgrades = {} -- This should be an array, not a table with string keys
 local tweenSpeed = 2 -- Adjust this to control fade in speed
 
 function setLevelUpShop()
-    levelUpShopAlpha = 0
-    shouldTweenAlpha = true
-    displayedUpgrades = {} -- Clear the displayed upgrades
-    levelUpShopType = "weapon"
-    -- Ball unlocks
-    local unlockedBallNames = {}
-    for _, ball in pairs(Balls.getUnlockedBallTypes()) do
-        unlockedBallNames[ball.name] = true
+    -- clearFancyTexts()
+
+    levelUpShopAlpha = 0;
+    shouldTweenAlpha = true;
+    levelUpShopType = "weapon";
+
+    Items.setAllWeaponsVisible(true);
+
+    for i, v in ipairs(WeaponHandler.getActiveWeapons()) do
+        Items.addInvisibleWeapon(v.filteredName);
     end
-    -- Only include non-spell balls
-    local availableBalls = {}
-    local weightedBalls = {}  -- Store balls with their weights
-    local unlockedCount = #Balls.getUnlockedBallTypes()
-    print("Unlocked Count: " .. unlockedCount)
 
-    for i=1, 3 do
-        local rarityDistribution = getRarityDistributionByLevel()
-        local commonChance, uncommonChance, rareChance, legendaryChance = rarityDistribution.common, rarityDistribution.uncommon, rarityDistribution.rare, rarityDistribution.legendary
-        
-        local doAgain = true
-        local iterations = 0
-        local maxIterations = 100
-        local iterations = 0
-        local weaponToDisplay = nil
-        while doAgain and iterations < maxIterations do
-            local randomChance = math.random(1,100)/100
-            iterations = iterations + 1
-            doAgain = false
-            print("Rarity chances: common=" .. tostring(commonChance) .. ", uncommon=" .. tostring(uncommonChance) .. ", rare=" .. tostring(rareChance) .. ", legendary=" .. tostring(legendaryChance))
-            if randomChance <= commonChance then
-                weaponToDisplay = getRandomWeaponOfRarity("common")
-            elseif randomChance <= commonChance + uncommonChance then
-                weaponToDisplay = getRandomWeaponOfRarity("uncommon")
-            elseif randomChance <= commonChance + uncommonChance + rareChance then
-                weaponToDisplay = getRandomWeaponOfRarity("rare")
-            elseif randomChance <= commonChance + uncommonChance + rareChance + legendaryChance then
-                weaponToDisplay = getRandomWeaponOfRarity("legendary")
-            else
-                weaponToDisplay = getRandomWeaponOfRarity("common")
-            end
+    displayedUpgrades = {} -- Clear the displayed upgrades
 
-            -- Failsafe to prevent infinite loops
-            if iterations > 80 then
-                weaponToDisplay = getRandomWeaponOfRarity("common")
-            end
+    for i = 1, 3 do
+        local newWeapon = Items.getRandomWeapon();
+        Items.addInvisibleWeapon(newWeapon.filteredName);
 
-            -- Ensure the weapon is not already displayed or owned
-            for _, displayedWeapon in pairs(displayedUpgrades) do
-                if displayedWeapon.name == weaponToDisplay.name then
-                    doAgain = true
-                    break
-                end
-            end
-            for _, playerWeapon in pairs(Balls.getUnlockedBallTypes()) do
-                if playerWeapon.name == weaponToDisplay.name then
-                    doAgain = true
-                    break
-                end
-            end
-        end
-        table.insert(displayedUpgrades, {
-            name = weaponToDisplay.name,
-            description = weaponToDisplay.description,
-            type = weaponToDisplay.type,
-            rarity = weaponToDisplay.rarity or "common",
-            effect = function()
-                print("will add weapon: " .. weaponToDisplay.name)
-                Balls.addBall(weaponToDisplay.name)
-            end
-        })
-        ::continue::
+        table.insert(displayedUpgrades, newWeapon);
     end
 end
 
@@ -537,14 +426,16 @@ local function drawPlayerUpgrades()
                     Player.bonusPrice[bonusName] = Player.bonusPrice[bonusName] * (usingMoneySystem and 10 or 2) -- Increase the price for the next upgrade
                     print(bonusName .. " upgraded to " .. Player.bonuses[bonusName])
                     if bonusName == "cooldown" then
-                        Balls.reduceAllCooldowns()
+                        -- Balls.reduceAllCooldowns()
+                        --* was a blank function anyways
                     end
                     if bonusName == "ammo" then
-                        for _, ball in pairs(Balls.getUnlockedBallTypes()) do
-                            if ball.type == "gun" then
-                                ball.currentAmmo = (ball.currentAmmo or 0) + (ball.ammoMult or 1) -- Reset ammo for all gun balls
-                            end
-                        end
+                        error("doing somthing we shouldnt");
+                        -- for _, ball in pairs(Balls.getUnlockedBallTypes()) do
+                            -- if ball.type == "gun" then
+                                -- ball.currentAmmo = (ball.currentAmmo or 0) + (ball.ammoMult or 1) -- Reset ammo for all gun balls
+                            -- end
+                        -- end
                     end
                 end
             end
@@ -669,10 +560,13 @@ local function drawBallStats()
     -- Prepare Ball List Data --
     ----------------------------
     
-    local ballsToShow = {}
-    for ballName, ballType in pairs(Balls.getUnlockedBallTypes()) do
-        ballsToShow[ballName] = ballType
+    local ballsToShow = {};
+    for i, v in ipairs(WeaponHandler.getActiveWeapons()) do
+        ballsToShow[v.name] = v;
     end
+    -- for ballName, ballType in pairs(Balls.getUnlockedBallTypes()) do
+        -- ballsToShow[ballName] = ballType
+    -- end
 
     -----------------------
     -- Draw Ball Entries --
@@ -732,8 +626,7 @@ local function drawBallStats()
 
         labelY = labelY + 20
         local statsX = currentX + 10
-        if #Balls.getUnlockedBallTypes() > 1 then
-        end
+
         local myLayout = {
             min_width = 410, -- Minimum width for the layout
             pos = {statsX, labelY + 40}, -- Starting position (x, y)
@@ -923,11 +816,11 @@ local function drawBallStats()
                 end]]
                 
                 local upgradeCount = 0
-                for _, queuedUpgrade in ipairs(ballType.queuedUpgrades) do
-                    if queuedUpgrade == statName then
-                        upgradeCount = upgradeCount + 1
-                    end
-                end
+                -- for _, queuedUpgrade in ipairs(ballType.queuedUpgrades) do
+                    -- if queuedUpgrade == statName then
+                        -- upgradeCount = upgradeCount + 1
+                    -- end
+                -- end
                 setFont(30)
                 if upgradeCount > 0 then
                     love.graphics.setColor(161/255, 231/255, 1, 1)
@@ -1006,9 +899,9 @@ local function drawBallStats()
                         local stat = ballType.stats[statName] or 0-- Get the current stat value
                         if statName == "speed" then
                             ballType.stats.speed = ballType.stats.speed + 50 -- Example action
-                            Balls.adjustSpeed(ballType.name) -- Adjust the speed of the ball
+                            --Balls.adjustSpeed(ballType.name) -- Adjust the speed of the ball
                         elseif statName == "amount" and ballType.type == "ball" then
-                            Balls.addBall(ballType.name, true) -- Add a new ball of the same type
+                            --Balls.addBall(ballType.name, true) -- Add a new ball of the same type
                             ballType.ballAmount = ballType.ballAmount + 1
                         elseif statName == "cooldown" then
                             ballType.stats.cooldown = ballType.stats.cooldown - 1
@@ -1040,7 +933,7 @@ local function drawBallStats()
         ::continue::
     end
     
-    local numBalls = tableLength(Balls.getUnlockedBallTypes())
+    local numBalls = #WeaponHandler.getActiveWeapons();--tableLength(Balls.getUnlockedBallTypes())
     local column = numBalls % 3 -- Get the current column (0, 1, or 2)
     
     -- If we're at the start of a new row, reset X position
@@ -1133,11 +1026,12 @@ function drawLevelUpShop()
         setFont(24)
         dress:Label(currentUpgrade.description, {align = "center", color = {normal = {fg = {1,1,1,opacity}}}}, suit.layout:row(buttonWidth - 30, 150))
         suit.layout:row(buttonWidth - 20, 15)
-        for statName, statValue in pairs(Balls.getBallList()[currentUpgrade.name].stats) do
-            love.graphics.setColor(1,1,1,opacity)
-            setFont(24)
-            dress:Label(statName .. ": " .. statValue, {align = "center", color = {normal = {fg = {1,1,1,opacity}}}}, suit.layout:row(buttonWidth - 30, 30))
-        end
+        --! MARK: fuck this
+        -- for statName, statValue in pairs(Balls.getBallList()[currentUpgrade.name].stats) do
+            -- love.graphics.setColor(1,1,1,opacity)
+            -- setFont(24)
+            -- dress:Label(statName .. ": " .. statValue, {align = "center", color = {normal = {fg = {1,1,1,opacity}}}}, suit.layout:row(buttonWidth - 30, 30))
+        -- end
 
         -- Register the invisible button with the custom theme
         local buttonID = "upgrade_" .. index
@@ -1146,9 +1040,10 @@ function drawLevelUpShop()
         
         if buttonHit and opacity >= 0.995 then
             playSoundEffect(upgradeSFX, 0.5, 0.95, false)
+            WeaponHandler.addWeapon(currentUpgrade.new());
             -- Button clicked: apply the effect and close the shop
             print("Clicked on upgrade: " .. currentUpgrade.name)
-            currentUpgrade.effect() -- Apply the effect of the upgrade
+            -- currentUpgrade.effect() -- Apply the effect of the upgrade
             Player.onLevelUp()
             Player.choosingUpgrade = false
             if not usingMoneySystem then
@@ -1214,8 +1109,7 @@ function setItemShop(forcedItems)
                     -- itemToDisplay.onInShop(itemToDisplay)
                 -- end
 
-                getItemFullDescription(itemToDisplay)
-                displayedItems[i] = itemToDisplay.new();
+                getItemFullDescription(itemToDisplay) --? does nothing?
             else
                 print("Error: No item found in setItemShop()")
             end
@@ -1223,22 +1117,11 @@ function setItemShop(forcedItems)
             goto continue
         end
         
-        while not itemIsGood do
-            itemToDisplay = Items.getRandomItem()
-            itemIsGood = true
-            if i > 1 then
-                for j=1, i-1 do
-                    if itemToDisplay.name == displayedItems[j].name then
-                        itemIsGood = false
-                        break
-                    end
-                end
-            end
-        end
-        displayedItems[i] = itemToDisplay.new();
-
+        itemToDisplay = Items.getRandomItem();
+        
         ::continue::
         Items.addInvisibleItem(itemToDisplay.filteredName);
+        displayedItems[i] = itemToDisplay.new();
     end
 end
 
@@ -1372,6 +1255,7 @@ local function drawItemShop()
                 print("button working")
                 -- if (#Player.items < maxItems or item.consumable) and Player.money >= upgradePrice then
                 if Player.realMoney >= upgradePrice then
+                    error("fuck thjis shuit");
                     Player.pay(upgradePrice)
                     playSoundEffect(upgradeSFX, 0.5, 0.95)
                     table.remove(displayedItems, i)
@@ -1389,13 +1273,15 @@ local function drawItemShop()
                         if reorderPlayerItems then reorderPlayerItems() end
                     end
                     if item.stats.amount then
-                        Balls.amountIncrease(item.stats.amount)
+                        error("doing somthing we shouldnt");
+                        --Balls.amountIncrease(item.stats.amount)
                     end
-                    for _, weaponType in pairs(Balls.getUnlockedBallTypes()) do
-                        if weaponType.type == "ball" then
-                            Balls.adjustSpeed(weaponType.name) -- Adjust the speed of the ball
-                        end
-                    end
+                    -- for _, weaponType in pairs(Balls.getUnlockedBallTypes()) do
+                        -- if weaponType.type == "ball" then
+                            -- error("doing something we shouldnt");
+                            -- Balls.adjustSpeed(weaponType.name) -- Adjust the speed of the ball
+                        -- end
+                    -- end
                     
                     local itemList = item.rarity == "common" and commonItems or item.rarity == "uncommon" and uncommonItems or item.rarity == "rare" and rareItems or item.rarity == "legendary" and legendaryItems or {}
                     local indexToRemove = nil

@@ -14,17 +14,12 @@ function BuyTheDip.new()
 end
 
 function BuyTheDip:purchase()
-    local randomId = math.random(1, tableLength(Balls.getUnlockedBallTypes()));
+    local weapons = WeaponHandler.getActiveWeapons();
+
+    local randomId = math.random(1, #weapons);
     local i = 1;
 
-    for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
-        if randomId == i then
-            weapon.price = 0;
-            break;
-        end
-
-        i = i + 1;
-    end
+    weapons[randomId].price = 0;
 end
 
 return BuyTheDip;

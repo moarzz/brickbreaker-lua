@@ -10,6 +10,10 @@ function WeaponHandler.init()
     self.activeWeapons = {};
 end
 
+function WeaponHandler.getActiveWeapons()
+    return self.activeWeapons;
+end
+
 function WeaponHandler.addWeapon(weapon)
     if type(weapon) == "string" then
         weapon = Items.getWeaponByName(weapon).new();

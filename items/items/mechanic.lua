@@ -13,24 +13,17 @@ end
 
 function Mechanic.events:levelUp()
     Player.changeMoney(-2, self.id)
-    local unlockedWeapons = Balls.getUnlockedBallTypes()
-    if tableLength(unlockedWeapons) == 0 then
+    local unlockedWeapons = WeaponHandler.getActiveWeapons();
+    if #unlockedWeapons == 0 then
         return;
     end
 
     -- Select a random weapon
-    local randomWeaponIndex = math.random(1, tableLength(unlockedWeapons));
+    local randomWeaponIndex = math.random(1, #unlockedWeapons);
     local selectedWeapon;
     local i = 1;
 
-    for _, weapon in pairs(unlockedWeapons) do
-        if i == randomWeaponIndex then
-            selectedWeapon = weapon;
-            break;
-        end
-
-        i = i + 1;
-    end
+    selectedWeapon = unlockedWeapons[randomWeaponIndex];
 
     if not selectedWeapon then
         return;

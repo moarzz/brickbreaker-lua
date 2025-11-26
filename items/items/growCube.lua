@@ -20,7 +20,8 @@ function GrowCube.events:levelUp()
     self.stats[randomStatName] = (self.stats[randomStatName] or 0) + (randomStatName == "cooldown" and -1 or 1);
 
     if randomStatName == "amount" then
-        Balls.amountIncrease(1);
+        error("doing something we shouldnt")
+        --Balls.amountIncrease(1);
     end
 end
 

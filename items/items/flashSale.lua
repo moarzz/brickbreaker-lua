@@ -14,7 +14,7 @@ function FlashSale.new()
 end
 
 function FlashSale:purchase()
-    for _, weaponType in pairs(Balls.getUnlockedBallTypes()) do
+    for _, weaponType in ipairs(WeaponHandler.getActiveWeapons()) do
         weaponType.price = math.max(weaponType.price - 2, 0);
     end
 end

@@ -207,8 +207,8 @@ function resetGame()
     -- for i = #Balls, 1, -1 do
         -- Balls[i] = nil
     -- end
-    Balls.clearUnlockedBallTypes()
-    Balls.initialize()
+    -- Balls.clearUnlockedBallTypes()
+    -- Balls.initialize()
     Player.initialize()
 
     -- Reset timers
@@ -859,7 +859,7 @@ function initializeGameState()
     initializeBricks()
     
     -- Then initialize Balls
-    Balls.initialize()
+    -- Balls.initialize()
     Player.initialize()
 end
 

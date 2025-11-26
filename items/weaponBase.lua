@@ -63,6 +63,21 @@ function WeaponBase:init()
     end
     self.stats = stats; -- stats
 
+    if self.rarity == "common" then
+        self.price = 2;
+    elseif self.rarity == "uncommon" then
+        self.price = 4;
+    elseif self.rarity == "rare" then
+        self.price = 6;
+    elseif self.rarity == "legendary" then
+        self.price = 8;
+    else
+        self.price = 3;
+    end
+    if Player.currentCore == "Hacker Core" then
+        self.price = 0;
+    end
+
     self.description = self.description or "<highlight=red><colour=white>ERROR<highlight=clear><colour=black> text not set for this ball";
 
     return self;

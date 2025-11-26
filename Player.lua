@@ -6,7 +6,6 @@ local saveFilePath = "gamedata.json"
 
 -- Load game data from file
 function loadGameData()
-    
     local data = {
         highScore = 0,
         gold = 0,
@@ -229,12 +228,14 @@ Player.permanentUpgradePrices = {
 
 Player.bonusUpgrades = {
     --income = function() Player.bonuses.income = Player.bonuses.income + 1 end,
-    speed = function() Player.bonuses.speed = Player.bonuses.speed + 1 
-    for _, ball in ipairs(Balls) do
-        if ball.type == "ball" then
-            Balls.adjustSpeed(ball.name)
-        end
-    end
+    speed = function()
+        error("doing something we shouldnt");
+        -- Player.bonuses.speed = Player.bonuses.speed + 1
+        -- for _, ball in ipairs(Balls) do
+            -- if ball.type == "ball" then
+                -- Balls.adjustSpeed(ball.name)
+            -- end
+        -- end
     end,    
     paddleSize = function()
         -- This is handled in permanentUpgrades.lua now
@@ -248,17 +249,18 @@ Player.bonusUpgrades = {
     ammo = function() Player.bonuses.ammo = Player.bonuses.ammo + 1 end,
     range = function() Player.bonuses.range = Player.bonuses.range + 1 end,
     fireRate = function() Player.bonuses.fireRate = Player.bonuses.fireRate + 1 end,
-    amount = function() 
-        Player.bonuses.amount = (Player.bonuses.amount or 0) + 1
+    amount = function()
+        error("doing something we shouldnt");
+        -- Player.bonuses.amount = (Player.bonuses.amount or 0) + 1
         -- For each unlocked ball type
-        local index = 0
-        for _, ballType in pairs(Balls.getUnlockedBallTypes()) do
-            if ballType.type == "ball" then  -- On  ly add actual balls
-                Balls.addBall(ballType.name, true)  -- Pass true to indicate single ball add
-            end
-            index = index + 1
-        end
-        print("#unlocked ball types: " .. index)
+        -- local index = 0
+        -- for _, ballType in pairs(Balls.getUnlockedBallTypes()) do
+            -- if ballType.type == "ball" then  -- On  ly add actual balls
+                -- Balls.addBall(ballType.name, true)  -- Pass true to indicate single ball add
+            -- end
+            -- index = index + 1
+        -- end
+        -- print("#unlocked ball types: " .. index)
     end,
     cooldown = function()
         Player.bonuses.cooldown = (Player.bonuses.cooldown or 0) - 1
@@ -425,7 +427,7 @@ function Player.levelUp()
     Player.level = Player.level + 1
 
     -- should player unlock new weapon?
-    local weaponAmount = tableLength(Balls.getUnlockedBallTypes())
+    local weaponAmount = #WeaponHandler.getActiveWeapons();--tableLength(Balls.getUnlockedBallTypes())
     if weaponAmount < math.ceil((Player.level + 1) / 4) and weaponAmount < 6 then
         setLevelUpShop(true) -- Set the level up shop with ball unlockedBallTypes
         Player.choosingUpgrade = true -- Set the flag to indicate leveling up
@@ -475,13 +477,19 @@ function Player.levelUp()
     elseif Player.level % 5 == 0 and Player.currentCore == "Spray and Pray Core" then -- THIS IS NOT AN ERROR
         Player.permanentUpgrades.fireRate = (Player.permanentUpgrades.fireRate or 0) + 1
     elseif "Amount Core" == Player.currentCore and Player.level % 5 == 0 then
-        Player.permanentUpgrades.amount = (Player.permanentUpgrades.amount or 0) + 1
-        for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
-            if weapon.type == "ball" then
-                Balls.addBall(weapon.name, true)
-                -- weapon.ballAmount = (weapon.ballAmount or 0) + 1
+        for i, v in ipairs(WeaponHandler.getActiveWeapons()) do
+            if v.type == "ball" and v.ballAmount then
+                v.ballAmount = v.ballAmount + 1;
             end
         end
+        -- error("doing something we shouldnt");
+        Player.permanentUpgrades.amount = (Player.permanentUpgrades.amount or 0) + 1
+        -- for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
+            -- if weapon.type == "ball" then
+                -- Balls.addBall(weapon.name, true)
+                -- -- weapon.ballAmount = (weapon.ballAmount or 0) + 1
+            -- end
+        -- end
     end
     if (not usingMoneySystem) then
         Player.levelingUp = true

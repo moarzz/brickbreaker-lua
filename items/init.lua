@@ -198,28 +198,59 @@ function Items.parseWeapon(file)
     };
 end
 
-function Items.updateitemRarityOdds()
+function Items.updateItemRarityOdds()
     local level = Player.level;
 
     if level < 5 then
-        Items.setitemRarityOdds(1, 0, 0.0, 0.0);
+        Items.setItemRarityOdds(1, 0, 0.0, 0.0);
     elseif level < 8 then
-        Items.setitemRarityOdds(0.88, 0.1, 0.02, 0.0);
+        Items.setItemRarityOdds(0.88, 0.1, 0.02, 0.0);
     elseif level < 13 then
-        Items.setitemRarityOdds(0.75, 0.2, 0.05, 0);
+        Items.setItemRarityOdds(0.75, 0.2, 0.05, 0);
     elseif level < 18 then
-        Items.setitemRarityOdds(0.625, 0.3, 0.075, 0);
+        Items.setItemRarityOdds(0.625, 0.3, 0.075, 0);
     elseif level < 22 then
-        Items.setitemRarityOdds(0.53, 0.35, 0.1, 0.02);
+        Items.setItemRarityOdds(0.53, 0.35, 0.1, 0.02);
     elseif level < 26 then
-        Items.setitemRarityOdds(0.485, 0.35, 0.125, 0.04);
+        Items.setItemRarityOdds(0.485, 0.35, 0.125, 0.04);
     else
-        Items.setitemRarityOdds(0.4, 0.39, 0.15, 0.06);
+        Items.setItemRarityOdds(0.4, 0.39, 0.15, 0.06);
     end
 end
 
-function Items.setitemRarityOdds(common, uncommon, rare, legendary)
+function Items.updateWeaponRarityOdds()
+    local level = Player.level;
+
+    if level < 5 then
+        Items.setWeaponRarityOdds(1, 0, 0.0, 0.0);
+    elseif level < 8 then
+        Items.setWeaponRarityOdds(0.88, 0.1, 0.02, 0.0);
+    elseif level < 13 then
+        Items.setWeaponRarityOdds(0.75, 0.2, 0.05, 0);
+    elseif level < 18 then
+        Items.setWeaponRarityOdds(0.625, 0.3, 0.075, 0);
+    elseif level < 22 then
+        Items.setWeaponRarityOdds(0.53, 0.35, 0.1, 0.02);
+    elseif level < 26 then
+        Items.setWeaponRarityOdds(0.485, 0.35, 0.125, 0.04);
+    else
+        Items.setWeaponRarityOdds(0.4, 0.39, 0.15, 0.06);
+    end
+end
+
+function Items.setItemRarityOdds(common, uncommon, rare, legendary)
     self.itemRarityOdds = {
+        ["common"]    =                               common;
+        ["uncommon"]  =                    uncommon + common;
+        ["rare"]      =             rare + uncommon + common;
+        ["legendary"] = legendary + rare + uncommon + common;
+    };
+
+    assert(legendary + rare + uncommon + common == 1, "tried tp set rarity odds, but odds do not add up to 1");
+end
+
+function Items.setWeaponRarityOdds(common, uncommon, rare, legendary)
+    self.weaponRarityOdds = {
         ["common"]    =                               common;
         ["uncommon"]  =                    uncommon + common;
         ["rare"]      =             rare + uncommon + common;
@@ -304,7 +335,7 @@ function Items.getRandomItem(allowInvisible)
     -- local dif = 0;
     -- print(randRarity);
 
-    Items.updateitemRarityOdds(); -- inneficient but i wanna go 2 bed
+    Items.updateItemRarityOdds(); -- inneficient but i wanna go 2 bed
 
     if randRarity < self.itemRarityOdds.common then
         rarity = "common";
@@ -354,16 +385,67 @@ function Items.getRandomItem(allowInvisible)
         return lookingInList["common"][1]
     end
 
-    local pick = love.math.random(1, totalWeight)
+    local pick = love.math.random() * totalWeight;
     local acc = 0
     for i, w in ipairs(weights) do
         acc = acc + w
-        if pick <= acc and w > 0 then
+        if pick <= acc then
             return lookingInList[rarity][i]
         end
     end
 
     error("uh oh, getRandomItem failed to return an item");
+end
+
+function Items.getRandomWeapon(allowInvisible)
+    --? always uses exactly 2 love.math.random calls (one for the rarity and one for the index) consumable
+
+    local randRarity = love.math.random(); -- [0-1)
+    local rarity = nil;
+    -- local dif = 0;
+    -- print(randRarity);
+
+    Items.updateWeaponRarityOdds(); -- inneficient but i wanna go 2 bed
+
+    if randRarity < self.weaponRarityOdds.common then
+        rarity = "common";
+    elseif randRarity < self.weaponRarityOdds.uncommon then
+        rarity = "uncommon";
+    elseif randRarity < self.weaponRarityOdds.rare then
+        rarity = "rare";
+    elseif randRarity < self.weaponRarityOdds.legendary then
+        rarity = "legendary";
+    else
+        print("smthn happened");
+        rarity = "common";
+    end
+
+    print(rarity, randRarity);
+
+    assert(self.allWeapons[rarity], "somehow a rarity was not chosen, this should be impossible (milo can't write working code apparently)");
+
+    if allowInvisible then
+        local index = love.math.random(1, #self.allWeapons[rarity]);
+
+        return self.allWeapons[rarity][index];
+    end
+
+    -- Build a weighted pool based on instancesLeft for visible items
+    -- visible means visibilityList[rarity][i] <= 0
+    local totalWeight = 0;
+    local available = {};
+    for i, v in ipairs(self.weaponsVisible[rarity]) do
+        if v <= 0 then
+            table.insert(available, i);
+        end
+    end
+
+    if #available == 0 then
+        -- no visible items in this rarity, fallback to first common
+        return self.allWeapons["common"][1];
+    end
+
+    return self.allWeapons[rarity][available[love.math.random(1, #available)]];
 end
 
 function Items.addInvisibleItem(name) -- makes an item un-attainable in the shop (calling twice needs 2 'removeInvisibleItem' calls 2 make visible again)
@@ -454,6 +536,53 @@ function Items.setAllVisible(visible)
     for rarity, list in pairs(self.consumablesVisible) do
         for i = 1, #list do
             self.consumablesVisible[rarity][i] = val
+        end
+    end
+end
+
+function Items.addInvisibleWeapon(name)
+    local index = self.weaponIndices[name];
+
+    if index then
+        self.weaponsVisible[index.rarity][index.index] = self.weaponsVisible[index.rarity][index.index] + 1;
+        return;
+    end
+
+    for rarity, v in pairs(self.allWeapons) do
+        for i, w in ipairs(v) do
+            if w.name == name then
+                self.weaponsVisible[rarity][i] = self.weaponsVisible[rarity][i] + 1;
+                return;
+            end
+        end
+    end
+
+    error("couldnt add visible to non existent weapon: " .. name);
+end
+function Items.removeInvisibleWeapon(name)
+    local index = self.weaponIndices[name];
+
+    if index then
+        self.weaponsVisible[index.rarity][index.index] = self.weaponsVisible[index.rarity][index.index] - 1;
+        return;
+    end
+
+    for rarity, v in pairs(self.allWeapons) do
+        for i, w in ipairs(v) do
+            if w.name == name then
+                self.weaponsVisible[rarity][i] = self.weaponsVisible[rarity][i] - 1;
+                return;
+            end
+        end
+    end
+
+    error("couldnt add visible to non existent weapon: " .. name);
+end
+function Items.setAllWeaponsVisible(visible)
+    local val = visible and 0 or 1 -- 0 = visible, >0 = hidden
+    for rarity, list in pairs(self.weaponsVisible) do
+        for i = 1, #list do
+            self.weaponsVisible[rarity][i] = val
         end
     end
 end

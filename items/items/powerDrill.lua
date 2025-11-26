@@ -14,25 +14,15 @@ function PowerDrill.new()
 end
 
 function PowerDrill:purchase()
-    local unlockedWeapons = Balls.getUnlockedBallTypes();
+    local unlockedWeapons = WeaponHandler.getActiveWeapons();
 
-    if tableLength(unlockedWeapons) == 0 then
+    if #unlockedWeapons == 0 then
         return;
     end
 
     -- Select a random weapon
-    local randomWeaponIndex = math.random(1, tableLength(unlockedWeapons));
-    local selectedWeapon;
-
-    local i = 1;
-    for _, weapon in pairs(unlockedWeapons) do
-        if i == randomWeaponIndex then
-            selectedWeapon = weapon;
-            break;
-        end
-
-        i = i + 1;
-    end
+    local randomWeaponIndex = math.random(1, #unlockedWeapons);
+    local selectedWeapon = unlockedWeapons[randomWeaponIndex];
 
     if not selectedWeapon then
         return;

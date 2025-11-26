@@ -17,17 +17,12 @@ function CouponCollector.events:levelUp()
         -- gainMoneyWithAnimations(1, self.name);
     end
 
-    local randomWeaponId = math.random(1, tableLength(Balls.getUnlockedBallTypes()));
+    local weapons = WeaponHandler.getActiveWeapons();
+
+    local randomWeaponId = math.random(1, #weapons);
     local i = 1;
 
-    for weaponId, weapon in pairs(Balls.getUnlockedBallTypes()) do
-        if i == randomWeaponId then
-            reducePriceWithAnimations(1, weapon.name, self.id);
-            break;
-        end
-
-        i = i + 1;
-    end
+    reducePriceWithAnimations(1, weapons[randomWeaponId].name, self.id);
 end
 
 return CouponCollector;
