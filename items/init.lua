@@ -18,6 +18,8 @@ function Items.load()
     _G.ItemBase = require(path .. ".itemBase");
     _G.WeaponBase = require(path .. ".weaponBase");
     _G.Trail = require("trail");
+    _G.WeaponEntity = require(path .. ".weaponEntity");
+    _G.WeaponHandler = require(path .. ".weaponHandler");
 
     self.allItems = {
         ["common"]    = {};
@@ -87,7 +89,7 @@ function Items.load()
         self.parseItem(path .. ".items." .. (string.match(v, "(.*)%.lua")));
     end
 
-    local allWeaponFiles = love.filesystem,getDirectoryItems(path .. "/weapons");
+    local allWeaponFiles = love.filesystem.getDirectoryItems(path .. "/weapons");
     for _, v in ipairs(allWeaponFiles) do -- load every file inside of the 'weapons/' directory
         assert(string.find(v, "%.lua$"), "non lua file found in weapons folder, all files must be .lua");
 
@@ -260,6 +262,25 @@ function Items.getItemByName(name)
     end
 
     error("tried to get item using an invalid name");
+end
+
+function Items.getWeaponByName(name)
+    local index = self.weaponIndices[name];
+
+    if index then
+        return self.allWeapons[index.rarity][index.index];
+    end
+
+    -- might be a name instead of a filteredName
+    for rarity, v in pairs(self.allWeapons) do
+        for i, w in ipairs(v) do
+            if w.name == name then
+                return w;
+            end
+        end
+    end
+
+    error("tried to get weapon using an invalid name");
 end
 
 --* does NOT set returned item as visible

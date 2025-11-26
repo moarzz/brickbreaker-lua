@@ -21,11 +21,22 @@ function WeaponEntity.new(x, y, radius)
     instance.wallCallback = nil;
     instance.brickCallback = nil;
 
+    instance.doesIgnoreWalls = false;
+
     instance.paddleOverlap = false;
-    instance.wallOverlap = false;
     instance.brickOverlap = {};
 
+    instance.destroyed = false;
+
     return instance;
+end
+
+function WeaponEntity:destroy()
+    self.destroyed = true;
+end
+
+function WeaponEntity:ignoreWalls()
+    self.doesIgnoreWalls = true;
 end
 
 function WeaponEntity:setDirection(x, y)
@@ -36,8 +47,17 @@ function WeaponEntity:setDirection(x, y)
 
     local dist = math.sqrt(x * x + y * y);
 
-    self.xn = x / dist;
-    self.yn = y / dist;
+    if dist > 1 then
+        x = x / dist;
+        y = y / dist;
+    end
+
+    self.xn = x;
+    self.yn = y;
+end
+
+function WeaponEntity:getDirection()
+    return self.xn, self.yn;
 end
 
 function WeaponEntity:setPaddleCallback(callback)
@@ -86,7 +106,7 @@ function WeaponEntity:collidePaddle()
         self.paddleOverlap = true;
 
         if self.paddleCallback then
-            if self.paddleCallback() then
+            if self.paddleCallback(self) then
                 return;
             end
         end
@@ -109,6 +129,8 @@ function WeaponEntity:collidePaddle()
 
         self:setDirection(newDir);
         self:addExtraSpeed(5);
+
+        playSoundEffect(paddleBoopSFX, 0.4, 0.8, false, true);
 
         return;
     end
@@ -139,7 +161,7 @@ function WeaponEntity:collideBrick(brick)
         self.brickOverlap[brick.id] = true;
 
         if self.brickCallback then
-            if self.brickCallback(brick) then
+            if self.brickCallback(self, brick) then
                 return;
             end
         end
@@ -190,23 +212,49 @@ end
 
 function WeaponEntity:collideWalls()
     if self.x < self.radius then
+        if self.wallCallback then
+            self.wallCallback(self);
+        end
+
         self.x = self.radius;
         self.xn = math.abs(self.xn);
+
+        playSoundEffect(wallBoopSFX, 0.5, 0.6);
     end
 
     if self.x > screenWidth - self.radius then
+        if self.wallCallback then
+            self.wallCallback(self);
+        end
+
         self.x = screenWidth - self.radius;
         self.xn = -math.abs(self.xn);
+
+        playSoundEffect(wallBoopSFX, 0.5, 0.6);
     end
 
     if self.y < self.radius then
+        if self.wallCallback then
+            if self.wallCallback(self) then
+                return;
+            end
+        end
+
         self.y = self.radius;
         self.yn = math.abs(self.yn);
+
+        playSoundEffect(wallBoopSFX, 0.5, 0.6);
     end
 
     if self.y > math.max(screenHeight, paddle.y + 150) - self.radius then
+        if self.wallCallback then
+            self.wallCallback(self);
+        end
+
         self.y = math.max(screenHeight, paddle.y + 150) - self.radius;
         self.yn = -math.abs(self.yn);
+
+        playSoundEffect(wallBoopSFX, 0.5, 0.6);
     end
 end
 
@@ -221,9 +269,18 @@ function WeaponEntity:substep(dt)
 
     -- brick collision
     self:collideBricks();
+
+    -- wall collision
+    if not self.doesIgnoreWalls then
+        self:collideWalls();
+    end
 end
 
 function WeaponEntity:update(dt)
+    if self.destroyed then
+        return true;
+    end
+
     for i = 1, substeps do
         self:substep(dt / substeps);
     end

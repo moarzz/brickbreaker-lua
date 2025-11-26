@@ -65,10 +65,6 @@ function WeaponBase:init()
 
     self.description = self.description or "<highlight=red><colour=white>ERROR<highlight=clear><colour=black> text not set for this ball";
 
-    if self.trail then
-        self.trail = Trail.new(self.trail:getTrailData());
-    end
-
     return self;
 end
 

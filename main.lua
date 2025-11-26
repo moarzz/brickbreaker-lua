@@ -15,6 +15,7 @@ Crooky = require("crooky") -- tax evasion goat
 UtilityFunction = require("UtilityFunction") -- utility functions
 Player = require("Player") -- player logic
 Balls = require("Balls") -- ball logic
+
 FancyText = require("Libraries.fancyText") -- fancy text rendering
 upgradesUI = require("upgradesUI") -- upgrade UI logic
 Timer = require("Libraries.timer") -- timer library
@@ -203,9 +204,9 @@ function resetGame()
     Player.reset()
     
     -- Reset balls
-    for i = #Balls, 1, -1 do
-        Balls[i] = nil
-    end
+    -- for i = #Balls, 1, -1 do
+        -- Balls[i] = nil
+    -- end
     Balls.clearUnlockedBallTypes()
     Balls.initialize()
     Player.initialize()
@@ -1364,7 +1365,8 @@ local function gameFixedUpdate(dt)
             paddle.y = paddle.y + (goalPaddleY - paddle.y) * math.min(10 * dt, 1)
             -- paddle.y = 1050
             -- Update Balls
-            Balls.update(dt, paddle, bricks, Player)
+            -- Balls.update(dt, paddle, bricks, Player)
+            WeaponHandler.update(dt);
 
             -- update damage ripples
             damageRipples.update(dt)
@@ -1619,7 +1621,8 @@ function drawMenu()
         -- initializeGameState()
         Player.bricksDestroyed = 0 -- Reset bricks destroyed count
         if startingItem ~= "Nothing" and Player.currentCore ~= "Speed Core" then
-            Balls.addBall(startingItem)
+            -- Balls.addBall(startingItem)
+            WeaponHandler.addWeapon(startingItem);
             print("Adding weapon : " .. startingItem)
         end
 
@@ -1806,7 +1809,7 @@ local function drawStartSelect()
         -- initializeGameState()
         Player.bricksDestroyed = 0 -- Reset bricks destroyed count
         if item.name ~= "Nothing" and Player.currentCore ~= "Speed Core" then
-            Balls.addBall(item.name)
+            -- Balls.addBall(item.name)
         end
 
         -- crooky logic
@@ -2093,7 +2096,7 @@ function restartGame()
     saveGameData()
     resetGame()
     if startingItem ~= "Nothing" and Player.currentCore ~= "Speed Core" then
-        Balls.addBall(startingItem)
+        -- Balls.addBall(startingItem)
     end
     currentGameState = GameState.PLAYING 
 end
@@ -2468,7 +2471,7 @@ local function fullDraw()
     love.graphics.push()
     --love.graphics.scale(0.5, 0.5)
     love.graphics.setColor(1, 1, 1, 1)
-    Balls:draw() -- Draw balls
+    -- Balls:draw() -- Draw balls
     love.graphics.pop()
     --love.graphics.setCanvas()
     WindowCorrector.stopDrawingToCanvas();
@@ -2492,7 +2495,8 @@ local function fullDraw()
     love.graphics.draw(paddleImg, paddle.x, paddle.y - 2, 0,  paddle.width/250, 1)
     -- love.graphics.rectangle("fill", paddle.x, paddle.y, paddle.width * paddle.widthMult, paddle.height)
     drawBricks()
-    Balls.draw(Balls)
+    -- Balls.draw(Balls)
+    WeaponHandler.draw();
     drawPopups()
 
     -- damageRipples.draw()
@@ -2612,11 +2616,11 @@ function finishUpgrading()
     playSoundEffect(selectSFX, 1, 0.8)
     itemsOnLevelUpEnd()
     Player.levelingUp = false
-    for _, ballType in pairs(Balls.getUnlockedBallTypes()) do
-        if ballType.type == "ball" then
-            Balls.adjustSpeed(ballType.name)
-        end
-    end
+    -- for _, ballType in pairs(Balls.getUnlockedBallTypes()) do
+        -- if ballType.type == "ball" then
+            -- Balls.adjustSpeed(ballType.name)
+        -- end
+    -- end
     if Player.level == 8 then
         changeMusic("mid")
     elseif Player.level == 16 then
@@ -2808,7 +2812,7 @@ function love.keypressed(key)
 
         -- add weapon
         if key == "7" then  
-            Balls.addBall("Exploding Ball")
+            -- Balls.addBall("Exploding Ball")
         end
 
         if key == "8" then
@@ -2901,9 +2905,9 @@ function love.keypressed(key)
 
         --test ball hit vfx
         if key == "y" then
-            for _,ball in ipairs(Balls) do
-                ballHitVFX(ball)
-            end
+            -- for _,ball in ipairs(Balls) do
+                -- ballHitVFX(ball)
+            -- end
         end
 
         if key == "=" then
