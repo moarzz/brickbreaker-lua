@@ -39,69 +39,6 @@ local fireAnims = {}
 local fireTimers = {}
 local lightningCooldowns = {} -- Table to track per-brick cooldowns for lightning spells
 
-local function burnBricksEnd(brickID)
-    if not brickID then return end
-
-    -- Cancel timers
-    if damageTimers[brickID] then
-        Timer.cancel(damageTimers[brickID])
-        damageTimers[brickID] = nil
-    end
-
-    -- Clear the burning state
-    burningBricksCooldown[brickID] = nil
-
-    -- Handle animation cleanup
-    local anim = fireAnims[brickID]
-    if anim then
-        local animation = getAnimation(anim)
-        if animation and animation.color then
-            local fadeOutTween = tween.new(0.25, animation.color, {1,1,1,0}, tween.outCubic)
-            addTweenToUpdate(fadeOutTween)
-            Timer.after(0.25, function()
-                removeAnimation(anim)
-                fireAnims[brickID] = nil
-            end)
-        else
-            removeAnimation(anim)
-            fireAnims[brickID] = nil
-        end
-    end
-end
-
-local function burnBrick(brick, damage, length, name)
-    --[[if not brick or not brick.id then return end
-
-    -- If brick is already burning, refresh duration and cancel old timer
-    if burningBricksCooldown[brick.id] then
-        burningBricksCooldown[brick.id] = math.max(burningBricksCooldown[brick.id], length)
-        return
-    elseif fireAnims[brick.id] then
-        removeAnimation(fireAnims[brick.id])
-        fireAnims[brick.id] = nil
-    end
-
-    -- Set up new burn effect
-    burningBricksCooldown[brick.id] = length
-
-    -- Create fire animation
-    fireAnims[brick.id] = createSpriteAnimation(brick.x + brick.width / 2, brick.y + brick.height / 2, 2, fireVFX, 32, 32, 0.05, 0, true, 1, 1, 0, {1,1,1,0},true, brick.id)
-    local animation = getAnimation(fireAnims[brick.id])
-    if animation then
-        local fireStartTween = tween.new(0.25, animation.color, {1,1,1,1}, tween.outCubic)
-        addTweenToUpdate(fireStartTween)
-    end
-
-    -- Set up damage timer
-    damageTimers[brick.id] = Timer.every(0.75, function()
-        if brick and brick.health and brick.health > 0 and burningBricksCooldown[brick.id] then
-            dealDamage({stats = {damage = 1}, name = name}, brick, true)
-        else
-            burnBricksEnd(brick.id)
-        end
-    end)]]
-end
-
 local bossWidth, bossHeight = 500, 300
 local function bossDestroyed(bossBrick)
     -- setTargetMusicVolume(0)
@@ -575,7 +512,7 @@ function dealDamage(ball, brick, burnDamage)
     if brick.health >= 1 then
         brick.hitLastFrame = true
         if ball.name == "Flamethrower" and not burnDamage then
-            burnBrick(brick, damage, 2, "Flamethrower")
+            --burnBrick(brick, damage, 2, "Flamethrower")
         end
     else
         kill = true

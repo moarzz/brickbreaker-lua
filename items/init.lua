@@ -17,6 +17,7 @@ local validWeaponTypes = {
 function Items.load()
     _G.ItemBase = require(path .. ".itemBase");
     _G.WeaponBase = require(path .. ".weaponBase");
+    _G.Trail = require("trail");
 
     self.allItems = {
         ["common"]    = {};
@@ -181,35 +182,18 @@ function Items.parseWeapon(file)
     assert(string.find(obj.name, "[\n|]") == nil, "weapons names cannot contain the characters: '|' or '\\n'");
     assert(validWeaponTypes[obj.type], "tried to create a weapon with an invalid weapon type: " .. (obj.type or "nil"));
 
-    -- stopped abt here
-
     local filteredName = string.gsub(obj.name, "[^%a+]", ""); -- remove everything other the letters (or pluses)
     filteredName = string.gsub(filteredName, "%+", "Plus"); -- kinda jank tbh
-    assert(EVENTS.item.purchase[filteredName], "tried to create item that does not have a 'purchase' event: " .. filteredName);
-    assert(EVENTS.item.sell[filteredName], "tried to create item that does not have a 'sell' event: " .. filteredName);
+    -- assert(EVENTS.item.purchase[filteredName], "tried to create item that does not have a 'purchase' event: " .. filteredName);
+    -- assert(EVENTS.item.sell[filteredName], "tried to create item that does not have a 'sell' event: " .. filteredName);
 
     obj.filteredName = filteredName; -- for calling events internally
-    obj.id = getNextItemId()
+    -- obj.id = getNextItemId()
 
-    if obj.consumable then
-        self.consumableIndices[filteredName] = {
-            index = #self.allConsumables[obj.rarity];
-            rarity = obj.rarity;
-        };
-    else
-        self.itemIndices[filteredName] = {
-            index = #self.allItems[obj.rarity];
-            rarity = obj.rarity;
-        };
-    end
-
-    if not obj.descriptionPointers then
-        obj.descriptionPointers = {}
-    end
-
-    if obj.imageReference then
-        obj.image = love.graphics.newImage(obj.imageReference);
-    end
+    self.weaponIndices[filteredName] = {
+        index = #self.allWeapons[obj.rarity];
+        rarity = obj.rarity;
+    };
 end
 
 function Items.updateitemRarityOdds()

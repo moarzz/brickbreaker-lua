@@ -69,10 +69,6 @@ function WeaponBase:init()
         self.trail = Trail.new(self.trail:getTrailData());
     end
 
-    self.x = 0;
-    self.y = 0;
-
-
     return self;
 end
 
