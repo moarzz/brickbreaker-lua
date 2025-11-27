@@ -1,7 +1,5 @@
-#define MAX_POINTS 60;
-
-uniform number points_x[60];
-uniform number points_y[60];
+uniform number points_x[120];
+uniform number points_y[120];
 uniform number trailRadius;
 uniform int usedPoints;
 
@@ -20,7 +18,7 @@ vec4 effect(vec4 colour, Image tex, vec2 texCoords, vec2 screenCoords)
         float len = length(prev - cur);
         float lineDot = (((fakeScreenPos.x - prev.x) * (cur.x - prev.x)) + ((fakeScreenPos.y - prev.y) * (cur.y - prev.y))) / (len * len);
         lineDot = clamp(lineDot, 0.0, 1.0);
-        float time = (60.0 - i - lineDot + 1.0) / 60.0;
+        float time = (usedPoints - i - lineDot + 1.0) / usedPoints;
 
         vec2 closest = prev + (lineDot * (cur - prev));
 

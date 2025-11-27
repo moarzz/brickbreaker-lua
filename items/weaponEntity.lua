@@ -124,7 +124,7 @@ function WeaponEntity:collidePaddle()
 
         local hitPerun = (self.x - playerPaddle.x) / (playerPaddle.width + self.radius) * 2 - 1;
 
-        local newDir = hitPerun * math.pi / 2 * 0.95 - math.pi / 2;
+        local newDir = hitPerun * math.pi / 2 * 0.75 - math.pi / 2;
 
         if self.yn > 0 then
             newDir = -(newDir + math.pi / 2) + math.pi / 2;
