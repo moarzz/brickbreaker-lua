@@ -1,6 +1,6 @@
 local industrialRevolution = ItemBase.new();
 industrialRevolution.__index = industrialRevolution;
-industrialRevolution.name = "Nirvana";
+industrialRevolution.name = "Industrial Revolution";
 industrialRevolution.description = "<font=bold>on level up\n<industrialRevolutionChance>%<font=default> chance to increase every stat of all your weapons by 1";
 industrialRevolution.rarity = "legendary";
 industrialRevolution.imageReference = "assets/sprites/UI/ItemIcons/Nirvana.png";
