@@ -948,7 +948,7 @@ function love.load()
     })
 
     loadGameData()
-    love.audio.setVolume(globalVolume)
+    love.audio.setVolume(globalVolume or 1)
     Crooky:setVisible(not firstRunCompleted)
 
     backgroundMusic:setVolume(musicVolume/4)

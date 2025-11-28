@@ -1483,9 +1483,9 @@ local function cast(spellName, brick, forcedDamage)
                     end)
                 end)
             end)        end
-        local cooldownValue = getStat("Light Beam", "cooldown") * 1.5
+        local cooldownValue = getStat("Light Beam", "cooldown")
         if accelerationOn then
-            cooldownValue = cooldownValue * 0.5
+            cooldownValue = cooldownValue * 0.4
         end
         Timer.after(0.2 * ammoValue + math.max(cooldownValue, 0) + 0.05, function()
             cast("Light Beam")
@@ -2122,9 +2122,9 @@ local function ballListInit()
             description = "Fires beams of light that pierces through bricks, dealing huge aoe damage.",
             color = {1, 1, 0.5, 1}, -- Yellow color for Light Beam
             stats = {
-                damage = 2,
+                damage = 3,
                 amount = 2,
-                cooldown = 12
+                cooldown = 11
             },
             onBuy = function()
                 cast("Light Beam")
