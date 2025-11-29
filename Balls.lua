@@ -1724,24 +1724,24 @@ local function ballListInit()
             },
             attractionStrength = 500
         },
-        --[[["Laser Ball"] = {
+        ["Laser Ball"] = {
             name = "Laser Ball",
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
-            speedMult = 1,
+            speedMult = 0.85,
             size = 1,
             ballAmount = 1,
             rarity = "uncommon",
             startingPrice = 50,
             description = "shoots a continuous laser beam that rotates around the ball",
-            color = {1, 0, 0, 1}, -- red color
+            color = {1, 0, 1, 0}, -- red color
             stats = {
                 speed = 100,
                 damage = 1,
-                fireRate = 1,
+                fireRate = 2,
             },
-        },]]
+        },
         ["Lightning Ball"] = {
             name = "Lightning Ball",
             type = "ball",
@@ -1954,7 +1954,7 @@ local function ballListInit()
                 cooldown = 12,
             },
         },
-        --[[["Laser Beam"] = {
+        ["Laser Beam"] = {
             name = "Laser Beam",
             type = "tech",
             x = screenWidth / 2,
@@ -1994,7 +1994,7 @@ local function ballListInit()
                 cooldown = 12,
             },
             canBuy = function() return Player.currentCore ~= "Damage Core" end
-        },]]
+        },
         ["Rocket Launcher"] = {
             name = "Rocket Launcher",
             type = "tech",
@@ -2104,7 +2104,7 @@ local function ballListInit()
             end,
 
             stats = {
-                amount = 1,
+                amount = 2,
                 damage = 2,
                 fireRate = 1,
                 range = 2
@@ -2122,7 +2122,7 @@ local function ballListInit()
             description = "Fires beams of light that pierces through bricks, dealing huge aoe damage.",
             color = {1, 1, 0.5, 1}, -- Yellow color for Light Beam
             stats = {
-                damage = 3,
+                damage = 2,
                 amount = 2,
                 cooldown = 11
             },
@@ -2988,7 +2988,7 @@ local function techUpdate(dt)
             
             -- Deal damage if we've been on target long enough
             
-            local cooldownLength = (Player.currentCore == "Madness Core" and 0.5 or 1) * 1.2/((Player.currentCore == "Damage Core" and 1 or getStat("Laser Beam", "fireRate")))
+            local cooldownLength = 1/((getStat("Laser Beam", "fireRate")))
             if hasItem("Spray and Pray") then
                 local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
                 cooldownLength = cooldownLength * sprayMult
@@ -3016,8 +3016,9 @@ local function techUpdate(dt)
         -- Calculate end point of laser using direction vector from angle
         local dirX = math.sin(angle)  -- X component of direction
         local dirY = -math.cos(angle) -- Y component of direction (negative because we're going up)
-        local endX = startX + dirX * screenHeight
-        local endY = startY + dirY * screenHeight
+        local laserLength = screenHeight + 500  -- Extend past screen top
+        local endX = startX + dirX * laserLength
+        local endY = startY + dirY * laserLength
         
         for _, brick in ipairs(bricks) do
             if brick.health > 0 and not brick.destroyed then
@@ -3060,7 +3061,7 @@ local function techUpdate(dt)
     if unlockedBallTypes["Saw Blades"] then
         local sawBlades = unlockedBallTypes["Saw Blades"]
         local numSaws = (Player.currentCore == "Damage Core") and 1 or getStat("Saw Blades", "amount")
-        local orbitRadius = sawBlades.orbitRadius * (math.sin(gameTime/2.5)/2 + 1) * 0.9
+        local orbitRadius = sawBlades.orbitRadius --* (math.sin(gameTime/2.5)/2 + 1) * 0.9
         local paddleCenterX = paddle.x + paddle.width / 2
         local paddleCenterY = paddle.y + paddle.height / 2
         local speed = getStat("Saw Blades", "speed") * 25
@@ -3670,6 +3671,11 @@ function powerupPickup(powerup, length)
         if moneyGain > 2 then
             moneyGain = 1
         end   
+        if hasItem("Cold Hard Cash") then
+            for i=1, itemCount("Cold Hard Cash") do
+                moneyGain = moneyGain + 1
+            end
+        end
         Player.changeMoney(moneyGain);
         createMoneyPopup(moneyGain, paddle.x + paddle.width/2, paddle.y)
         if hasItem("Money Crazy") then
@@ -3892,6 +3898,79 @@ function Balls.update(dt, paddle, bricks)
     local electroCount = hasElectroItem and itemCount("Electromagnetic Alignment") or 0
     local MAX_RANGE_SQ = 500 * 500
     for _, ball in ipairs(Balls) do
+        if ball.name == "Laser Ball" then
+            local laserBeam = unlockedBallTypes["Laser Ball"]
+        
+            -- If we have the same target brick as last frame, increment timer
+            if ball.laserBeamBrick and ball.laserBeamBrick == ball.laserBeamTarget then
+                ball.laserBeamTimer = ball.laserBeamTimer + dt
+                
+                -- Deal damage if we've been on target long enough
+                
+                local cooldownLength = 2.2/((getStat("Laser Ball", "fireRate")))
+                if hasItem("Spray and Pray") then
+                    local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
+                    cooldownLength = cooldownLength * sprayMult
+                end
+                if ball.laserBeamTimer >= cooldownLength and ball.laserBeamBrick.y > -ball.laserBeamBrick.height then
+                    dealDamage(laserBeam, ball.laserBeamBrick)
+                    ball.laserBeamTimer = 0  -- Reset timer after damage
+                end
+            else
+                -- New target or no target, reset timer
+                ball.laserBeamTarget = ball.laserBeamBrick
+                ball.laserBeamTimer = math.max((ball.laserBeamTimer or 0) + dt, 0) -- Decrease timer if not on target
+            end
+            ball.laserBeamBrick = nil
+            local closestDist = math.huge
+            local highestBrick
+            ball.randomSeed = ball.randomSeed or math.random(1, 1000000)
+            local angle = -math.rad(gameTime * 15 + ball.randomSeed)
+            local startX = ball.x
+            local startY = ball.y
+            -- Calculate end point of laser using direction vector from angle
+            local dirX = math.sin(angle)  -- X component of direction
+            local dirY = -math.cos(angle) -- Y component of direction (negative because we're going up)
+            local endX = startX + dirX * 2000
+            local endY = startY + dirY * 2000
+            
+            for _, brick in ipairs(bricks) do
+                if brick.health > 0 and not brick.destroyed then
+                    -- Check all four sides of the brick for intersection
+                    local sides = {
+                        {brick.x, brick.y + brick.height, brick.x + brick.width, brick.y + brick.height}, -- bottom
+                        {brick.x, brick.y, brick.x + brick.width, brick.y}, -- top
+                        {brick.x, brick.y, brick.x, brick.y + brick.height}, -- left
+                        {brick.x + brick.width, brick.y, brick.x + brick.width, brick.y + brick.height} -- right
+                    }
+                    
+                    for _, side in ipairs(sides) do
+                        -- Line intersection check
+                        local x1, y1, x2, y2 = side[1], side[2], side[3], side[4]
+                        local denominator = (endY - startY) * (x2 - x1) - (endX - startX) * (y2 - y1)
+                        
+                        if denominator ~= 0 then
+                            local ua = ((endX - startX) * (y1 - startY) - (endY - startY) * (x1 - startX)) / denominator
+                            local ub = ((x2 - x1) * (y1 - startY) - (y2 - y1) * (x1 - startX)) / denominator
+                            
+                            if ua >= 0 and ua <= 1 and ub >= 0 and ub <= 1 then
+                                local intersectX = x1 + ua * (x2 - x1)
+                                local intersectY = y1 + ua * (y2 - y1)
+                                local dist = math.sqrt((intersectX - startX)^2 + (intersectY - startY)^2)
+                                
+                                if dist < closestDist then
+                                    closestDist = dist
+                                    highestBrick = brick
+                                    laserBeamY = intersectY
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+            ball.laserBeamBrick = highestBrick
+        end
+
         -- Skip shadow balls early
         if ball.type == "spell" and ball.name == "Shadow Ball" then
             goto continue
@@ -4484,16 +4563,16 @@ local function techDraw()
     if unlockedBallTypes["Laser Beam"] then
         -- Draw the actual Laser Beam
         -- Calculate charge progress
-        local chargeProgress = laserBeamTimer / ((1.35/((Player.currentCore == "Damage Core" and 1 or getStat("Laser Beam", "fireRate")))))
+        local chargeProgress = laserBeamTimer / ((1/((Player.currentCore == "Damage Core" and 1 or getStat("Laser Beam", "fireRate")))))
         if hasItem("Spray and Pray") then
             local sprayMult = hasItem("Four Leafed Clover") and 2 or 1.5
             chargeProgress = math.min(1, chargeProgress * sprayMult)
         end
         -- Interpolate color from grey to red based on charge
-        local r = 0.35 + (1 - 0.35) * chargeProgress
-        local g = 0.35 - 0.35 * chargeProgress
-        local b = 0.35 - 0.35 * chargeProgress
-        local a = 0.25 + 0.75 * chargeProgress
+        local r = 0.5 + (1 - 0.5) * chargeProgress
+        local g = 0.175 - 0.175 * chargeProgress
+        local b = 0.175 - 0.175 * chargeProgress
+        local a = 0.5 + 0.5 * chargeProgress
         love.graphics.setColor(r, g, b, a)
         local angle = -math.rad(unlockedBallTypes["Laser Beam"].angle)
         local startX = paddle.x + paddle.width/2
@@ -4511,7 +4590,7 @@ local function techDraw()
         love.graphics.rotate(angle)  -- Removed extra negative to match collision detection
         love.graphics.rectangle("fill", -1, -beamLength, 2, beamLength)
         love.graphics.pop()
-    end    
+    end 
 
     if unlockedBallTypes["Gun Turrets"] then
         love.graphics.setColor(1,1,1,1)
@@ -4614,6 +4693,41 @@ function Balls:draw()
     local screenBottom = screenHeight + 64
     local invBallTrailLength = 1 / math.max(1, ballTrailLength)
     for _, ball in ipairs(Balls) do
+        if ball.name == "Laser Ball" then
+            ball.laserBeamTimer = ball.laserBeamTimer or 0
+            local chargeProgress = ball.laserBeamTimer / ((2.2/((getStat("Laser Ball", "fireRate")))))
+            if hasItem("Spray and Pray") then
+                local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
+                chargeProgress = math.min(1, chargeProgress / sprayMult)
+            end
+            -- Interpolate color from grey to red based on charge
+            local r = 0.5 + (1 - 0.5) * chargeProgress
+            local g = 0.175 - 0.175 * chargeProgress
+            local b = 0.175 - 0.175 * chargeProgress
+            local a = 0.5 + 0.5 * chargeProgress
+            love.graphics.setColor(r, g, b, a)
+            local angle = -math.rad(gameTime * 15 + (ball.randomSeed or 0))
+            local startX = ball.x
+            local startY = ball.y
+            local beamLength = 2000  -- Match update logic
+            
+            -- Calculate distance to target brick if we have one
+            if ball.laserBeamBrick and ball.laserBeamBrick.health > 0 then
+                local brick = ball.laserBeamBrick
+                -- Find closest point on brick to the beam origin
+                local closestX = math.max(brick.x, math.min(startX, brick.x + brick.width))
+                local closestY = math.max(brick.y, math.min(startY, brick.y + brick.height))
+                local distToBrick = math.sqrt((closestX - startX)^2 + (closestY - startY)^2)
+                beamLength = distToBrick
+            end
+            
+            love.graphics.push()
+            love.graphics.translate(startX, startY)
+            love.graphics.rotate(angle)
+            love.graphics.rectangle("fill", -1, -beamLength, 2, beamLength)
+            love.graphics.pop()
+        end
+
         if ball.type == "spell" then
             drawShadowBall(ball)
             goto continue

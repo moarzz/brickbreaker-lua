@@ -293,7 +293,7 @@ Player.availableCores = {
         name = "Fast Study Core",
         description = "gain +5% experience gain per Player Level",
         price = 500,
-        startingItem = "Magnetic Ball"
+        startingItem = "Laser Beam"
     },
     {
         name = "Hacker Core",

@@ -1,7 +1,7 @@
 local Scavenger = ItemBase.new();
 Scavenger.__index = Scavenger;
 Scavenger.name = "Scavenger";
-Scavenger.description = "<font=bold>+<scavengerChance>%<font=default> chance for bricks to drop money when destroyed";
+Scavenger.description = "<font=bold>+<scavengerChance>%<font=default> chance for bricks to drop a <font=big>Dollar Bill<font=default> when destroyed";
 Scavenger.rarity = "common";
 Scavenger.imageReference = "assets/sprites/UI/ItemIcons/Scavenger.png";
 
