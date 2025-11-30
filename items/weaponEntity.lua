@@ -145,7 +145,9 @@ function WeaponEntity:collideBricks()
     local checkBricks = _G.bricks;
 
     for _, brick in ipairs(checkBricks) do
-        self:collideBrick(brick);
+        if not brick.destroyed then
+            self:collideBrick(brick);
+        end
     end
 end
 

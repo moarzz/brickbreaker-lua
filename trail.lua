@@ -211,6 +211,10 @@ end
 function Trail:draw()
     -- love.graphics.setColor(1,1,1); -- white
 
+    if #self.prevXCoords <= 0 then
+        return;
+    end
+
     self.shader:send("points_x", unpack(self.prevXCoords));
     self.shader:send("points_y", unpack(self.prevYCoords));
     self.shader:send("trailRadius", self.trailRadius);
