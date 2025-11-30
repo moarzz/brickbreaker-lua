@@ -553,7 +553,7 @@ end
 
 local shootSFXCooldown = 0
 -- Update bullet damage in shoot function
-local function shoot(gunName, ball)
+function shoot(gunName, ball)
     if Player.dead then
         return
     end   
