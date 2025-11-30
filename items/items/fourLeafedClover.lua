@@ -2,7 +2,7 @@ local FourLeafedClover = ItemBase.new();
 FourLeafedClover.__index = FourLeafedClover;
 FourLeafedClover.name = "Four Leafed Clover";
 FourLeafedClover.description = "every <font=bold>%</font=bold><font=default> on items is doubled";
-FourLeafedClover.rarity = "uncommon";
+FourLeafedClover.rarity = "rare";
 FourLeafedClover.imageReference = "assets/sprites/UI/ItemIcons/Four-Leafed-Clover.png";
 FourLeafedClover.unique = true;
 

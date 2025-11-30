@@ -360,7 +360,7 @@ local bossBrickSpawnTimer
 local bossSpawnSwitch = true
 local boss = nil
 local function spawnBoss()
-    currentRowPopulation = 850
+    currentRowPopulation = 1000
     targetMusicVolume = 0
     -- Center the boss brick at the top
     Timer.after(8, function()
@@ -2809,7 +2809,7 @@ function love.keypressed(key)
 
         -- add weapon
         if key == "7" then  
-            Balls.addBall("Saw Blades")
+            Balls.addBall("Gun Ball Gun")
         end
 
         if key == "8" then

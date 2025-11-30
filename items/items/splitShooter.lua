@@ -14,7 +14,7 @@ function SplitShooter.new()
         splitChance = hasItem("Four Leafed Clover") and 70 or 35;
     };
 
-    instance.stats.cooldown = -2;
+    instance.stats.cooldown = -1;
 
     return instance;
 end
