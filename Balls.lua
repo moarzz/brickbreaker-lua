@@ -1375,6 +1375,7 @@ function getLightBeamCount()
     return #lightBeams
 end
 
+local laserPortals = {}
 local lastFireballsCastTime = 0
 local lightningSFXCooldown = 0
 local lightBeamOpacity = {a = 0}
@@ -1613,6 +1614,154 @@ local function cast(spellName, brick, forcedDamage)
         end
         chainStep(brick, 1)
     end
+    if spellName == "Laser Portals" then
+        local xBias = mapRangeClamped(paddle.x + paddle.width/2, 0, screenWidth, -50, 50)
+        local angle = (math.random() * 0.3 + -0.15) * math.pi
+        local laserX = paddle.x + paddle.width/2 + (math.random(-50, 50) + xBias) * paddle.width/200
+        local laserY = paddle.y -25 + math.random(-40, 40)
+        local laserPortal = {
+            name = "Laser Portals",
+            x = laserX,
+            y = laserY,
+            angle = angle,
+            angleOffset = 0,
+            targetBrick = nil,
+            creationTime = gameTime,
+            laserBeamTimer = 0,
+            update = function(self, dt)
+                if gameTime - self.creationTime < 0.25 then
+                    -- portal being created (draw only)
+                elseif gameTime - self.creationTime < 6.25 then
+                    -- laser logic
+                    self.laserBeamTimer = (self.laserBeamTimer or 0) + dt
+                    print("Laser Portals laserBeamTimer:", self.laserBeamTimer)
+                    if self.laserBeamBrick then
+                        local cooldownLength = 1/((getStat("Laser Portals", "fireRate")))
+                        if hasItem("Spray and Pray") then
+                            local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
+                            cooldownLength = cooldownLength * sprayMult
+                        end
+                        if self.laserBeamTimer >= cooldownLength and self.laserBeamBrick.y > -self.laserBeamBrick.height then
+                            dealDamage(unlockedBallTypes["Laser Portals"], self.laserBeamBrick)
+                            self.laserBeamTimer = 0  -- Reset timer after damage
+                            if hasItem("Spray and Pray") then
+                                self.angleOffset = math.random(-100, 100)/10
+                            else
+                                self.angleOffset = 0
+                            end
+                        end
+                    end
+                    self.laserBeamBrick = nil
+                    local closestDist = math.huge
+                    local highestBrick
+                    local angle = (self.angle + math.rad(self.angleOffset))
+                    local startX = self.x
+                    local startY = self.y
+                    -- Calculate end point of laser using direction vector from angle
+                    local dirX = math.sin(angle)  -- X component of direction
+                    local dirY = -math.cos(angle) -- Y component of direction (negative because we're going up)
+                    local laserLength = screenHeight + 500  -- Extend past screen top
+                    local endX = startX + dirX * laserLength
+                    local endY = startY + dirY * laserLength
+                    
+                    for _, brick in ipairs(bricks) do
+                        if brick.health > 0 and not brick.destroyed then
+                            -- Check all four sides of the brick for intersection
+                            local sides = {
+                                {brick.x, brick.y + brick.height, brick.x + brick.width, brick.y + brick.height}, -- bottom
+                                {brick.x, brick.y, brick.x + brick.width, brick.y}, -- top
+                                {brick.x, brick.y, brick.x, brick.y + brick.height}, -- left
+                                {brick.x + brick.width, brick.y, brick.x + brick.width, brick.y + brick.height} -- right
+                            }
+                            
+                            for _, side in ipairs(sides) do
+                                -- Line intersection check
+                                local x1, y1, x2, y2 = side[1], side[2], side[3], side[4]
+                                local denominator = (endY - startY) * (x2 - x1) - (endX - startX) * (y2 - y1)
+                                
+                                if denominator ~= 0 then
+                                    local ua = ((endX - startX) * (y1 - startY) - (endY - startY) * (x1 - startX)) / denominator
+                                    local ub = ((x2 - x1) * (y1 - startY) - (y2 - y1) * (x1 - startX)) / denominator
+                                    
+                                    if ua >= 0 and ua <= 1 and ub >= 0 and ub <= 1 then
+                                        local intersectX = x1 + ua * (x2 - x1)
+                                        local intersectY = y1 + ua * (y2 - y1)
+                                        local dist = math.sqrt((intersectX - startX)^2 + (intersectY - startY)^2)
+                                        
+                                        if dist < closestDist then
+                                            closestDist = dist
+                                            highestBrick = brick
+                                            laserBeamY = intersectY
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                    self.laserBeamBrick = highestBrick
+                else
+                    -- portal being removed (only draw)
+                end
+            end,
+            draw = function(self)
+                if gameTime - self.creationTime < 0.25 then
+                    -- portal creation draw
+                    local portalScale = mapRangeClamped(gameTime - self.creationTime, 0, 0.25, 0, 1) * 0.15
+                    love.graphics.setColor(1, 1, 1, 1)
+                    drawImageCentered(runeCircleImg, self.x, self.y, runeCircleImg:getWidth()/2 * portalScale, runeCircleImg:getHeight()/2 * portalScale, self.angle, 0, 0)
+                elseif gameTime - self.creationTime < 6.25 then
+                    -- portal draw
+                    local portalScale = 0.15
+                    love.graphics.setColor(1, 1, 1, 1)
+                    drawImageCentered(runeCircleImg, self.x, self.y, runeCircleImg:getWidth()/2 * portalScale, runeCircleImg:getHeight()/2 * portalScale, self.angle, 0, 0)
+                    -- laser draw
+                    local chargeProgress = self.laserBeamTimer / (1/getStat("Laser Portals", "fireRate"))
+                    print("Laser Portals chargeProgress:" .. chargeProgress .. " laserBeamTimer:" .. self.laserBeamTimer)
+                    if hasItem("Spray and Pray") then
+                        local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
+                        chargeProgress = math.min(1, chargeProgress / sprayMult)
+                    end
+                    -- Interpolate color from grey to red based on charge
+                    local r = 0.5 + (1 - 0.5) * chargeProgress
+                    local g = 0.175 - 0.175 * chargeProgress
+                    local b = 0.175 - 0.175 * chargeProgress
+                    local a = 0.5 + 0.5 * chargeProgress
+                    love.graphics.setColor(r, g, b, a)
+                    local angle = self.angle + math.rad(self.angleOffset)
+                    local startX = self.x
+                    local startY = self.y
+                    local beamLength = screenHeight + 500  -- Match update logic
+                    
+                    -- Calculate distance to target brick if we have one
+                    if self.laserBeamBrick and self.laserBeamBrick.health > 0 then
+                        local brick = self.laserBeamBrick
+                        -- Find closest point on brick to the beam origin
+                        local closestX = math.max(brick.x, math.min(startX, brick.x + brick.width))
+                        local closestY = math.max(brick.y, math.min(startY, brick.y + brick.height))
+                        local distToBrick = math.sqrt((closestX - startX)^2 + (closestY - startY)^2)
+                        beamLength = distToBrick
+                    end
+                    
+                    love.graphics.push()
+                    love.graphics.translate(startX, startY)
+                    love.graphics.rotate(angle)
+                    love.graphics.rectangle("fill", -1, -beamLength, 2, beamLength)
+                    love.graphics.pop()
+                else
+
+                end
+            end,
+        }
+        table.insert(laserPortals, laserPortal)
+
+        -- playSoundEffect()
+        local cooldownValue = getStat("Laser Portals", "cooldown")
+        local timeUntilNextCast = math.max(cooldownValue, 0) * 0.4 + 1
+        createCooldownVFX(timeUntilNextCast)
+        Timer.after(timeUntilNextCast, function()
+            cast("Laser Portals")
+        end)
+    end
 end
 
 local gravityWell = {
@@ -1688,7 +1837,7 @@ local function ballListInit()
                 range = 3
             },
         },
-        --[[["Phantom Ball"] = {
+        ["Phantom Ball"] = {
             name = "Phantom Ball",
             type = "ball",
             x = screenWidth / 2,
@@ -1705,7 +1854,7 @@ local function ballListInit()
                 damage = 1,
                 range = 3
             },
-        },]]
+        },
         ["Magnetic Ball"] = {
             name = "Magnetic Ball",
             type = "ball",
@@ -1740,6 +1889,28 @@ local function ballListInit()
                 speed = 100,
                 damage = 1,
                 fireRate = 2,
+            },
+        },
+        ["Laser Portals"] = {
+            name = "Laser Portals",
+            type = "spell",
+            x = screenWidth / 2,
+            y = screenHeight / 2,
+            speedMult = 1,
+            size = 1,
+            rarity = "uncommon",
+            noAmount = true,
+            startingPrice = 75,
+            description = "Creates linked portals on hit that shoot lasers between them.",
+            color = {1, 0.5, 0, 1}, -- orange color
+            onBuy = function()
+                cast("Laser Portals")
+            end,
+            stats = {
+                amount = 1,
+                damage = 1,
+                fireRate = 2,
+                cooldown = 11,
             },
         },
         ["Lightning Ball"] = {
@@ -2019,7 +2190,7 @@ local function ballListInit()
                 range = 3
             }
         },
-        --[[["Saw Blades"] = {
+        ["Saw Blades"] = {
             name = "Saw Blades",
             type = "tech",
             size = 1,
@@ -2031,14 +2202,14 @@ local function ballListInit()
             stats = {
                 damage = 1,
                 amount = 1, -- Number of saws
-                speed = 50, -- Rotations per second
+                speed = 100, -- Rotations per second
             },
             sawPositions = {}, -- Will store current positions of saws
             sawAnimations = {}, -- Will store animation IDs
             currentAngle = 0, -- Current rotation angle
             orbitRadius = 225,
             damageCooldowns = {}, -- Add this line to track cooldowns per saw per brick
-        },]]
+        },
         ["Gun Turrets"] = {
             name = "Gun Turrets",
             type = "gun",
@@ -2255,6 +2426,7 @@ function Balls.initialize()
     fakeBossValues.boost = 0
     ballList = {}   
     unlockedBallTypes = {}
+    laserPortals = {}
     resetAllCooldownVFXs()
     Player.xp = 0
     nextBallPrice = 100
@@ -3064,7 +3236,7 @@ local function techUpdate(dt)
         local orbitRadius = sawBlades.orbitRadius --* (math.sin(gameTime/2.5)/2 + 1) * 0.9
         local paddleCenterX = paddle.x + paddle.width / 2
         local paddleCenterY = paddle.y + paddle.height / 2
-        local speed = getStat("Saw Blades", "speed") * 25
+        local speed = getStat("Saw Blades", "speed") * 15
         sawBlades.sawPositions = sawBlades.sawPositions or {}
         sawBlades.sawAnimations = sawBlades.sawAnimations or {}
         sawBlades.damageCooldowns = sawBlades.damageCooldowns or {} -- Initialize cooldown table
@@ -3492,6 +3664,7 @@ local function spellsUpdate(dt)
         end
     end
 
+    -- update fireballs
     if unlockedBallTypes["Fireballs"] then
         --[[local fireballsCooldown = 20/getStat("Fireballs", "fireRate")
         if gameTime - lastFireballsCastTime >= fireballsCooldown then
@@ -3592,6 +3765,13 @@ local function spellsUpdate(dt)
                     end
                 end
             end
+        end
+    end
+
+    -- update Laser Portals
+    if unlockedBallTypes["Laser Portals"] then
+        for _, portal in ipairs(laserPortals) do
+            portal:update(dt)
         end
     end
 end
@@ -4565,8 +4745,8 @@ local function techDraw()
         -- Calculate charge progress
         local chargeProgress = laserBeamTimer / ((1/((Player.currentCore == "Damage Core" and 1 or getStat("Laser Beam", "fireRate")))))
         if hasItem("Spray and Pray") then
-            local sprayMult = hasItem("Four Leafed Clover") and 2 or 1.5
-            chargeProgress = math.min(1, chargeProgress * sprayMult)
+            local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
+            chargeProgress = math.min(1, chargeProgress / sprayMult)
         end
         -- Interpolate color from grey to red based on charge
         local r = 0.5 + (1 - 0.5) * chargeProgress
@@ -4577,17 +4757,21 @@ local function techDraw()
         local angle = -math.rad(unlockedBallTypes["Laser Beam"].angle)
         local startX = paddle.x + paddle.width/2
         local startY = paddle.y
-        local beamLength
+        local beamLength = screenHeight + 500  -- Match update logic
         
-        if laserBeamBrick then
-            beamLength = math.sqrt((laserBeamY - startY)^2 + ((startX + math.sin(angle) * (startY - laserBeamY)) - startX)^2)
-        else
-            beamLength = startY  -- Full length to top of screen
+        -- Calculate distance to target brick if we have one
+        if laserBeamBrick and laserBeamBrick.health > 0 then
+            local brick = laserBeamBrick
+            -- Find closest point on brick to the beam origin
+            local closestX = math.max(brick.x, math.min(startX, brick.x + brick.width))
+            local closestY = math.max(brick.y, math.min(startY, brick.y + brick.height))
+            local distToBrick = math.sqrt((closestX - startX)^2 + (closestY - startY)^2)
+            beamLength = distToBrick
         end
         
         love.graphics.push()
         love.graphics.translate(startX, startY)
-        love.graphics.rotate(angle)  -- Removed extra negative to match collision detection
+        love.graphics.rotate(angle)
         love.graphics.rectangle("fill", -1, -beamLength, 2, beamLength)
         love.graphics.pop()
     end 
@@ -4657,6 +4841,7 @@ local function spellDraw()
             drawShadowBall(shadowBall)
         end
     end
+
     if unlockedBallTypes["Light Beam"] then
         for _, lightbeam in ipairs(lightBeams) do
             love.graphics.setColor(1, 1, 1, lightbeam.opacity)
@@ -4669,6 +4854,12 @@ local function spellDraw()
             local y = centerY - math.sin(lightbeam.angle) * lightBeamImg:getWidth() * 0.125
 
             love.graphics.draw(lightBeamImg, x, y, lightbeam.angle, 0.25, 5)
+        end
+    end
+
+    if unlockedBallTypes["Laser Portals"] then
+        for _, portal in ipairs(laserPortals) do
+            portal:draw()
         end
     end
 end

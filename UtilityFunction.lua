@@ -517,7 +517,7 @@ end
 
 
 
-function drawImageCentered(image, x, y, targetWidth, targetHeight, angle, xOffset, yOffset)
+function drawImageCentered(image, x, y, targetWidth, targetHeight, angle, xOffset, yOffset, scale)
     targetWidth = targetWidth or image:getWidth()
     targetHeight = targetHeight or image:getHeight()
     xOffset = xOffset or 0
@@ -533,7 +533,6 @@ function drawImageCentered(image, x, y, targetWidth, targetHeight, angle, xOffse
     -- Calculate the offset to center the rotation pivot
     local offsetX = imageWidth / 2
     local offsetY = imageHeight / 2
-
     -- Apply the additional pivot offset
     offsetX = offsetX + (xOffset / scaleX)  -- Convert offset to image space
     offsetY = offsetY + (yOffset / scaleY)  -- Convert offset to image space

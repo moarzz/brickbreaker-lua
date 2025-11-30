@@ -274,6 +274,7 @@ local function loadAssets()
     tutorialScreen4Img = love.graphics.newImage("assets/sprites/firstUpgradeShop/screen4.png")
     lightBeamImg = love.graphics.newImage("assets/sprites/lightBeam.png")
     bossBrickOverlayImg = love.graphics.newImage("assets/sprites/bossBrickOverlay.png")
+    runeCircleImg = love.graphics.newImage("assets/sprites/runeCircle.png")
 
     -- UI
     uiLabelImg = love.graphics.newImage("assets/sprites/UI/label.png")
@@ -2808,7 +2809,7 @@ function love.keypressed(key)
 
         -- add weapon
         if key == "7" then  
-            Balls.addBall("Laser Ball")
+            Balls.addBall("Saw Blades")
         end
 
         if key == "8" then
