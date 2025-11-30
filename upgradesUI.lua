@@ -1255,7 +1255,7 @@ local function drawItemShop()
                 print("button working")
                 -- if (#Player.items < maxItems or item.consumable) and Player.money >= upgradePrice then
                 if Player.realMoney >= upgradePrice then
-                    error("fuck thjis shuit");
+                    --error("fuck thjis shuit");
                     Player.pay(upgradePrice)
                     playSoundEffect(upgradeSFX, 0.5, 0.95)
                     table.remove(displayedItems, i)
