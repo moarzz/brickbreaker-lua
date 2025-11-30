@@ -156,61 +156,84 @@ function WeaponEntity:collideBrick(brick)
     local dx = self.x - closestX;
     local dy = self.y - closestY;
 
-    if dx * dx + dy * dy < self.radius * self.radius then
-        if self.brickOverlap[brick.id] then
-            return;
-        end
-
-        self.brickOverlap[brick.id] = true;
-
-        if self.brickCallback then
-            if self.brickCallback(self, brick) then
-                return;
-            end
-        end
-
-        local distLeft  = self.x + self.radius - brick.x;
-        local distRight = brick.x + brick.width - self.x + self.radius;
-        local distTop   = self.y + self.radius - brick.y;
-        local distBot   = brick.y + brick.height - self.y + self.radius;
-
-        local horizontalDist;
-        local verticalDist;
-
-        if self.xn > 0 then
-            horizontalDist = distLeft * self.xn;
-        else
-            horizontalDist = distRight * -self.xn;
-        end
-
-        if self.yn > 0 then
-            verticalDist = distTop * self.yn;
-        else
-            verticalDist = distBot * -self.yn;
-        end
-
-        if verticalDist > horizontalDist then
-            if self.xn > 0 then
-                self.x = self.x - distLeft;
-            else
-                self.x = self.x + distRight;
-            end
-
-            self.xn = -self.xn;
-        else
-            if self.yn > 0 then
-                self.y = self.y - distTop;
-            else
-                self.y = self.y + distBot;
-            end
-
-            self.yn = -self.yn;
-        end
-
+    if dx * dx + dy * dy >= self.radius * self.radius then
+        self.brickOverlap[brick.id] = nil;
         return;
     end
 
-    self.brickOverlap[brick.id] = nil;
+    if self.brickOverlap[brick.id] then
+        return;
+    end
+
+    self.brickOverlap[brick.id] = true;
+
+    if self.brickCallback then
+        if self.brickCallback(self, brick) then
+            return;
+        end
+    end
+
+    local isVer = closestX ~= self.x;
+    local isHor = closestY ~= self.y;
+
+    if isVer and not isHor then -- bounce off of x axis every time
+        if self.xn < 0 then
+            self.x = brick.x + brick.width + self.radius;
+        else
+            self.x = brick.x - self.radius;
+        end
+
+        self.xn = -self.xn;
+
+        return;
+    elseif isHor and not isVer then -- bounce off y axis every time
+        if self.yn < 0 then
+            self.y = brick.y + brick.height + self.radius;
+        else
+            self.y = brick.y - self.radius;
+        end
+
+        self.yn = -self.yn;
+
+        return;
+    else -- who knows :3
+        local closeVer;
+        local closeHor;
+
+        if self.xn < 0 then
+            closeHor = self.x - brick.x - brick.width;
+        else
+            closeHor = brick.x - self.x;
+        end
+
+        if self.yn < 0 then
+            closeVer = self.y - brick.y - brick.height;
+        else
+            closeVer = brick.y - self.y;
+        end
+
+        if closeHor < closeVer then -- vertical
+            if self.yn < 0 then
+                self.y = brick.y + brick.height + self.radius;
+            else
+                self.y = brick.y - self.radius;
+            end
+
+            self.yn = -self.yn;
+
+            return;
+        else
+            if self.xn < 0 then
+                self.x = brick.x + brick.width + self.radius;
+            else
+                self.x = brick.x - self.radius;
+            end
+
+            self.xn = -self.xn;
+
+            return;
+        end
+    end
 end
 
 function WeaponEntity:collideWalls()
@@ -262,6 +285,9 @@ function WeaponEntity:collideWalls()
 end
 
 function WeaponEntity:substep(dt)
+    local px = self.x;
+    local py = self.y;
+
     -- split speed into 2 sections bcs thats how calculus works
     self.x = self.x + self.xn * (self.speed + self.extraSpeed) * dt / 2;
     self.y = self.y + self.yn * (self.speed + self.extraSpeed) * dt / 2;
@@ -274,14 +300,14 @@ function WeaponEntity:substep(dt)
     -- check collision
 
     -- paddle collision
-    self:collidePaddle();
+    self:collidePaddle(px, py);
 
     -- brick collision
-    self:collideBricks();
+    self:collideBricks(px, py);
 
     -- wall collision
     if not self.doesIgnoreWalls then
-        self:collideWalls();
+        self:collideWalls(px, py);
     end
 end
 
