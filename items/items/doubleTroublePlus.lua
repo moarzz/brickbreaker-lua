@@ -2,7 +2,7 @@ local DoubleTroublePlus = ItemBase.new();
 DoubleTroublePlus.__index = DoubleTroublePlus;
 DoubleTroublePlus.name = "Double Trouble +";
 DoubleTroublePlus.description = "<font=default>Increase <colour=green>2<colour=white> random stats by <colour=blue>2";
-DoubleTroublePlus.rarity = "uncommon";
+DoubleTroublePlus.rarity = "rare";
 DoubleTroublePlus.imageReference = "assets/sprites/UI/ItemIcons/Triple-Trouble.png";
 
 function DoubleTroublePlus.new()

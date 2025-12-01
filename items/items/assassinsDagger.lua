@@ -12,10 +12,10 @@ function AssassinsDagger.new()
     local instance = setmetatable({}, AssassinsDagger):init();
 
     instance.descriptionPointers = {
-        critChance = hasItem("Four Leafed Clover") and 30 or 15;
+        critChance = hasItem("Four Leafed Clover") and 50 or 25;
     };
 
-    instance.stats.damage = 2;
+    instance.stats.damage = 1;
 
     return instance;
 end

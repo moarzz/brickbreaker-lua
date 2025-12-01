@@ -2805,16 +2805,16 @@ function love.keypressed(key)
 
         -- create powerup
         if key == "6" then
-            createPowerupG("acceleration")
+            drawTrails = not drawTrails
         end
 
         -- add weapon
         if key == "7" then  
-            Balls.addBall("Laser Ball")
+            Balls.addBall("Ball Gun")
         end
 
         if key == "8" then
-            Player.level = Player.level - 1
+            updateTrails = not updateTrails
         end
 
         if key == "9" then

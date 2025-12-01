@@ -375,6 +375,7 @@ end
 
 brickPieces = {}
 local currentMoneyDropChance = 0
+local bricksDestroyedSinceLastDrop = 0
 local function brickDestroyed(brick)
     Player.bricksDestroyed = (Player.bricksDestroyed or 0) + 1
     local chance = hasItem("Four Leafed Clover") and 40 or 20
@@ -445,12 +446,12 @@ local function brickDestroyed(brick)
             end
         end
     end
-    local maxChance = mapRangeClamped(Player.level,1, 15, 250, 1500)
-    if math.random(1,maxChance) <= 10*chanceMult then
+    local maxChance = mapRangeClamped(Player.level,1, 18, 250, 1500)
+    if math.random(1,maxChance) <= 10*chanceMult or bricksDestroyedSinceLastDrop >= maxChance/8 then
         createPowerup(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth, "dollarBill")
-        currentMoneyDropChance = 0
+        bricksDestroyedSinceLastDrop = 0
     else
-        currentMoneyDropChance = currentMoneyDropChance + 1
+        bricksDestroyedSinceLastDrop = bricksDestroyedSinceLastDrop + 1
     end
 
     if hasItem("Thundershock") then
@@ -533,7 +534,7 @@ function dealDamage(ball, brick, burnDamage)
         damage = math.floor(damage / 2)
     end
 
-    local critChance = hasItem("Four Leafed Clover") and 30 or 15
+    local critChance = hasItem("Four Leafed Clover") and 50 or 25
     if hasItem("Assassin's Dagger") and math.random(1,100) <= critChance and ball.type ~= "bullet" then
         damage = damage * 2
     end
@@ -617,13 +618,13 @@ function dealDamage(ball, brick, burnDamage)
 end
 
 local laserPortals = {}
-local function newLaserPortal(damage, fireRate)
+local function newLaserPortal(damage, fireRate, name)
     local xBias = mapRangeClamped(paddle.x + paddle.width/2, 0, screenWidth, -50, 50)
     local angle = (math.random() * 0.3 + -0.15) * math.pi
     local laserX = paddle.x + paddle.width/2 + (math.random(-150, 150) + xBias) * paddle.width/200
     local laserY = paddle.y -25 + math.random(-40, 40)
     local laserPortal = {
-        name = "Laser Portals",
+        name = name,
         x = laserX,
         y = laserY,
         angle = angle,
@@ -648,7 +649,7 @@ local function newLaserPortal(damage, fireRate)
                         cooldownLength = cooldownLength * sprayMult
                     end
                     if self.laserBeamTimer >= cooldownLength and self.laserBeamBrick.y > -self.laserBeamBrick.height then
-                        dealDamage({stats = {damage = damage}, name = "Laser Portals"}, self.laserBeamBrick)
+                        dealDamage({stats = {damage = damage}, name = self.name}, self.laserBeamBrick)
                         self.laserBeamTimer = 0  -- Reset timer after damage
                         if hasItem("Spray and Pray") then
                             self.angleOffset = math.random(-100, 100)/10
@@ -771,7 +772,7 @@ local function shoot(gunName, ball)
     end
     if hasItem("Cover Laser") then
         if getItem("Cover Laser"):onShoot() then
-            newLaserPortal(unlockedBallTypes[gunName].stats.damage or 3, unlockedBallTypes[gunName].stats.fireRate or 5)
+            newLaserPortal(unlockedBallTypes[gunName].stats.damage or 3, unlockedBallTypes[gunName].stats.fireRate or 5, gunName)
         end
     end   
     if ball ~= nil then
@@ -1778,7 +1779,7 @@ local function cast(spellName, brick, forcedDamage)
     if spellName == "Laser Portals" then
         for i=1, getStat("Laser Portals", "amount") do
             Timer.after((i-1) * 0.2, function()
-                newLaserPortal(getStat("Laser Portals", "damage"), getStat("Laser Portals", "fireRate"))
+                newLaserPortal(getStat("Laser Portals", "damage"), getStat("Laser Portals", "fireRate"), "Laser Portals")
             end)
         end
 
@@ -1946,7 +1947,7 @@ local function ballListInit()
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
-            speedMult = 0.9,
+            speedMult = 1,
             size = 1,
             rarity = "common",
             startingPrice = 50,
@@ -3170,7 +3171,7 @@ local function techUpdate(dt)
             
             -- Deal damage if we've been on target long enough
             
-            local cooldownLength = 0.9/((getStat("Laser Beam", "fireRate")))
+            local cooldownLength = 1/((getStat("Laser Beam", "fireRate")))
             if hasItem("Spray and Pray") then
                 local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
                 cooldownLength = cooldownLength * sprayMult
@@ -3909,6 +3910,7 @@ function powerupPickup(powerup, length)
     end      
 end
 
+updateTrails = true
 -- Modify the Balls.update function to include shadowBall updates
 function Balls.update(dt, paddle, bricks)
     if Player.levelingUp or Player.choosingUpgrade then
@@ -4204,27 +4206,13 @@ function Balls.update(dt, paddle, bricks)
         end
         
         -- Trail logic (only for ball type)
-        if ball.type == "ball" then
+        if ball.type == "ball" and updateTrails then
             if ball.activeTrail then
                 ball.activeTrail:addPosition(ball.x, ball.y);
             else
-                ball.activeTrail = Trail.new(20, 100)
+                ball.activeTrail = Trail.new(17, 13)
                 -- table.insert(ball.activeTrail, Trail.new(20, 100));
             end
-            --[[if not ball.lastTrailPos then
-                ball.lastTrailPos = {x = ball.x, y = ball.y}
-            else
-                ball.lastTrailPos.x = ball.x
-                ball.lastTrailPos.y = ball.y
-            end
-            
-            local trail = ball.trail
-            trail[#trail + 1] = {x = ball.x, y = ball.y}
-            
-            -- Remove old trail points
-            if #trail > ballTrailLength then
-                table.remove(trail, 1)
-            end]]
         end
         
         -- Magnetic attraction
@@ -4761,7 +4749,7 @@ local function techDraw()
     if unlockedBallTypes["Laser Beam"] then
         -- Draw the actual Laser Beam
         -- Calculate charge progress
-        local chargeProgress = laserBeamTimer / ((0.9/((Player.currentCore == "Damage Core" and 1 or getStat("Laser Beam", "fireRate")))))
+        local chargeProgress = laserBeamTimer / ((1/((Player.currentCore == "Damage Core" and 1 or getStat("Laser Beam", "fireRate")))))
         if hasItem("Spray and Pray") then
             local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
             chargeProgress = math.min(1, chargeProgress / sprayMult)
@@ -4835,6 +4823,7 @@ local function spellDraw()
     end
 end
 
+drawTrails = true
 function Balls:draw()
     -- Draw Flamethrower VFX first if active
     local flamethrower = unlockedBallTypes["Flamethrower"]
@@ -4901,59 +4890,7 @@ function Balls:draw()
         local ballRadius = ball.radius or 10
         
         -- Draw trail (skip for phantom balls or dead balls)
-        if not ball.dead and ballName ~= "Phantom Ball" then
-            if ball.activeTrail then
-                ball.activeTrail:draw()
-            end
-            --[[local trail = ball.trail
-            if trail then
-                local trailLen = #trail
-                
-                -- Quick offscreen culling
-                if ballX + ballRadius >= screenLeft and ballX - ballRadius <= screenRight and
-                ballY + ballRadius >= screenTop and ballY - ballRadius <= screenBottom and
-                trailLen > 1 then
-                    
-                    -- Get ball color
-                    local ballColor = ballList[ballName].color or {1, 1, 1, 1}
-                    if ballName == "Incrediball" then
-                        ballColor = incrediballColor
-                    end
-                    
-                    -- Cache color components
-                    local r, g, b = ballColor[1], ballColor[2], ballColor[3]
-                    
-                    -- Sample trail to reduce draw calls
-                    local sampleMax = 8
-                    local step = math.max(1, math.floor(trailLen / sampleMax))
-                    
-                    -- Cache radius calculations
-                    local drawSizeBoost = ball.drawSizeBoost or 1
-                    local drawSizeMult = ball.drawSizeMult or 1
-                    local startRadius = math.max(1, ballRadius * drawSizeBoost)
-                    local minRadius = startRadius * 0.15
-                    local radiusRange = startRadius - minRadius
-                    
-                    -- Draw trail segments (oldest to newest)
-                    for i = trailLen - 1, 1, -step do
-                        local p = trail[i]
-                        if p then
-                            local segmentPos = i / trailLen
-                            local segmentPosSq = segmentPos * segmentPos
-                            
-                            -- Calculate radius and alpha with cached values
-                            local segRadius = (minRadius + radiusRange * segmentPos) * drawSizeMult
-                            local alpha = math.max(0.04, segmentPosSq * (p.alpha or 1))
-                            
-                            love.graphics.setColor(r, g, b, alpha)
-                            love.graphics.circle("fill", p.x, p.y, segRadius)
-                        end
-                    end
-                    
-                    love.graphics.setColor(1, 1, 1, 1)
-                end
-            end]]
-        end
+        
         
         -- Draw ball
         if ballName == "Phantom Ball" then
@@ -4970,6 +4907,13 @@ function Balls:draw()
                 love.graphics.setColor(c[1], c[2], c[3], c[4])
             else
                 love.graphics.setColor(1, 1, 1, 1)
+            end
+
+            -- trail draw logic
+            if not ball.dead and ballName ~= "Phantom Ball" and drawTrails then
+                if ball.activeTrail then
+                    ball.activeTrail:draw()
+                end
             end
             
             if ballName == "Incrediball" then

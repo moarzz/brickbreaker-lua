@@ -2,7 +2,7 @@ local PlusFourBuff = ItemBase.new();
 PlusFourBuff.__index = PlusFourBuff;
 PlusFourBuff.name = "Plus Four Buff";
 PlusFourBuff.description = "";
-PlusFourBuff.rarity = "uncommon";
+PlusFourBuff.rarity = "rare";
 
 function PlusFourBuff.new()
     local instance = setmetatable({}, PlusFourBuff):init();
@@ -25,6 +25,7 @@ function PlusFourBuff.new()
     end
 
     local statNames = {
+        "damage",
         "speed";
         "amount";
         "ammo";
@@ -34,12 +35,14 @@ function PlusFourBuff.new()
     };
 
     local itemNames = {
-        "Running Shoes +";
-        "Two for One Meal Ticket +";
-        "Extended Magazine +";
-        "Fast Hands +";
-        "Duct Tape +";
-        "Fake Pregnancy Belly +";
+        "Kitchen Knife ++";
+        "Running Shoes ++";
+        "Two for One Meal Ticket ++";
+        "Extended Magazine ++";
+        "Fast Hands ++";
+        "Duct Tape ++";
+        "Fake Pregnancy Belly ++";
+
     };
 
     local itemVersion = math.random(1, #itemStats);

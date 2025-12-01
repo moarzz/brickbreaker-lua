@@ -2,7 +2,7 @@ local Thundershock = ItemBase.new();
 Thundershock.__index = Thundershock;
 Thundershock.name = "Thundershock";
 Thundershock.description = "<font=bold>On brick destroyed<font=default>\nSummon a lightning bolt that deals 35% of a random brick's health";
-Thundershock.rarity = "uncommon";
+Thundershock.rarity = "common";
 Thundershock.shotCount = 0;
 Thundershock.unique = true
 -- CoverLaser.imageReference = "assets/sprites/UI/ItemIcons/Cover-Laser.png";
@@ -22,7 +22,7 @@ function Thundershock:onBrickDestroyed()
         iterations = iterations + 1
         local randomBrickId = math.random(1, #bricks)
         randomBrick = bricks[randomBrickId]
-        if randomBrick.y >= 0 and randomBrick.health > 0 and (not randomBrick.destroyed) and (not randomBrick.type == "boss") then
+        if randomBrick.y >= 0 and randomBrick.health > 0 and (not randomBrick.destroyed) and (randomBrick.type ~= "boss") then
             go = false
         elseif iterations >= 100 then
             go = false
@@ -32,7 +32,7 @@ function Thundershock:onBrickDestroyed()
 
     local thunderDamage = math.ceil(randomBrick.health * 0.35)
     Timer.after(0.125, function()
-        if not randomBrick.type == "boss" then
+        if randomBrick.type ~= "boss" then
             dealDamage({stats = {damage = thunderDamage}}, randomBrick)
         end
     end)

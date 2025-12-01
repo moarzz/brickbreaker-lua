@@ -11,7 +11,7 @@ function BouncyWalls.new()
     local instance = setmetatable({}, BouncyWalls):init();
 
     instance.stats.amount = 1;
-    instance.stats.speed = 1;
+    -- instance.stats.speed = 1;
 
     return instance;
 end

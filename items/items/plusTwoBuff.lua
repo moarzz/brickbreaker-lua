@@ -25,6 +25,7 @@ function PlusTwoBuff.new()
     end
 
     local statNames = {
+        "damage";
         "speed";
         "amount";
         "ammo";
@@ -34,6 +35,7 @@ function PlusTwoBuff.new()
     };
 
     local itemNames = {
+        "Kitchen Knife";
         "Running Shoes";
         "Two for One Meal Ticket";
         "Extended Magazine";

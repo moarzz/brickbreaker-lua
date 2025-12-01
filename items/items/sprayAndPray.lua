@@ -14,7 +14,7 @@ function SprayAndPray.new()
         fireRateMult = hasItem("Four Leafed Clover") and 70 or 35;
     };
 
-    instance.stats.fireRate = 2;
+    instance.stats.fireRate = 1;
 
     return instance;
 end
