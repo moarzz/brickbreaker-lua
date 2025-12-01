@@ -4208,7 +4208,8 @@ function Balls.update(dt, paddle, bricks)
             if ball.activeTrail then
                 ball.activeTrail:addPosition(ball.x, ball.y);
             else
-                table.insert(ball.activeTrail, Trail.new(20, 100));
+                ball.activeTrail = Trail.new(20, 100)
+                -- table.insert(ball.activeTrail, Trail.new(20, 100));
             end
             --[[if not ball.lastTrailPos then
                 ball.lastTrailPos = {x = ball.x, y = ball.y}
