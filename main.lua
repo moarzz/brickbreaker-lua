@@ -1456,6 +1456,7 @@ local function memLeakCheck(dt)
         local lightBeamCount = getLightBeamCount() or 0
         local arcaneMissileCount = getArcaneMissileCount() or 0
         local shieldAurasAmount = shieldAuras and #shieldAuras or 0
+        local laserPortalCount = getLaserPortalCount() or 0
 
         -- Add formatted info
         logText = logText .. string.format("#Bricks: %d - #Brick Pieces: %d - #Brick Text Cache: %d - #fastBricks: %d - #shieldAuras: %d\n", brickAmount, brickPieceAmount, brickTextCacheAmount, #fastBricks, shieldAurasAmount)
@@ -1464,7 +1465,7 @@ local function memLeakCheck(dt)
         logText = logText .. string.format("#Animations: %d - #Sprite Batches: %d - #Quad Cache: %d\n", animationAmount, spriteBatchesAmount, quadCacheAmount)
         logText = logText .. string.format("#Explosions: %d\n", explosionAmount)
         logText = logText .. string.format("#Font Table: %d\n", fontTableAmount)
-        logText = logText .. string.format("#Shadow Balls: %d - #Fireballs: %d - #Light Beams: %d - #Arcane Missiles: %d\n", shadowBallCount, fireballCount, lightBeamCount, arcaneMissileCount)
+        logText = logText .. string.format("#Shadow Balls: %d - #Fireballs: %d - #Light Beams: %d - #Arcane Missiles: %d - #Laser Portals: %d\n", shadowBallCount, fireballCount, lightBeamCount, arcaneMissileCount, laserPortalCount)
 
         -- Add this entry to the full log
         memLeakLog = memLeakLog .. logText
@@ -2810,7 +2811,7 @@ function love.keypressed(key)
 
         -- add weapon
         if key == "7" then  
-            Balls.addBall("Ball Gun")
+            Balls.addBall("Laser Ball")
         end
 
         if key == "8" then

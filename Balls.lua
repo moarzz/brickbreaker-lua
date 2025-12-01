@@ -617,14 +617,29 @@ function dealDamage(ball, brick, burnDamage)
     return kill
 end
 
+local currentPortalID = 0
 local laserPortals = {}
+function getLaserPortalCount()
+    return #laserPortals
+end
+local function removePortalByID(id)
+    for i, portal in ipairs(laserPortals) do
+        if portal.id == id then
+            table.remove(laserPortals, i)
+            return
+        end
+    end
+end
+
 local function newLaserPortal(damage, fireRate, name)
     local xBias = mapRangeClamped(paddle.x + paddle.width/2, 0, screenWidth, -50, 50)
     local angle = (math.random() * 0.3 + -0.15) * math.pi
     local laserX = paddle.x + paddle.width/2 + (math.random(-150, 150) + xBias) * paddle.width/200
     local laserY = paddle.y -25 + math.random(-40, 40)
+    currentPortalID = currentPortalID + 1
     local laserPortal = {
         name = name,
+        id = currentPortalID,
         x = laserX,
         y = laserY,
         angle = angle,
@@ -706,7 +721,8 @@ local function newLaserPortal(damage, fireRate, name)
                     end
                 end
                 self.laserBeamBrick = highestBrick
-            else
+            elseif gameTime - self.creationTime < 6.5 then
+                removePortalByID(self.id)
                 -- portal being removed (only draw)
             end
         end,
@@ -757,7 +773,45 @@ local function newLaserPortal(damage, fireRate, name)
                 love.graphics.rectangle("fill", -1, -beamLength, 2, beamLength)
                 love.graphics.pop()
             else
-
+                -- portal draw
+                local totalScaleMult = mapRangeClamped(gameTime - (self.creationTime + 6.25), 0, 0.25, 1, 0)
+                local portalScale = 0.15 * totalScaleMult
+                local angle = (self.angle + math.rad(self.angleOffset)) + self.swayAngleOffset
+                love.graphics.setColor(1, 1, 1, 1)
+                drawImageCentered(runeCircleImg, self.x, self.y, runeCircleImg:getWidth()/2 * portalScale, runeCircleImg:getHeight()/2 * portalScale, angle, 0, 0)
+                -- laser draw
+                local chargeProgress = self.laserBeamTimer / (1.5/fireRate)
+                print("Laser Portals chargeProgress:" .. chargeProgress .. " laserBeamTimer:" .. self.laserBeamTimer)
+                if hasItem("Spray and Pray") then
+                    local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
+                    chargeProgress = math.min(1, chargeProgress / sprayMult)
+                end
+                -- Interpolate color from grey to red based on charge
+                local r = 0.5 + (1 - 0.5) * chargeProgress
+                local g = 0.175 - 0.175 * chargeProgress
+                local b = 0.175 - 0.175 * chargeProgress
+                local a = 0.5 + 0.5 * chargeProgress * totalScaleMult
+                love.graphics.setColor(r, g, b, a)
+                local angle = (self.angle + math.rad(self.angleOffset)) + self.swayAngleOffset
+                local startX = self.x
+                local startY = self.y
+                local beamLength = screenHeight + 500  -- Match update logic
+                
+                -- Calculate distance to target brick if we have one
+                if self.laserBeamBrick and self.laserBeamBrick.health > 0 then
+                    local brick = self.laserBeamBrick
+                    -- Find closest point on brick to the beam origin
+                    local closestX = math.max(brick.x, math.min(startX, brick.x + brick.width))
+                    local closestY = math.max(brick.y, math.min(startY, brick.y + brick.height))
+                    local distToBrick = math.sqrt((closestX - startX)^2 + (closestY - startY)^2)
+                    beamLength = distToBrick
+                end
+                
+                love.graphics.push()
+                love.graphics.translate(startX, startY)
+                love.graphics.rotate(angle)
+                love.graphics.rectangle("fill", -1, -beamLength, 2, beamLength)
+                love.graphics.pop()
             end
         end,
     }
@@ -1895,7 +1949,7 @@ local function ballListInit()
             rarity = "uncommon",
             startingPrice = 50,
             description = "shoots a continuous laser beam that rotates around the ball",
-            color = {1, 0, 1, 0}, -- red color
+            color = {1, 0, 1, 1}, -- red color
             stats = {
                 speed = 100,
                 damage = 1,
@@ -1921,7 +1975,7 @@ local function ballListInit()
                 amount = 1,
                 damage = 1,
                 fireRate = 2,
-                cooldown = 12,
+                cooldown = 10,
             },
         },
         ["Lightning Ball"] = {

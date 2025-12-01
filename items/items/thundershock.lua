@@ -2,7 +2,7 @@ local Thundershock = ItemBase.new();
 Thundershock.__index = Thundershock;
 Thundershock.name = "Thundershock";
 Thundershock.description = "<font=bold>On brick destroyed<font=default>\nSummon a lightning bolt that deals 35% of a random brick's health";
-Thundershock.rarity = "common";
+Thundershock.rarity = "uncommon";
 Thundershock.shotCount = 0;
 Thundershock.unique = true
 -- CoverLaser.imageReference = "assets/sprites/UI/ItemIcons/Cover-Laser.png";
