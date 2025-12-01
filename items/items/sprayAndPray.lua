@@ -21,11 +21,11 @@ end
 
 -- I dont think this is necessary it should already be in the paddle metadata
 function SprayAndPray.events:item_purchase_FourLeafedClover()
-    self.descriptionPointers.paddleWidth = 70;
+    self.descriptionPointers.fireRateMult = 70;
 end
 
 function SprayAndPray.events:item_sell_FourLeafedClover()
-    self.descriptionPointers.paddleWidth = 35;
+    self.descriptionPointers.fireRateMult = 35;
 end
 
 return SprayAndPray;

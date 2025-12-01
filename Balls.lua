@@ -439,14 +439,14 @@ local function brickDestroyed(brick)
     if hasItem("Scavenger") then
         for i=1, itemCount("Scavenger") do
             if hasItem("Four Leafed Clover") then
-                chanceMult = chanceMult + 1.2
+                chanceMult = chanceMult + 1
             else
-                chanceMult = chanceMult + 0.6
+                chanceMult = chanceMult + 0.5
             end
         end
     end
-    local maxChance = mapRangeClamped(Player.level,1, 12, 1500, 4000)
-    if math.random(1,maxChance)/chanceMult <= currentMoneyDropChance then
+    local maxChance = mapRangeClamped(Player.level,1, 15, 250, 1500)
+    if math.random(1,maxChance) <= 10*chanceMult then
         createPowerup(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth, "dollarBill")
         currentMoneyDropChance = 0
     else
@@ -642,13 +642,13 @@ local function newLaserPortal(damage, fireRate)
                 self.laserBeamTimer = (self.laserBeamTimer or 0) + dt
                 print("Laser Portals laserBeamTimer:", self.laserBeamTimer)
                 if self.laserBeamBrick then
-                    local cooldownLength = 1/(fireRate)
+                    local cooldownLength = 1.5/(fireRate)
                     if hasItem("Spray and Pray") then
                         local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
                         cooldownLength = cooldownLength * sprayMult
                     end
                     if self.laserBeamTimer >= cooldownLength and self.laserBeamBrick.y > -self.laserBeamBrick.height then
-                        dealDamage({stats = {damage = damage}}, self.laserBeamBrick)
+                        dealDamage({stats = {damage = damage}, name = "Laser Portals"}, self.laserBeamBrick)
                         self.laserBeamTimer = 0  -- Reset timer after damage
                         if hasItem("Spray and Pray") then
                             self.angleOffset = math.random(-100, 100)/10
@@ -723,7 +723,7 @@ local function newLaserPortal(damage, fireRate)
                 love.graphics.setColor(1, 1, 1, 1)
                 drawImageCentered(runeCircleImg, self.x, self.y, runeCircleImg:getWidth()/2 * portalScale, runeCircleImg:getHeight()/2 * portalScale, angle, 0, 0)
                 -- laser draw
-                local chargeProgress = self.laserBeamTimer / (1/fireRate)
+                local chargeProgress = self.laserBeamTimer / (1.5/fireRate)
                 print("Laser Portals chargeProgress:" .. chargeProgress .. " laserBeamTimer:" .. self.laserBeamTimer)
                 if hasItem("Spray and Pray") then
                     local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
@@ -771,7 +771,7 @@ local function shoot(gunName, ball)
     end
     if hasItem("Cover Laser") then
         if getItem("Cover Laser"):onShoot() then
-            newLaserPortal(unlockedBallTypes[gunName].stats.damage, unlockedBallTypes[gunName].stats.fireRate)
+            newLaserPortal(unlockedBallTypes[gunName].stats.damage or 3, unlockedBallTypes[gunName].stats.fireRate or 5)
         end
     end   
     if ball ~= nil then
@@ -1383,18 +1383,18 @@ fire = function(techName)
             unlockedBallTypes["Rocket Launcher"].currentAmmo = unlockedBallTypes["Rocket Launcher"].currentAmmo - 1
             -- Reset ammo and set cooldown
             if unlockedBallTypes["Rocket Launcher"].currentAmmo <= 0 then
-                local cooldownValue = getStat("Rocket Launcher", "cooldown") * 0.8
+                local cooldownValue = getStat("Rocket Launcher", "cooldown") * 1
                 if accelerationOn then
                     cooldownValue = cooldownValue * 0.5
                 end
-                local timeUntilNextShot = math.max(cooldownValue, 6/getStat("Rocket Launcher", "fireRate"))
+                local timeUntilNextShot = math.max(cooldownValue, 5/getStat("Rocket Launcher", "fireRate"))
                 Timer.after(timeUntilNextShot, function()
                     unlockedBallTypes["Rocket Launcher"].currentAmmo = getStat("Rocket Launcher", "ammo")
                     fire("Rocket Launcher")
                 end)
                 createCooldownVFX(cooldownValue)
             else
-                local timerLength = 6/getStat("Rocket Launcher", "fireRate")
+                local timerLength = 5/getStat("Rocket Launcher", "fireRate")
                 if hasItem("Spray and Pray") then
                     local timerMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
                     timerLength = timerLength * timerMult
@@ -1853,7 +1853,7 @@ local function ballListInit()
             x = screenWidth / 2,
             y = screenHeight / 2,
             ballAmount = 1,
-            speedMult = 0.3,
+            speedMult = 0.5,
             size = 2,
             rarity = "rare",
             startingPrice = 100,
@@ -1881,7 +1881,7 @@ local function ballListInit()
                 speed = 150,
                 damage = 1,
             },
-            attractionStrength = 500
+            attractionStrength = 425
         },
         ["Laser Ball"] = {
             name = "Laser Ball",
@@ -2022,7 +2022,7 @@ local function ballListInit()
             size = 1,
             rarity = "common",
             ammoMult = 2,
-            fireRateMult = 1.8,
+            fireRateMult = 1.85,
             startingPrice = 25,
             description = "Fire bullets that die on impact in bursts.",
             onBuy = function() 
@@ -3170,7 +3170,7 @@ local function techUpdate(dt)
             
             -- Deal damage if we've been on target long enough
             
-            local cooldownLength = 1/((getStat("Laser Beam", "fireRate")))
+            local cooldownLength = 0.9/((getStat("Laser Beam", "fireRate")))
             if hasItem("Spray and Pray") then
                 local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
                 cooldownLength = cooldownLength * sprayMult
@@ -4024,7 +4024,7 @@ function Balls.update(dt, paddle, bricks)
         if bricksInEllipse(rocket.x, rocket.y, 20, 60) then
             playSoundEffect(explosionSFX, 0.5, 1, false, true)
             -- Explosion damage
-            local scale = 2 + getStat("Rocket Launcher", "range") * 0.4
+            local scale = 2 + getStat("Rocket Launcher", "range") * 0.5
             local explosionX, explosionY = rocket.x - math.sin(math.rad(rocket.angle)) * rocket.radius, rocket.y - math.cos(math.rad(rocket.angle)) * rocket.radius
             local touchingBricks = getBricksInCircle((explosionX), (explosionY), scale*25)
             for _, hitBrick in ipairs(touchingBricks) do
@@ -4097,7 +4097,7 @@ function Balls.update(dt, paddle, bricks)
                 
                 -- Deal damage if we've been on target long enough
                 
-                local cooldownLength = 2.2/((getStat("Laser Ball", "fireRate")))
+                local cooldownLength = 2.5/((getStat("Laser Ball", "fireRate")))
                 if hasItem("Spray and Pray") then
                     local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
                     cooldownLength = cooldownLength * sprayMult
@@ -4115,7 +4115,7 @@ function Balls.update(dt, paddle, bricks)
             local closestDist = math.huge
             local highestBrick
             ball.randomSeed = ball.randomSeed or math.random(1, 1000000)
-            local angle = -math.rad(gameTime * 15 + ball.randomSeed)
+            local angle = math.sin((gameTime + ball.randomSeed) * 0.5) * 1.5
             local startX = ball.x
             local startY = ball.y
             -- Calculate end point of laser using direction vector from angle
@@ -4753,7 +4753,7 @@ local function techDraw()
     if unlockedBallTypes["Laser Beam"] then
         -- Draw the actual Laser Beam
         -- Calculate charge progress
-        local chargeProgress = laserBeamTimer / ((1/((Player.currentCore == "Damage Core" and 1 or getStat("Laser Beam", "fireRate")))))
+        local chargeProgress = laserBeamTimer / ((0.9/((Player.currentCore == "Damage Core" and 1 or getStat("Laser Beam", "fireRate")))))
         if hasItem("Spray and Pray") then
             local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
             chargeProgress = math.min(1, chargeProgress / sprayMult)
@@ -4849,7 +4849,7 @@ function Balls:draw()
     for _, ball in ipairs(Balls) do
         if ball.name == "Laser Ball" then
             ball.laserBeamTimer = ball.laserBeamTimer or 0
-            local chargeProgress = ball.laserBeamTimer / ((2.2/((getStat("Laser Ball", "fireRate")))))
+            local chargeProgress = ball.laserBeamTimer / ((2.5/((getStat("Laser Ball", "fireRate")))))
             if hasItem("Spray and Pray") then
                 local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
                 chargeProgress = math.min(1, chargeProgress / sprayMult)
@@ -4860,7 +4860,8 @@ function Balls:draw()
             local b = 0.175 - 0.175 * chargeProgress
             local a = 0.5 + 0.5 * chargeProgress
             love.graphics.setColor(r, g, b, a)
-            local angle = -math.rad(gameTime * 15 + (ball.randomSeed or 0))
+            ball.randomSeed = ball.randomSeed or math.random() * 1000
+            local angle = math.sin((gameTime + ball.randomSeed) * 0.5) * 1.5
             local startX = ball.x
             local startY = ball.y
             local beamLength = 2000  -- Match update logic
