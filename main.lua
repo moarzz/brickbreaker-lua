@@ -4,6 +4,7 @@ WindowCorrector = require("Libraries.windowCorrector");
 
 --! these three *need* to be the first code 2 run otherwise i will eat you
 
+Trail = require("trail") -- trail logic
 EventQueueRef = require("Libraries.eventQueue.eventQueue")
 Events = require("Libraries.eventQueue.events")
 

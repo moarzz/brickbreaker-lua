@@ -439,9 +439,9 @@ local function brickDestroyed(brick)
     if hasItem("Scavenger") then
         for i=1, itemCount("Scavenger") do
             if hasItem("Four Leafed Clover") then
-                chanceMult = chanceMult + 1
+                chanceMult = chanceMult + 1.2
             else
-                chanceMult = chanceMult + 0.5
+                chanceMult = chanceMult + 0.6
             end
         end
     end
@@ -4088,6 +4088,8 @@ function Balls.update(dt, paddle, bricks)
     local electroCount = hasElectroItem and itemCount("Electromagnetic Alignment") or 0
     local MAX_RANGE_SQ = 500 * 500
     for _, ball in ipairs(Balls) do
+
+        -- Laser ball logic
         if ball.name == "Laser Ball" then
             local laserBeam = unlockedBallTypes["Laser Ball"]
         
@@ -4203,7 +4205,12 @@ function Balls.update(dt, paddle, bricks)
         
         -- Trail logic (only for ball type)
         if ball.type == "ball" then
-            if not ball.lastTrailPos then
+            if ball.activeTrail then
+                ball.activeTrail:addPosition(ball.x, ball.y);
+            else
+                table.insert(ball.activeTrail, Trail.new(20, 100));
+            end
+            --[[if not ball.lastTrailPos then
                 ball.lastTrailPos = {x = ball.x, y = ball.y}
             else
                 ball.lastTrailPos.x = ball.x
@@ -4216,7 +4223,7 @@ function Balls.update(dt, paddle, bricks)
             -- Remove old trail points
             if #trail > ballTrailLength then
                 table.remove(trail, 1)
-            end
+            end]]
         end
         
         -- Magnetic attraction
@@ -4894,7 +4901,10 @@ function Balls:draw()
         
         -- Draw trail (skip for phantom balls or dead balls)
         if not ball.dead and ballName ~= "Phantom Ball" then
-            local trail = ball.trail
+            if ball.activeTrail then
+                ball.activeTrail:draw()
+            end
+            --[[local trail = ball.trail
             if trail then
                 local trailLen = #trail
                 
@@ -4941,7 +4951,7 @@ function Balls:draw()
                     
                     love.graphics.setColor(1, 1, 1, 1)
                 end
-            end
+            end]]
         end
         
         -- Draw ball
