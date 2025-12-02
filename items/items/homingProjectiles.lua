@@ -10,8 +10,8 @@ HomingProjectiles.unique = true; -- does smthn ig
 function HomingProjectiles.new()
     local instance = setmetatable({}, HomingProjectiles):init();
 
-    -- instance.stats.fireRate = 1;
-    instance.stats.ammo = 1;
+    instance.stats.fireRate = 1;
+    -- instance.stats.ammo = 1;
     instance.stats.cooldown = -1;
 
     return instance;

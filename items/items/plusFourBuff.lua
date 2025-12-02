@@ -1,11 +1,11 @@
-local PlusFourBuff = ItemBase.new();
-PlusFourBuff.__index = PlusFourBuff;
-PlusFourBuff.name = "Plus Four Buff";
-PlusFourBuff.description = "";
-PlusFourBuff.rarity = "rare";
+local PlusFiveBuff = ItemBase.new();
+PlusFiveBuff.__index = PlusFiveBuff;
+PlusFiveBuff.name = "Plus Five Buff";
+PlusFiveBuff.description = "";
+PlusFiveBuff.rarity = "rare";
 
-function PlusFourBuff.new()
-    local instance = setmetatable({}, PlusFourBuff):init();
+function PlusFiveBuff.new()
+    local instance = setmetatable({}, PlusFiveBuff):init();
 
     local itemStats = {};
     local statUnlocked = {}
@@ -56,11 +56,11 @@ function PlusFourBuff.new()
         end
     end
     instance.name = name;
-    instance.stats[randStat] = randStat == "cooldown" and -4 or (randStat == "damage" and 2 or 4);
+    instance.stats[randStat] = randStat == "cooldown" and -4 or (randStat == "damage" and 3 or 5);
     instance.imageReference = "assets/sprites/UI/ItemIcons/" .. randStat .. (randStat == "cooldown" and "-.png" or "+.png")
     instance.image = love.graphics.newImage(instance.imageReference);
 
     return instance;
 end
 
-return PlusFourBuff;
+return PlusFiveBuff;

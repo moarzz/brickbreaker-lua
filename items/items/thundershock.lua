@@ -1,7 +1,7 @@
 local Thundershock = ItemBase.new();
 Thundershock.__index = Thundershock;
 Thundershock.name = "Thundershock";
-Thundershock.description = "<font=bold>On brick destroyed<font=default>\nSummon a lightning bolt that deals 35% of a random brick's health";
+Thundershock.description = "<font=bold>On brick destroyed<font=default>\n35% chance to Summon a lightning bolt that deals 50% of a random brick's health";
 Thundershock.rarity = "uncommon";
 Thundershock.shotCount = 0;
 Thundershock.unique = true
@@ -13,7 +13,9 @@ function Thundershock.new()
 end
 
 function Thundershock:onBrickDestroyed()
-    playSoundEffect(lightningPulseSFX, 0.1, 0.85)
+    if math.random() > (hasItem("Four Leafed Clover") and 0.35 or 0.7) then
+        return
+    end
     local selectedBrickIds = {}
     local iterations = 0
     local go = true
@@ -22,15 +24,20 @@ function Thundershock:onBrickDestroyed()
         iterations = iterations + 1
         local randomBrickId = math.random(1, #bricks)
         randomBrick = bricks[randomBrickId]
-        if randomBrick.y >= 0 and randomBrick.health > 0 and (not randomBrick.destroyed) and (randomBrick.type ~= "boss") then
-            go = false
-        elseif iterations >= 100 then
-            go = false
+        if randomBrick then
+            if randomBrick.y >= 0 and randomBrick.health > 0 and (not randomBrick.destroyed) and (randomBrick.type ~= "boss") then
+                go = false
+            elseif iterations >= 100 then
+                go = false
+            end
         end
+    end
+    if not randomBrick then
+        return
     end
     createSpriteAnimation(randomBrick.x + randomBrick.width/2, randomBrick.y + randomBrick.height/2, 0.25, sparkVFX, 512, 512, 0.075, 1)
 
-    local thunderDamage = math.ceil(randomBrick.health * 0.35)
+    local thunderDamage = math.ceil(randomBrick.health * (hasItem("Four Leafed Clover") and 0.35 or 0.7))
     Timer.after(0.125, function()
         if randomBrick.type ~= "boss" then
             dealDamage({stats = {damage = thunderDamage}}, randomBrick)

@@ -14,6 +14,7 @@ Textures = require("textures") -- for CROOKYYYYY
 Crooky = require("crooky") -- tax evasion goat
 
 UtilityFunction = require("UtilityFunction") -- utility functions
+DifficultyModifiers = require("difficultyModifiers") -- difficulty modifiers
 Player = require("Player") -- player logic
 Balls = require("Balls") -- ball logic
 FancyText = require("Libraries.fancyText") -- fancy text rendering
@@ -707,7 +708,7 @@ local function generateRow(brickCount, yPos)
                     }
                     table.insert(shieldAuras, shieldAura)
                     brickId = brickId + 1
-                elseif (totalGoldBricksGeneratedThisRun < math.floor((gameTime + 25)/100)) then
+                elseif (totalGoldBricksGeneratedThisRun < math.floor((gameTime + 25)/120)) then
                     totalGoldBricksGeneratedThisRun = totalGoldBricksGeneratedThisRun + 1
                     local goldBrick = {
                         type = "gold",
@@ -953,7 +954,7 @@ function love.load()
     love.audio.setVolume(globalVolume or 1)
     Crooky:setVisible(not firstRunCompleted)
 
-    backgroundMusic:setVolume(musicVolume/4)
+    backgroundMusic:setVolume(musicVolume/3)
     love.window.setFullscreen(fullScreenCheckbox);
 
     Crooky:giveInfo("game", "open")
@@ -1155,12 +1156,12 @@ function changeMusic(newMusicStage)
         backgroundMusic:stop()
         backgroundMusic = love.audio.newSource(ref, "stream")
         backgroundMusic:setLooping(true)
-        backgroundMusic:setVolume(musicVolume/4)
+        backgroundMusic:setVolume(musicVolume/3)
         backgroundMusic:play()
     else
         backgroundMusic = love.audio.newSource(ref, "stream")
         backgroundMusic:setLooping(true)
-        backgroundMusic:setVolume(musicVolume/4)
+        backgroundMusic:setVolume(musicVolume/3)
         backgroundMusic:play()
     end
     currentMusicRef = newMusicStage
@@ -1223,7 +1224,7 @@ local function updateMusicEffect(dt)
             else
                 currentVolume = math.min(currentVolume + volumeChangeRate * dt, targetMusicVolume)
             end
-            backgroundMusic:setVolume(musicVolume/4 * currentVolume)
+            backgroundMusic:setVolume(musicVolume/3 * currentVolume)
         end
     end
 end
@@ -1294,6 +1295,7 @@ local function gameFixedUpdate(dt)
 
         dt = dt * playRate -- Adjust the delta time based on the playback rate
         upgradesUI.update(dt) -- Update the upgrades UI
+
         updateAllTweens(dt) -- Update all tweens
 
 
@@ -2259,7 +2261,7 @@ function drawSettingsMenu()
     local musicSlider = suit.Slider(musicSliderInfo, {id = "music_slider"}, sliderX, sliderY + 40, sliderWidth, sliderHeight)
     musicVolume = musicSliderInfo.value
     if backgroundMusic then
-        backgroundMusic:setVolume(musicVolume/4) -- Adjust the volume of the background music
+        backgroundMusic:setVolume(musicVolume/3) -- Adjust the volume of the background music
     else
         print("Background music not found")
     end
@@ -2811,7 +2813,7 @@ function love.keypressed(key)
 
         -- add weapon
         if key == "7" then  
-            Balls.addBall("Laser Ball")
+            Balls.addBall("Laser Turrets")
         end
 
         if key == "8" then

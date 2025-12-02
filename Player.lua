@@ -291,7 +291,7 @@ Player.availableCores = {
     },
     {
         name = "Fast Study Core",
-        description = "gain +5% experience gain per Player Level",
+        description = "gain +4% experience gain per Player Level",
         price = 500,
         startingItem = "Laser Beam"
     },
@@ -329,7 +329,7 @@ Player.availableCores = {
 Player.coreDescriptions = {
     ["Amount Core"] = "gain +1 amount for every 5 player level",
     ["Spray and Pray Core"] = "gain +1 fireRate for every 5 Player level",
-    ["Fast Study Core"] = "gain +5% experience gain per Player Level",
+    ["Fast Study Core"] = "gain +4% experience gain per Player Level",
     ["Hacker Core"] = "All Weapons start with an upgradePrice of 0",
     ["Loan Core"] = "start with 25$. gain 3$ instead of 5$ on level up.",
     ["Size Core"] = "gain 7% paddle size per level",
@@ -471,7 +471,7 @@ function Player.levelUp()
     elseif Player.currentCore == "Size Core" then
         paddle.width = paddle.width + 20
     elseif Player.currentCore == "Fast Study Core" then
-        Player.xpGainMult = Player.xpGainMult + 0.05
+        Player.xpGainMult = Player.xpGainMult + 0.04
     elseif Player.level % 5 == 0 and Player.currentCore == "Spray and Pray Core" then -- THIS IS NOT AN ERROR
         Player.permanentUpgrades.fireRate = (Player.permanentUpgrades.fireRate or 0) + 1
     elseif "Amount Core" == Player.currentCore and Player.level % 5 == 0 then
