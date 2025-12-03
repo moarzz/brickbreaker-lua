@@ -365,6 +365,9 @@ end
 
 local function getRandomPowerupType()
     local powerupTypes = {"moneyBag", "nuke", "acceleration", "doubleDamage"}
+    if gameTime >= 450 then
+        powerupTypes = {"moneyBag", "nuke"--[[, "freeze"]]}
+    end
     local powerup = powerupTypes[math.random(#powerupTypes)] 
     --[[if getHighestBrickY() < screenHeight - 400 then
         local powerupTypesNoFreeze = {"moneyBag", "nuke", "acceleration", "doubleDamage"}
@@ -697,7 +700,7 @@ local function newLaserPortal(damage, fireRate, name)
                 -- Calculate end point of laser using direction vector from angle
                 local dirX = math.sin(angle)  -- X component of direction
                 local dirY = -math.cos(angle) -- Y component of direction (negative because we're going up)
-                local laserLength = screenHeight + 500  -- Extend past screen top
+                local laserLength = 2500  -- Extend past screen top
                 local endX = startX + dirX * laserLength
                 local endY = startY + dirY * laserLength
                 
@@ -771,7 +774,7 @@ local function newLaserPortal(damage, fireRate, name)
                 local angle = (self.angle + math.rad(self.angleOffset)) + self.swayAngleOffset
                 local startX = self.x
                 local startY = self.y
-                local beamLength = screenHeight + 500  -- Match update logic
+                local beamLength = 2500  -- Match update logic
                 
                 -- Calculate distance to target brick if we have one
                 if self.laserBeamBrick and self.laserBeamBrick.health > 0 then
@@ -811,7 +814,7 @@ local function newLaserPortal(damage, fireRate, name)
                 local angle = (self.angle + math.rad(self.angleOffset)) + self.swayAngleOffset
                 local startX = self.x
                 local startY = self.y
-                local beamLength = screenHeight + 500  -- Match update logic
+                local beamLength = 2500  -- Match update logic
                 
                 -- Calculate distance to target brick if we have one
                 if self.laserBeamBrick and self.laserBeamBrick.health > 0 then
@@ -1566,6 +1569,7 @@ local function fire(techName)
             turretsInQueue = turretsInQueue + 1
         end
     end
+    
     if techName == "Laser Turrets" then
         -- handles the entire logic for spawning, placing and after 10 seconds, destroying a turret. also handles first shot
         if #laserTurrets < 50 then
@@ -1601,7 +1605,7 @@ local function fire(techName)
                         
                         -- Deal damage if we've been on target long enough
                         
-                        local cooldownLength = 1.5/getStat("Laser Turrets", "fireRate")
+                        local cooldownLength = 0.4
                         if hasItem("Spray and Pray") then
                             local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
                             cooldownLength = cooldownLength * sprayMult
@@ -1640,7 +1644,7 @@ local function fire(techName)
                     -- Calculate end point of laser using direction vector from angle
                     local dirX = math.sin(angle)  -- X component of direction
                     local dirY = -math.cos(angle) -- Y component of direction (negative because we're going up)
-                    local laserLength = screenHeight + 500  -- Extend past screen top
+                    local laserLength = 2500  -- Extend past screen top
                     local endX = startX + dirX * laserLength
                     local endY = startY + dirY * laserLength
                     
@@ -1689,7 +1693,7 @@ local function fire(techName)
                     -- laser beam draw
                     -- Draw the actual Laser Beam
                     -- Calculate charge progress
-                    local chargeProgress = self.laserBeamTimer / (1.5/getStat("Laser Turrets", "fireRate"))
+                    local chargeProgress = self.laserBeamTimer / 0.5
                     if hasItem("Spray and Pray") then
                         local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
                         chargeProgress = math.min(1, chargeProgress / sprayMult)
@@ -1708,7 +1712,7 @@ local function fire(techName)
                     local cannonOffsetDistance = self.radius * 0.8  -- Adjust this multiplier to position it correctly
                     local startX = self.x + normalizedSpeedX * cannonOffsetDistance
                     local startY = self.y + normalizedSpeedY * cannonOffsetDistance
-                    local beamLength = screenHeight + 500  -- Match update logic
+                    local beamLength = 2500  -- Match update logic
                     
                     -- Calculate distance to target brick if we have one
                     if self.laserBeamBrick and self.laserBeamBrick.health > 0 then
@@ -1738,7 +1742,7 @@ local function fire(techName)
                 rotateTurret(turret, startDir == 1, 1.5, 0.7)
             end)
 
-            local turretLength = 10
+            local turretLength = getStat("Laser Turrets", "ammo")/2 + 3
             Timer.after(turretLength, function()
                 turret.alive = false -- Mark turret as dead
                 local turretDeathTween = tween.new(0.5, turret, {radius = 0}, tween.ouQuint)
@@ -1758,13 +1762,59 @@ local function fire(techName)
                 end
             end)
 
-            local cooldownValue = 1.5 + getStat("Laser Turrets", "cooldown") * 0.4
+            local cooldownValue = 1 + getStat("Laser Turrets", "cooldown") * 0.4
             if accelerationOn then
                 cooldownValue = cooldownValue * 0.5
             end
             Timer.after(cooldownValue, function()
                 -- Refill ammo after cooldown
                 fire("Laser Turrets")
+            end)
+            createCooldownVFX(cooldownValue)
+        else
+            turretsInQueue = turretsInQueue + 1
+        end
+    end
+
+    if techName == "Mortar Turrets" then
+        -- handles the entire logic for spawning, placing and after 10 seconds, destroying a turret. also handles first shot
+        if #turrets < 50 then
+            local turretType = unlockedBallTypes["Mortar Turrets"]
+            local id = currentTurretId
+            local destination = {x = (math.random(50, screenWidth - 50)), y = math.random(math.max(paddle.y + 50, screenHeight - 300), screenHeight - 25)}
+            local startDir = math.random(0,1)
+            local turret = {
+                id = currentTurretId,
+                x = paddle.x + paddle.width / 2,
+                y = paddle.y + paddle.height/2, -- Position above the paddle
+                radius = 0,
+                currentAmmo = getStat("Mortar Turrets", "ammo"),
+                angle = (startDir == 1 and math.pi*0.25 or -math.pi*0.25),
+                angleOffset = math.random(-100, 100)/100 * math.pi * 0.2,
+                stats = turretType.stats,
+                alive = true,
+            }
+            currentTurretId = currentTurretId + 1
+            local lookDirectionX, lookDirectionY = normalizeVector(screenWidth/2 - destination.x, - destination.y)
+            local directionAngle = 0
+            local turretPositionTween = tween.new(0.5, turret, {x = destination.x, y = destination.y, angle = turret.angle, radius = 65}, tween.outCubic)
+            addTweenToUpdate(turretPositionTween)
+            table.insert(mortarTurrets, turret)
+            -- first shot when turret in position
+            Timer.after(0.5, function() 
+                rotateTurret(turret, startDir == 1)
+            end)
+            Timer.after(1 + math.random(0, 100) / 100, function()
+                turretShoot(turret, "mortar")
+            end)
+            local cooldownValue = 1.5 + getStat("Mortar Turrets", "cooldown") * 0.4
+            if accelerationOn then
+                cooldownValue = cooldownValue * 0.5
+            end
+            Timer.after(cooldownValue, function()
+                -- Refill ammo after cooldown
+                turret.currentAmmo = getStat("Mortar Turrets", "ammo")
+                fire("Mortar Turrets")
             end)
             createCooldownVFX(cooldownValue)
         else
@@ -2063,17 +2113,19 @@ local function cast(spellName, brick, forcedDamage)
     end
     if spellName == "Laser Portals" then
         for i=1, getStat("Laser Portals", "amount") do
-            Timer.after((i-1) * 0.2, function()
+            Timer.after((i-1) * 0.5, function()
                 newLaserPortal(getStat("Laser Portals", "damage"), getStat("Laser Portals", "fireRate"), "Laser Portals")
             end)
         end
 
         -- playSoundEffect()
-        local cooldownValue = getStat("Laser Portals", "cooldown")
-        local timeUntilNextCast = math.max(cooldownValue, 0) * 0.4 + 2 + math.max((getStat("Laser Portals", "amount") - 1), 0) * 0.2
-        createCooldownVFX(timeUntilNextCast)
-        Timer.after(timeUntilNextCast, function()
-            cast("Laser Portals")
+        Timer.after(0.5 * getStat("Laser Portals", "amount") - 0.25, function()
+            local cooldownValue = getStat("Laser Portals", "cooldown")
+            local timeUntilNextCast = math.max(cooldownValue, 0) * 0.4 + 2
+            createCooldownVFX(timeUntilNextCast)
+            Timer.after(timeUntilNextCast, function()
+                cast("Laser Portals")
+            end)
         end)
     end
 end
@@ -2203,7 +2255,7 @@ local function ballListInit()
                 cast("Laser Portals")
             end,
             stats = {
-                amount = 2,
+                amount = 1,
                 damage = 1,
                 fireRate = 2,
                 cooldown = 10,
@@ -2528,7 +2580,7 @@ local function ballListInit()
             end,
             stats = {
                 ammo = 9,
-                cooldown = 12,
+                cooldown = 11,
                 damage = 1,
             },
         },
@@ -2539,13 +2591,13 @@ local function ballListInit()
             y = screenHeight / 2,
             size = 1,
             noAmount = true,
-            ammoMult = 3,
+            ammoMult = 2,
             rarity = "uncommon",
             startingPrice = 50,
             description = "Generates turrets that shoot laser beams forward. \n(max 20)",
             bulletSpeed = 1500,
             color = {0.5, 0.5, 0.5, 1}, -- Grey color for Turret Generator
-            currentAmmo = 9 + ((Player.permanentUpgrades.ammo or 0)) * 3,
+            currentAmmo = 6 + ((Player.permanentUpgrades.ammo or 0)) * 2,
             onBuy = function() 
                 fire("Laser Turrets")
             end,
@@ -2553,8 +2605,8 @@ local function ballListInit()
                 return Player.currentCore ~= "Damage Core"
             end,
             stats = {
-                fireRate = 2,
-                cooldown = 12,
+                ammo = 6,
+                cooldown = 10,
                 damage = 1,
             },
         },
@@ -2565,7 +2617,7 @@ local function ballListInit()
             y = screenHeight / 2,
             size = 1,
             noAmount = true,
-            ammoMult = 3,
+            ammoMult = 1,
             rarity = "uncommon",
             startingPrice = 50,
             description = "Generates turrets that shoot explosive shells forward. \n(max 20)",
@@ -2579,7 +2631,7 @@ local function ballListInit()
                 return Player.currentCore ~= "Damage Core"
             end,
             stats = {
-                ammo = 9,
+                ammo = 3,
                 cooldown = 12,
                 damage = 1,
             },
@@ -3274,155 +3326,166 @@ end
 local function paddleCollisionCheck(ball, paddle)
     local effectiveRadius = ball.name == "Phantom Ball" and getStat(ball.name, "range") * 8 or ball.radius
     
-    -- Paddle bounds
+    -- Cache paddle bounds (computed once)
     local paddleLeft = paddle.x
     local paddleRight = paddle.x + paddle.width
     local paddleTop = paddle.y - 10
     local paddleBottom = paddle.y + paddle.height + 10
     
-    -- First, do a basic AABB collision check (for normal speed balls)
-    local basicCollision = ball.x + effectiveRadius > paddleLeft and 
-                          ball.x - effectiveRadius < paddleRight and
-                          ball.y + effectiveRadius > paddleTop and 
-                          ball.y - effectiveRadius < paddleBottom
+    -- Early exit: check if ball is in paddle's horizontal range
+    local ballLeft = ball.x - effectiveRadius
+    local ballRight = ball.x + effectiveRadius
+    if ballRight < paddleLeft or ballLeft > paddleRight then
+        return false
+    end
     
-    -- Check if ball is moving in the right direction
-    local correctDirection = (ball.y > paddleBottom and ball.speedY < 0) or 
-                            (ball.y < paddleTop and ball.speedY > 0)
+    -- Early exit: check if ball is moving away from paddle
+    local ballTop = ball.y - effectiveRadius
+    local ballBottom = ball.y + effectiveRadius
+    local ballAbovePaddle = ballBottom < paddleTop
+    local ballBelowPaddle = ballTop > paddleBottom
     
-    -- If basic collision and correct direction, we have a hit
+    if (ballAbovePaddle and ball.speedY < 0) or (ballBelowPaddle and ball.speedY > 0) then
+        return false  -- Moving away
+    end
+    
+    -- Check for collision (either overlapping or swept)
     local collision = false
+    local hitY = nil
     
-    if basicCollision and correctDirection then
-        collision = true
+    -- Direct overlap check
+    if ballBottom > paddleTop and ballTop < paddleBottom then
+        -- Ball is overlapping paddle vertically
+        if (ball.speedY > 0 and ballTop <= paddleTop) or 
+           (ball.speedY < 0 and ballBottom >= paddleBottom) then
+            collision = true
+            hitY = ball.speedY > 0 and (paddleTop - effectiveRadius) or (paddleBottom + effectiveRadius)
+        end
     else
-        -- If no basic collision, try sweep test for high-speed balls
-        -- Calculate where the ball was based on its speed
-        local lookbackTime = 0.05 -- Look back 50ms
-        local prevX = ball.x - ball.speedX * lookbackTime
-        local prevY = ball.y - ball.speedY * lookbackTime
-        
-        -- Determine which paddle face to check
+        -- Sweep test for fast-moving balls (only when needed)
+        local prevY = ball.y - ball.speedY * 0.05
         local targetY
-        if ball.speedY < 0 and ball.y > paddleTop then
-            -- Ball moving up, check bottom face of paddle
-            targetY = paddleBottom + effectiveRadius
-        elseif ball.speedY > 0 and ball.y < paddleBottom then
-            -- Ball moving down, check top face of paddle
+        
+        if ball.speedY > 0 and prevY < paddleTop and ball.y > paddleTop then
+            -- Ball crossed top face
             targetY = paddleTop - effectiveRadius
+        elseif ball.speedY < 0 and prevY > paddleBottom and ball.y < paddleBottom then
+            -- Ball crossed bottom face
+            targetY = paddleBottom + effectiveRadius
         end
         
-        if targetY and ball.speedY ~= 0 then
-            -- Check if ball path crossed the paddle plane
-            if (prevY - targetY) * (ball.y - targetY) <= 0 then
-                -- Calculate intersection point
-                local t = (targetY - prevY) / (ball.y - prevY)
-                local intersectX = prevX + (ball.x - prevX) * t
-                
-                -- Check if intersection is within paddle horizontal bounds
-                if intersectX + effectiveRadius >= paddleLeft and 
-                   intersectX - effectiveRadius <= paddleRight and
-                   t >= 0 and t <= 1 then
-                    collision = true
-                    -- Move ball to collision point
-                    ball.x = intersectX
-                    ball.y = targetY
-                end
-            end
+        if targetY then
+            collision = true
+            hitY = targetY
         end
     end
     
-    -- If we detected a collision, process it
-    print("paddle collision check at time " .. gameTime .. " / collision = " .. tostring(collision))
-    if collision then
-        playSoundEffect(paddleBoopSFX, 0.4, 0.8, false, true)
+    if not collision then
+        return false
+    end
+    
+    -- Process collision (only when detected)
+    if hitY then
+        ball.y = hitY
+    end
+    
+    playSoundEffect(paddleBoopSFX, 0.4, 0.8, false, true)
+    
+    -- Paddle Defense System (cache item checks)
+    if hasItem("Paddle Defense System") then
+        local bulletSpeed = 1500
+        local speedX = math.random(-500, 500)
+        local speedYMag = math.sqrt(bulletSpeed * bulletSpeed - speedX * speedX)
+        local hasDagger = hasItem("Assassin's Dagger")
+        local hasClover = hasItem("Four Leafed Clover")
+        local critChance = hasClover and 50 or 25
         
-        if hasItem("Paddle Defense System") then
-            local bulletSpeed = 1500
-            local speedX = math.random(-500,500)
-            local speed = {x = speedX, y = -math.sqrt(bulletSpeed*bulletSpeed - speedX*speedX)}
-            local critChance = hasItem("Four Leafed Clover") and 50 or 25
-            local bullet = {
-                x = paddle.x + paddle.width/2,
-                y = paddle.y - 5,
-                speedX = speed.x,
-                speedY = speed.y,
-                radius = 5,
-                stats = {damage = getStat(ball.name, "damage") * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1), type = "gun"},
-                name = "Paddle Defense System",
-                type = "bullet",
-                golden = math.random(1,100) <= getGoldenBulletChance(),
+        local bullet = {
+            x = paddle.x + paddle.width * 0.5,
+            y = paddle.y - 5,
+            speedX = speedX,
+            speedY = -speedYMag,
+            radius = 5,
+            stats = {
+                damage = getStat(ball.name, "damage") * (hasDagger and math.random(1, 100) <= critChance and 2 or 1),
+                type = "gun"
+            },
+            name = "Paddle Defense System",
+            type = "bullet",
+            golden = math.random(1, 100) <= getGoldenBulletChance(),
+        }
+        table.insert(bullets, bullet)
+        
+        -- Sudden Mitosis
+        local mitosisChance = hasClover and 20 or 10
+        if math.random(1, 100) <= mitosisChance and hasItem("Sudden Mitosis") then
+            local totalSpeed = 500
+            local speedX = math.random(-totalSpeed * 0.6, totalSpeed * 0.6)
+            local speedY = -math.sqrt(math.max(0.01, totalSpeed^2 - speedX^2))
+            local ballTemplate = ballList["Ball"]
+            
+            local newBall = {
+                type = "ball",
+                name = ballTemplate.name,
+                x = paddle.x + paddle.width * 0.5,
+                y = paddle.y - 6,
+                speedMult = ballTemplate.speedMult or 1,
+                radius = (ballTemplate.radius or 10) * 1.5,
+                drawSizeBoost = 1,
+                drawSizeMult = 0.5,
+                drawSizeBoostTweens = {},
+                onBounce = ballTemplate.onBounce,
+                currentlyOverlappingBricks = {},
+                attractionStrength = ballTemplate.attractionStrength,
+                stats = ballTemplate.stats,
+                speedX = speedX,
+                speedY = speedY,
+                dead = false,
+                trail = {},
+                speedMultiplier = 1
             }
-            table.insert(bullets, bullet)
-            local chance = hasItem("Four Leafed Clover") and 20 or 10
-            if math.random(1,100) <= chance and hasItem("Sudden Mitosis") then
-                local totalSpeed = 500
-                local speedX = math.random(-totalSpeed*0.6, totalSpeed*0.6)
-                local speedY = -math.sqrt(math.max(0.01, totalSpeed^2 - speedX^2))
-                local ballTemplate = ballList["Ball"]
-                local newBall = {
-                    type = "ball",
-                    name = ballTemplate.name,
-                    x = paddle.x + paddle.width / 2,
-                    y = paddle.y - 6,
-                    speedMult = ballTemplate.speedMult or 1,
-                    radius = (ballTemplate.radius or 10) * 1.5,
-                    drawSizeBoost = 1,
-                    drawSizeMult = 0.5,
-                    drawSizeBoostTweens = {},
-                    onBounce = ballTemplate.onBounce or nil,
-                    currentlyOverlappingBricks = {},
-                    attractionStrength = ballTemplate.attractionStrength or nil,
-                    stats = ballTemplate.stats,
-                    speedX = speedX,
-                    speedY = speedY,
-                    dead = false,
-                    trail = {},
-                    speedMultiplier = 1
-                }
-                table.insert(Balls, newBall)
-                Timer.after(8, function()
-                    local ballDeathTween = tween.new(0.5, newBall, {drawSizeMult = 0}, tween.outCubic)
-                    addTweenToUpdate(ballDeathTween)
-                    Timer.after(0.5, function()
-                        for i, b in ipairs(Balls) do
-                            if b == newBall then
-                                table.remove(Balls, i)
-                                break
-                            end
-                        end 
-                    end)
+            table.insert(Balls, newBall)
+            
+            Timer.after(8, function()
+                local ballDeathTween = tween.new(0.5, newBall, {drawSizeMult = 0}, tween.outCubic)
+                addTweenToUpdate(ballDeathTween)
+                Timer.after(0.5, function()
+                    for i = #Balls, 1, -1 do
+                        if Balls[i] == newBall then
+                            table.remove(Balls, i)
+                            break
+                        end
+                    end 
                 end)
-            end
+            end)
         end
+    end
 
-        ball.speedY = -ball.speedY
-        local hitPosition = (ball.x - (paddle.x - ball.radius)) / (paddle.width + ball.radius * 2)
-        -- Calculate total speed by adding all bonuses first
-        local ballSpeed = getStat(ball.name, "speed")
-        ball.speedX = (hitPosition - 0.5) * 2 * math.abs(ballSpeed * 0.99)
-        local speedYSquared = math.max(0, ballSpeed^2 - ball.speedX^2)
-        ball.speedY = math.sqrt(speedYSquared) * (ball.speedY > 0 and 1 or -1)
-        
-        ball.speedExtra = math.min((ball.speedExtra or 1) + 5, 8)
-
-        Balls.adjustSpeed(ball.name)
-        
-        for _, ballType in pairs(unlockedBallTypes) do
-            if ballType.onPaddleBounce then
-                ballType.onPaddleBounce()
-            end
+    -- Bounce physics
+    ball.speedY = -ball.speedY
+    local hitPosition = (ball.x - paddleLeft) / paddle.width
+    local ballSpeed = getStat(ball.name, "speed")
+    ball.speedX = (hitPosition - 0.5) * 2 * math.abs(ballSpeed * 0.99)
+    local speedYSquared = math.max(0, ballSpeed^2 - ball.speedX^2)
+    ball.speedY = math.sqrt(speedYSquared) * (ball.speedY > 0 and 1 or -1)
+    
+    ball.speedExtra = math.min((ball.speedExtra or 1) + 5, 8)
+    Balls.adjustSpeed(ball.name)
+    
+    -- Callbacks
+    for _, ballType in pairs(unlockedBallTypes) do
+        if ballType.onPaddleBounce then
+            ballType.onPaddleBounce()
         end
-        if ball.onBounce then
-            ball.onBounce(ball)
-        end
-        if ball.name == "Ping-Pong ball" then
-            ball.speedY = ball.speedY - 150
-        end
-        return true
+    end
+    if ball.onBounce then
+        ball.onBounce(ball)
+    end
+    if ball.name == "Ping-Pong ball" then
+        ball.speedY = ball.speedY - 150
     end
     
-    return false
+    return true
 end
 
 local function wallCollisionCheck(ball)
@@ -3552,7 +3615,7 @@ local function techUpdate(dt)
         -- Calculate end point of laser using direction vector from angle
         local dirX = math.sin(angle)  -- X component of direction
         local dirY = -math.cos(angle) -- Y component of direction (negative because we're going up)
-        local laserLength = screenHeight + 500  -- Extend past screen top
+        local laserLength = 2500  -- Extend past screen top
         local endX = startX + dirX * laserLength
         local endY = startY + dirY * laserLength
         
@@ -4272,6 +4335,11 @@ function powerupPickup(powerup, length)
 end
 
 updateTrails = true
+collisionsOn = true
+brickCollisions = true
+paddleCollision = true
+wallCollision = true
+ballPhysics = true
 -- Modify the Balls.update function to include shadowBall updates
 function Balls.update(dt, paddle, bricks)
     if Player.levelingUp or Player.choosingUpgrade then
@@ -4553,30 +4621,39 @@ function Balls.update(dt, paddle, bricks)
         local magneticSpeedMult = (isMagnetic or isIncrediball) and 0.1 or 1
         
         -- Physics substeps
-        for i = 1, substeps do
-            -- Speed decay
-            if ball.speedExtra then
-                ball.speedExtra = math.max(1, ball.speedExtra - math.pow(ball.speedExtra, 1.75) * dtStep * 0.5)
-            end
-            
-            -- Movement calculation
-            local speedExtra = magneticSpeedMult * (ball.speedExtra or 0)
-            if speedExtra > 0 then
-                local multX, multY = normalizeVector(ball.speedX, ball.speedY)
-                local extraX = speedExtra * multX * 50
-                local extraY = speedExtra * multY * 50
-                ball.x = ball.x + (ball.speedX + extraX) * ball.speedMult * dtStep * coreMult
-                ball.y = ball.y + (ball.speedY + extraY) * ball.speedMult * dtStep * coreMult
-            else
-                ball.x = ball.x + ball.speedX * ball.speedMult * dtStep * coreMult
-                ball.y = ball.y + ball.speedY * ball.speedMult * dtStep * coreMult
-            end
-            
-            -- Collision checks
-            paddleCollisionCheck(ball, paddle)
-            local hitBrickThisFrame = brickCollisionCheck(ball, visibleBricks, Player)
-            if not hitBrickThisFrame then
-                wallCollisionCheck(ball)
+        if ballPhysics then
+            for i = 1, substeps do
+                -- Speed decay
+                if ball.speedExtra then
+                    ball.speedExtra = math.max(1, ball.speedExtra - math.pow(ball.speedExtra, 1.75) * dtStep * 0.5)
+                end
+                
+                -- Movement calculation
+                local speedExtra = magneticSpeedMult * (ball.speedExtra or 0)
+                if speedExtra > 0 then
+                    local multX, multY = normalizeVector(ball.speedX, ball.speedY)
+                    local extraX = speedExtra * multX * 50
+                    local extraY = speedExtra * multY * 50
+                    ball.x = ball.x + (ball.speedX + extraX) * ball.speedMult * dtStep * coreMult
+                    ball.y = ball.y + (ball.speedY + extraY) * ball.speedMult * dtStep * coreMult
+                else
+                    ball.x = ball.x + ball.speedX * ball.speedMult * dtStep * coreMult
+                    ball.y = ball.y + ball.speedY * ball.speedMult * dtStep * coreMult
+                end
+                
+                -- Collision checks
+                if collisionsOn then
+                    if paddleCollision then
+                        paddleCollisionCheck(ball, paddle)
+                    end
+                    local hitBrickThisFrame = false
+                    if brickCollisions then
+                        local hitBrickThisFrame = brickCollisionCheck(ball, visibleBricks, Player)
+                    end
+                    if not hitBrickThisFrame and wallCollision then
+                        wallCollisionCheck(ball)
+                    end
+                end
             end
         end
         
@@ -5138,7 +5215,7 @@ local function techDraw()
         local angle = -math.rad(unlockedBallTypes["Laser Beam"].angle)
         local startX = paddle.x + paddle.width/2
         local startY = paddle.y
-        local beamLength = screenHeight + 500  -- Match update logic
+        local beamLength = 2500  -- Match update logic
         
         -- Calculate distance to target brick if we have one
         if laserBeamBrick and laserBeamBrick.health > 0 then
@@ -5260,7 +5337,7 @@ function Balls:draw()
             local angle = math.sin((gameTime + ball.randomSeed) * 0.5) * 1.5
             local startX = ball.x
             local startY = ball.y
-            local beamLength = 2000  -- Match update logic
+            local beamLength = 2500  -- Match update logic
             
             -- Calculate distance to target brick if we have one
             if ball.laserBeamBrick and ball.laserBeamBrick.health > 0 then

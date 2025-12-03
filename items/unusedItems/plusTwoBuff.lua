@@ -55,7 +55,7 @@ function PlusTwoBuff.new()
         end
     end
     instance.name = name;
-    instance.stats[randStat] = randStat == "cooldown" and -2 or (randStat == "damage" and 1 or 2);
+    instance.stats[randStat] = randStat == "cooldown" and -1 or (randStat == "damage" and 1 or 2);
     instance.imageReference = "assets/sprites/UI/ItemIcons/" .. randStat .. (randStat == "cooldown" and "-.png" or "+.png")
     instance.image = love.graphics.newImage(instance.imageReference);
 

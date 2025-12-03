@@ -13,7 +13,7 @@ function Thundershock.new()
 end
 
 function Thundershock:onBrickDestroyed()
-    if math.random() > (hasItem("Four Leafed Clover") and 0.35 or 0.7) then
+    if math.random() > (hasItem("Four Leafed Clover") and 0.7 or 0.35) then
         return
     end
     local selectedBrickIds = {}

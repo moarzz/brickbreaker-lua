@@ -2782,13 +2782,11 @@ function love.keypressed(key)
         -----------------------------------
 
         if key == "1" then
-            firstRunCompleted = true
+            paddleCollision = not paddleCollision
         end
 
         if key == "2" then
-            Timer.every(0.035, function()
-                playSoundEffect(shieldBlockSFX, 1, 1, false)
-            end)
+            wallCollision = not wallCollision
         end
         if key == "3" then
             damageThisFrame = 50
@@ -2806,18 +2804,20 @@ function love.keypressed(key)
             powerupPickup(powerup, 1)
         end
 
-        -- create powerup
+        -- test ball lag
         if key == "6" then
-            drawTrails = not drawTrails
+            -- drawTrails = not drawTrails
+            ballPhysics = not ballPhysics
         end
 
         -- add weapon
         if key == "7" then  
-            Balls.addBall("Laser Turrets")
+            Balls.addBall("Laser Portals")
         end
 
         if key == "8" then
-            updateTrails = not updateTrails
+            -- updateTrails = not updateTrails
+            brickCollisions = not brickCollisions
         end
 
         if key == "9" then
@@ -2827,10 +2827,10 @@ function love.keypressed(key)
         -- PERFORMANCE TEST ON OFF BLOCK
 
         if key == "v" then
-            damageNumbersOn = not DamageNumbersOn
+            collisionsOn = not collisionsOn
         end
         if key == "b" then
-            healNumbersOn = not healNumbersOn
+            
         end
         if key == "r" then
             dmgVFXOn = not dmgVFXOn
