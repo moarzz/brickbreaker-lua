@@ -365,9 +365,6 @@ end
 
 local function getRandomPowerupType()
     local powerupTypes = {"moneyBag", "nuke", "acceleration", "doubleDamage"}
-    if gameTime >= 450 then
-        powerupTypes = {"moneyBag", "nuke"--[[, "freeze"]]}
-    end
     local powerup = powerupTypes[math.random(#powerupTypes)] 
     --[[if getHighestBrickY() < screenHeight - 400 then
         local powerupTypesNoFreeze = {"moneyBag", "nuke", "acceleration", "doubleDamage"}
@@ -1742,7 +1739,7 @@ local function fire(techName)
                 rotateTurret(turret, startDir == 1, 1.5, 0.7)
             end)
 
-            local turretLength = getStat("Laser Turrets", "ammo")/2 + 3
+            local turretLength = getStat("Laser Turrets", "ammo") * 0.7 + 3
             Timer.after(turretLength, function()
                 turret.alive = false -- Mark turret as dead
                 local turretDeathTween = tween.new(0.5, turret, {radius = 0}, tween.ouQuint)
@@ -2555,7 +2552,7 @@ local function ballListInit()
             sawPositions = {}, -- Will store current positions of saws
             sawAnimations = {}, -- Will store animation IDs
             currentAngle = 0, -- Current rotation angle
-            orbitRadius = 240,
+            orbitRadius = 250,
             damageCooldowns = {}, -- Add this line to track cooldowns per saw per brick
         },
         ["Gun Turrets"] = {
@@ -2606,7 +2603,7 @@ local function ballListInit()
             end,
             stats = {
                 ammo = 6,
-                cooldown = 10,
+                cooldown = 11,
                 damage = 1,
             },
         },
@@ -3354,7 +3351,7 @@ local function paddleCollisionCheck(ball, paddle)
     local hitY = nil
     
     -- Direct overlap check
-    if ballBottom > paddleTop and ballTop < paddleBottom then
+    if (ballBottom > paddleTop and ball.speedY > 0) and (ballTop < paddleBottom and ball.speedY < 0) then
         -- Ball is overlapping paddle vertically
         if (ball.speedY > 0 and ballTop <= paddleTop) or 
            (ball.speedY < 0 and ballBottom >= paddleBottom) then
@@ -3386,7 +3383,7 @@ local function paddleCollisionCheck(ball, paddle)
     
     -- Process collision (only when detected)
     if hitY then
-        ball.y = hitY
+        -- ball.y = hitY
     end
     
     playSoundEffect(paddleBoopSFX, 0.4, 0.8, false, true)
@@ -3463,9 +3460,9 @@ local function paddleCollisionCheck(ball, paddle)
 
     -- Bounce physics
     ball.speedY = -ball.speedY
-    local hitPosition = (ball.x - paddleLeft) / paddle.width
+    local hitPosition = math.max(0, math.min(1, (ball.x - paddleLeft) / paddle.width))
     local ballSpeed = getStat(ball.name, "speed")
-    ball.speedX = (hitPosition - 0.5) * 2 * math.abs(ballSpeed * 0.99)
+    ball.speedX = (hitPosition - 0.5) * 2 * math.abs(ballSpeed * 0.9)
     local speedYSquared = math.max(0, ballSpeed^2 - ball.speedX^2)
     ball.speedY = math.sqrt(speedYSquared) * (ball.speedY > 0 and 1 or -1)
     
@@ -3495,6 +3492,11 @@ local function wallCollisionCheck(ball)
     local effectiveRadius = ball.name == "Phantom Ball" and getStat(ball.name, "range") * 8 or ball.radius
     if ball.x - effectiveRadius < leftWallPosition and ball.speedX < 0 then
         ball.speedX = -ball.speedX
+        if ball.speedY > 0 then
+            ball.speedY = ball.speedY + 5
+        else
+            ball.speedY = ball.speedY - 5
+        end
         ball.x = leftWallPosition + effectiveRadius -- Ensure the ball is not stuck in the wall
         if Player.currentCore == "Bouncy Core" or hasItem("Bouncy Walls") then
             ball.speedExtra = math.min((ball.speedExtra or 1) + 6, 12)
@@ -4318,7 +4320,19 @@ function powerupPickup(powerup, length)
             accelerationOn = false
         end)
     elseif powerup.type == "acceleration" then
-        accelerationBoost(length or 12)
+        --accelerationBoost(length or 12)
+
+        accelerationOn = true
+        Timer.after(12, function() 
+            local outTween = tween.new(0.15, powerupPopup, {scale = 0}, tween.easing.inCirc)
+            addTweenToUpdate(outTween)
+            Timer.after(0.15, function()
+                powerupPopup.type = nil
+            end)
+            if accelerationOn == true then
+                accelerationOn = false
+            end
+        end)
     elseif powerup.type == "doubleDamage" then
         statDoubled = "damage"
         Timer.after(12, function() 
@@ -4455,7 +4469,7 @@ function Balls.update(dt, paddle, bricks)
         if bricksInEllipse(rocket.x, rocket.y, 20, 60) then
             playSoundEffect(explosionSFX, 0.5, 1, false, true)
             -- Explosion damage
-            local scale = 2 + getStat("Rocket Launcher", "range") * 0.5
+            local scale = 1.8 + getStat("Rocket Launcher", "range") * 0.4
             local explosionX, explosionY = rocket.x - math.sin(math.rad(rocket.angle)) * rocket.radius, rocket.y - math.cos(math.rad(rocket.angle)) * rocket.radius
             local touchingBricks = getBricksInCircle((explosionX), (explosionY), scale*25)
             for _, hitBrick in ipairs(touchingBricks) do

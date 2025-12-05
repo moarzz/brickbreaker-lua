@@ -1365,7 +1365,7 @@ local function gameFixedUpdate(dt)
                 end
             end
             local goalPaddleY = Player.dead and 10000 or math.max(bossY, math.max(math.max(getHighestBrickY() + brickHeight*5, screenHeight/2 + 200), -100))
-            paddle.y = paddle.y + (goalPaddleY - paddle.y) * math.min(10 * dt, 1)
+            paddle.y = paddle.y + (goalPaddleY - paddle.y) * math.min(3 * dt, 1)
             -- paddle.y = 1050
             -- Update Balls
             Balls.update(dt, paddle, bricks, Player)
@@ -2812,7 +2812,7 @@ function love.keypressed(key)
 
         -- add weapon
         if key == "7" then  
-            Balls.addBall("Laser Portals")
+            Balls.addBall("Phantom Ball")
         end
 
         if key == "8" then

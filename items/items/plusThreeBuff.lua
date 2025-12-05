@@ -9,22 +9,9 @@ function PlusThreeBuff.new()
 
     local itemStats = {};
     local statUnlocked = {}
-    for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
-        for statName, _ in pairs(weapon.stats) do
-            if not statUnlocked[statName] and statName ~= "damage" then
-                table.insert(itemStats, statName);
-                statUnlocked[statName] = true
-            end
-        end
-        if weapon.type == "ball" then
-            if not statUnlocked["amount"] then
-                table.insert(itemStats, "amount");
-                statUnlocked["amount"] = true
-            end
-        end
-    end
 
     local statNames = {
+        "damage";
         "speed";
         "amount";
         "ammo";
@@ -34,6 +21,7 @@ function PlusThreeBuff.new()
     };
 
     local itemNames = {
+        "Kitchen Knife +";
         "Running Shoes +";
         "Two for One Meal Ticket +";
         "Extended Magazine +";
@@ -42,9 +30,9 @@ function PlusThreeBuff.new()
         "Fake Pregnancy Belly +";
     };
 
-    local itemVersion = math.random(1, #itemStats);
+    local itemVersion = math.random(1, #statNames);
 
-    local randStat = itemStats[itemVersion];
+    local randStat = statNames[itemVersion];
 
     local name = "no name found"
     for i, statName in ipairs(statNames) do
@@ -53,7 +41,7 @@ function PlusThreeBuff.new()
         end
     end
     instance.name = name;
-    instance.stats[randStat] = randStat == "cooldown" and -3 or 3;
+    instance.stats[randStat] = randStat == "cooldown" and -3 or (randStat == "damage" and 2 or 3);
     instance.imageReference = "assets/sprites/UI/ItemIcons/" .. randStat .. (randStat == "cooldown" and "-.png" or "+.png")
     instance.image = love.graphics.newImage(instance.imageReference);
 

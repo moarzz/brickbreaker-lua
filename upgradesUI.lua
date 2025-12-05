@@ -34,8 +34,8 @@ _G.Items = require("items");
 
 local _shared_item_fonts = _shared_item_fonts or {
     default = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 18),
-    big = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 23),
-    bold = love.graphics.newFont("assets/Fonts/KenneyFutureBold.ttf", 25),
+    big = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 21),
+    bold = love.graphics.newFont("assets/Fonts/KenneyFutureBold.ttf", 23),
 }
 
 local _shared_item_images = _shared_item_images or {}
@@ -196,8 +196,8 @@ uiOffset = {x = 0, y = 0}
 local drawPlayerStatsHeight = 200 -- Height of the player stats section
 local playerStatsPointers = {
     default = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 20),
-    big = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 26),
-    bold = love.graphics.newFont("assets/Fonts/KenneyFutureBold.ttf", 28),
+    big = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 23),
+    bold = love.graphics.newFont("assets/Fonts/KenneyFutureBold.ttf", 25),
     -- interest = interestValue,
     -- totalInterest = gainValue
 }
@@ -1341,18 +1341,6 @@ local function drawItemShop()
                 local imgScale = scale * 0.75
                 love.graphics.draw(item.image,centerX - (item.image:getWidth()*imgScale)/2, itemY + 130 * imgScale,0,imgScale,imgScale)
             else
-                --[[local getValue = function() return longTermInvestment.value end
-                local pointers = {
-                    default = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 18),
-                    big = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 23),
-                    bold = love.graphics.newFont("assets/Fonts/KenneyFutureBold.ttf", 25),
-                    longTermValue = getValue
-                }
-                if item.descriptionPointers then
-                    for valueName, functionPointer in pairs(item.descriptionPointers) do
-                        pointers[valueName] = functionPointer
-                    end
-                end]]
                 local id = "fancyText" .. i .. item.name:gsub("%s+", "_")
                 if fancyTexts[id] then
                     -- fancyTexts[id]:update()

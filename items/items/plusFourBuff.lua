@@ -9,20 +9,6 @@ function PlusFiveBuff.new()
 
     local itemStats = {};
     local statUnlocked = {}
-    for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
-        for statName, _ in pairs(weapon.stats) do
-            if not statUnlocked[statName] and statName ~= "damage" then
-                table.insert(itemStats, statName);
-                statUnlocked[statName] = true
-            end
-        end
-        if weapon.type == "ball" then
-            if not statUnlocked["amount"] then
-                table.insert(itemStats, "amount");
-                statUnlocked["amount"] = true
-            end
-        end
-    end
 
     local statNames = {
         "damage",
@@ -45,9 +31,9 @@ function PlusFiveBuff.new()
 
     };
 
-    local itemVersion = math.random(1, #itemStats);
+    local itemVersion = math.random(1, #statNames);
 
-    local randStat = itemStats[itemVersion];
+    local randStat = statNames[itemVersion];
 
     local name = "no name found"
     for i, statName in ipairs(statNames) do
