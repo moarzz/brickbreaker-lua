@@ -737,6 +737,26 @@ function removeTween(tweenID)
     end
 end
 
+function createExplosionAtLocation(x, y, radius, damage, name)
+    name = name or "none"
+    -- Limit Chain Lightning sprite animations to 25 at once
+    createSpriteAnimation(x, y, radius, explosionVFX, 512, 512, 0.01, 5, false, 0.9, 0.9)
+
+    --Explosion.spawn(ball.x, ball.y, scale)
+    
+    -- Play explosion sound
+    playSoundEffect(explosionSFX, 0.5, 1, false, true)
+    
+    local bricksTouchingCircle = getBricksInCircle(x, y, radius * 30)
+    for _, touchingBrick in ipairs(bricksTouchingCircle) do
+        if touchingBrick then -- Ensure not nil and not the original brick
+            if touchingBrick.health > 0 then
+                dealDamage({stats = {damage = damage}, name = name}, touchingBrick) -- Deal damage to the touched bricks
+            end
+        end
+    end
+end
+
 function updateAllTweens(dt)
     for i = #Tweens, 1, -1 do -- Iterate backward to safely remove items
         local tween = Tweens[i]

@@ -365,7 +365,7 @@ local function spawnBoss()
     currentRowPopulation = 1000
     targetMusicVolume = 0
     -- Center the boss brick at the top
-    Timer.after(8, function()
+    Timer.after(7.5, function()
         targetMusicVolume = 1
         changeMusic("boss")
     end)
@@ -2812,7 +2812,7 @@ function love.keypressed(key)
 
         -- add weapon
         if key == "7" then  
-            Balls.addBall("Phantom Ball")
+            Balls.addBall("Mortar Turrets")
         end
 
         if key == "8" then

@@ -133,7 +133,6 @@ local function bossDestroyed(bossBrick)
             b.destroyed = true
         end
     end
-    bossSpawned = false
     love.mouse.setVisible(true)
     -- Award gold and save data (same as game over)
     local goldEarned = 500 + Player.level * math.ceil(Player.level / 5) * 5 
@@ -446,8 +445,8 @@ local function brickDestroyed(brick)
             end
         end
     end
-    local maxChance = mapRangeClamped(Player.level,1, 18, 250, 1500)
-    if math.random(1,maxChance) <= 10*chanceMult or bricksDestroyedSinceLastDrop >= maxChance/8 then
+    local BricksRequired = mapRangeClamped(Player.level,1, 12, 25, 100)
+    if bricksDestroyedSinceLastDrop >= BricksRequired/chanceMult then
         createPowerup(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth, "dollarBill")
         bricksDestroyedSinceLastDrop = 0
     else
@@ -662,7 +661,7 @@ local function newLaserPortal(damage, fireRate, name)
                 if self.laserBeamBrick then
                     local cooldownLength = 1.5/(fireRate)
                     if hasItem("Spray and Pray") then
-                        local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
+                        local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                         cooldownLength = cooldownLength * sprayMult
                     end
                     if self.laserBeamTimer >= cooldownLength and self.laserBeamBrick.y > -self.laserBeamBrick.height then
@@ -759,7 +758,7 @@ local function newLaserPortal(damage, fireRate, name)
                 local chargeProgress = self.laserBeamTimer / (1.5/fireRate)
                 print("Laser Portals chargeProgress:" .. chargeProgress .. " laserBeamTimer:" .. self.laserBeamTimer)
                 if hasItem("Spray and Pray") then
-                    local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
+                    local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                     chargeProgress = math.min(1, chargeProgress / sprayMult)
                 end
                 -- Interpolate color from grey to red based on charge
@@ -799,7 +798,7 @@ local function newLaserPortal(damage, fireRate, name)
                 local chargeProgress = self.laserBeamTimer / (1.5/fireRate)
                 print("Laser Portals chargeProgress:" .. chargeProgress .. " laserBeamTimer:" .. self.laserBeamTimer)
                 if hasItem("Spray and Pray") then
-                    local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
+                    local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                     chargeProgress = math.min(1, chargeProgress / sprayMult)
                 end
                 -- Interpolate color from grey to red based on charge
@@ -838,6 +837,7 @@ end
 
 local shootSFXCooldown = 0
 -- Update bullet damage in shoot function
+local currentBallID = 1
 local function shoot(gunName, ball)
     if Player.dead then
         return
@@ -878,15 +878,18 @@ local function shoot(gunName, ball)
                 hasTriggeredOnBulletHit = false,
                 golden = math.random(1,100) <= getGoldenBulletChance(),
             })
-            local chance = hasItem("Four Leafed Clover") and 20 or 10
+            local chance = hasItem("Four Leafed Clover") and 16 or 8
             if math.random(1,100) <= chance and hasItem("Sudden Mitosis") then
                 local totalSpeed = 500
                 local speedX = math.random(-totalSpeed*0.6, totalSpeed*0.6)
                 local speedY = -math.sqrt(math.max(0.01, totalSpeed^2 - speedX^2))
                 local ballTemplate = ballList["Ball"]
+
+                currentBallID = currentBallID + 1
                 local newBall = {
                     type = "ball",
                     name = ballTemplate.name,
+                    id = currentBallID,
                     x = paddle.x + paddle.width / 2,
                     y = paddle.y - 6,
                     speedMult = ballTemplate.speedMult or 1,
@@ -905,12 +908,12 @@ local function shoot(gunName, ball)
                     speedMultiplier = 1
                 }
                 table.insert(Balls, newBall)
-                Timer.after(8, function()
+                Timer.after(6, function()
                     local ballDeathTween = tween.new(0.5, newBall, {drawSizeMult = 0}, tween.outCubic)
                     addTweenToUpdate(ballDeathTween)
                     Timer.after(0.5, function()
                         for i, b in ipairs(Balls) do
-                            if b == newBall then
+                            if b.id == newBall.id then
                                 table.remove(Balls, i)
                                 break
                             end
@@ -1067,15 +1070,18 @@ local function shoot(gunName, ball)
                         getItem("Cover Laser"):onShoot()
                     end
                 end
-                local chance = hasItem("Four Leafed Clover") and 20 or 10
+                local chance = hasItem("Four Leafed Clover") and 16 or 8
                 if math.random(1,100) <= chance and hasItem("Sudden Mitosis") then
                     local totalSpeed = 500
                     local speedX = math.random(-totalSpeed*0.6, totalSpeed*0.6)
                     local speedY = -math.sqrt(math.max(0.01, totalSpeed^2 - speedX^2))
                     local ballTemplate = ballList["Ball"]
+
+                    currentBallID = currentBallID + 1
                     local newBall = {
                         type = "ball",
                         name = ballTemplate.name,
+                        id = currentBallID,
                         x = paddle.x + paddle.width / 2,
                         y = paddle.y - 6,
                         speedMult = ballTemplate.speedMult or 1,
@@ -1094,12 +1100,12 @@ local function shoot(gunName, ball)
                         speedMultiplier = 1
                     }
                     table.insert(Balls, newBall)
-                    Timer.after(8, function()
+                    Timer.after(6, function()
                         local ballDeathTween = tween.new(0.5, newBall, {drawSizeMult = 0}, tween.outCubic)
                         addTweenToUpdate(ballDeathTween)
                         Timer.after(0.5, function()
                             for i, b in ipairs(Balls) do
-                                if b == newBall then
+                                if b.id == newBall.id then
                                     table.remove(Balls, i)
                                     break
                                 end
@@ -1139,15 +1145,18 @@ local function shoot(gunName, ball)
                     hasTriggeredOnBulletHit = false,
                     golden = math.random(1,100) <= getGoldenBulletChance(),
                 })
-                local chance = hasItem("Four Leafed Clover") and 20 or 10
+                local chance = hasItem("Four Leafed Clover") and 16 or 8
                 if math.random(1,100) <= chance and hasItem("Sudden Mitosis") then
                     local totalSpeed = 500
                     local speedX = math.random(-totalSpeed*0.6, totalSpeed*0.6)
                     local speedY = -math.sqrt(math.max(0.01, totalSpeed^2 - speedX^2))
                     local ballTemplate = ballList["Ball"]
+
+                    currentBallID = currentBallID + 1
                     local newBall = {
                         type = "ball",
                         name = ballTemplate.name,
+                        id = currentBallID,
                         x = paddle.x + paddle.width / 2,
                         y = paddle.y - 6,
                         speedMult = ballTemplate.speedMult or 1,
@@ -1166,12 +1175,12 @@ local function shoot(gunName, ball)
                         speedMultiplier = 1
                     }
                     table.insert(Balls, newBall)
-                    Timer.after(8, function()
+                    Timer.after(6, function()
                         local ballDeathTween = tween.new(0.5, newBall, {drawSizeMult = 0}, tween.outCubic)
                         addTweenToUpdate(ballDeathTween)
                         Timer.after(0.5, function()
                             for i, b in ipairs(Balls) do
-                                if b == newBall then
+                                if b.id == newBall.id then
                                     table.remove(Balls, i)
                                     break
                                 end
@@ -1196,15 +1205,18 @@ local function shoot(gunName, ball)
                     hasTriggeredOnBulletHit = false,
                     golden = math.random(1,100) <= getGoldenBulletChance(),
                 })
-                local chance = hasItem("Four Leafed Clover") and 20 or 10
+                local chance = hasItem("Four Leafed Clover") and 16 or 8
                 if math.random(1,100) <= chance and hasItem("Sudden Mitosis")then
                     local totalSpeed = 500
                     local speedX = math.random(-totalSpeed*0.6, totalSpeed*0.6)
                     local speedY = -math.sqrt(math.max(0.01, totalSpeed^2 - speedX^2))
                     local ballTemplate = ballList["Ball"]
+
+                    currentBallID = currentBallID + 1
                     local newBall = {
                         type = "ball",
                         name = ballTemplate.name,
+                        id = currentBallID,
                         x = paddle.x + paddle.width / 2,
                         y = paddle.y - 6,
                         speedMult = ballTemplate.speedMult or 1,
@@ -1223,12 +1235,12 @@ local function shoot(gunName, ball)
                         speedMultiplier = 1
                     }
                     table.insert(Balls, newBall)
-                    Timer.after(8, function()
+                    Timer.after(6, function()
                         local ballDeathTween = tween.new(0.5, newBall, {drawSizeMult = 0}, tween.outCubic)
                         addTweenToUpdate(ballDeathTween)
                         Timer.after(0.5, function()
                             for i, b in ipairs(Balls) do
-                                if b == newBall then
+                                if b.id == newBall.id then
                                     table.remove(Balls, i)
                                     break
                                 end
@@ -1243,13 +1255,13 @@ local function shoot(gunName, ball)
             -- ammo logic
             if gun.currentAmmo > 0 then
                 if gun.name == "Minigun" then
-                    local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
+                    local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                     local timeUntilNextShot = gun.fireRateMult * (mapRangeClamped(getStat("Minigun", "ammo") - gun.currentAmmo, 0, 25, 4, 0.5) * (spray and sprayMult or 1))/(getStat(gun.name, "fireRate") * bulletStormMult)
                     Timer.after(timeUntilNextShot, function() shoot(gunName) end)
                     createFireRateVFX(timeUntilNextShot)
                     -- createCooldownVFX(cooldownValue)
                 else
-                    local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
+                    local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                     local timeUntilNextShot = (gun.fireRateMult * 3.0 * (spray and sprayMult or 1))/(getStat(gun.name, "fireRate") * bulletStormMult)
                     Timer.after(timeUntilNextShot, function() shoot(gunName) end)
                     createFireRateVFX(timeUntilNextShot)
@@ -1294,22 +1306,20 @@ end
 local fire
 local turretsInQueue = 0
 local lastTurretSoundTime = 0
+local currentBombId = 0
+local mortarBombs = {}
 local function turretShoot(turret, typeMod)
     if not typeMod then typeMod = "gun" end
+
+    -- return if player is dead
     if Player.dead then
         return
     end   
-    local turretType = unlockedBallTypes["Gun Turrets"]  
+    
+    -- logic for gun turrets
     if turret and typeMod == "gun" then
+        local turretType = unlockedBallTypes["Gun Turrets"]  
         if not turret.alive then
-            return
-        end
-        if turret.currentAmmo <= 0 then
-            Timer.after(2, function()
-                -- Refill ammo after cooldown
-                turret.currentAmmo = getStat("Gun Turrets", "ammo")
-                turretShoot(turret) -- Restart shooting after ammo refill
-            end)
             return
         end
         local currentTime = love.timer.getTime()
@@ -1335,15 +1345,18 @@ local function turretShoot(turret, typeMod)
             golden = math.random(1,100) <= getGoldenBulletChance(),
         }
         table.insert(bullets, bullet)
-        local chance = hasItem("Four Leafed Clover") and 20 or 10
+        local chance = hasItem("Four Leafed Clover") and 16 or 8
         if math.random(1,100) <= chance and hasItem("Sudden Mitosis") then
             local totalSpeed = 500
             local speedX = math.random(-totalSpeed*0.6, totalSpeed*0.6)
             local speedY = -math.sqrt(math.max(0.01, totalSpeed^2 - speedX^2))
             local ballTemplate = ballList["Ball"]
+
+            currentBallID = currentBallID + 1
             local newBall = {
                 type = "ball",
                 name = ballTemplate.name,
+                id = currentBallID,
                 x = paddle.x + paddle.width / 2,
                 y = paddle.y - 6,
                 speedMult = ballTemplate.speedMult or 1,
@@ -1362,12 +1375,12 @@ local function turretShoot(turret, typeMod)
                 speedMultiplier = 1
             }
             table.insert(Balls, newBall)
-            Timer.after(8, function()
+            Timer.after(6, function()
                 local ballDeathTween = tween.new(0.5, newBall, {drawSizeMult = 0}, tween.outCubic)
                 addTweenToUpdate(ballDeathTween)
                 Timer.after(0.5, function()
                     for i, b in ipairs(Balls) do
-                        if b == newBall then
+                        if b.id == newBall.id then
                             table.remove(Balls, i)
                             break
                         end
@@ -1399,8 +1412,66 @@ local function turretShoot(turret, typeMod)
             end
         end
     end
-    if turret and typeMod == "laser" then
-        -- Laser turret logic can be added here
+
+    -- logic for "mortar turrets"
+    if turret and typeMod == "mortar" then
+        -- shoot logic
+        currentBombId = currentBombId + 1
+        local bomb = {
+            id = currentBombId,
+            x = turret.x,
+            y = turret.y,
+            radius = 10,
+        }
+        table.insert(mortarBombs, bomb)
+        local targetX = math.min(screenWidth - 80, math.max(80, turret.x + math.random(-300, 300)))
+        local targetY = math.min(screenHeight - 80, math.max(80, turret.y - (math.random(300, 600))))
+        local bombLocationTween = tween.new(3, bomb, {x = targetX, y = targetY}, tween.linear)
+        addTweenToUpdate(bombLocationTween)
+        local bombScaleTween = tween.new(1.5, bomb, {radius = 25}, tween.outExpo)
+        addTweenToUpdate(bombScaleTween)
+        Timer.after(1.5, function()
+            local bombFallTween = tween.new(1.5, bomb, {radius = 5}, tween.inExpo)
+            addTweenToUpdate(bombFallTween)
+        end)
+        Timer.after(3, function()
+            -- Create explosion
+            createExplosionAtLocation(bomb.x, bomb.y, unlockedBallTypes["Mortar Turrets"].stats.range * 0.3 + 0.2, unlockedBallTypes["Mortar Turrets"].stats.damage or 3, "Mortar Turrets")
+
+            -- delete bomb
+            for i, b in ipairs(mortarBombs) do
+                if b.id == bomb.id then
+                    table.remove(mortarBombs, i)
+                    break
+                end
+            end
+            playSoundEffect(explosionSFX, 1.0, 1.0, false, true)
+        end)
+
+        -- ammo logic
+        turret.currentAmmo = turret.currentAmmo - 1
+        if turret.currentAmmo > 0 then
+            Timer.after(2, function()
+                turretShoot(turret, "mortar") -- Restart shooting after ammo refill
+            end)
+        else
+            turret.alive = false -- Mark turret as dead
+            local turretDeathTween = tween.new(0.5, turret, {radius = 0}, tween.ouQuint)
+            addTweenToUpdate(turretDeathTween)
+            Timer.after(0.5, function()
+                -- Remove turret after 10 seconds
+                for i, t in ipairs(mortarTurrets) do
+                    if turret.id == t.id then
+                        table.remove(mortarTurrets, i)
+                        break
+                    end
+                end
+            end)
+            if turretsInQueue > 0 then
+                fire("Gun Turrets")
+                turretsInQueue = turretsInQueue - 1
+            end
+        end
     end
 end
 
@@ -1477,7 +1548,7 @@ local function fire(techName)
             else
                 local timerLength = 6/getStat("Rocket Launcher", "fireRate")
                 if hasItem("Spray and Pray") then
-                    local timerMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
+                    local timerMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                     timerLength = timerLength * timerMult
                 end
                 Timer.after(timerLength, function()
@@ -1604,7 +1675,7 @@ local function fire(techName)
                         
                         local cooldownLength = 0.4
                         if hasItem("Spray and Pray") then
-                            local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
+                            local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                             cooldownLength = cooldownLength * sprayMult
                         end
                         if self.laserBeamTimer >= cooldownLength and self.laserBeamBrick.y > -self.laserBeamBrick.height then
@@ -1692,7 +1763,7 @@ local function fire(techName)
                     -- Calculate charge progress
                     local chargeProgress = self.laserBeamTimer / 0.5
                     if hasItem("Spray and Pray") then
-                        local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
+                        local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                         chargeProgress = math.min(1, chargeProgress / sprayMult)
                     end
                     -- Interpolate color from grey to red based on charge
@@ -1775,10 +1846,10 @@ local function fire(techName)
 
     if techName == "Mortar Turrets" then
         -- handles the entire logic for spawning, placing and after 10 seconds, destroying a turret. also handles first shot
-        if #turrets < 50 then
+        if #mortarTurrets < 50 then
             local turretType = unlockedBallTypes["Mortar Turrets"]
             local id = currentTurretId
-            local destination = {x = (math.random(50, screenWidth - 50)), y = math.random(math.max(paddle.y + 50, screenHeight - 300), screenHeight - 25)}
+            local destination = {x = math.max(50, math.min(screenWidth - 50, paddle.x + math.random(-400, 400))), y = math.random(math.max(paddle.y + 25, paddle.y + 75), screenHeight - 25)}
             local startDir = math.random(0,1)
             local turret = {
                 id = currentTurretId,
@@ -1798,9 +1869,6 @@ local function fire(techName)
             addTweenToUpdate(turretPositionTween)
             table.insert(mortarTurrets, turret)
             -- first shot when turret in position
-            Timer.after(0.5, function() 
-                rotateTurret(turret, startDir == 1)
-            end)
             Timer.after(1 + math.random(0, 100) / 100, function()
                 turretShoot(turret, "mortar")
             end)
@@ -2110,13 +2178,13 @@ local function cast(spellName, brick, forcedDamage)
     end
     if spellName == "Laser Portals" then
         for i=1, getStat("Laser Portals", "amount") do
-            Timer.after((i-1) * 0.5, function()
+            Timer.after((i-1) * 0.3, function()
                 newLaserPortal(getStat("Laser Portals", "damage"), getStat("Laser Portals", "fireRate"), "Laser Portals")
             end)
         end
 
         -- playSoundEffect()
-        Timer.after(0.5 * getStat("Laser Portals", "amount") - 0.25, function()
+        Timer.after(0.3 * getStat("Laser Portals", "amount") - 0.3, function()
             local cooldownValue = getStat("Laser Portals", "cooldown")
             local timeUntilNextCast = math.max(cooldownValue, 0) * 0.4 + 2
             createCooldownVFX(timeUntilNextCast)
@@ -2607,7 +2675,7 @@ local function ballListInit()
                 damage = 1,
             },
         },
-        --[[["Mortar Turrets"] = {
+        ["Mortar Turrets"] = {
             name = "Mortar Turrets",
             type = "tech",
             x = screenWidth / 2,
@@ -2631,8 +2699,9 @@ local function ballListInit()
                 ammo = 3,
                 cooldown = 12,
                 damage = 1,
+                range = 3,
             },
-        },]]
+        },
         ["Shadow Ball"] = {
             name = "Shadow Ball",
             type = "spell",
@@ -2796,6 +2865,7 @@ function Balls.initialize()
     victoryAchieved = false
     fastBricksReset()
     statDoubled = nil
+    bossSpawned = false
     accelerationOn = false
     Player.setMoney(0);
     longTermInvestment.value = 0
@@ -3154,7 +3224,7 @@ local function brickCollisionEffects(ball, brick)
             end
         end
 
-        -- Decrement the global Chain Lightning sprite count when the animation ends
+        --[[ Decrement the global Chain Lightning sprite count when the animation ends
         local anim = getAnimation and getAnimation(ball.x, ball.y, scale/3, explosionVFX) -- getAnimation must be implemented to retrieve the animation object
         if anim and anim.onComplete then
             local oldOnComplete = anim.onComplete
@@ -3162,7 +3232,7 @@ local function brickCollisionEffects(ball, brick)
                 _G.chainLightningSpriteCount = math.max(0, (_G.chainLightningSpriteCount or 1) - 1)
                 if oldOnComplete then oldOnComplete(...) end
             end
-        end
+        end]]
     else 
         dealDamage(ball, brick) -- For other ball types, just deal damage to the brick
     end
@@ -3320,6 +3390,7 @@ local function brickCollisionCheck(ball, bricksToCheck)
     return false
 end
 
+
 local function paddleCollisionCheck(ball, paddle)
     local effectiveRadius = ball.name == "Phantom Ball" and getStat(ball.name, "range") * 8 or ball.radius
     
@@ -3407,23 +3478,25 @@ local function paddleCollisionCheck(ball, paddle)
                 damage = getStat(ball.name, "damage") * (hasDagger and math.random(1, 100) <= critChance and 2 or 1),
                 type = "gun"
             },
-            name = "Paddle Defense System",
+            name = ball.name,
             type = "bullet",
             golden = math.random(1, 100) <= getGoldenBulletChance(),
         }
         table.insert(bullets, bullet)
         
         -- Sudden Mitosis
-        local mitosisChance = hasClover and 20 or 10
+        local mitosisChance = hasClover and 16 or 8
         if math.random(1, 100) <= mitosisChance and hasItem("Sudden Mitosis") then
             local totalSpeed = 500
             local speedX = math.random(-totalSpeed * 0.6, totalSpeed * 0.6)
             local speedY = -math.sqrt(math.max(0.01, totalSpeed^2 - speedX^2))
             local ballTemplate = ballList["Ball"]
-            
+
+            currentBallID = currentBallID + 1
             local newBall = {
                 type = "ball",
                 name = ballTemplate.name,
+                id = currentBallID,
                 x = paddle.x + paddle.width * 0.5,
                 y = paddle.y - 6,
                 speedMult = ballTemplate.speedMult or 1,
@@ -3443,12 +3516,12 @@ local function paddleCollisionCheck(ball, paddle)
             }
             table.insert(Balls, newBall)
             
-            Timer.after(8, function()
+            Timer.after(6, function()
                 local ballDeathTween = tween.new(0.5, newBall, {drawSizeMult = 0}, tween.outCubic)
                 addTweenToUpdate(ballDeathTween)
                 Timer.after(0.5, function()
                     for i = #Balls, 1, -1 do
-                        if Balls[i] == newBall then
+                        if Balls[i].id == newBall.id then
                             table.remove(Balls, i)
                             break
                         end
@@ -3578,7 +3651,7 @@ local function techUpdate(dt)
             
             local cooldownLength = 1/((getStat("Laser Beam", "fireRate")))
             if hasItem("Spray and Pray") then
-                local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
+                local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                 cooldownLength = cooldownLength * sprayMult
             end
             if laserBeamTimer >= cooldownLength and laserBeamBrick.y > -laserBeamBrick.height then
@@ -4534,6 +4607,10 @@ function Balls.update(dt, paddle, bricks)
     local MAX_RANGE_SQ = 500 * 500
     for _, ball in ipairs(Balls) do
 
+        if ball.activeTrail then
+            ball.activeTrail.trailRadius = ball.radius * (ball.drawSizeBoost or 1) * (ball.drawSizeMult or 1)
+        end
+
         -- Laser ball logic
         if ball.name == "Laser Ball" then
             local laserBeam = unlockedBallTypes["Laser Ball"]
@@ -4547,7 +4624,7 @@ function Balls.update(dt, paddle, bricks)
                 
                 local cooldownLength = 2.5/((getStat("Laser Ball", "fireRate")))
                 if hasItem("Spray and Pray") then
-                    local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
+                    local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                     cooldownLength = cooldownLength * sprayMult
                 end
                 if ball.laserBeamTimer >= cooldownLength and ball.laserBeamBrick.y > -ball.laserBeamBrick.height then
@@ -5217,7 +5294,7 @@ local function techDraw()
         -- Calculate charge progress
         local chargeProgress = laserBeamTimer / ((1/((Player.currentCore == "Damage Core" and 1 or getStat("Laser Beam", "fireRate")))))
         if hasItem("Spray and Pray") then
-            local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
+            local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
             chargeProgress = math.min(1, chargeProgress / sprayMult)
         end
         -- Interpolate color from grey to red based on charge
@@ -5277,6 +5354,11 @@ local function techDraw()
             local angle = math.atan2(-turret.y, screenWidth/2 - turret.x)
             drawImageCentered(turretBaseImg, turret.x, turret.y, turret.radius * 0.75, turret.radius * 0.75, turret.angleOffset)
             drawImageCentered(turretGunImg, turret.x, turret.y, turret.radius * 145/280, turret.radius * 145/144, turret.angle + turret.angleOffset, 0, turret.radius * 145/144 * 1/4)
+        end
+
+        love.graphics.setColor(100/255,125/255,150/255,1)
+        for _, bomb in ipairs(mortarBombs) do
+            love.graphics.circle("fill", bomb.x, bomb.y, bomb.radius)
         end
     end
 
@@ -5338,7 +5420,7 @@ function Balls:draw()
             ball.laserBeamTimer = ball.laserBeamTimer or 0
             local chargeProgress = ball.laserBeamTimer / ((2.5/((getStat("Laser Ball", "fireRate")))))
             if hasItem("Spray and Pray") then
-                local sprayMult = hasItem("Four Leafed Clover") and 0.5 or 0.67
+                local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                 chargeProgress = math.min(1, chargeProgress / sprayMult)
             end
             -- Interpolate color from grey to red based on charge

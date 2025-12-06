@@ -11,7 +11,7 @@ function SprayAndPray.new()
     local instance = setmetatable({}, SprayAndPray):init();
 
     instance.descriptionPointers = {
-        fireRateMult = hasItem("Four Leafed Clover") and 70 or 35;
+        fireRateMult = hasItem("Four Leafed Clover") and 80 or 40;
     };
 
     instance.stats.fireRate = 1;
@@ -21,11 +21,11 @@ end
 
 -- I dont think this is necessary it should already be in the paddle metadata
 function SprayAndPray.events:item_purchase_FourLeafedClover()
-    self.descriptionPointers.fireRateMult = 70;
+    self.descriptionPointers.fireRateMult = 80;
 end
 
 function SprayAndPray.events:item_sell_FourLeafedClover()
-    self.descriptionPointers.fireRateMult = 35;
+    self.descriptionPointers.fireRateMult = 40;
 end
 
 return SprayAndPray;
