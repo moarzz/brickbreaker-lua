@@ -327,8 +327,8 @@ Player.availableCores = {
 }
 
 Player.coreDescriptions = {
-    ["Amount Core"] = "gain +1 amount for every 5 player level",
-    ["Spray and Pray Core"] = "gain +1 fireRate for every 5 Player level",
+    ["Amount Core"] = "gain +1 amount for every 6 player level",
+    ["Spray and Pray Core"] = "gain +1 fireRate for every 6 Player level",
     ["Fast Study Core"] = "gain +4% experience gain per Player Level",
     ["Hacker Core"] = "All Weapons start with an upgradePrice of 0",
     ["Loan Core"] = "start with 25$. gain 3$ instead of 5$ on level up.",
@@ -445,7 +445,7 @@ function Player.levelUp()
         if Player.level < 5 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 2)
         elseif Player.level < 10 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.65)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.6)
         elseif Player.level < 15 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.5)
         elseif Player.level < 20 then
@@ -472,9 +472,9 @@ function Player.levelUp()
         paddle.width = paddle.width + 20
     elseif Player.currentCore == "Fast Study Core" then
         Player.xpGainMult = Player.xpGainMult + 0.04
-    elseif Player.level % 5 == 0 and Player.currentCore == "Spray and Pray Core" then -- THIS IS NOT AN ERROR
+    elseif Player.level % 6 == 0 and Player.currentCore == "Spray and Pray Core" then -- THIS IS NOT AN ERROR
         Player.permanentUpgrades.fireRate = (Player.permanentUpgrades.fireRate or 0) + 1
-    elseif "Amount Core" == Player.currentCore and Player.level % 5 == 0 then
+    elseif "Amount Core" == Player.currentCore and Player.level % 6 == 0 then
         Player.permanentUpgrades.amount = (Player.permanentUpgrades.amount or 0) + 1
         for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
             if weapon.type == "ball" then

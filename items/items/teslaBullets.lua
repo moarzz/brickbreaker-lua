@@ -1,7 +1,7 @@
 local TeslaBullets = ItemBase.new();
 TeslaBullets.__index = TeslaBullets;
 TeslaBullets.name = "Tesla Bullets";
-TeslaBullets.description = "<font=bold>On Bullet Hit\n<teslaChance>%<font=default> chance to start an electric current that jumps to 3 nearby bricks. Dealing the bullet's <color=damage>damage";
+TeslaBullets.description = "<font=bold>On Bullet Hit\n\n<teslaChance>%<font=default> chance to start an electric current that jumps to 3 nearby bricks.";
 TeslaBullets.rarity = "uncommon";
 TeslaBullets.imageReference = "assets/sprites/UI/ItemIcons/Tesla-Bullets.png";
 
@@ -14,7 +14,7 @@ function TeslaBullets.new()
         teslaChance = hasItem("Four Leafed Clover") and 50 or 25;
     };
 
-    instance.stats.ammo = 1
+    -- instance.stats.ammo = 1
 
     return instance;
 end

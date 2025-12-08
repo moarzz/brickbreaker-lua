@@ -1,7 +1,7 @@
 local PowerDrill = ItemBase.new();
 PowerDrill.__index = PowerDrill;
 PowerDrill.name = "Power Drill";
-PowerDrill.description = "Choose a random weapon\n randomly upgrade two of its stats";
+PowerDrill.description = "Choose a random weapon\n randomly upgrade one of its stats 3 times";
 PowerDrill.rarity = "common";
 PowerDrill.imageReference = "assets/sprites/UI/ItemIcons/Power-Drill.png";
 
@@ -38,7 +38,7 @@ function PowerDrill:purchase()
         return;
     end
 
-    for i = 1, 2 do
+    for i = 1, 3 do
         local statList = {};
         for statName, _ in pairs(selectedWeapon.stats) do
             table.insert(statList, statName);

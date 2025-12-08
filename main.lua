@@ -769,7 +769,12 @@ local function addMoreBricks()
             for i=1 , 10 do
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
                 local addBrickMult = mapRangeClamped(Player.level, 1, 20, 2, 1)
-                currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 30, 180) 
+                if victoryAchieved then
+                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 30, 180) * mapRangeClamped(gameTime, 600, 1200, 1, 5)
+                else
+                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 30, 180)
+                end
+                
                 if spawnBossNextRow and not bossSpawned then
                     spawnBoss()
                     bossSpawned = true
@@ -1123,6 +1128,9 @@ end
 local targetMusicPitch = 1
 local currentMusicRef = nil
 function changeMusic(newMusicStage)
+    if newMusicStage == "intense" and currentMusicRef == "boss" then
+        return
+    end
     if newMusicStage == currentMusicRef then
         return
     end
@@ -1144,7 +1152,7 @@ function changeMusic(newMusicStage)
         BackgroundShader.changeShader(2); -- acid
     elseif newMusicStage == "intense" then
         ref = "assets/SFX/inGame3.mp3";
-        BackgroundShader.changeShader(3); -- vexel
+        BackgroundShader.changeShader(1); -- vexel
     elseif newMusicStage == "boss" then
         ref = "assets/SFX/inGameBoss.mp3";
         BackgroundShader.changeShader(3); -- vexel

@@ -236,7 +236,7 @@ function FancyText:alignText()
                 widthOfStr = widthOfStr + curFont:getWidth(previousFontText) * scale; -- add the width of the previous text to the width of the current line
 
                 local fontName = string.match(modif, "^font=(.*)$");
-                lineHeight = math.max(lineHeight, curFont:getHeight() * scale);
+                -- lineHeight = math.max(lineHeight, curFont:getHeight() * scale);
                 curFont = self.pointer[fontName] or self.GLOBAL_POINTER[fontName];
 
                 if not curFont then
@@ -246,6 +246,9 @@ function FancyText:alignText()
                 end
 
                 assert(curFont and curFont:type() == "Font", "tried to set font to a non font object");
+                
+                -- Update line height AFTER changing font, so it uses the new font's height
+                lineHeight = math.max(lineHeight, curFont:getHeight() * scale);
 
 
                 parsedText = parsedText .. previousFontText;
@@ -403,7 +406,6 @@ function FancyText:draw()
     -- has some bad coding practices but is very hard to fix without creating unecessary public functions
     -- or extremely inefficient local functions that are created and destroyed every draw call
 
-    print("");
     for _, v in ipairs(self.lines) do
         local x;
 
@@ -500,14 +502,13 @@ function FancyText:draw()
 
             love.graphics.setColor(colour);
             love.graphics.print(v.text, x, y, 0, scale,scale);
+            print(v.height);
+            print(v.text);
         end
 
-        print(v.height);
-        print(v.text);
         y = y + v.height; -- move the next line downwards by the height of this line
+        print("")
     end
-
-    print("");
 
     love.graphics.pop();
 end

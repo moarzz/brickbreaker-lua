@@ -747,7 +747,7 @@ function createExplosionAtLocation(x, y, radius, damage, name)
     -- Play explosion sound
     playSoundEffect(explosionSFX, 0.5, 1, false, true)
     
-    local bricksTouchingCircle = getBricksInCircle(x, y, radius * 30)
+    local bricksTouchingCircle = getBricksInCircle(x, y, radius * 60)
     for _, touchingBrick in ipairs(bricksTouchingCircle) do
         if touchingBrick then -- Ensure not nil and not the original brick
             if touchingBrick.health > 0 then
@@ -858,7 +858,7 @@ function bricksInEllipse(centerX, centerY, radiusX, radiusY)
             
             -- Check if the distance is less than or equal to 1 (normalized radius)
             if (dx * dx + dy * dy) <= 1 then
-                return true
+                return brick
             end
         end
     end

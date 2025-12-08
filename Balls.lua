@@ -446,7 +446,7 @@ local function brickDestroyed(brick)
         end
     end
     local BricksRequired = mapRangeClamped(Player.level,1, 12, 25, 100)
-    if bricksDestroyedSinceLastDrop >= BricksRequired/chanceMult then
+    if bricksDestroyedSinceLastDrop >= math.floor(BricksRequired/chanceMult) then
         createPowerup(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth, "dollarBill")
         bricksDestroyedSinceLastDrop = 0
     else
@@ -633,8 +633,8 @@ end
 
 local function newLaserPortal(damage, fireRate, name)
     local xBias = mapRangeClamped(paddle.x + paddle.width/2, 0, screenWidth, -50, 50)
-    local angle = (math.random() * 0.3 + -0.15) * math.pi
-    local laserX = paddle.x + paddle.width/2 + (math.random(-150, 150) + xBias) * paddle.width/200
+    local angle = (mapRangeClamped(paddle.y, 0, screenWidth, 0, 1) * -0.2 + 0.1) * math.pi
+    local laserX = math.min(screenWidth - 50, math.max(50, paddle.x + paddle.width/2 + (math.random(-150, 150) + xBias) * paddle.width/200))
     local laserY = paddle.y -25 + math.random(-40, 40)
     currentPortalID = currentPortalID + 1
     local laserPortal = {
@@ -659,7 +659,7 @@ local function newLaserPortal(damage, fireRate, name)
                 self.laserBeamTimer = (self.laserBeamTimer or 0) + dt
                 print("Laser Portals laserBeamTimer:", self.laserBeamTimer)
                 if self.laserBeamBrick then
-                    local cooldownLength = 1.5/(fireRate)
+                    local cooldownLength = 1.75/(fireRate)
                     if hasItem("Spray and Pray") then
                         local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                         cooldownLength = cooldownLength * sprayMult
@@ -755,7 +755,7 @@ local function newLaserPortal(damage, fireRate, name)
                 love.graphics.setColor(1, 1, 1, 1)
                 drawImageCentered(runeCircleImg, self.x, self.y, runeCircleImg:getWidth()/2 * portalScale, runeCircleImg:getHeight()/2 * portalScale, angle, 0, 0)
                 -- laser draw
-                local chargeProgress = self.laserBeamTimer / (1.5/fireRate)
+                local chargeProgress = self.laserBeamTimer / (1.75/fireRate)
                 print("Laser Portals chargeProgress:" .. chargeProgress .. " laserBeamTimer:" .. self.laserBeamTimer)
                 if hasItem("Spray and Pray") then
                     local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
@@ -795,7 +795,7 @@ local function newLaserPortal(damage, fireRate, name)
                 love.graphics.setColor(1, 1, 1, 1)
                 drawImageCentered(runeCircleImg, self.x, self.y, runeCircleImg:getWidth()/2 * portalScale, runeCircleImg:getHeight()/2 * portalScale, angle, 0, 0)
                 -- laser draw
-                local chargeProgress = self.laserBeamTimer / (1.5/fireRate)
+                local chargeProgress = self.laserBeamTimer / (1.75/fireRate)
                 print("Laser Portals chargeProgress:" .. chargeProgress .. " laserBeamTimer:" .. self.laserBeamTimer)
                 if hasItem("Spray and Pray") then
                     local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
@@ -1425,7 +1425,7 @@ local function turretShoot(turret, typeMod)
         }
         table.insert(mortarBombs, bomb)
         local targetX = math.min(screenWidth - 80, math.max(80, turret.x + math.random(-300, 300)))
-        local targetY = math.min(screenHeight - 80, math.max(80, turret.y - (math.random(300, 600))))
+        local targetY = math.min(screenHeight - 80, math.max(80, getHighestBrickY(false) - (math.random(0, 400))))
         local bombLocationTween = tween.new(3, bomb, {x = targetX, y = targetY}, tween.linear)
         addTweenToUpdate(bombLocationTween)
         local bombScaleTween = tween.new(1.5, bomb, {radius = 25}, tween.outExpo)
@@ -1539,7 +1539,7 @@ local function fire(techName)
                 if accelerationOn then
                     cooldownValue = cooldownValue * 0.5
                 end
-                local timeUntilNextShot = math.max(cooldownValue, 6/getStat("Rocket Launcher", "fireRate"))
+                local timeUntilNextShot = math.max(cooldownValue, 5/getStat("Rocket Launcher", "fireRate"))
                 Timer.after(timeUntilNextShot, function()
                     unlockedBallTypes["Rocket Launcher"].currentAmmo = getStat("Rocket Launcher", "ammo")
                     fire("Rocket Launcher")
@@ -1640,7 +1640,7 @@ local function fire(techName)
     
     if techName == "Laser Turrets" then
         -- handles the entire logic for spawning, placing and after 10 seconds, destroying a turret. also handles first shot
-        if #laserTurrets < 50 then
+        if #laserTurrets < 50 or true then
             local turretType = unlockedBallTypes["Laser Turrets"]
             local id = currentTurretId
             local destination = {x = (math.random(50, screenWidth - 50)), y = math.random(math.max(paddle.y + 50, screenHeight - 300), screenHeight - 25)}
@@ -2274,7 +2274,7 @@ local function ballListInit()
             ballAmount = 1,
             x = screenWidth / 2,
             y = screenHeight / 2,
-            speedMult = 1.25,
+            speedMult = 1.15,
             size = 1,
             rarity = "common",
             startingPrice = 25,
@@ -4539,11 +4539,12 @@ function Balls.update(dt, paddle, bricks)
         local dirY = -math.sin(math.rad(rocket.angle - 90)) * 50
         local rocketDrawX = rocket.x + dirX
         local rocketDrawY = rocket.y + dirY
-        if bricksInEllipse(rocket.x, rocket.y, 20, 60) then
+        if bricksInEllipse(rocket.x, rocket.y, 20, 60) ~= false then
+            local brickHit = bricksInEllipse(rocket.x, rocket.y, 20, 60)
             playSoundEffect(explosionSFX, 0.5, 1, false, true)
             -- Explosion damage
-            local scale = 1.8 + getStat("Rocket Launcher", "range") * 0.4
-            local explosionX, explosionY = rocket.x - math.sin(math.rad(rocket.angle)) * rocket.radius, rocket.y - math.cos(math.rad(rocket.angle)) * rocket.radius
+            local scale = 1.8 + getStat("Rocket Launcher", "range") * 0.5
+            local explosionX, explosionY = (rocket.x + brickHit.x)/2, (rocket.y + brickHit.y)/2
             local touchingBricks = getBricksInCircle((explosionX), (explosionY), scale*25)
             for _, hitBrick in ipairs(touchingBricks) do
                 if not hitBrick.destroyed and hitBrick.health > 0 then
@@ -4601,7 +4602,7 @@ function Balls.update(dt, paddle, bricks)
     local substeps = 2
     local dtStep = dt / substeps
     local isMadnessCore = Player.currentCore == "Madness Core"
-    local coreMult = isMadnessCore and 2 or 1
+    local coreMult = 0.9
     local hasElectroItem = hasItem("Electromagnetic Alignment")
     local electroCount = hasElectroItem and itemCount("Electromagnetic Alignment") or 0
     local MAX_RANGE_SQ = 500 * 500

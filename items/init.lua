@@ -253,6 +253,7 @@ function Items.getRandomItem(allowInvisible)
             end
             -- Ensure at least weight 1
             local w = math.max(1, instances)
+            w = (w-1) * 2 + 1
             weights[i] = w
             totalWeight = totalWeight + w
         else

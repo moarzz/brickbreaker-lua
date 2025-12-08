@@ -2,7 +2,7 @@ local PaddleDefenseSystem = ItemBase.new();
 PaddleDefenseSystem.__index = PaddleDefenseSystem;
 PaddleDefenseSystem.name = "Paddle Defense System";
 PaddleDefenseSystem.description = "<font=bold>On ball bounce with paddle<font=default>\nshoot a bullet of that ball's <color=damage>damage";
-PaddleDefenseSystem.rarity = "uncommon";
+PaddleDefenseSystem.rarity = "rare";
 PaddleDefenseSystem.imageReference = "assets/sprites/UI/ItemIcons/Paddle-Defense-System.png";
 
 PaddleDefenseSystem.unique = true; -- does smthn ig
