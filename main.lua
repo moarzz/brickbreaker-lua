@@ -522,13 +522,14 @@ local function fastBricksUpdate()
     end
 end
 
+endlessRun = false
 local healBricks = {}
 local unavailableXpos = {}
 local blockedRows = {}
 local currentRow = 1
 local nextRowDebuff = 0
 local function generateRow(brickCount, yPos)
-    if victoryAchieved then
+    if victoryAchieved and not endlessRun then
         return
     end
     local rowXOffset = math.random(-15,15)
@@ -1410,7 +1411,7 @@ local function gameFixedUpdate(dt)
                 if damageThisFrame > 0 and damageCooldown <= 0 then
                     damageScreenVisuals(mapRangeClamped(damageThisFrame,1,20,0.25, 0.5), damageThisFrame)
                     playSoundEffect(brickHitSFX, math.sqrt(damageThisFrame) >= 4 and mapRangeClamped(math.sqrt(damageThisFrame), 6, 10, 0.6, 1) or mapRangeClamped(math.sqrt(damageThisFrame), 1,6, 0.35, 0.6), math.sqrt(damageThisFrame) >= 5 and mapRangeClamped(math.sqrt(damageThisFrame), 6, 10, 0.75, 1) or  mapRangeClamped(math.sqrt(damageThisFrame),1,6,0.4,0.75), false, true)
-                    damageCooldown = 0.03 -- Set cooldown for damage visuals
+                    damageCooldown = 0.05 -- Set cooldown for damage visuals
                     damageThisFrame = 0 -- Reset damage this frame
                 end
                 brickKilledThisFrame = false -- Reset brick hit state for the next frame
@@ -2198,13 +2199,14 @@ function drawVictoryScreen()
     local y = screenHeight * 3/4
     setFont(36)
 
-    --[[ Keep Going button (new)
+    -- Keep Going button (new)
     if suit.Button("Keep Going", {id = "keep_going"}, startX, y, buttonW, buttonH).hit then
         changeMusic("intense")
         playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.PLAYING  -- Set state back to playing
+        endlessRun = true
         love.mouse.setVisible(false)
-    end]]
+    end
 
     -- Main Menu button
     if suit.Button("Main Menu", {id = "victory_menu"}, startX + buttonW + spacing, y, buttonW, buttonH).hit then
@@ -2536,7 +2538,7 @@ local function fullDraw()
         drawGameTimer()
     end
     if Player.levelingUp then
-        love.graphics.setColor(0, 0, 0, 0.5)
+        love.graphics.setColor(0, 0, 0, 0.7)
         love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
         love.graphics.setColor(1, 1, 1, 1)
     end

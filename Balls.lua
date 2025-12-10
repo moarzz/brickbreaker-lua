@@ -1595,293 +1595,312 @@ local function fire(techName)
     if techName == "Gun Turrets" then
         -- handles the entire logic for spawning, placing and after 10 seconds, destroying a turret. also handles first shot
         if #turrets < 50 then
-            local turretType = unlockedBallTypes["Gun Turrets"]
-            local id = currentTurretId
-            local destination = {x = (math.random(50, screenWidth - 50)), y = math.random(math.max(paddle.y + 50, screenHeight - 300), screenHeight - 25)}
-            local startDir = math.random(0,1)
-            local turret = {
-                id = currentTurretId,
-                x = paddle.x + paddle.width / 2,
-                y = paddle.y + paddle.height/2, -- Position above the paddle
-                radius = 0,
-                currentAmmo = getStat("Gun Turrets", "ammo"),
-                angle = (startDir == 1 and math.pi*0.25 or -math.pi*0.25),
-                angleOffset = math.random(-100, 100)/100 * math.pi * 0.2,
-                stats = turretType.stats,
-                alive = true,
-            }
-            currentTurretId = currentTurretId + 1
-            local lookDirectionX, lookDirectionY = normalizeVector(screenWidth/2 - destination.x, - destination.y)
-            local directionAngle = 0
-            local turretPositionTween = tween.new(0.5, turret, {x = destination.x, y = destination.y, angle = turret.angle, radius = 65}, tween.outCubic)
-            addTweenToUpdate(turretPositionTween)
-            table.insert(turrets, turret)
-            -- first shot when turret in position
-            Timer.after(0.5, function() 
-                rotateTurret(turret, startDir == 1)
-            end)
-            Timer.after(1 + math.random(0, 100) / 100, function()
-                turretShoot(turret)
-            end)
-            local cooldownValue = 1.5 + getStat("Gun Turrets", "cooldown") * 0.4
-            if accelerationOn then
-                cooldownValue = cooldownValue * 0.5
+            local iterations = 1
+            local chance = hasItem("Four Leafed Clover") and 80 or 40
+            if hasItem("Factory") and math.random(1,100) <= chance then
+                iterations = 2
             end
-            Timer.after(cooldownValue, function()
-                -- Refill ammo after cooldown
-                turret.currentAmmo = getStat("Gun Turrets", "ammo")
-                fire("Gun Turrets")
-            end)
-            createCooldownVFX(cooldownValue)
+            for i=1, iterations do
+                local turretType = unlockedBallTypes["Gun Turrets"]
+                local id = currentTurretId
+                local destination = {x = (math.random(50, screenWidth - 50)), y = math.random(math.max(paddle.y + 50, screenHeight - 300), screenHeight - 25)}
+                local startDir = math.random(0,1)
+                local turret = {
+                    id = currentTurretId,
+                    x = paddle.x + paddle.width / 2,
+                    y = paddle.y + paddle.height/2, -- Position above the paddle
+                    radius = 0,
+                    currentAmmo = getStat("Gun Turrets", "ammo"),
+                    angle = (startDir == 1 and math.pi*0.25 or -math.pi*0.25),
+                    angleOffset = math.random(-100, 100)/100 * math.pi * 0.2,
+                    stats = turretType.stats,
+                    alive = true,
+                }
+                currentTurretId = currentTurretId + 1
+                local lookDirectionX, lookDirectionY = normalizeVector(screenWidth/2 - destination.x, - destination.y)
+                local directionAngle = 0
+                local turretPositionTween = tween.new(0.5, turret, {x = destination.x, y = destination.y, angle = turret.angle, radius = 65}, tween.outCubic)
+                addTweenToUpdate(turretPositionTween)
+                table.insert(turrets, turret)
+                -- first shot when turret in position
+                Timer.after(0.5, function() 
+                    rotateTurret(turret, startDir == 1)
+                end)
+                Timer.after(1 + math.random(0, 100) / 100, function()
+                    turretShoot(turret)
+                end)
+                local cooldownValue = 1.5 + getStat("Gun Turrets", "cooldown") * 0.4
+                if accelerationOn then
+                    cooldownValue = cooldownValue * 0.5
+                end
+                Timer.after(cooldownValue, function()
+                    -- Refill ammo after cooldown
+                    turret.currentAmmo = getStat("Gun Turrets", "ammo")
+                    fire("Gun Turrets")
+                end)
+                createCooldownVFX(cooldownValue)
+            end
         else
             turretsInQueue = turretsInQueue + 1
         end
     end
-    
     if techName == "Laser Turrets" then
         -- handles the entire logic for spawning, placing and after 10 seconds, destroying a turret. also handles first shot
         if #laserTurrets < 50 or true then
-            local turretType = unlockedBallTypes["Laser Turrets"]
-            local id = currentTurretId
-            local destination = {x = (math.random(50, screenWidth - 50)), y = math.random(math.max(paddle.y + 50, screenHeight - 300), screenHeight - 25)}
-            local startDir = math.random(0,1)
-            local turretValueX = mapRangeClamped(destination.x, 0, screenWidth, -100, 100)
-            local turret = {
-                id = currentTurretId,
-                x = paddle.x + paddle.width / 2,
-                y = paddle.y + paddle.height/2, -- Position above the paddle
-                radius = 0,
-                -- currentAmmo = 10,
-                angle = (startDir == 1 and math.pi*0.25 or -math.pi*0.25),
-                angleOffset = -turretValueX/100 * math.pi * 0.2,
-                stats = turretType.stats,
-                alive = true,
-                laserBeamBrick = nil,
-                laserBeamTimer = 0,
-                laserBricksInSight = {},
-                laserBeamNextShotPhantom = false,
-                beamUpdate = function(self, dt) 
-                    if self.radius <= 60 then
-                        return
-                    end
-                    -- laser beam update
-                    local laserBeam = unlockedBallTypes["Laser Turrets"]
-        
-                    -- If we have the same target brick as last frame, increment timer
-                    if self.laserBeamBrick then
-                        self.laserBeamTimer = self.laserBeamTimer + dt
+            local iterations = 1
+            local chance = hasItem("Four Leafed Clover") and 80 or 40
+            if hasItem("Factory") and math.random(1,100) <= chance then
+                iterations = 2
+            end
+            for i=1, iterations do
+                local turretType = unlockedBallTypes["Laser Turrets"]
+                local id = currentTurretId
+                local destination = {x = (math.random(50, screenWidth - 50)), y = math.random(math.max(paddle.y + 50, screenHeight - 300), screenHeight - 25)}
+                local startDir = math.random(0,1)
+                local turretValueX = mapRangeClamped(destination.x, 0, screenWidth, -100, 100)
+                local turret = {
+                    id = currentTurretId,
+                    x = paddle.x + paddle.width / 2,
+                    y = paddle.y + paddle.height/2, -- Position above the paddle
+                    radius = 0,
+                    -- currentAmmo = 10,
+                    angle = (startDir == 1 and math.pi*0.25 or -math.pi*0.25),
+                    angleOffset = -turretValueX/100 * math.pi * 0.2,
+                    stats = turretType.stats,
+                    alive = true,
+                    laserBeamBrick = nil,
+                    laserBeamTimer = 0,
+                    laserBricksInSight = {},
+                    laserBeamNextShotPhantom = false,
+                    beamUpdate = function(self, dt) 
+                        if self.radius <= 60 then
+                            return
+                        end
+                        -- laser beam update
+                        local laserBeam = unlockedBallTypes["Laser Turrets"]
+            
+                        -- If we have the same target brick as last frame, increment timer
+                        if self.laserBeamBrick then
+                            self.laserBeamTimer = self.laserBeamTimer + dt
+                            
+                            -- Deal damage if we've been on target long enough
+                            
+                            local cooldownLength = 0.4
+                            if hasItem("Spray and Pray") then
+                                local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
+                                cooldownLength = cooldownLength * sprayMult
+                            end
+                            if self.laserBeamTimer >= cooldownLength and self.laserBeamBrick.y > -self.laserBeamBrick.height then
+                                if self.laserBeamNextShotPhantom then
+                                    for _, brick in ipairs(laserBricksInSight) do
+                                        if brick.y > -brick.height then
+                                            dealDamage(laserBeam, brick)
+                                        end
+                                    end
+                                    self.laserBeamNextShotPhantom = false
+                                else
+                                    dealDamage(laserBeam, self.laserBeamBrick)
+                                end
+                                self.laserBeamTimer = 0  -- Reset timer after damage
+                                if hasItem("Piercing Beams") and math.random(1,100) <= 10 then
+                                    self.laserBeamNextShotPhantom = true
+                                end
+                            end
+                        else
+                            -- New target or no target, reset timer
+                            self.laserBeamTimer = math.max(self.laserBeamTimer + dt, 0) -- Decrease timer if not on target
+                        end
+                        self.laserBricksInSight = {}
+                        self.laserBeamBrick = nil
+                        local closestDist = math.huge
+                        local highestBrick
+                        local angle = self.angle + self.angleOffset
+                        local speed = {x =math.cos((self.angle + self.angleOffset) - math.pi/2) * 1000, y = math.sin((self.angle + self.angleOffset) - math.pi/2) * 1000}
+                        local normalizedSpeedX, normalizedSpeedY = normalizeVector(speed.x, speed.y)
+                        local startX = self.x + normalizedSpeedX * self.radius
+                        local startY = self.y + normalizedSpeedY * self.radius * 0.8
+                        local startX = self.x
+                        local startY = self.y
+                        -- Calculate end point of laser using direction vector from angle
+                        local dirX = math.sin(angle)  -- X component of direction
+                        local dirY = -math.cos(angle) -- Y component of direction (negative because we're going up)
+                        local laserLength = 2500  -- Extend past screen top
+                        local endX = startX + dirX * laserLength
+                        local endY = startY + dirY * laserLength
                         
-                        -- Deal damage if we've been on target long enough
-                        
-                        local cooldownLength = 0.4
+                        for _, brick in ipairs(bricks) do
+                            if brick.health > 0 and not brick.destroyed then
+                                -- Check all four sides of the brick for intersection
+                                local sides = {
+                                    {brick.x, brick.y + brick.height, brick.x + brick.width, brick.y + brick.height}, -- bottom
+                                    {brick.x, brick.y, brick.x + brick.width, brick.y}, -- top
+                                    {brick.x, brick.y, brick.x, brick.y + brick.height}, -- left
+                                    {brick.x + brick.width, brick.y, brick.x + brick.width, brick.y + brick.height} -- right
+                                }
+                                
+                                for _, side in ipairs(sides) do
+                                    -- Line intersection check
+                                    local x1, y1, x2, y2 = side[1], side[2], side[3], side[4]
+                                    local denominator = (endY - startY) * (x2 - x1) - (endX - startX) * (y2 - y1)
+                                    
+                                    if denominator ~= 0 then
+                                        local ua = ((endX - startX) * (y1 - startY) - (endY - startY) * (x1 - startX)) / denominator
+                                        local ub = ((x2 - x1) * (y1 - startY) - (y2 - y1) * (x1 - startX)) / denominator
+                                        
+                                        if ua >= 0 and ua <= 1 and ub >= 0 and ub <= 1 then
+                                            local intersectX = x1 + ua * (x2 - x1)
+                                            local intersectY = y1 + ua * (y2 - y1)
+                                            local dist = math.sqrt((intersectX - startX)^2 + (intersectY - startY)^2)
+                                            
+                                            table.insert(laserBricksInSight, brick)
+                                            if dist < closestDist then
+                                                closestDist = dist
+                                                highestBrick = brick
+                                                laserBeamY = intersectY
+                                            end
+                                            break
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                        self.laserBeamBrick = highestBrick
+                    end,
+                    beamDraw = function(self) 
+                        if self.radius <= 60 then
+                            return
+                        end
+                        -- laser beam draw
+                        -- Draw the actual Laser Beam
+                        -- Calculate charge progress
+                        local chargeProgress = self.laserBeamTimer / 0.5
                         if hasItem("Spray and Pray") then
                             local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
-                            cooldownLength = cooldownLength * sprayMult
+                            chargeProgress = math.min(1, chargeProgress / sprayMult)
                         end
-                        if self.laserBeamTimer >= cooldownLength and self.laserBeamBrick.y > -self.laserBeamBrick.height then
-                            if self.laserBeamNextShotPhantom then
-                                for _, brick in ipairs(laserBricksInSight) do
-                                    if brick.y > -brick.height then
-                                        dealDamage(laserBeam, brick)
-                                    end
-                                end
-                                self.laserBeamNextShotPhantom = false
-                            else
-                                dealDamage(laserBeam, self.laserBeamBrick)
-                            end
-                            self.laserBeamTimer = 0  -- Reset timer after damage
-                            if hasItem("Piercing Beams") and math.random(1,100) <= 10 then
-                                self.laserBeamNextShotPhantom = true
-                            end
+                        -- Interpolate color from grey to red based on charge
+                        local r = 0.5 + (1 - 0.5) * chargeProgress
+                        local g = 0.175 - 0.175 * chargeProgress
+                        local b = 0.175 - 0.175 * chargeProgress
+                        local a = 0.5 + 0.5 * chargeProgress
+                        love.graphics.setColor(r, g, b, a)
+                        local angle = self.angle + self.angleOffset
+                        local speed = {x = math.cos(angle - math.pi/2) * 1000, y = math.sin(angle - math.pi/2) * 1000}
+                        local normalizedSpeedX, normalizedSpeedY = normalizeVector(speed.x, speed.y)
+                        
+                        -- Start from the tip of the cannon, not the center
+                        local cannonOffsetDistance = self.radius * 0.8  -- Adjust this multiplier to position it correctly
+                        local startX = self.x + normalizedSpeedX * cannonOffsetDistance
+                        local startY = self.y + normalizedSpeedY * cannonOffsetDistance
+                        local beamLength = 2500  -- Match update logic
+                        
+                        -- Calculate distance to target brick if we have one
+                        if self.laserBeamBrick and self.laserBeamBrick.health > 0 then
+                            local brick = self.laserBeamBrick
+                            -- Find closest point on brick to the beam origin
+                            local closestX = math.max(brick.x, math.min(startX, brick.x + brick.width))
+                            local closestY = math.max(brick.y, math.min(startY, brick.y + brick.height))
+                            local distToBrick = math.sqrt((closestX - startX)^2 + (closestY - startY)^2)
+                            beamLength = distToBrick
                         end
-                    else
-                        -- New target or no target, reset timer
-                        self.laserBeamTimer = math.max(self.laserBeamTimer + dt, 0) -- Decrease timer if not on target
-                    end
-                    self.laserBricksInSight = {}
-                    self.laserBeamBrick = nil
-                    local closestDist = math.huge
-                    local highestBrick
-                    local angle = self.angle + self.angleOffset
-                    local speed = {x =math.cos((self.angle + self.angleOffset) - math.pi/2) * 1000, y = math.sin((self.angle + self.angleOffset) - math.pi/2) * 1000}
-                    local normalizedSpeedX, normalizedSpeedY = normalizeVector(speed.x, speed.y)
-                    local startX = self.x + normalizedSpeedX * self.radius
-                    local startY = self.y + normalizedSpeedY * self.radius * 0.8
-                    local startX = self.x
-                    local startY = self.y
-                    -- Calculate end point of laser using direction vector from angle
-                    local dirX = math.sin(angle)  -- X component of direction
-                    local dirY = -math.cos(angle) -- Y component of direction (negative because we're going up)
-                    local laserLength = 2500  -- Extend past screen top
-                    local endX = startX + dirX * laserLength
-                    local endY = startY + dirY * laserLength
-                    
-                    for _, brick in ipairs(bricks) do
-                        if brick.health > 0 and not brick.destroyed then
-                            -- Check all four sides of the brick for intersection
-                            local sides = {
-                                {brick.x, brick.y + brick.height, brick.x + brick.width, brick.y + brick.height}, -- bottom
-                                {brick.x, brick.y, brick.x + brick.width, brick.y}, -- top
-                                {brick.x, brick.y, brick.x, brick.y + brick.height}, -- left
-                                {brick.x + brick.width, brick.y, brick.x + brick.width, brick.y + brick.height} -- right
-                            }
-                            
-                            for _, side in ipairs(sides) do
-                                -- Line intersection check
-                                local x1, y1, x2, y2 = side[1], side[2], side[3], side[4]
-                                local denominator = (endY - startY) * (x2 - x1) - (endX - startX) * (y2 - y1)
-                                
-                                if denominator ~= 0 then
-                                    local ua = ((endX - startX) * (y1 - startY) - (endY - startY) * (x1 - startX)) / denominator
-                                    local ub = ((x2 - x1) * (y1 - startY) - (y2 - y1) * (x1 - startX)) / denominator
-                                    
-                                    if ua >= 0 and ua <= 1 and ub >= 0 and ub <= 1 then
-                                        local intersectX = x1 + ua * (x2 - x1)
-                                        local intersectY = y1 + ua * (y2 - y1)
-                                        local dist = math.sqrt((intersectX - startX)^2 + (intersectY - startY)^2)
-                                        
-                                        table.insert(laserBricksInSight, brick)
-                                        if dist < closestDist then
-                                            closestDist = dist
-                                            highestBrick = brick
-                                            laserBeamY = intersectY
-                                        end
-                                        break
-                                    end
-                                end
-                            end
-                        end
-                    end
-                    self.laserBeamBrick = highestBrick
-                end,
-                beamDraw = function(self) 
-                    if self.radius <= 60 then
-                        return
-                    end
-                    -- laser beam draw
-                    -- Draw the actual Laser Beam
-                    -- Calculate charge progress
-                    local chargeProgress = self.laserBeamTimer / 0.5
-                    if hasItem("Spray and Pray") then
-                        local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
-                        chargeProgress = math.min(1, chargeProgress / sprayMult)
-                    end
-                    -- Interpolate color from grey to red based on charge
-                    local r = 0.5 + (1 - 0.5) * chargeProgress
-                    local g = 0.175 - 0.175 * chargeProgress
-                    local b = 0.175 - 0.175 * chargeProgress
-                    local a = 0.5 + 0.5 * chargeProgress
-                    love.graphics.setColor(r, g, b, a)
-                    local angle = self.angle + self.angleOffset
-                    local speed = {x = math.cos(angle - math.pi/2) * 1000, y = math.sin(angle - math.pi/2) * 1000}
-                    local normalizedSpeedX, normalizedSpeedY = normalizeVector(speed.x, speed.y)
-                    
-                    -- Start from the tip of the cannon, not the center
-                    local cannonOffsetDistance = self.radius * 0.8  -- Adjust this multiplier to position it correctly
-                    local startX = self.x + normalizedSpeedX * cannonOffsetDistance
-                    local startY = self.y + normalizedSpeedY * cannonOffsetDistance
-                    local beamLength = 2500  -- Match update logic
-                    
-                    -- Calculate distance to target brick if we have one
-                    if self.laserBeamBrick and self.laserBeamBrick.health > 0 then
-                        local brick = self.laserBeamBrick
-                        -- Find closest point on brick to the beam origin
-                        local closestX = math.max(brick.x, math.min(startX, brick.x + brick.width))
-                        local closestY = math.max(brick.y, math.min(startY, brick.y + brick.height))
-                        local distToBrick = math.sqrt((closestX - startX)^2 + (closestY - startY)^2)
-                        beamLength = distToBrick
-                    end
-                    
-                    love.graphics.push()
-                    love.graphics.translate(startX, startY)
-                    love.graphics.rotate(angle)
-                    love.graphics.rectangle("fill", -1, -beamLength, 2, beamLength)
-                    love.graphics.pop()
-                end,
-            }
-            currentTurretId = currentTurretId + 1
-            local lookDirectionX, lookDirectionY = normalizeVector(screenWidth/2 - destination.x, - destination.y)
-            local directionAngle = 0
-            local turretPositionTween = tween.new(0.5, turret, {x = destination.x, y = destination.y, angle = turret.angle, radius = 65}, tween.outCubic)
-            addTweenToUpdate(turretPositionTween)
-            table.insert(laserTurrets, turret)
-            -- first shot when turret in position
-            Timer.after(0.5, function() 
-                rotateTurret(turret, startDir == 1, 1.5, 0.7)
-            end)
+                        
+                        love.graphics.push()
+                        love.graphics.translate(startX, startY)
+                        love.graphics.rotate(angle)
+                        love.graphics.rectangle("fill", -1, -beamLength, 2, beamLength)
+                        love.graphics.pop()
+                    end,
+                }
+                currentTurretId = currentTurretId + 1
+                local lookDirectionX, lookDirectionY = normalizeVector(screenWidth/2 - destination.x, - destination.y)
+                local directionAngle = 0
+                local turretPositionTween = tween.new(0.5, turret, {x = destination.x, y = destination.y, angle = turret.angle, radius = 65}, tween.outCubic)
+                addTweenToUpdate(turretPositionTween)
+                table.insert(laserTurrets, turret)
+                -- first shot when turret in position
+                Timer.after(0.5, function() 
+                    rotateTurret(turret, startDir == 1, 1.5, 0.7)
+                end)
 
-            local turretLength = getStat("Laser Turrets", "ammo") * 0.7 + 3
-            Timer.after(turretLength, function()
-                turret.alive = false -- Mark turret as dead
-                local turretDeathTween = tween.new(0.5, turret, {radius = 0}, tween.ouQuint)
-                addTweenToUpdate(turretDeathTween)
-                Timer.after(0.5, function()
-                    -- Remove turret after 10 seconds
-                    for i, t in ipairs(turrets) do
-                        if turret.id == t.id then
-                            table.remove(turrets, i)
-                            break
+                local turretLength = getStat("Laser Turrets", "ammo") * 0.7 + 3
+                Timer.after(turretLength, function()
+                    turret.alive = false -- Mark turret as dead
+                    local turretDeathTween = tween.new(0.5, turret, {radius = 0}, tween.ouQuint)
+                    addTweenToUpdate(turretDeathTween)
+                    Timer.after(0.5, function()
+                        -- Remove turret after 10 seconds
+                        for i, t in ipairs(turrets) do
+                            if turret.id == t.id then
+                                table.remove(turrets, i)
+                                break
+                            end
                         end
+                    end)
+                    if turretsInQueue > 0 then
+                        fire("Gun Turrets")
+                        turretsInQueue = turretsInQueue - 1
                     end
                 end)
-                if turretsInQueue > 0 then
-                    fire("Gun Turrets")
-                    turretsInQueue = turretsInQueue - 1
-                end
-            end)
 
-            local cooldownValue = 1 + getStat("Laser Turrets", "cooldown") * 0.4
-            if accelerationOn then
-                cooldownValue = cooldownValue * 0.5
+                local cooldownValue = 1 + getStat("Laser Turrets", "cooldown") * 0.4
+                if accelerationOn then
+                    cooldownValue = cooldownValue * 0.5
+                end
+                Timer.after(cooldownValue, function()
+                    -- Refill ammo after cooldown
+                    fire("Laser Turrets")
+                end)
+                createCooldownVFX(cooldownValue)
             end
-            Timer.after(cooldownValue, function()
-                -- Refill ammo after cooldown
-                fire("Laser Turrets")
-            end)
-            createCooldownVFX(cooldownValue)
         else
             turretsInQueue = turretsInQueue + 1
         end
     end
-
     if techName == "Mortar Turrets" then
         -- handles the entire logic for spawning, placing and after 10 seconds, destroying a turret. also handles first shot
         if #mortarTurrets < 50 then
-            local turretType = unlockedBallTypes["Mortar Turrets"]
-            local id = currentTurretId
-            local destination = {x = math.max(50, math.min(screenWidth - 50, paddle.x + math.random(-400, 400))), y = math.random(math.max(paddle.y + 25, paddle.y + 75), screenHeight - 25)}
-            local startDir = math.random(0,1)
-            local turret = {
-                id = currentTurretId,
-                x = paddle.x + paddle.width / 2,
-                y = paddle.y + paddle.height/2, -- Position above the paddle
-                radius = 0,
-                currentAmmo = getStat("Mortar Turrets", "ammo"),
-                angle = (startDir == 1 and math.pi*0.25 or -math.pi*0.25),
-                angleOffset = math.random(-100, 100)/100 * math.pi * 0.2,
-                stats = turretType.stats,
-                alive = true,
-            }
-            currentTurretId = currentTurretId + 1
-            local lookDirectionX, lookDirectionY = normalizeVector(screenWidth/2 - destination.x, - destination.y)
-            local directionAngle = 0
-            local turretPositionTween = tween.new(0.5, turret, {x = destination.x, y = destination.y, angle = turret.angle, radius = 65}, tween.outCubic)
-            addTweenToUpdate(turretPositionTween)
-            table.insert(mortarTurrets, turret)
-            -- first shot when turret in position
-            Timer.after(1 + math.random(0, 100) / 100, function()
-                turretShoot(turret, "mortar")
-            end)
-            local cooldownValue = 1.5 + getStat("Mortar Turrets", "cooldown") * 0.4
-            if accelerationOn then
-                cooldownValue = cooldownValue * 0.5
+            local iterations = 1
+            local chance = hasItem("Four Leafed Clover") and 80 or 40
+            if hasItem("Factory") and math.random(1,100) <= chance then
+                iterations = 2
             end
-            Timer.after(cooldownValue, function()
-                -- Refill ammo after cooldown
-                turret.currentAmmo = getStat("Mortar Turrets", "ammo")
-                fire("Mortar Turrets")
-            end)
-            createCooldownVFX(cooldownValue)
+            for i=1, iterations do
+                local turretType = unlockedBallTypes["Mortar Turrets"]
+                local id = currentTurretId
+                local destination = {x = math.max(50, math.min(screenWidth - 50, paddle.x + math.random(-400, 400))), y = math.random(math.max(paddle.y + 25, paddle.y + 75), screenHeight - 25)}
+                local startDir = math.random(0,1)
+                local turret = {
+                    id = currentTurretId,
+                    x = paddle.x + paddle.width / 2,
+                    y = paddle.y + paddle.height/2, -- Position above the paddle
+                    radius = 0,
+                    currentAmmo = getStat("Mortar Turrets", "ammo"),
+                    angle = (startDir == 1 and math.pi*0.25 or -math.pi*0.25),
+                    angleOffset = math.random(-100, 100)/100 * math.pi * 0.2,
+                    stats = turretType.stats,
+                    alive = true,
+                }
+                currentTurretId = currentTurretId + 1
+                local lookDirectionX, lookDirectionY = normalizeVector(screenWidth/2 - destination.x, - destination.y)
+                local directionAngle = 0
+                local turretPositionTween = tween.new(0.5, turret, {x = destination.x, y = destination.y, angle = turret.angle, radius = 65}, tween.outCubic)
+                addTweenToUpdate(turretPositionTween)
+                table.insert(mortarTurrets, turret)
+                -- first shot when turret in position
+                Timer.after(1 + math.random(0, 100) / 100, function()
+                    turretShoot(turret, "mortar")
+                end)
+                local cooldownValue = 1.5 + getStat("Mortar Turrets", "cooldown") * 0.4
+                if accelerationOn then
+                    cooldownValue = cooldownValue * 0.5
+                end
+                Timer.after(cooldownValue, function()
+                    -- Refill ammo after cooldown
+                    turret.currentAmmo = getStat("Mortar Turrets", "ammo")
+                    fire("Mortar Turrets")
+                end)
+                createCooldownVFX(cooldownValue)
+            end
         else
             turretsInQueue = turretsInQueue + 1
         end
@@ -2861,6 +2880,7 @@ accelerationOn = false
 function Balls.initialize()
     -- clean code/s
     changeMusic("calm")
+    endlessRun = false
     powerupPopup = {startTime = 0, type = nil, scale = 0, angle = 0}
     victoryAchieved = false
     fastBricksReset()
