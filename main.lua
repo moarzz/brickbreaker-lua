@@ -1165,10 +1165,10 @@ function changeMusic(newMusicStage)
         BackgroundShader.changeShader(2); -- acid
     elseif newMusicStage == "intense" then
         ref = "assets/SFX/inGame3.mp3";
-        BackgroundShader.changeShader(1); -- vexel
+        BackgroundShader.changeShader(1);
     elseif newMusicStage == "boss" then
         ref = "assets/SFX/inGameBoss.mp3";
-        BackgroundShader.changeShader(1); -- vexel
+        BackgroundShader.changeShader(1);
     elseif newMusicStage == "victory" then
         ref = "assets/SFX/victoryTheme.mp3"
         targetMusicVolume = 1
@@ -2252,7 +2252,7 @@ end
 
 inGame = false
 globalVolume = 1
-arcadeBezelOn = false
+arcadeBezelOn = true
 -- Add a function to draw the settings menu with SUIT sliders
 function drawSettingsMenu()
     local centerX = screenWidth / 2 - buttonWidth / 2

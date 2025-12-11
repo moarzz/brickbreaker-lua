@@ -5,7 +5,7 @@ Thundershock.description = "<font=bold>On brick destroyed<font=default>\nSummon 
 Thundershock.rarity = "uncommon";
 Thundershock.shotCount = 0;
 Thundershock.unique = true
--- CoverLaser.imageReference = "assets/sprites/UI/ItemIcons/Cover-Laser.png";
+Thundershock.imageReference = "assets/sprites/UI/ItemIcons/Thundershock.png";
 function Thundershock.new()
     local instance = setmetatable({}, Thundershock):init();
 

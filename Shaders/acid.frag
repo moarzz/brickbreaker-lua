@@ -2,7 +2,7 @@ uniform number time = 0.0;
 uniform float intensity;
 uniform float brightness;
 
-float tau = 6.28318;
+float tau = 6;
 float actualIntensity = intensity * 0.4 + 0.3;
 float actualBrightness = brightness * 0.4 + 0.3;
 
