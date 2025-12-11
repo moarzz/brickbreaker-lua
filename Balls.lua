@@ -666,7 +666,7 @@ local function newLaserPortal(damage, fireRate, name)
                     end
                     if self.laserBeamTimer >= cooldownLength and self.laserBeamBrick.y > -self.laserBeamBrick.height then
                         if self.laserBeamNextShotPhantom then
-                            createExplosionAtLocation(self.laserBeamBrick.x + self.laserBeambrick.width/2, self.laserBeamBrick.y + self.laserBeamBrick.height/2, 1, laserBeam.stats.damage, "Laser Turrets")
+                            createExplosionAtLocation(self.laserBeamBrick.x + self.laserBeamBrick.width/2, self.laserBeamBrick.y + self.laserBeamBrick.height/2, 0.9, damage, "Laser Turrets")
                         else
                             dealDamage({stats = {damage = damage}, name = self.name}, self.laserBeamBrick)
                         end
@@ -676,7 +676,7 @@ local function newLaserPortal(damage, fireRate, name)
                         else
                             self.angleOffset = 0
                         end
-                        local chance = hasItem("Four Leafed Clover") and 20 or 10
+                        local chance = hasItem("Four Leafed Clover") and 30 or 15
                         if hasItem("Exploding Beams") and math.random(1,100) <= chance then
                             self.laserBeamNextShotPhantom = true
                         end
@@ -1441,7 +1441,6 @@ local function turretShoot(turret, typeMod)
                     break
                 end
             end
-            playSoundEffect(explosionSFX, 1.0, 1.0, false, true)
         end)
 
         -- ammo logic
@@ -1688,13 +1687,13 @@ local function fire(techName)
                             end
                             if self.laserBeamTimer >= cooldownLength and self.laserBeamBrick.y > -self.laserBeamBrick.height then
                                 if self.laserBeamNextShotPhantom then
-                                    createExplosionAtLocation(self.laserBeamBrick.x + self.laserBeambrick.width/2, self.laserBeamBrick.y + self.laserBeamBrick.height/2, 1, laserBeam.stats.damage, "Laser Turrets")
+                                    createExplosionAtLocation(self.laserBeamBrick.x + self.laserBeamBrick.width/2, self.laserBeamBrick.y + self.laserBeamBrick.height/2, 0.9, laserBeam.stats.damage, "Laser Turrets")
                                     self.laserBeamNextShotPhantom = false
                                 else
                                     dealDamage(laserBeam, self.laserBeamBrick)
                                 end
                                 self.laserBeamTimer = 0  -- Reset timer after damage
-                                local chance = hasItem("Four Leafed Clover") and 20 or 10
+                                local chance = hasItem("Four Leafed Clover") and 30 or 15
                                 if hasItem("Exploding Beams") and math.random(1,100) <= chance then
                                     self.laserBeamNextShotPhantom = true
                                 end
@@ -2317,7 +2316,7 @@ local function ballListInit()
             stats = {
                 speed = 100,
                 damage = 1,
-                fireRate = 2,
+                fireRate = 1,
             },
         },
         ["Laser Portals"] = {
@@ -3222,14 +3221,15 @@ local function brickCollisionEffects(ball, brick)
     end  
     if ball.name == "Exploding Ball" or ball.name == "Incrediball" then
         -- Create explosion using new particle system
-        local scale = math.max(getStat(ball.name, "range") * 0.3 + 0.5, 1)
+        local scale = getStat(ball.name, "range") * 0.15 + 0.3
         -- Limit Chain Lightning sprite animations to 25 at once
-        createSpriteAnimation(ball.x, ball.y, scale/2, explosionVFX, 512, 512, 0.01, 5, false, 0.9, 0.9)
+        --createSpriteAnimation(ball.x, ball.y, scale/2, explosionVFX, 512, 512, 0.01, 5, false, 0.9, 0.9)
 
         --Explosion.spawn(ball.x, ball.y, scale)
         
         -- Play explosion sound
-        playSoundEffect(explosionSFX, 0.5, 1, false, true)
+        createExplosionAtLocation(ball.x, ball.y, scale, getStat(ball.name, "damage"), "Exploding Ball")
+        --[[playSoundEffect(explosionSFX, 0.5, 1, false, true)
         
         dealDamage(ball, brick)
         local bricksTouchingCircle = getBricksInCircle(ball.x, ball.y, getStat(ball.name, "range") * 15)
@@ -3239,7 +3239,7 @@ local function brickCollisionEffects(ball, brick)
                     dealDamage(ball, touchingBrick) -- Deal damage to the touched bricks
                 end
             end
-        end
+        end]]
 
         --[[ Decrement the global Chain Lightning sprite count when the animation ends
         local anim = getAnimation and getAnimation(ball.x, ball.y, scale/3, explosionVFX) -- getAnimation must be implemented to retrieve the animation object
@@ -3725,7 +3725,7 @@ local function techUpdate(dt)
             end
             if laserBeamTimer >= cooldownLength and laserBeamBrick.y > -laserBeamBrick.height then
                 if laserBeamNextShotPhantom then
-                    createExplosionAtLocation(laserBeamBrick.x + laserBeamBrick.width/2, laserBeamBrick.y + laserBeamBrick.height/2, 1, laserBeam.stats.damage, "Laser Turrets")
+                    createExplosionAtLocation(laserBeamBrick.x + laserBeamBrick.width/2, laserBeamBrick.y + laserBeamBrick.height/2, 0.9, laserBeam.stats.damage, "Laser Turrets")
                     laserBeamNextShotPhantom = false
                 else
                     dealDamage(laserBeam, laserBeamBrick)
@@ -3736,7 +3736,7 @@ local function techUpdate(dt)
                 else
                     laserBeam.angle = 0
                 end
-                local chance = hasItem("Four Leafed Clover") and 20 or 10
+                local chance = hasItem("Four Leafed Clover") and 30 or 15
                 if hasItem("Exploding Beams") and math.random(1,100) <= chance then
                     laserBeamNextShotPhantom = true
                 end
@@ -4274,8 +4274,9 @@ local function spellsUpdate(dt)
                        fireball.y + fireball.radius > brick.y and fireball.y - fireball.radius < brick.y + brick.height then
                         -- Deal damage and create explosion effect
                         dealDamage(unlockedBallTypes["Fireballs"], brick)
-                        local scale = getStat("Fireballs", "range") * 0.325
-                        createSpriteAnimation(fireball.x, fireball.y, scale, explosionVFX, 512, 512, 0.01, 5)
+                        local scale = getStat("Fireballs", "range") * 0.2 + 0.3
+                        createExplosionAtLocation(fireball.x, fireball.y, scale, getStat("Fireballs", "damage"), "Fireballs")
+                        --[[createSpriteAnimation(fireball.x, fireball.y, scale, explosionVFX, 512, 512, 0.01, 5)
                         playSoundEffect(explosionSFX, 0.5, 1, false, true)
                         -- Area damage to nearby bricks
                         local area = scale * 80
@@ -4284,7 +4285,7 @@ local function spellsUpdate(dt)
                             if touchingBrick and touchingBrick ~= brick and touchingBrick.health > 0 then
                                 dealDamage(fireball, touchingBrick)
                             end
-                        end
+                        end]]
                         removeAnimation(fireball.animation.id)
                         table.remove(fireballs, i)
                         break
@@ -4557,6 +4558,9 @@ function Balls.update(dt, paddle, bricks)
         local rocketDrawY = rocket.y + dirY
         if bricksInEllipse(rocket.x, rocket.y, 20, 60) ~= false then
             local brickHit = bricksInEllipse(rocket.x, rocket.y, 20, 60)
+            local explosionX, explosionY = (rocket.x + brickHit.x)/2, (rocket.y + brickHit.y)/2
+            createExplosionAtLocation(explosionX, explosionY, 0.3 + getStat("Rocket Launcher", "range") * 0.25, unlockedBallTypes["Rocket Launcher"].stats.damage, "Rocket Launcher")
+            --[[local brickHit = bricksInEllipse(rocket.x, rocket.y, 20, 60)
             playSoundEffect(explosionSFX, 0.5, 1, false, true)
             -- Explosion damage
             local scale = 1.8 + getStat("Rocket Launcher", "range") * 0.5
@@ -4568,7 +4572,7 @@ function Balls.update(dt, paddle, bricks)
                     hitBrick.hitLastFrame = true
                 end
             end
-            createSpriteAnimation((explosionX), (explosionY), scale/3, explosionVFX, 512, 512, 0.01, 0, false)
+            createSpriteAnimation((explosionX), (explosionY), scale/3, explosionVFX, 512, 512, 0.01, 0, false)]]
             hitBrick = true
             removeAnimation(rocket.animation.id)
             table.remove(rockets, i) -- Remove rocket immediately when it hits a brick
@@ -4639,20 +4643,20 @@ function Balls.update(dt, paddle, bricks)
                 
                 -- Deal damage if we've been on target long enough
                 
-                local cooldownLength = 2.5/((getStat("Laser Ball", "fireRate")))
+                local cooldownLength = 2.75/((getStat("Laser Ball", "fireRate")))
                 if hasItem("Spray and Pray") then
                     local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                     cooldownLength = cooldownLength * sprayMult
                 end
                 if ball.laserBeamTimer >= cooldownLength and ball.laserBeamBrick.y > -ball.laserBeamBrick.height then
                     if ball.laserBeamNextShotPhantom then
-                        createExplosionAtLocation(ball.laserBeamBrick.x + ball.laserBeambrick.width/2, ball.laserBeamBrick.y + ball.laserBeamBrick.height/2, 1, laserBeam.stats.damage, "Laser Turrets")
+                        createExplosionAtLocation(ball.laserBeamBrick.x + ball.laserBeamBrick.width/2, ball.laserBeamBrick.y + ball.laserBeamBrick.height/2, 0.9, laserBeam.stats.damage, "Laser Turrets")
                         ball.laserBeamNextShotPhantom = false
                     else
                         dealDamage(laserBeam, ball.laserBeamBrick)
                     end
                     ball.laserBeamTimer = 0  -- Reset timer after damage
-                    local chance = hasItem("Four Leafed Clover") and 20 or 10
+                    local chance = hasItem("Four Leafed Clover") and 30 or 15
                     if hasItem("Exploding Beams") and math.random(1,100) <= chance then
                         ball.laserBeamNextShotPhantom = true
                     end
@@ -5302,7 +5306,6 @@ local function techDraw()
         love.graphics.rectangle("fill", paddle.x, 0, paddle.width, paddle.y)
     end
 
-    -- Draw Laser Beam
     if unlockedBallTypes["Laser Beam"] then
         -- Draw the actual Laser Beam
         -- Calculate charge progress

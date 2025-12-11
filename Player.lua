@@ -419,6 +419,7 @@ function Player.onLevelUp()
 end
 
 function Player.levelUp()
+    arcadeBezelShader:send("targetAberration", 0.001);
     setMusicEffect("paused")
     love.mouse.setVisible(true)
     resetRerollPrice()

@@ -738,7 +738,9 @@ function removeTween(tweenID)
     end
 end
 
-function createExplosionAtLocation(x, y, radius, damage, name)
+local lastExplosionTime = 0
+function createExplosionAtLocation(x, y, radius, damage, name, recast)
+    recast = recast or false
     name = name or "none"
     -- Limit Chain Lightning sprite animations to 25 at once
     createSpriteAnimation(x, y, radius, explosionVFX, 512, 512, 0.01, 5, false, 0.9, 0.9)
@@ -746,7 +748,10 @@ function createExplosionAtLocation(x, y, radius, damage, name)
     --Explosion.spawn(ball.x, ball.y, scale)
     
     -- Play explosion sound
-    playSoundEffect(explosionSFX, 0.5, 1, false, true)
+    if gameTime - lastExplosionTime >= 0.1 then
+        playSoundEffect(explosionSFX, 0.5, 1, false, true)
+        lastExplosionTime = gameTime
+    end
     
     local bricksTouchingCircle = getBricksInCircle(x, y, radius * 60)
     for _, touchingBrick in ipairs(bricksTouchingCircle) do
@@ -755,6 +760,19 @@ function createExplosionAtLocation(x, y, radius, damage, name)
                 dealDamage({stats = {damage = damage}, name = name}, touchingBrick) -- Deal damage to the touched bricks
             end
         end
+    end
+
+    if hasItem("Total Anihilation") and not recast then
+        Timer.after(0.15, function()
+            local randomAngle = math.rad(math.random(0, 360))
+            for i=1, 3 do
+                randomAngle = randomAngle + math.rad(120)
+                local xMult = math.cos(randomAngle)
+                local yMult = math.sin(randomAngle)
+                local distance = radius * 100
+                createExplosionAtLocation(x + distance * xMult, y + distance * yMult, radius * 0.6, math.ceil(damage/2), name, true)
+            end
+        end)
     end
 end
 

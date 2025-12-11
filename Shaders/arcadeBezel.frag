@@ -1,3 +1,4 @@
+uniform float targetAberration = 0.002;
 
 vec4 effect(vec4 colour, Image image, vec2 textureCoords, vec2 screenCoords)
 {
@@ -6,7 +7,7 @@ vec4 effect(vec4 colour, Image image, vec2 textureCoords, vec2 screenCoords)
     vec2 centered = uv - center;
     
     // Barrel distortion parameters
-    float strength = 0.2;  // Strength of the barrel effect
+    float strength = 0.25;  // Strength of the barrel effect
     float radius = length(centered);
     
     // Apply barrel distortion
@@ -48,7 +49,7 @@ vec4 effect(vec4 colour, Image image, vec2 textureCoords, vec2 screenCoords)
     vec4 color = Texel(image, distortedUv);
     
     // Chromatic aberration
-    float aberrationStrength = 0.002;
+    float aberrationStrength = targetAberration;
     vec2 aberrationDir = normalize(centered);
     float redShift = Texel(image, distortedUv + aberrationDir * aberrationStrength).r;
     float greenShift = Texel(image, distortedUv).g;

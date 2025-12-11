@@ -334,7 +334,7 @@ local function loadAssets()
     -- load shaders
     -- backgroundShader = love.graphics.newShader("background", "Shaders/background.glsl")
     glowShader = love.graphics.newShader("glow", "Shaders/glow.glsl")
-    arcadeBevelShader = love.graphics.newShader("arcadeBezel", "Shaders/arcadeBezel.frag")
+    arcadeBezelShader = love.graphics.newShader("arcadeBezel", "Shaders/arcadeBezel.frag")
 
     -- load spriteSheets
     impactVFX = love.graphics.newImage("assets/sprites/VFX/Impact.png")
@@ -686,10 +686,12 @@ local function generateRow(brickCount, yPos)
                                     healThisFrame = healThisFrame + healAmount
                                 end
                             end
+                            
                             Timer.after(1.75, function() healSelf(healBrick) end)
                         end
                     end
-                    Timer.after(1.75 + math.random(1,175)/100, function() healSelf(healBrick) end)
+                    local healDelay = 1.75 - ((gameTime * 100) % 175)/100
+                    Timer.after(1.75 + healDelay, function() healSelf(healBrick) end)
                 elseif Player.level >= 12 and math.random(1, 250) <= math.floor(mapRangeClamped(Player.level, 12, 25, 1, 5)) then
                     -- make shield bricks
                     print("Generating shield brick")
@@ -2060,7 +2062,7 @@ function drawBricks()
 
     -- draw shield auras
     for _, aura in ipairs(shieldAuras) do
-        love.graphics.setColor(0,104/255,161/255,1)
+        love.graphics.setColor(0,104/255,161/255,0.4)
         drawImageCentered(healAuraImg, aura.x + aura.width/2, aura.y + aura.height/2,aura.width * 6.5, aura.width * 6.5)
         setFont(45)
         love.graphics.setColor(0,0,0,0.35)
@@ -2681,6 +2683,7 @@ local old_love_keypressed = love.keypressed
 moneyScale = {scale = 1}
 function love.keypressed(key)
     if key == "space" and Player.levelingUp and (not Player.choosingUpgrade) and EventQueue:isQueueFinished() then
+        arcadeBezelShader:send("targetAberration", 0.002);
         if currentlyOnFirstLevelUp then
             if Player.getCurrentTutorialStep() == 2 then
                 EventQueue:addEventToQueue(EVENT_POINTERS.levelUp, 0);

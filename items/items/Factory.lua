@@ -3,7 +3,7 @@ Factory.__index = Factory;
 Factory.name = "Factory";
 Factory.description = "<font=bold>On Turret Generation<font=default>\n<doubleChance>% chance to create an additional turret";
 Factory.rarity = "uncommon";
--- Factory.imageReference = "assets/sprites/UI/ItemIcons/Archeologist's-Hat.png";
+Factory.imageReference = "assets/sprites/UI/ItemIcons/Factory.png";
 
 function Factory.new()
     local instance = setmetatable({}, Factory):init();

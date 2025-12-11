@@ -3,13 +3,13 @@ ExplodingBeams.__index = ExplodingBeams;
 ExplodingBeams.name = "Exploding Beams";
 ExplodingBeams.description = "<font=bold>Laser beams<font=default> have a <font=big><explosionChance>%<font=default> chance to cause an explosion";
 ExplodingBeams.rarity = "uncommon";
--- ExplodingBeams.imageReference = "assets/sprites/UI/ItemIcons/Archeologist's-Hat.png";
+ExplodingBeams.imageReference = "assets/sprites/UI/ItemIcons/Exploding-Beams.png";
 
 function ExplodingBeams.new()
     local instance = setmetatable({}, ExplodingBeams):init();
 
     instance.descriptionPointers = {
-        explosionChance = hasItem("Four Leafed Clover") and 20 or 10;
+        explosionChance = hasItem("Four Leafed Clover") and 30 or 15;
     };
     return instance;
 end
