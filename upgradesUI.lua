@@ -1412,7 +1412,7 @@ local function drawItemShop()
         end
         if suit.Button("Reroll", {id = "reroll_items", color = invisButtonColor}, screenWidth - 260, 50 + uiBigWindowImg:getHeight() * 0.65/2 - 57, uiLabelImg:getWidth() - 30, uiLabelImg:getHeight() - 6).hit then
             if Player.realMoney >= actualRerollPrice then
-                Player.pay(actualRerollPrice)
+                Player.pay(actualRerollPrice, true)
                 -- playSoundEffect(upgradeSFX, 0.5, 0.95)
                 setItemShop()
                 if Player.currentCore ~= "Picky Core" then

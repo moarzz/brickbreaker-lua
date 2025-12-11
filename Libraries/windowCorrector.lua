@@ -398,11 +398,18 @@ function WindowCorrector.stopDraw()
     -- draw the currentLayer canvas to the final render target with depth
     love.graphics.setCanvas(); -- not active so it is actually window
     love.graphics.setShader();
-
     love.graphics.origin();
     love.graphics.setColor(1,1,1,1);
+    
 
+    -- apply arcade bezel shader as post-process effect
+    if arcadeBezelOn then
+        love.graphics.setShader("arcadeBezel")
+    end
+    love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(self.canvases[1]);
+    -- love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+    love.graphics.setShader()
 
     self.errorDrawCalls = true; -- error draw calls since theyre not done in the WindowCorrector
 end

@@ -363,16 +363,17 @@ end
 
 -- Public interface
 
-function tween.new(duration, subject, target, easing, id)
+function tween.new(duration, subject, target, easing, id, updateWhenPaused)
   easing = getEasingFunction(easing)
   checkNewParams(duration, subject, target, easing)
   return setmetatable({
-    id = id or 0,
+    id = id or math.random(1,99999999),
     duration  = duration,
     subject   = subject,
     target    = target,
     easing    = easing,
-    clock     = 0
+    clock     = 0,
+    updateWhenPaused = updateWhenPaused or false  -- defaults to true
   }, Tween_mt)
 end
 

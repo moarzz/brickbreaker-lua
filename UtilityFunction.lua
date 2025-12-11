@@ -186,9 +186,9 @@ function createMoneyPopup(value, x, y)
     }
     moneyPopupId = moneyPopupId + 1
     table.insert(moneyPopups, popup)
-    local inTween = tween.new(0.2, popup, {scale = 40}, tween.easing.outCirc)
+    local inTween = tween.new(0.2, popup, {scale = 40}, tween.easing.outCirc, nil, true)
     addTweenToUpdate(inTween)
-    local entireInTween = tween.new(1, popup, {x = popup.x + xOffset, y = popup.y + yOffset}, tween.easing.outCirc)
+    local entireInTween = tween.new(1, popup, {x = popup.x + xOffset, y = popup.y + yOffset}, tween.easing.outCirc, nil, true)
     addTweenToUpdate(entireInTween)
     GlobalTimer:after(0.2, function()
         local outTween = tween.new(0.8, popup, {scale = 0}, tween.easing.inCirc)
@@ -220,12 +220,12 @@ function plusStatPopup(text, x, y)
     }
     plusStatPopupId = plusStatPopupId + 1
     table.insert(plusStatPopups, popup)
-    local inTween = tween.new(0.2, popup, {scale = 40}, tween.easing.outCirc)
+    local inTween = tween.new(0.2, popup, {scale = 40}, tween.easing.outCirc, nil, true)
     addTweenToUpdate(inTween)
-    local entireInTween = tween.new(1, popup, {x = popup.x + xOffset, y = popup.y + yOffset}, tween.easing.outCirc)
+    local entireInTween = tween.new(1, popup, {x = popup.x + xOffset, y = popup.y + yOffset}, tween.easing.outCirc, nil, true)
     addTweenToUpdate(entireInTween)
     GlobalTimer:after(0.2, function()
-        local outTween = tween.new(0.8, popup, {scale = 0}, tween.easing.inCirc)
+        local outTween = tween.new(0.8, popup, {scale = 0}, tween.easing.inCirc, nil, true)
         addTweenToUpdate(outTween)
         GlobalTimer:after(0.8, function()
             -- Remove the popup from the list after the animation
@@ -261,10 +261,10 @@ function itemTriggerAnimation(itemIdentifier)
         visualItemValues[resolvedName] = {scale = 1}
     end
 
-    local inTween = tween.new(0.05, visualItemValues[resolvedName], {scale = 1.6}, tween.easing.outCirc)
+    local inTween = tween.new(0.05, visualItemValues[resolvedName], {scale = 1.6}, tween.easing.outCirc, nil, true)
     addTweenToUpdate(inTween)
     GlobalTimer:after(0.05, function()
-        local outTween = tween.new(0.175, visualItemValues[resolvedName], {scale = 1}, tween.easing.inCirc)
+        local outTween = tween.new(0.175, visualItemValues[resolvedName], {scale = 1}, tween.easing.inCirc, nil, true)
         addTweenToUpdate(outTween)
     end)
 end
@@ -285,7 +285,8 @@ function reorderPlayerItems()
 end
 local pausedUpgradeNumbers = {}
 
-function gainMoneyWithAnimations(moneyGain, itemID)
+function gainMoneyWithAnimations(moneyGain, itemID, playSFX)
+    playSFX = playSFX or false
     print("gaining money: " .. moneyGain .. " with itemID: " .. (itemID or "NO ID"))
     EventQueue:addEventToQueue(EVENT_POINTERS.money_gain, 0.3, function() 
         -- First event: Show animation and add money
@@ -299,21 +300,21 @@ function gainMoneyWithAnimations(moneyGain, itemID)
         end
         
         -- Create and add tween without capturing outer scope variables
-        local inTween = tween.new(0.075, visualMoneyValues, {scale = 1.7}, tween.easing.outCirc)
+        local inTween = tween.new(0.075, visualMoneyValues, {scale = 1.7}, tween.easing.outCirc, nil, true)
         addTweenToUpdate(inTween)
         
         -- Update money
         createMoneyPopup(moneyGain, math.random(190, 210), 175);
         if not Player.levelingUp then
             playerMoneyBoost.alpha = 1.0
-            local moneyOutTween = tween.new(1.0, playerMoneyBoost, {alpha = 0.0}, tween.easing.inCirc)
+            local moneyOutTween = tween.new(1.0, playerMoneyBoost, {alpha = 0.0}, tween.easing.inCirc, nil, true)
             addTweenToUpdate(moneyOutTween)
         end
 
         -- reset Scale tween
         GlobalTimer:after(0.075, function() 
             Player.shiftMoneyValue(moneyGain);
-            local outTween = tween.new(0.225, visualMoneyValues, {scale = 1}, tween.easing.inCirc)
+            local outTween = tween.new(0.225, visualMoneyValues, {scale = 1}, tween.easing.inCirc, nil, true)
             addTweenToUpdate(outTween)
         end)
     end)
@@ -338,14 +339,14 @@ function reducePriceWithAnimations(reductionAmount, weaponName, itemID)  -- Acce
             visualUpgradePriceValues[weapon.name] = {scale = 1}
         end
         
-        local inTween = tween.new(0.075, visualUpgradePriceValues[weaponName], {scale = 1.7}, tween.easing.outCirc)
+        local inTween = tween.new(0.075, visualUpgradePriceValues[weaponName], {scale = 1.7}, tween.easing.outCirc, nil, true)
         addTweenToUpdate(inTween)
         
         -- Directly modify the weapon object
         weapon.price = math.max(weapon.price - reductionAmount, 0)
     end)
     EventQueue:addEventToQueue(EVENT_POINTERS.empty, 0.225, function() 
-        local outTween = tween.new(0.225, visualUpgradePriceValues[weaponName], {scale = 1}, tween.easing.inCirc)
+        local outTween = tween.new(0.225, visualUpgradePriceValues[weaponName], {scale = 1}, tween.easing.inCirc, nil, true)
         addTweenToUpdate(outTween)
     end)
 end
@@ -371,7 +372,7 @@ function gainStatWithAnimation(statName, weaponName, itemID)
         if not visualStatValues[weaponName][statName] then
             visualStatValues[weaponName][statName] = {scale = 1}
         end
-        local inTween = tween.new(0.075, visualStatValues[weaponName][statName], {scale = 1.6}, tween.easing.outCirc)
+        local inTween = tween.new(0.075, visualStatValues[weaponName][statName], {scale = 1.6}, tween.easing.outCirc, nil, true)
         addTweenToUpdate(inTween)
         local selectedWeapon = Balls.getUnlockedBallTypes()[weaponName]
         if statName == "cooldown" then
@@ -388,7 +389,7 @@ function gainStatWithAnimation(statName, weaponName, itemID)
         end
     end)
     EventQueue:addEventToQueue(EVENT_POINTERS.empty, 0.225, function() 
-        local outTween = tween.new(0.225, visualStatValues[weaponName][statName], {scale = 1}, tween.easing.inCirc)
+        local outTween = tween.new(0.225, visualStatValues[weaponName][statName], {scale = 1}, tween.easing.inCirc, nil, true)
         addTweenToUpdate(outTween)
     end)
 end
@@ -761,6 +762,18 @@ function updateAllTweens(dt)
     for i = #Tweens, 1, -1 do -- Iterate backward to safely remove items
         local tween = Tweens[i]
         if tween.update then
+            tween:update(dt) -- Update each tween
+            if tween.clock >= tween.duration then
+                table.remove(Tweens, i) -- Remove the tween if its duration is over
+            end
+        end
+    end
+end
+
+function updatePausedTweens(dt)
+    for i = #Tweens, 1, -1 do -- Iterate backward to safely remove items
+        local tween = Tweens[i]
+        if tween.update and tween.updateWhenPaused then
             tween:update(dt) -- Update each tween
             if tween.clock >= tween.duration then
                 table.remove(Tweens, i) -- Remove the tween if its duration is over

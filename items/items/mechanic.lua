@@ -12,7 +12,7 @@ function Mechanic.new()
 end
 
 function Mechanic.events:levelUp()
-    Player.changeMoney(-2, self.id)
+    Player.changeMoney(-2, self.id, true)
     local unlockedWeapons = Balls.getUnlockedBallTypes()
     if tableLength(unlockedWeapons) == 0 then
         return;

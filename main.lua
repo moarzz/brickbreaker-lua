@@ -260,7 +260,12 @@ local function loadAssets()
     muzzleFlashImg = love.graphics.newImage("assets/sprites/muzzleFlash.png")
     turretImg = love.graphics.newImage("assets/sprites/turret.png")
     turretBaseImg = love.graphics.newImage("assets/sprites/turretBase.png")
+    laserTurretBaseImg = love.graphics.newImage("assets/sprites/laserTurretBase.png")
+    mortarImg = love.graphics.newImage("assets/sprites/mortar.png")
+    mortarBaseImg = love.graphics.newImage("assets/sprites/mortarBase.png")
     turretGunImg = love.graphics.newImage("assets/sprites/turretGun.png")
+    laserTurretGunImg = love.graphics.newImage("assets/sprites/laserTurretGun.png")
+    mortarTurretGunImg = love.graphics.newImage("assets/sprites/mortarGun.png")
     brickPiece1Img = love.graphics.newImage("assets/sprites/brickPiece1.png")
     brickPiece2Img = love.graphics.newImage("assets/sprites/brickPiece2.png")
     brickPiece3Img = love.graphics.newImage("assets/sprites/brickPiece3.png")
@@ -329,6 +334,7 @@ local function loadAssets()
     -- load shaders
     -- backgroundShader = love.graphics.newShader("background", "Shaders/background.glsl")
     glowShader = love.graphics.newShader("glow", "Shaders/glow.glsl")
+    arcadeBevelShader = love.graphics.newShader("arcadeBezel", "Shaders/arcadeBezel.frag")
 
     -- load spriteSheets
     impactVFX = love.graphics.newImage("assets/sprites/VFX/Impact.png")
@@ -362,7 +368,7 @@ local bossBrickSpawnTimer
 local bossSpawnSwitch = true
 local boss = nil
 local function spawnBoss()
-    currentRowPopulation = 1000
+    currentRowPopulation = 750
     targetMusicVolume = 0
     -- Center the boss brick at the top
     Timer.after(7.5, function()
@@ -549,7 +555,7 @@ local function generateRow(brickCount, yPos)
     end
 
     if not bossSpawned then
-        local blockedRowCount = math.random(0,13)
+        local blockedRowCount = math.random(0,15)
         if blockedRowCount ~= 0 then
             blockedRows = {}
             for i=1, blockedRowCount do
@@ -890,7 +896,7 @@ function love.load()
     love.mouse.setVisible(true)
     math.randomseed(os.time())
 
-    WindowCorrector.init(7); -- 5 additional render canvases for shaders and draw order stuff
+    WindowCorrector.init(8); -- 5 additional render canvases for shaders and draw order stuff (added 1 for post-process)
 
     dress = suit.new()
     loadAssets() -- Load assets
@@ -903,6 +909,7 @@ function love.load()
 
     gameCanvas = 1; -- enum for windowCorrector canvas --love.graphics.newCanvas(screenWidth, screenHeight)
     uiCanvas = 2; -- enum for windowCorrector canvas --love.graphics.newCanvas(screenWidth, screenHeight)
+    postProcessCanvas = 8; -- enum for windowCorrector canvas for post-process effects
 
     -- Render glow canvases at half resolution for performance
     --local glowWidth, glowHeight = math.floor(screenWidth / 2), math.floor(screenHeight / 2)
@@ -991,7 +998,7 @@ brickFreeze = false
 brickFreezeTime = gameTime
 function getBrickSpeedByTime()
     -- Scale speed from 0.5 to 3 over 30 minutes
-    local returnValue = mapRange(gameTime, 0, 2000, 0.225, 3) * (Player.currentCore == "Madness Core" and 2 or 1)
+    local returnValue = mapRange(gameTime, 0, 2000, 0.3, 3) * (Player.currentCore == "Madness Core" and 2 or 1)
     if brickFreeze == true then
         if gameTime - brickFreezeTime > 20 then
             brickFreeze = false
@@ -1040,6 +1047,9 @@ function getBrickSpeedMult()
             return posMult
         end
         
+        if bossSpawned then
+            posMult = posMult * mapRangeClamped(boss.y, 350, screenHeight, 1, 0.5)
+        end
         -- Combine with time-based multiplier
         return posMult * getBrickSpeedByTime()
     end
@@ -1074,7 +1084,7 @@ local function moveBricksDown(dt)
                 else
                     fastSpeed = mapRangeClamped(brick.y, screenHeight/2, screenHeight, 50, 6)
                 end
-                brick.y = brick.y + dt * mapRangeClamped(brick.y, 0, screenHeight, 80, 20) * (brick.speedMult or 1)
+                brick.y = brick.y + dt * mapRangeClamped(brick.y, 0, screenHeight, 80, 15) * (brick.speedMult or 1)
             else
                 brick.y = brick.y + brickSpeed.value * dt * speedMult * (brick.speedMult or 1)
             end
@@ -1156,7 +1166,7 @@ function changeMusic(newMusicStage)
         BackgroundShader.changeShader(1); -- vexel
     elseif newMusicStage == "boss" then
         ref = "assets/SFX/inGameBoss.mp3";
-        BackgroundShader.changeShader(3); -- vexel
+        BackgroundShader.changeShader(1); -- vexel
     elseif newMusicStage == "victory" then
         ref = "assets/SFX/victoryTheme.mp3"
         targetMusicVolume = 1
@@ -1305,8 +1315,6 @@ local function gameFixedUpdate(dt)
         dt = dt * playRate -- Adjust the delta time based on the playback rate
         upgradesUI.update(dt) -- Update the upgrades UI
 
-        updateAllTweens(dt) -- Update all tweens
-
 
         GlobalTimer:update(dt) -- Update the global timer
         if Player.choosingUpgrade then
@@ -1324,8 +1332,10 @@ local function gameFixedUpdate(dt)
             end
         end
 
-        if not Player.choosingUpgrade and Player.levelingUp then
-            dt = 0
+        if Player.levelingUp then
+            updatePausedTweens(dt)
+        else
+            updateAllTweens(dt) -- Update all tweens
         end
 
         -- Standard Play logic
@@ -1417,7 +1427,7 @@ local function gameFixedUpdate(dt)
                 brickKilledThisFrame = false -- Reset brick hit state for the next frame
                 if healThisFrame > 0 and healCooldown <= 0 then
                     playSoundEffect(healSFX, math.sqrt(healThisFrame) >= 5 and mapRangeClamped(math.sqrt(healThisFrame), 5, 8, 0.25, 0.65) or mapRangeClamped(math.sqrt(healThisFrame), 1, 5, 0.1, 0.4), mapRangeClamped(math.sqrt(healThisFrame), 2, 7, 0.5, 0.8), false, true)
-                    healCooldown = 0.07 -- Set cooldown for heal visuals
+                    healCooldown = 0.1 -- Set cooldown for heal visuals
                     healThisFrame = 0 -- Reset heal this frame
                 end
             end
@@ -2044,7 +2054,7 @@ function drawBricks()
         else
             table.remove(healBricks, i)
         end
-        love.graphics.setColor(0 ,1 ,0 , 0.5)
+        love.graphics.setColor(0 ,1 ,0 , 0.4)
         drawImageCentered(healAuraImg, brick.x + brick.width/2, brick.y + brick.height/2,brick.width * 3.25, brick.width * 3.25)
     end
 
@@ -2053,7 +2063,7 @@ function drawBricks()
         love.graphics.setColor(0,104/255,161/255,1)
         drawImageCentered(healAuraImg, aura.x + aura.width/2, aura.y + aura.height/2,aura.width * 6.5, aura.width * 6.5)
         setFont(45)
-        love.graphics.setColor(0,0,0,1)
+        love.graphics.setColor(0,0,0,0.35)
         love.graphics.print(tostring(aura.health), aura.x + aura.width/2 - getTextSize(aura.health) / 2 -1, aura.y + aura.height/2 - 21)
         love.graphics.print(tostring(aura.health), aura.x + aura.width/2 - getTextSize(aura.health) / 2 -1, aura.y + aura.height/2 - 19)
         love.graphics.print(tostring(aura.health), aura.x + aura.width/2 - getTextSize(aura.health) / 2 +1, aura.y + aura.height/2 - 21)
@@ -2240,6 +2250,7 @@ end
 
 inGame = false
 globalVolume = 1
+arcadeBezelOn = false
 -- Add a function to draw the settings menu with SUIT sliders
 function drawSettingsMenu()
     local centerX = screenWidth / 2 - buttonWidth / 2
@@ -2302,9 +2313,13 @@ function drawSettingsMenu()
     local prevDamageNumbersOn = damageNumbersOn;
     local dmgNumCheckboxInfo = {checked = damageNumbersOn};
     suit.Label("Damage Numbers", {align = "left"}, sliderX, sliderY + sliderSpacing * 2 + 80, 50000, 40);
-    sliderY = sliderY + sliderSpacing
-    local damageNumbersTickBox = suit.Checkbox(dmgNumCheckboxInfo, {id = "damage_numbers_checkbox"}, sliderX, sliderY + sliderSpacing * 2 + 40, 40, 40);
+    local damageNumbersTickBox = suit.Checkbox(dmgNumCheckboxInfo, {id = "damage_numbers_checkbox"}, sliderX, sliderY + sliderSpacing * 2 + 120, 40, 40);
     damageNumbersOn = dmgNumCheckboxInfo.checked;
+
+    local bezelCheckboxInfo = {checked = arcadeBezelOn};
+    suit.Label("Arcade Mode", {align = "left"}, sliderX, sliderY + sliderSpacing * 2 + 160, 50000, 40);
+    local bezelTickBox = suit.Checkbox(bezelCheckboxInfo, {id = "bezel_checkbox"}, sliderX, sliderY + sliderSpacing * 2 + 200, 40, 40);
+    arcadeBezelOn = bezelCheckboxInfo.checked;
 
     -- Back button
     local backBtn = suit.Button("Back", {id="settings_back"}, sliderX, sliderY + sliderSpacing * 5 + 20, sliderWidth, buttonHeight)
@@ -2605,7 +2620,19 @@ local function fullDraw()
     --love.graphics.draw(uiCanvas)
     drawFPS()
 
-    love.graphics.setShader()
+    
+    --[[ Merge game canvas to post-process
+    WindowCorrector.mergeCanvases(postProcessCanvas, gameCanvas);
+
+    -- Merge UI canvas to post-process
+    WindowCorrector.mergeCanvases(postProcessCanvas, uiCanvas);
+
+    -- Apply shader to final result
+    love.graphics.setShader("arcadeBezel")
+    love.graphics.setColor(1, 1, 1, 1)
+    WindowCorrector.mergeCanvas(postProcessCanvas);
+    love.graphics.setShader()]]
+
     love.graphics.setColor(1, 1, 1, 1)
     setFont(20)
 end
@@ -2827,7 +2854,8 @@ function love.keypressed(key)
 
         if key == "8" then
             -- updateTrails = not updateTrails
-            brickCollisions = not brickCollisions
+            -- brickCollisions = not brickCollisions
+            Balls.addBall("Laser Turrets")
         end
 
         if key == "9" then

@@ -666,12 +666,7 @@ local function newLaserPortal(damage, fireRate, name)
                     end
                     if self.laserBeamTimer >= cooldownLength and self.laserBeamBrick.y > -self.laserBeamBrick.height then
                         if self.laserBeamNextShotPhantom then
-                            for _, brick in ipairs(self.laserBricksInSight) do
-                                if brick.y > -brick.height then
-                                    dealDamage({stats = {damage = damage}, name = self.name}, brick)
-                                end
-                            end
-                            self.laserBeamNextShotPhantom = false
+                            createExplosionAtLocation(self.laserBeamBrick.x + self.laserBeambrick.width/2, self.laserBeamBrick.y + self.laserBeamBrick.height/2, 1, laserBeam.stats.damage, "Laser Turrets")
                         else
                             dealDamage({stats = {damage = damage}, name = self.name}, self.laserBeamBrick)
                         end
@@ -681,7 +676,8 @@ local function newLaserPortal(damage, fireRate, name)
                         else
                             self.angleOffset = 0
                         end
-                        if hasItem("Piercing Beams") and math.random(1,100) <= 10 then
+                        local chance = hasItem("Four Leafed Clover") and 20 or 10
+                        if hasItem("Exploding Beams") and math.random(1,100) <= chance then
                             self.laserBeamNextShotPhantom = true
                         end
                     end
@@ -861,7 +857,7 @@ local function shoot(gunName, ball)
             local speedXref = math.cos(angle) * bulletSpeed
             local speedYref = math.sin(angle) * bulletSpeed
             if shootSFXCooldown <= 0 then
-                playSoundEffect(gunShootSFX, 0.8, 0.8, false, true)
+                playSoundEffect(gunShootSFX, 1, 0.9, false, true)
                 shootSFXCooldown = 0.05
             end
             local critChance = hasItem("Four Leafed Clover") and 50 or 25
@@ -939,7 +935,7 @@ local function shoot(gunName, ball)
                 end
             end
             if shootSFXCooldown <= 0 then
-                playSoundEffect(gunShootSFX, 0.8, 0.8, false, true)
+                playSoundEffect(gunShootSFX, 1, 0.9, false, true)
                 shootSFXCooldown = 0.05
             end
             local speedOffset = (paddle.currentSpeedX or 0) * 0.4
@@ -1324,7 +1320,7 @@ local function turretShoot(turret, typeMod)
         end
         local currentTime = love.timer.getTime()
         if shootSFXCooldown <= 0 then
-            playSoundEffect(gunShootSFX, 0.8, 0.8, false, true)
+            playSoundEffect(gunShootSFX, 1, 0.9, false, true)
             shootSFXCooldown = 0.05
         end
         local bulletSpeed = turretType.bulletSpeed or 2000
@@ -1436,7 +1432,7 @@ local function turretShoot(turret, typeMod)
         end)
         Timer.after(3, function()
             -- Create explosion
-            createExplosionAtLocation(bomb.x, bomb.y, unlockedBallTypes["Mortar Turrets"].stats.range * 0.3 + 0.2, unlockedBallTypes["Mortar Turrets"].stats.damage or 3, "Mortar Turrets")
+            createExplosionAtLocation(bomb.x, bomb.y, unlockedBallTypes["Mortar Turrets"].stats.range * 0.15 + 0.3, unlockedBallTypes["Mortar Turrets"].stats.damage or 3, "Mortar Turrets")
 
             -- delete bomb
             for i, b in ipairs(mortarBombs) do
@@ -1664,7 +1660,7 @@ local function fire(techName)
                     y = paddle.y + paddle.height/2, -- Position above the paddle
                     radius = 0,
                     -- currentAmmo = 10,
-                    angle = (startDir == 1 and math.pi*0.25 or -math.pi*0.25),
+                    angle = (startDir == 1 and math.pi*0.125 or -math.pi*0.125),
                     angleOffset = -turretValueX/100 * math.pi * 0.2,
                     stats = turretType.stats,
                     alive = true,
@@ -1692,17 +1688,14 @@ local function fire(techName)
                             end
                             if self.laserBeamTimer >= cooldownLength and self.laserBeamBrick.y > -self.laserBeamBrick.height then
                                 if self.laserBeamNextShotPhantom then
-                                    for _, brick in ipairs(laserBricksInSight) do
-                                        if brick.y > -brick.height then
-                                            dealDamage(laserBeam, brick)
-                                        end
-                                    end
+                                    createExplosionAtLocation(self.laserBeamBrick.x + self.laserBeambrick.width/2, self.laserBeamBrick.y + self.laserBeamBrick.height/2, 1, laserBeam.stats.damage, "Laser Turrets")
                                     self.laserBeamNextShotPhantom = false
                                 else
                                     dealDamage(laserBeam, self.laserBeamBrick)
                                 end
                                 self.laserBeamTimer = 0  -- Reset timer after damage
-                                if hasItem("Piercing Beams") and math.random(1,100) <= 10 then
+                                local chance = hasItem("Four Leafed Clover") and 20 or 10
+                                if hasItem("Exploding Beams") and math.random(1,100) <= chance then
                                     self.laserBeamNextShotPhantom = true
                                 end
                             end
@@ -1819,7 +1812,7 @@ local function fire(techName)
                 table.insert(laserTurrets, turret)
                 -- first shot when turret in position
                 Timer.after(0.5, function() 
-                    rotateTurret(turret, startDir == 1, 1.5, 0.7)
+                    rotateTurret(turret, startDir == 1, 1.5, 0.6)
                 end)
 
                 local turretLength = getStat("Laser Turrets", "ammo") * 0.7 + 3
@@ -1875,7 +1868,7 @@ local function fire(techName)
                     y = paddle.y + paddle.height/2, -- Position above the paddle
                     radius = 0,
                     currentAmmo = getStat("Mortar Turrets", "ammo"),
-                    angle = (startDir == 1 and math.pi*0.25 or -math.pi*0.25),
+                    angle = (startDir == 1 and math.pi*0.075 or -math.pi*0.075),
                     angleOffset = math.random(-100, 100)/100 * math.pi * 0.2,
                     stats = turretType.stats,
                     alive = true,
@@ -1885,6 +1878,9 @@ local function fire(techName)
                 local directionAngle = 0
                 local turretPositionTween = tween.new(0.5, turret, {x = destination.x, y = destination.y, angle = turret.angle, radius = 65}, tween.outCubic)
                 addTweenToUpdate(turretPositionTween)
+                Timer.after(0.5, function() 
+                    rotateTurret(turret, startDir == 1, 1.5, 0.25)
+                end)
                 table.insert(mortarTurrets, turret)
                 -- first shot when turret in position
                 Timer.after(1 + math.random(0, 100) / 100, function()
@@ -2069,10 +2065,11 @@ local function cast(spellName, brick, forcedDamage)
         if accelerationOn then
             cooldownValue = cooldownValue * 0.4
         end
-        Timer.after(0.2 * ammoValue + math.max(cooldownValue, 0) + 0.05, function()
+        local cooldownLength = 0.3 * ammoValue + math.max(cooldownValue, 0) + 0.05
+        Timer.after(cooldownLength, function()
             cast("Light Beam")
         end)
-        createCooldownVFX(cooldownValue)
+        createCooldownVFX(cooldownLength)
     end
     if spellName == "Lightning Pulse" then
         print("Casting Lightning Pulse")
@@ -2368,9 +2365,9 @@ local function ballListInit()
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
-            speedMult = 1,
+            speedMult = 1.1,
             size = 1,
-            rarity = "common",
+            rarity = "uncommon",
             startingPrice = 50,
             ballAmount = 1,
             description = "A ball that shoots bullets in a random direction like a gun on bounce.",
@@ -2707,7 +2704,7 @@ local function ballListInit()
             description = "Generates turrets that shoot explosive shells forward. \n(max 20)",
             bulletSpeed = 1500,
             color = {0.5, 0.5, 0.5, 1}, -- Grey color for Turret Generator
-            currentAmmo = 9 + ((Player.permanentUpgrades.ammo or 0)) * 3,
+            currentAmmo = 2 + ((Player.permanentUpgrades.ammo or 0)) * 1,
             onBuy = function() 
                 fire("Mortar Turrets")
             end,
@@ -2715,7 +2712,7 @@ local function ballListInit()
                 return Player.currentCore ~= "Damage Core"
             end,
             stats = {
-                ammo = 3,
+                ammo = 2,
                 cooldown = 12,
                 damage = 1,
                 range = 3,
@@ -3663,43 +3660,6 @@ local function techUpdate(dt)
     if unlockedBallTypes["Laser Beam"] then
         local laserBeam = unlockedBallTypes["Laser Beam"]
         
-        -- If we have the same target brick as last frame, increment timer
-        if laserBeamBrick and laserBeamBrick == laserBeamTarget then
-            laserBeamTimer = laserBeamTimer + dt
-            
-            -- Deal damage if we've been on target long enough
-            
-            local cooldownLength = 1/((getStat("Laser Beam", "fireRate")))
-            if hasItem("Spray and Pray") then
-                local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
-                cooldownLength = cooldownLength * sprayMult
-            end
-            if laserBeamTimer >= cooldownLength and laserBeamBrick.y > -laserBeamBrick.height then
-                if laserBeamNextShotPhantom then
-                    for _, brick in ipairs(laserBricksInSight) do
-                        if brick.y > -brick.height then
-                            dealDamage(laserBeam, brick)
-                        end
-                    end
-                    laserBeamNextShotPhantom = false
-                else
-                    dealDamage(laserBeam, laserBeamBrick)
-                end
-                laserBeamTimer = 0  -- Reset timer after damage
-                if hasItem("Spray and Pray") then
-                    laserBeam.angle = math.random(-100, 100)/10
-                else
-                    laserBeam.angle = 0
-                end
-                if hasItem("Piercing Beams") and math.random(1,100) <= 10 then
-                    laserBeamNextShotPhantom = true
-                end
-            end
-        else
-            -- New target or no target, reset timer
-            laserBeamTarget = laserBeamBrick
-            laserBeamTimer = math.max(laserBeamTimer + dt, 0) -- Decrease timer if not on target
-        end
         laserBricksInSight = {}
         laserBeamBrick = nil
         local closestDist = math.huge
@@ -3751,6 +3711,42 @@ local function techUpdate(dt)
             end
         end
         laserBeamBrick = highestBrick
+
+        -- If we have the same target brick as last frame, increment timer
+        if laserBeamBrick and laserBeamBrick == laserBeamTarget then
+            laserBeamTimer = laserBeamTimer + dt
+            
+            -- Deal damage if we've been on target long enough
+            
+            local cooldownLength = 1/((getStat("Laser Beam", "fireRate")))
+            if hasItem("Spray and Pray") then
+                local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
+                cooldownLength = cooldownLength * sprayMult
+            end
+            if laserBeamTimer >= cooldownLength and laserBeamBrick.y > -laserBeamBrick.height then
+                if laserBeamNextShotPhantom then
+                    createExplosionAtLocation(laserBeamBrick.x + laserBeamBrick.width/2, laserBeamBrick.y + laserBeamBrick.height/2, 1, laserBeam.stats.damage, "Laser Turrets")
+                    laserBeamNextShotPhantom = false
+                else
+                    dealDamage(laserBeam, laserBeamBrick)
+                end
+                laserBeamTimer = 0  -- Reset timer after damage
+                if hasItem("Spray and Pray") then
+                    laserBeam.angle = math.random(-100, 100)/10
+                else
+                    laserBeam.angle = 0
+                end
+                local chance = hasItem("Four Leafed Clover") and 20 or 10
+                if hasItem("Exploding Beams") and math.random(1,100) <= chance then
+                    laserBeamNextShotPhantom = true
+                end
+            end
+        else
+            -- New target or no target, reset timer
+            laserBeamTarget = laserBeamBrick
+            laserBeamTimer = math.max(laserBeamTimer + dt, 0) -- Decrease timer if not on target
+        end
+        
     end
 
     -- Saw Blades damage logic and animation update
@@ -4348,7 +4344,7 @@ local function accelerationBoost(length)
 end
 
 local function accelerationEndCheck()
-    if accelerationOn and goalAccelerationBoostEndTime < gameTime then
+    if accelerationOn and goalAccelerationBoostEndTime < gameTime and false then
         --[[accelerationEndTween = tween.new(0.15, powerupPopup, {scale = 0}, tween.easing.inCirc)
         addTweenToUpdate(accelerationEndTween)
         Timer.after(0.15, function()
@@ -4650,17 +4646,14 @@ function Balls.update(dt, paddle, bricks)
                 end
                 if ball.laserBeamTimer >= cooldownLength and ball.laserBeamBrick.y > -ball.laserBeamBrick.height then
                     if ball.laserBeamNextShotPhantom then
-                        for _, brick in ipairs(ball.laserBricksInSight) do
-                            if brick.y > -brick.height then
-                                dealDamage(laserBeam, brick)
-                            end
-                        end
+                        createExplosionAtLocation(ball.laserBeamBrick.x + ball.laserBeambrick.width/2, ball.laserBeamBrick.y + ball.laserBeamBrick.height/2, 1, laserBeam.stats.damage, "Laser Turrets")
                         ball.laserBeamNextShotPhantom = false
                     else
                         dealDamage(laserBeam, ball.laserBeamBrick)
                     end
                     ball.laserBeamTimer = 0  -- Reset timer after damage
-                    if hasItem("Piercing Beams") and math.random(1,100) <= 10 then
+                    local chance = hasItem("Four Leafed Clover") and 20 or 10
+                    if hasItem("Exploding Beams") and math.random(1,100) <= chance then
                         ball.laserBeamNextShotPhantom = true
                     end
                 end
@@ -5358,28 +5351,30 @@ local function techDraw()
     if unlockedBallTypes["Laser Turrets"] then
         
         for _, turret in ipairs(laserTurrets) do
+            -- laser beam draw
+            turret:beamDraw()
+
             love.graphics.setColor(1,1,1,1)
             local angle = math.atan2(-turret.y, screenWidth/2 - turret.x)
             laserTurrets.angle = angle
-            drawImageCentered(turretBaseImg, turret.x, turret.y, turret.radius * 0.75, turret.radius * 0.75, turret.angleOffset)
-            drawImageCentered(turretGunImg, turret.x, turret.y, turret.radius * 145/280, turret.radius * 145/144, turret.angle + turret.angleOffset, 0, turret.radius * 145/144 * 1/4)
-            
-            -- laser beam draw
-            turret:beamDraw()
+            drawImageCentered(laserTurretBaseImg, turret.x, turret.y, turret.radius * 0.7, turret.radius * 0.7, turret.angleOffset)
+            drawImageCentered(laserTurretGunImg, turret.x, turret.y, turret.radius * 11/40, turret.radius * 11/8, turret.angle + turret.angleOffset, 0, turret.radius * 145/144 * 1/4)
         end
     end
 
     if unlockedBallTypes["Mortar Turrets"] then
-        love.graphics.setColor(1,1,1,1)
-        for _, turret in ipairs(mortarTurrets) do
-            local angle = math.atan2(-turret.y, screenWidth/2 - turret.x)
-            drawImageCentered(turretBaseImg, turret.x, turret.y, turret.radius * 0.75, turret.radius * 0.75, turret.angleOffset)
-            drawImageCentered(turretGunImg, turret.x, turret.y, turret.radius * 145/280, turret.radius * 145/144, turret.angle + turret.angleOffset, 0, turret.radius * 145/144 * 1/4)
-        end
-
+        -- draw bombs
         love.graphics.setColor(100/255,125/255,150/255,1)
         for _, bomb in ipairs(mortarBombs) do
             love.graphics.circle("fill", bomb.x, bomb.y, bomb.radius)
+        end
+
+        love.graphics.setColor(1,1,1,1)
+        for _, turret in ipairs(mortarTurrets) do
+            local angle = math.atan2(-turret.y, screenWidth/2 - turret.x)
+            -- drawImageCentered(mortarImg, turret.x, turret.y, turret.radius * 1, turret.radius * 23/20, turret.angleOffset)
+            drawImageCentered(mortarBaseImg, turret.x, turret.y, turret.radius * 1, turret.radius * 0.8, turret.angleOffset)
+            drawImageCentered(mortarTurretGunImg, turret.x, turret.y, turret.radius * 15/22, turret.radius * 15/16, turret.angle + turret.angleOffset, 0, turret.radius * 145/144 * 1/4)
         end
     end
 
