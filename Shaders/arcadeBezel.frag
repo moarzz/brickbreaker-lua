@@ -1,4 +1,4 @@
-uniform float targetAberration = 0.002;
+uniform float targetAberration = 0.00125;
 uniform bool enableBezel = false;
 
 vec4 effect(vec4 colour, Image image, vec2 textureCoords, vec2 screenCoords)
@@ -8,16 +8,19 @@ vec4 effect(vec4 colour, Image image, vec2 textureCoords, vec2 screenCoords)
     vec2 centered = uv - center;
     
     // Barrel distortion parameters
-    float strength = 0.25;  // Strength of the barrel effect
+    float strength = 0.2;  // Strength of the barrel effect
     float radius = length(centered);
     
-    // Apply barrel distortion
-    float distorted = radius * (1.0 + strength * radius * radius);
-    vec2 distortedUv = center + (centered / radius) * distorted;
+    // Apply barrel distortion only if bezel is enabled
+    vec2 distortedUv = uv;
+    if (enableBezel) {
+        float distorted = radius * (1.0 + strength * radius * radius);
+        distortedUv = center + (centered / radius) * distorted;
+    }
     
     // Check if distorted UV is out of bounds
-    if (distortedUv.x < 0.0 || distortedUv.x > 1.0 || 
-        distortedUv.y < 0.0 || distortedUv.y > 1.0) {
+    if (enableBezel && (distortedUv.x < 0.0 || distortedUv.x > 1.0 || 
+        distortedUv.y < 0.0 || distortedUv.y > 1.0)) {
         // Draw the bezel at the edges if enabled
         if (enableBezel) {
             vec2 edgeUv = uv;

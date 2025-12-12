@@ -2684,7 +2684,7 @@ local old_love_keypressed = love.keypressed
 moneyScale = {scale = 1}
 function love.keypressed(key)
     if key == "space" and Player.levelingUp and (not Player.choosingUpgrade) and EventQueue:isQueueFinished() then
-        arcadeBezelShader:send("targetAberration", 0.002);
+        arcadeBezelShader:send("targetAberration", 0.00125);
         if currentlyOnFirstLevelUp then
             if Player.getCurrentTutorialStep() == 2 then
                 EventQueue:addEventToQueue(EVENT_POINTERS.levelUp, 0);

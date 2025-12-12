@@ -9,7 +9,7 @@ function ExplodingBeams.new()
     local instance = setmetatable({}, ExplodingBeams):init();
 
     instance.descriptionPointers = {
-        explosionChance = hasItem("Four Leafed Clover") and 30 or 15;
+        explosionChance = hasItem("Four Leafed Clover") and 50 or 25;
     };
     return instance;
 end
