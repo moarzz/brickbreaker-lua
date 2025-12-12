@@ -27,17 +27,28 @@ vec4 effect(vec4 colour, Image image, vec2 textureCoords, vec2 screenCoords)
             // We're in the bezel region
             float bezelFactor = (edgeDist - (0.5 - bezelWidth)) / bezelWidth;
             
+            // Determine which edge we're on
+            vec2 absEdge = abs(centered);
+            float edgeType = max(absEdge.x, absEdge.y) - min(absEdge.x, absEdge.y);
+            
             // Create 3D lighting on the bezel
             vec2 bezelNormal = normalize(centered);
             
-            // Top-left light source
-            vec3 lightDir = normalize(vec3(-0.5, 1.0, -0.5));
-            vec3 bezelNormalVec = normalize(vec3(bezelNormal.x, 0.3, bezelNormal.y));
-            float bezelLight = 0.05 + 0.12 * max(0.0, dot(bezelNormalVec, lightDir));
+            // Light from directly above
+            vec3 lightDir = normalize(vec3(0.0, 1.0, 0.0));
             
-            // Darker at the very edge (chamfer)
-            float chamfer = pow(bezelFactor, 1.5);
-            float bezelColor = mix(0.02, bezelLight, chamfer);
+            // Surface normal points outward from center
+            vec3 surfaceNormal = normalize(vec3(bezelNormal.x, 0.5, bezelNormal.y));
+            
+            // Apply lighting
+            float lighting = max(0.15, dot(surfaceNormal, lightDir));
+            
+            // Smooth darkness based on Y position (top is darker)
+            float topDarkness = mix(0.5, 1.0, (centered.y + 0.5) * 0.5);
+            
+            // Blend between shadow and lit
+            float chamfer = pow(bezelFactor, 1.2);
+            float bezelColor = mix(0.02, lighting * 0.4 * topDarkness, chamfer);
             
             return vec4(vec3(bezelColor), 1.0);
         }

@@ -1,7 +1,7 @@
 local ArcaneMissiles = ItemBase.new();
 ArcaneMissiles.__index = ArcaneMissiles;
 ArcaneMissiles.name = "Arcane Missiles";
-ArcaneMissiles.description = "<font=bold>On ball bounce with Brick\n<font=default>shoot an arcane missile of that ball's <color=damage>damage";
+ArcaneMissiles.description = "<font=bold>On damage dealt\n<font=default>20% chance to shoot an arcane missile that deals 25% health damage";
 ArcaneMissiles.rarity = "rare";
 ArcaneMissiles.imageReference = "assets/sprites/UI/ItemIcons/Arcane-Missiles.png";
 

@@ -282,6 +282,7 @@ local function loadAssets()
     lightBeamImg = love.graphics.newImage("assets/sprites/lightBeam.png")
     bossBrickOverlayImg = love.graphics.newImage("assets/sprites/bossBrickOverlay.png")
     runeCircleImg = love.graphics.newImage("assets/sprites/runeCircle.png")
+    bezelImg = love.graphics.newImage("assets/sprites/bezel.png")
 
     -- UI
     uiLabelImg = love.graphics.newImage("assets/sprites/UI/label.png")
@@ -368,7 +369,7 @@ local bossBrickSpawnTimer
 local bossSpawnSwitch = true
 local boss = nil
 local function spawnBoss()
-    currentRowPopulation = 750
+    currentRowPopulation = 650
     targetMusicVolume = 0
     -- Center the boss brick at the top
     Timer.after(7.5, function()
@@ -430,7 +431,7 @@ local function spawnBoss()
             brickId = brickId + 1
         end
     end)]]
-    local bossHealTimer = Timer.every(2, function()
+    local bossHealTimer = Timer.every(2.5, function()
         if boss.y >= -bossHeight + 150 and canHeal then
 
             --[[ self heal
@@ -554,26 +555,26 @@ local function generateRow(brickCount, yPos)
         end
     end
 
-    if not bossSpawned then
-        local blockedRowCount = math.random(0,15)
-        if blockedRowCount ~= 0 then
-            blockedRows = {}
-            for i=1, blockedRowCount do
-                local doAgain = true
-                local iterations = 1
-                while doAgain do
-                    iterations = iterations + 1
-                    local blockedRow = math.random(1,22)
-                    if not blockedRows[blockedRow] then
-                        blockedRows[blockedRow] = true
-                        doAgain = false
-                    end
-                    if iterations >= 35 then
-                        doAgain = false
-                    end
+    local blockedRowCount = math.random(0,15)
+    if bossSpawned then
+        blockedRowCount = math.random(0,7)
+    end
+    if blockedRowCount ~= 0 then
+        blockedRows = {}
+        for i=1, blockedRowCount do
+            local doAgain = true
+            local iterations = 1
+            while doAgain do
+                iterations = iterations + 1
+                local blockedRow = math.random(1,22)
+                if not blockedRows[blockedRow] then
+                    blockedRows[blockedRow] = true
+                    doAgain = false
+                end
+                if iterations >= 35 then
+                    doAgain = false
                 end
             end
-
         end
     end
     
@@ -1162,7 +1163,7 @@ function changeMusic(newMusicStage)
         targetMusicVolume = 1
     elseif newMusicStage == "mid" then
         ref = "assets/SFX/inGame2.mp3";
-        BackgroundShader.changeShader(2); -- acid
+        BackgroundShader.changeShader(1); -- acid
     elseif newMusicStage == "intense" then
         ref = "assets/SFX/inGame3.mp3";
         BackgroundShader.changeShader(1);
@@ -2062,7 +2063,7 @@ function drawBricks()
 
     -- draw shield auras
     for _, aura in ipairs(shieldAuras) do
-        love.graphics.setColor(0,104/255,161/255,0.4)
+        love.graphics.setColor(0,104/255,161/255,0.65)
         drawImageCentered(healAuraImg, aura.x + aura.width/2, aura.y + aura.height/2,aura.width * 6.5, aura.width * 6.5)
         setFont(45)
         love.graphics.setColor(0,0,0,0.35)

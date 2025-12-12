@@ -410,6 +410,7 @@ function WindowCorrector.stopDraw()
     love.graphics.draw(self.canvases[1]);
     -- love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
     love.graphics.setShader()
+    -- love.graphics.draw(bezelImg, 0, 0)
 
     self.errorDrawCalls = true; -- error draw calls since theyre not done in the WindowCorrector
 end

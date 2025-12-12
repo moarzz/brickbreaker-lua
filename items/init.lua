@@ -210,9 +210,9 @@ function Items.getRandomItem(allowInvisible)
         visibilityList = self.itemsVisible;
     end
     local multiplier = 1
-    if hasItem("Rabbit's Paw") then
-        for i=1, itemCount("Rabbit's Paw") do
-            multiplier = multiplier * 1.25
+    if hasItem("Rabbit's Foot") then
+        for i=1, itemCount("Rabbit's Foot") do
+            multiplier = multiplier + 0.3
         end
     end
     local randRarity = math.min(1, love.math.random() * multiplier); -- [0-1)

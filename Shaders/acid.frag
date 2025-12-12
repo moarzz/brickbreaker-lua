@@ -26,10 +26,11 @@ vec3 palette(float t)
 
 vec4 effect(vec4 colour, Image tex, vec2 textureCoords, vec2 screenCoords)
 {
+    float actualTime = time/3;
     vec2 uv = (screenCoords * 2.0 - love_ScreenSize.xy) / min(love_ScreenSize.x, love_ScreenSize.y);
 
-    uv *= rot(sin(time / 17.4) * 1.1);
-    uv += vec2(sin(time / 4.4), sin(time / 5.8 + 0.2)) * 0.08;
+    uv *= rot(sin(actualTime / 17.4) * 1.1);
+    uv += vec2(sin(actualTime / 4.4), sin(actualTime / 5.8 + 0.2)) * 0.08;
 
     vec2 uv0 = uv;
     vec3 finalColor = vec3(0.0);
@@ -40,9 +41,9 @@ vec4 effect(vec4 colour, Image tex, vec2 textureCoords, vec2 screenCoords)
 
         float d = length(uv) * exp(-length(uv0));
 
-        vec3 col = palette(length(uv0) + i * 0.4 + time * 0.2);
+        vec3 col = palette(length(uv0) + i * 0.4 + actualTime * 0.2);
 
-        d = abs(sin(d * 8.0 + time / 2.0) / 8.0);
+        d = abs(sin(d * 8.0 + actualTime / 2.0) / 8.0);
         d = pow(0.01 / d, 1.2);
 
         finalColor += col * d;

@@ -501,7 +501,50 @@ local brickDeathSFXCd = 0
 local RED_COLOR = {1, 0, 0, 1}
 local YELLOW_COLOR = {1, 1, 0, 1}
 
+-- Table to hold active arcane missiles
+local arcaneMissiles = {}
+
+function getArcaneMissileCount()
+    return #arcaneMissiles
+end
+
+local function castArcaneMissile(ball)
+    -- Per-ball cooldown: only allow cast once per 2 seconds per ball
+    local redo = true
+    local targetBrick = nil
+    while redo do
+        local brick = bricks[math.random(1, #bricks)]
+        if (not brick.destroyed) and brick.health > 0 and brick.y > -brick.height then
+            targetBrick = brick
+            redo = false
+        end
+    end
+    local angle = (math.random() * 0.5 - 0.75) * math.pi
+    local missileSpeed = 2000
+    local startX = paddle.x + paddle.width/2
+    local startY = paddle.y
+    local vx = math.cos(angle) * missileSpeed
+    local vy = math.sin(angle) * missileSpeed
+    table.insert(arcaneMissiles, {
+        name = "Arcane Missiles",
+        x = startX,
+        y = startY,
+        vx = vx,
+        vy = vy,
+        radius = 8,
+        stats = {
+            damage = getStat(ball.name, "damage"),
+        },
+        alive = true,
+        target = targetBrick
+    })
+end
+
 function dealDamage(ball, brick, burnDamage)
+    local chance = hasItem("Four Leafed Clover") and 50 or 25
+    if hasItem("Arcane Missiles") and math.random(1,100) <= chance then
+        castArcaneMissile(ball)
+    end
 
     if Player.dead then return end
     if not ball or not brick then return false end
@@ -549,6 +592,9 @@ function dealDamage(ball, brick, burnDamage)
     if protectingAura then
         damage = 0
         damageAura(protectingAura)
+    end
+    if ball.name == "Arcane Missiles" then
+        damage = math.ceil(brick.health/10)
     end
     brick.health = math.ceil(brick.health - damage)
     
@@ -1902,43 +1948,6 @@ local function fire(techName)
     end
 end
 
--- Table to hold active arcane missiles
-local arcaneMissiles = {}
-
-function getArcaneMissileCount()
-    return #arcaneMissiles
-end
-
-local function castArcaneMissile(ball)
-    -- Per-ball cooldown: only allow cast once per 2 seconds per ball
-    local redo = true
-    local targetBrick = nil
-    while redo do
-        local brick = bricks[math.random(1, #bricks)]
-        if (not brick.destroyed) and brick.health > 0 and brick.y > -brick.height then
-            targetBrick = brick
-            redo = false
-        end
-    end
-    local angle = (math.random() * 0.5 - 0.75) * math.pi
-    local missileSpeed = 2000
-    local startX = paddle.x + paddle.width/2
-    local startY = paddle.y
-    local vx = math.cos(angle) * missileSpeed
-    local vy = math.sin(angle) * missileSpeed
-    table.insert(arcaneMissiles, {
-        name = "Arcane Missiles",
-        x = startX,
-        y = startY,
-        vx = vx,
-        vy = vy,
-        radius = 8,
-        damage = getStat(ball.name, "damage"),
-        alive = true,
-        target = targetBrick
-    })
-end
-
 local shadowBalls = {}
 local fireballs = {}
 local lightBeams = {}
@@ -2172,8 +2181,8 @@ local function cast(spellName, brick, forcedDamage)
                     local spawnY = ((currentBrick.y + currentBrick.height / 2) + (targetBrick.y + targetBrick.height / 2)) / 2
                     local distance = math.sqrt((targetBrick.x - currentBrick.x)^2 + (targetBrick.y - currentBrick.y)^2)
                     if lightningSFXCooldown <= 0 then
-                        playSoundEffect(lightningSFX, 0.3, 0.75)
-                        lightningSFXCooldown = 0.05
+                        playSoundEffect(lightningSFX, 0.2, 0.75)
+                        lightningSFXCooldown = 0.1
                     end
                     createSpriteAnimation(spawnX, spawnY, mapRangeClamped(distance, 0, 350, 2.0, 1.0), chainLightningVFX, 256, 128, 0.075, 0, false, scaleX, scaleX*1.5, angle)
                     Timer.after(0.3, function()
@@ -3266,9 +3275,6 @@ local function brickCollisionEffects(ball, brick)
         end
     end
     local chance = hasItem("Four Leafed Clover") and 100 or 50
-    if hasItem("Arcane Missiles") and math.random(1,100) <= 100 then
-        castArcaneMissile(ball)
-    end
     if ball.onBounce then
         ball.onBounce(ball)
     end
@@ -4158,7 +4164,7 @@ local function spellsUpdate(dt)
                 if not brick.destroyed and brick.health > 0 then
                     if missile.x + missile.radius > brick.x and missile.x - missile.radius < brick.x + brick.width and
                        missile.y + missile.radius > brick.y and missile.y - missile.radius < brick.y + brick.height then
-                        dealDamage({stats={damage=missile.damage}}, brick)
+                        dealDamage(missile, brick)
                         missile.alive = false
                         break
                     end
