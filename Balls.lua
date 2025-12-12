@@ -713,6 +713,7 @@ local function newLaserPortal(damage, fireRate, name)
                     if self.laserBeamTimer >= cooldownLength and self.laserBeamBrick.y > -self.laserBeamBrick.height then
                         if self.laserBeamNextShotPhantom then
                             createExplosionAtLocation(self.laserBeamBrick.x + self.laserBeamBrick.width/2, self.laserBeamBrick.y + self.laserBeamBrick.height/2, 0.9, damage, "Laser Turrets")
+                            self.laserBeamNextShotPhantom = false
                         else
                             dealDamage({stats = {damage = damage}, name = self.name}, self.laserBeamBrick)
                         end
@@ -2284,7 +2285,7 @@ local function ballListInit()
             size = 2,
             rarity = "rare",
             startingPrice = 100,
-            description = "A ball that can pass through bricks.",
+            description = "A ball that passes through bricks and the paddle.",
             color = {0.5, 0.5, 0.7, 0.6}, -- Blue color
             stats = {
                 speed = 150,
@@ -3415,6 +3416,9 @@ end
 
 
 local function paddleCollisionCheck(ball, paddle)
+    if ball.name == "Phantom Ball" then
+        return false
+    end
     local effectiveRadius = ball.name == "Phantom Ball" and getStat(ball.name, "range") * 8 or ball.radius
     
     -- Cache paddle bounds (computed once)
@@ -3581,12 +3585,148 @@ local function paddleCollisionCheck(ball, paddle)
     return true
 end
 
+local ballLasers = {}
+local ballLaserId = 0
+local function shootRandomLaserFromBall(ball, hitType)
+    local laser = {
+        id = ballLaserId,
+        x = ball.x,
+        y = ball.y,
+        startTime = gameTime,
+        angle = 0,
+        targetBrick = nil
+    }
+    ballLaserId = ballLaserId + 1
+    -- set some vars, idk figure it out man
+    local closestDist = math.huge
+    local highestBrick
+
+    -- establish starting location
+    local startX = ball.x
+    local startY = ball.y
+
+    -- calculating laser direction
+    local angle = 0
+    if hitType == "left" then
+        angle = math.rad(-65 + math.random(0, 130))
+    elseif hitType == "right" then
+        angle = math.rad(115 + math.random(0, 130))
+    elseif hitType == "top" then
+        angle = math.rad(math.random(25, 155))
+    else
+        angle = math.rad(205 + math.random(0,130))
+    end
+    angle = angle + math.rad(90)
+    laser.angle = angle
+    local dirX = math.sin(angle)  -- X component of direction
+    local dirY = -math.cos(angle)
+
+    -- calculate angle
+    local laserLength = 2500  -- Extend past screen top
+    local endX = startX + dirX * laserLength
+    local endY = startY + dirY * laserLength
+
+    -- check if colliding with brick
+    for _, brick in ipairs(bricks) do
+        if brick.health > 0 and not brick.destroyed then
+            -- Check all four sides of the brick for intersection
+            local sides = {
+                {brick.x, brick.y + brick.height, brick.x + brick.width, brick.y + brick.height}, -- bottom
+                {brick.x, brick.y, brick.x + brick.width, brick.y}, -- top
+                {brick.x, brick.y, brick.x, brick.y + brick.height}, -- left
+                {brick.x + brick.width, brick.y, brick.x + brick.width, brick.y + brick.height} -- right
+            }
+            
+            for _, side in ipairs(sides) do
+                -- Line intersection check
+                local x1, y1, x2, y2 = side[1], side[2], side[3], side[4]
+                local denominator = (endY - startY) * (x2 - x1) - (endX - startX) * (y2 - y1)
+                
+                if denominator ~= 0 then
+                    local ua = ((endX - startX) * (y1 - startY) - (endY - startY) * (x1 - startX)) / denominator
+                    local ub = ((x2 - x1) * (y1 - startY) - (y2 - y1) * (x1 - startX)) / denominator
+                    
+                    if ua >= 0 and ua <= 1 and ub >= 0 and ub <= 1 then
+                        local intersectX = x1 + ua * (x2 - x1)
+                        local intersectY = y1 + ua * (y2 - y1)
+                        local dist = math.sqrt((intersectX - startX)^2 + (intersectY - startY)^2)
+                        
+                        table.insert(laserBricksInSight, brick)
+                        if dist < closestDist then
+                            closestDist = dist
+                            highestBrick = brick
+                            laserBeamY = intersectY
+                        end
+                        break
+                    end
+                end
+            end
+        end
+    end
+    laser.laserBeamBrick = highestBrick
+
+    if laser.laserBeamBrick then
+        laser.targetBrick = laser.laserBeamBrick
+        local chance = hasItem("Four Leafed Clover") and 30 or 15
+        if hasItem("Exploding Beams") and math.random(1,100) <= chance then
+            createExplosionAtLocation(laser.laserBeamBrick.x + laser.laserBeamBrick.width/2, laser.laserBeamBrick.y + laser.laserBeamBrick.height/2, 0.9, ball.stats.damage, ball.name)
+        else
+            dealDamage(ball, laser.laserBeamBrick)
+        end
+    end
+    table.insert(ballLasers, laser)
+end
+
+local function drawBallLasers()
+    local IDsToRemove = {}
+    for _, laser in ipairs(ballLasers) do
+        local timeSinceStart = gameTime - laser.startTime
+        local intensity = math.max(0, 2 - 4^timeSinceStart)  -- Fade out over 0.5 seconds
+        if timeSinceStart >= 1 then
+            table.insert(IDsToRemove, laser.id)
+            goto continue
+        end
+        love.graphics.setColor(intensity, 0, 0, intensity)
+        local angle = laser.angle
+        local startX = laser.x
+        local startY = laser.y
+        local beamLength = 2500  -- Match update logic
+        
+        -- Calculate distance to target brick if we have one
+        if laser.laserBeamBrick and laser.laserBeamBrick.health > 0 then
+            local brick = laser.laserBeamBrick
+            -- Find closest point on brick to the beam origin
+            local closestX = math.max(brick.x, math.min(startX, brick.x + brick.width))
+            local closestY = math.max(brick.y, math.min(startY, brick.y + brick.height))
+            local distToBrick = math.sqrt((closestX - startX)^2 + (closestY - startY)^2)
+            beamLength = distToBrick
+        end
+
+        love.graphics.push()
+        love.graphics.translate(startX, startY)
+        love.graphics.rotate(angle)
+        love.graphics.rectangle("fill", -1, -beamLength, 2, beamLength)
+        love.graphics.pop()
+        ::continue::
+    end
+    for _, id in ipairs(IDsToRemove) do
+        for i = #ballLasers, 1, -1 do
+            if ballLasers[i].id == id then
+                table.remove(ballLasers, i)
+                break
+            end
+        end
+    end
+end
+
 local function wallCollisionCheck(ball)
+    local hitType = nil
     local leftWallPosition = usingMoneySystem and statsWidth or 0
     local rightWallPosition = screenWidth - (usingMoneySystem and statsWidth or 0)
     local wallHit = false
     local effectiveRadius = ball.name == "Phantom Ball" and getStat(ball.name, "range") * 8 or ball.radius
     if ball.x - effectiveRadius < leftWallPosition and ball.speedX < 0 then
+        hitType = "left"
         ball.speedX = -ball.speedX
         if ball.speedY > 0 then
             ball.speedY = ball.speedY + 5
@@ -3602,6 +3742,7 @@ local function wallCollisionCheck(ball)
         end
         wallHit = true
     elseif ball.x + effectiveRadius > rightWallPosition and ball.speedX > 0 then
+        hitType = "right"
         ball.speedX = -ball.speedX
         ball.x = rightWallPosition - effectiveRadius -- Ensure the ball is not stuck in the 
         if Player.currentCore == "Bouncy Core" or hasItem("Bouncy Walls") then
@@ -3613,6 +3754,7 @@ local function wallCollisionCheck(ball)
         wallHit = true
     end
     if ball.y - effectiveRadius < 0 and ball.speedY < 0 then
+        hitType = "top"
         ball.speedY = -ball.speedY
         ball.y = effectiveRadius -- Ensure the ball is not stuck in the wall
         if Player.currentCore == "Bouncy Core" or hasItem("Bouncy Walls") then
@@ -3621,6 +3763,7 @@ local function wallCollisionCheck(ball)
         playSoundEffect(wallBoopSFX, 0.5, 0.6)
         wallHit = true
     elseif ball.y + effectiveRadius > math.max(screenHeight, paddle.y + 150) and ball.speedY > 0 then
+        hitType = "bottom"
         ball.speedY = -ball.speedY
         ball.y = math.max(screenHeight, paddle.y + 150) - effectiveRadius
         if Player.currentCore == "Bouncy Core" or hasItem("Bouncy Walls") then
@@ -3633,6 +3776,10 @@ local function wallCollisionCheck(ball)
         wallHit = true
     end
     if wallHit then
+        local chance = hasItem("Four Leafed Clover") and 100 or 50
+        if hasItem("Ball Laser") and math.random(1,100) <= chance then
+            shootRandomLaserFromBall(ball, hitType)
+        end
         for _, ballType in pairs(unlockedBallTypes) do
             if ballType.onWallBounce then
                 ballType.onWallBounce() -- Call the onWallBounce function if it exists
@@ -5433,6 +5580,9 @@ function Balls:draw()
 
     -- drawSpells
     spellDraw()
+
+    -- draw Ball Laser
+    drawBallLasers()
     
     -- Draw balls
     local screenLeft = -64
