@@ -331,7 +331,12 @@ local powerupColors = {
     doubleFireRate = {},
     
 }
+local lastPowerupSpawnTime = 0
 local function createPowerup(x, y, amount, type)
+    if gameTime - lastPowerupSpawnTime < 1.5 then
+        return
+    end
+    lastPowerupSpawnTime = gameTime
     local powerup = {
         x = x,
         y = y,
@@ -541,7 +546,7 @@ local function castArcaneMissile(ball)
 end
 
 function dealDamage(ball, brick, burnDamage)
-    local chance = hasItem("Four Leafed Clover") and 50 or 25
+    local chance = hasItem("Four Leafed Clover") and 70 or 35
     if hasItem("Arcane Missiles") and math.random(1,100) <= chance then
         castArcaneMissile(ball)
     end
@@ -577,7 +582,7 @@ function dealDamage(ball, brick, burnDamage)
         damage = math.floor(damage / 2)
     end
 
-    local critChance = hasItem("Four Leafed Clover") and 50 or 25
+    local critChance = hasItem("Four Leafed Clover") and 40 or 20
     if hasItem("Assassin's Dagger") and math.random(1,100) <= critChance and ball.type ~= "bullet" then
         damage = damage * 2
     end
@@ -594,7 +599,7 @@ function dealDamage(ball, brick, burnDamage)
         damageAura(protectingAura)
     end
     if ball.name == "Arcane Missiles" then
-        damage = math.ceil(brick.health/10)
+        damage = math.ceil(brick.health*0.35)
     end
     brick.health = math.ceil(brick.health - damage)
     
@@ -712,7 +717,7 @@ local function newLaserPortal(damage, fireRate, name)
                     end
                     if self.laserBeamTimer >= cooldownLength and self.laserBeamBrick.y > -self.laserBeamBrick.height then
                         if self.laserBeamNextShotPhantom then
-                            createExplosionAtLocation(self.laserBeamBrick.x + self.laserBeamBrick.width/2, self.laserBeamBrick.y + self.laserBeamBrick.height/2, 0.9, damage, "Laser Portals")
+                            createExplosionAtLocation(self.laserBeamBrick.x + self.laserBeamBrick.width/2, self.laserBeamBrick.y + self.laserBeamBrick.height/2, 1, damage, "Laser Portals")
                             self.laserBeamNextShotPhantom = false
                         else
                             dealDamage({stats = {damage = damage}, name = self.name}, self.laserBeamBrick)
@@ -723,7 +728,7 @@ local function newLaserPortal(damage, fireRate, name)
                         else
                             self.angleOffset = 0
                         end
-                        local chance = hasItem("Four Leafed Clover") and 50 or 25
+                        local chance = hasItem("Four Leafed Clover") and 60 or 30
                         if hasItem("Exploding Beams") and math.random(1,100) <= chance then
                             self.laserBeamNextShotPhantom = true
                         end
@@ -907,7 +912,7 @@ local function shoot(gunName, ball)
                 playSoundEffect(gunShootSFX, 1, 0.9, false, true)
                 shootSFXCooldown = 0.05
             end
-            local critChance = hasItem("Four Leafed Clover") and 50 or 25
+            local critChance = hasItem("Four Leafed Clover") and 40 or 20
             table.insert(bullets, {
                 name = gunName,
                 type = "bullet",
@@ -1093,7 +1098,7 @@ local function shoot(gunName, ball)
             elseif gun.name == "Shotgun" then
                 for i = 1, 7 do
                     local speedXref = spray and (math.random(-gun.bulletSpeed * 0.8, gun.bulletSpeed * 0.8) + speedOffset) or (math.random(-250, 250) + speedOffset)
-                    local critChance = hasItem("Four Leafed Clover") and 50 or 25
+                    local critChance = hasItem("Four Leafed Clover") and 40 or 20
                     table.insert(bullets, {
                         name = "Shotgun",
                         type = "bullet",
@@ -1173,7 +1178,7 @@ local function shoot(gunName, ball)
                     speedXref = 0
                     speedYref = -bulletSpeed -- Default to straight up if no target found
                 end
-                local critChance = hasItem("Four Leafed Clover") and 50 or 25
+                local critChance = hasItem("Four Leafed Clover") and 40 or 20
                 table.insert(bullets, {
                     name = gun.name,
                     type = "bullet",
@@ -1234,7 +1239,7 @@ local function shoot(gunName, ball)
             else -- default shooting behavior
                 local speedXref = spray and (math.random(-gun.bulletSpeed * 0.8, gun.bulletSpeed * 0.8) + speedOffset) or (math.random(-150, 150) + speedOffset)
                 local xBruh = paddle.x + paddle.width / 2 + ((speedXref - speedOffset)/(spray and gun.bulletSpeed * 0.8 or 200))*50
-                local critChance = hasItem("Four Leafed Clover") and 50 or 25
+                local critChance = hasItem("Four Leafed Clover") and 40 or 20
                 table.insert(bullets, {
                     name = gun.name,
                     type = "bullet",
@@ -1375,7 +1380,7 @@ local function turretShoot(turret, typeMod)
         local normalizedSpeedX, normalizedSpeedY = normalizeVector(speed.x, speed.y)
         local bulletDamage = getStat("Gun Turrets", "damage")
         if Player.currentCore == "Phantom Core" then bulletDamage = math.max(math.floor(bulletDamage /2),1) end
-        local critChance = hasItem("Four Leafed Clover") and 50 or 25
+        local critChance = hasItem("Four Leafed Clover") and 40 or 20
         local bullet = {
             x = turret.x + normalizedSpeedX * turret.radius,
             y = turret.y + normalizedSpeedY * turret.radius * 0.8,
@@ -1577,7 +1582,7 @@ local function fire(techName)
             unlockedBallTypes["Rocket Launcher"].currentAmmo = unlockedBallTypes["Rocket Launcher"].currentAmmo - 1
             -- Reset ammo and set cooldown
             if unlockedBallTypes["Rocket Launcher"].currentAmmo <= 0 then
-                local cooldownValue = getStat("Rocket Launcher", "cooldown") * 1
+                local cooldownValue = getStat("Rocket Launcher", "cooldown") * 0.8
                 if accelerationOn then
                     cooldownValue = cooldownValue * 0.5
                 end
@@ -1678,7 +1683,6 @@ local function fire(techName)
             end
             Timer.after(cooldownValue, function()
                 -- Refill ammo after cooldown
-                turret.currentAmmo = getStat("Gun Turrets", "ammo")
                 fire("Gun Turrets")
             end)
             createCooldownVFX(cooldownValue)
@@ -1734,13 +1738,13 @@ local function fire(techName)
                             end
                             if self.laserBeamTimer >= cooldownLength and self.laserBeamBrick.y > -self.laserBeamBrick.height then
                                 if self.laserBeamNextShotPhantom then
-                                    createExplosionAtLocation(self.laserBeamBrick.x + self.laserBeamBrick.width/2, self.laserBeamBrick.y + self.laserBeamBrick.height/2, 0.9, laserBeam.stats.damage, "Laser Turrets")
+                                    createExplosionAtLocation(self.laserBeamBrick.x + self.laserBeamBrick.width/2, self.laserBeamBrick.y + self.laserBeamBrick.height/2, 1, laserBeam.stats.damage, "Laser Turrets")
                                     self.laserBeamNextShotPhantom = false
                                 else
                                     dealDamage(laserBeam, self.laserBeamBrick)
                                 end
                                 self.laserBeamTimer = 0  -- Reset timer after damage
-                                local chance = hasItem("Four Leafed Clover") and 50 or 25
+                                local chance = hasItem("Four Leafed Clover") and 60 or 30
                                 if hasItem("Exploding Beams") and math.random(1,100) <= chance then
                                     self.laserBeamNextShotPhantom = true
                                 end
@@ -1938,7 +1942,6 @@ local function fire(techName)
             end
             Timer.after(cooldownValue, function()
                 -- Refill ammo after cooldown
-                turret.currentAmmo = getStat("Mortar Turrets", "ammo")
                 fire("Mortar Turrets")
             end)
             createCooldownVFX(cooldownValue)
@@ -2436,7 +2439,7 @@ local function ballListInit()
 
             stats = {
                 damage = 1,
-                cooldown = 8,
+                cooldown = 9,
                 ammo = 14,
                 fireRate = 4,
             },
@@ -2461,7 +2464,7 @@ local function ballListInit()
 
             stats = {
                 damage = 1,
-                cooldown = 11,
+                cooldown = 12,
                 ammo = 2,
                 fireRate = 1,
             },
@@ -2712,7 +2715,7 @@ local function ballListInit()
             description = "Generates turrets that shoot explosive shells forward. \n(max 20)",
             bulletSpeed = 1500,
             color = {0.5, 0.5, 0.5, 1}, -- Grey color for Turret Generator
-            currentAmmo = 2 + ((Player.permanentUpgrades.ammo or 0)) * 1,
+            currentAmmo = 3 + ((Player.permanentUpgrades.ammo or 0)) * 1,
             onBuy = function() 
                 fire("Mortar Turrets")
             end,
@@ -2720,7 +2723,7 @@ local function ballListInit()
                 return Player.currentCore ~= "Damage Core"
             end,
             stats = {
-                ammo = 2,
+                ammo = 3,
                 cooldown = 12,
                 damage = 1,
                 range = 3,
@@ -3495,7 +3498,7 @@ local function paddleCollisionCheck(ball, paddle)
         local speedYMag = math.sqrt(bulletSpeed * bulletSpeed - speedX * speedX)
         local hasDagger = hasItem("Assassin's Dagger")
         local hasClover = hasItem("Four Leafed Clover")
-        local critChance = hasClover and 50 or 25
+        local critChance = hasClover and 40 or 20
         
         local bullet = {
             x = paddle.x + paddle.width * 0.5,
@@ -3669,9 +3672,9 @@ local function shootRandomLaserFromBall(ball, hitType)
 
     if laser.laserBeamBrick then
         laser.targetBrick = laser.laserBeamBrick
-        local chance = hasItem("Four Leafed Clover") and 50 or 25
+        local chance = hasItem("Four Leafed Clover") and 60 or 30
         if hasItem("Exploding Beams") and math.random(1,100) <= chance then
-            createExplosionAtLocation(laser.laserBeamBrick.x + laser.laserBeamBrick.width/2, laser.laserBeamBrick.y + laser.laserBeamBrick.height/2, 0.9, ball.stats.damage, ball.name)
+            createExplosionAtLocation(laser.laserBeamBrick.x + laser.laserBeamBrick.width/2, laser.laserBeamBrick.y + laser.laserBeamBrick.height/2, 1, ball.stats.damage, ball.name)
         else
             dealDamage(ball, laser.laserBeamBrick)
         end
@@ -3882,14 +3885,14 @@ local function techUpdate(dt)
             
             -- Deal damage if we've been on target long enough
             
-            local cooldownLength = 1.1/((getStat("Laser Beam", "fireRate")))
+            local cooldownLength = 1/((getStat("Laser Beam", "fireRate")))
             if hasItem("Spray and Pray") then
                 local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                 cooldownLength = cooldownLength * sprayMult
             end
             if laserBeamTimer >= cooldownLength and laserBeamBrick.y > -laserBeamBrick.height then
                 if laserBeamNextShotPhantom then
-                    createExplosionAtLocation(laserBeamBrick.x + laserBeamBrick.width/2, laserBeamBrick.y + laserBeamBrick.height/2, 0.9, laserBeam.stats.damage, "Laser Beam")
+                    createExplosionAtLocation(laserBeamBrick.x + laserBeamBrick.width/2, laserBeamBrick.y + laserBeamBrick.height/2, 1, laserBeam.stats.damage, "Laser Beam")
                     laserBeamNextShotPhantom = false
                 else
                     dealDamage(laserBeam, laserBeamBrick)
@@ -3900,7 +3903,7 @@ local function techUpdate(dt)
                 else
                     laserBeam.angle = 0
                 end
-                local chance = hasItem("Four Leafed Clover") and 50 or 25
+                local chance = hasItem("Four Leafed Clover") and 60 or 30
                 if hasItem("Exploding Beams") and math.random(1,100) <= chance then
                     laserBeamNextShotPhantom = true
                 end
@@ -4727,7 +4730,7 @@ function Balls.update(dt, paddle, bricks)
         local rocketDrawY = rocket.y + dirY
         if bricksInEllipse(rocket.x, rocket.y, 20, 60) ~= false then
             local brickHit = bricksInEllipse(rocket.x, rocket.y, 20, 60)
-            local explosionX, explosionY = (rocket.x + brickHit.x)/2, (rocket.y + brickHit.y)/2
+            local explosionX, explosionY = brickHit.x, brickHit.y
             createExplosionAtLocation(explosionX, explosionY, 0.3 + getStat("Rocket Launcher", "range") * 0.25, unlockedBallTypes["Rocket Launcher"].stats.damage, "Rocket Launcher")
             --[[local brickHit = bricksInEllipse(rocket.x, rocket.y, 20, 60)
             playSoundEffect(explosionSFX, 0.5, 1, false, true)
@@ -4791,7 +4794,7 @@ function Balls.update(dt, paddle, bricks)
     local substeps = 2
     local dtStep = dt / substeps
     local isMadnessCore = Player.currentCore == "Madness Core"
-    local coreMult = 0.9
+    local coreMult = 1
     local hasElectroItem = hasItem("Electromagnetic Alignment")
     local electroCount = hasElectroItem and itemCount("Electromagnetic Alignment") or 0
     local MAX_RANGE_SQ = 500 * 500
@@ -4812,20 +4815,20 @@ function Balls.update(dt, paddle, bricks)
                 
                 -- Deal damage if we've been on target long enough
                 
-                local cooldownLength = 2.75/((getStat("Laser Ball", "fireRate")))
+                local cooldownLength = 2.4/((getStat("Laser Ball", "fireRate")))
                 if hasItem("Spray and Pray") then
                     local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                     cooldownLength = cooldownLength * sprayMult
                 end
                 if ball.laserBeamTimer >= cooldownLength and ball.laserBeamBrick.y > -ball.laserBeamBrick.height then
                     if ball.laserBeamNextShotPhantom then
-                        createExplosionAtLocation(ball.laserBeamBrick.x + ball.laserBeamBrick.width/2, ball.laserBeamBrick.y + ball.laserBeamBrick.height/2, 0.9, laserBeam.stats.damage, "Laser Ball")
+                        createExplosionAtLocation(ball.laserBeamBrick.x + ball.laserBeamBrick.width/2, ball.laserBeamBrick.y + ball.laserBeamBrick.height/2, 1, laserBeam.stats.damage, "Laser Ball")
                         ball.laserBeamNextShotPhantom = false
                     else
                         dealDamage(laserBeam, ball.laserBeamBrick)
                     end
                     ball.laserBeamTimer = 0  -- Reset timer after damage
-                    local chance = hasItem("Four Leafed Clover") and 50 or 25
+                    local chance = hasItem("Four Leafed Clover") and 60 or 30
                     if hasItem("Exploding Beams") and math.random(1,100) <= chance then
                         ball.laserBeamNextShotPhantom = true
                     end
@@ -5478,7 +5481,7 @@ local function techDraw()
     if unlockedBallTypes["Laser Beam"] then
         -- Draw the actual Laser Beam
         -- Calculate charge progress
-        local chargeProgress = laserBeamTimer / ((1.1/((Player.currentCore == "Damage Core" and 1 or getStat("Laser Beam", "fireRate")))))
+        local chargeProgress = laserBeamTimer / ((1/((Player.currentCore == "Damage Core" and 1 or getStat("Laser Beam", "fireRate")))))
         if hasItem("Spray and Pray") then
             local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
             chargeProgress = math.min(1, chargeProgress / sprayMult)
@@ -5609,7 +5612,7 @@ function Balls:draw()
     for _, ball in ipairs(Balls) do
         if ball.name == "Laser Ball" then
             ball.laserBeamTimer = ball.laserBeamTimer or 0
-            local chargeProgress = ball.laserBeamTimer / ((2.5/((getStat("Laser Ball", "fireRate")))))
+            local chargeProgress = ball.laserBeamTimer / ((2.4/((getStat("Laser Ball", "fireRate")))))
             if hasItem("Spray and Pray") then
                 local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                 chargeProgress = math.min(1, chargeProgress / sprayMult)

@@ -26,7 +26,7 @@ vec3 palette(float t)
 
 vec4 effect(vec4 colour, Image tex, vec2 textureCoords, vec2 screenCoords)
 {
-    float actualTime = time/3;
+    float actualTime = time/2;
     vec2 uv = (screenCoords * 2.0 - love_ScreenSize.xy) / min(love_ScreenSize.x, love_ScreenSize.y);
 
     uv *= rot(sin(actualTime / 17.4) * 1.1);

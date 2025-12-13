@@ -369,7 +369,7 @@ local bossBrickSpawnTimer
 local bossSpawnSwitch = true
 local boss = nil
 local function spawnBoss()
-    currentRowPopulation = 650
+    currentRowPopulation = 500
     targetMusicVolume = 0
     -- Center the boss brick at the top
     Timer.after(7.5, function()
@@ -433,12 +433,6 @@ local function spawnBoss()
     end)]]
     local bossHealTimer = Timer.every(2.5, function()
         if boss.y >= -bossHeight + 150 and canHeal then
-
-            --[[ self heal
-            local healValue = math.floor(mapRange(boss.health, 1, 5000, 1, 50))
-            boss.health = boss.health + healValue
-            healThisFrame = healThisFrame + healValue
-            healNumber(healValue, boss.x + boss.width/2, math.max(10, boss.y + boss.height/2))]]
             for _, brick in ipairs(bricks) do
                 if brick.type ~= "boss" then
                     local healAmount = math.ceil(brick.health/(brick.type == "big" and 160 or 80))
@@ -560,7 +554,9 @@ local function generateRow(brickCount, yPos)
         blockedRowCount = math.random(0,7)
     end
     if blockedRowCount ~= 0 then
-        blockedRows = {}
+        if not bossSpawned then
+            blockedRows = {}
+        end
         for i=1, blockedRowCount do
             local doAgain = true
             local iterations = 1
@@ -679,12 +675,14 @@ local function generateRow(brickCount, yPos)
                             if healBrick.health > 0 and healBrick.destroyed ~= true and healBrick.y >= -healBrick.height + 10 then
                                 local bricksToHeal = getBricksInCircle(healBrick.x + healBrick.width/2, healBrick.y + healBrick.height/2, healBrick.width* 5/4)
                                 for _, brick in ipairs(bricksToHeal) do
-                                    -- local brick = healBrick
-                                    local healAmount = math.ceil(brick.health/(brick.type == "big" and 160 or 80))
-                                    brick.health = brick.health + healAmount
-                                    brick.color = getBrickColor(brick.health, brick.type == "big")
-                                    healNumber(healAmount, brick.x + brick.width/2, brick.y + brick.height/2)
-                                    healThisFrame = healThisFrame + healAmount
+                                    if brick.type ~= "boss" then
+                                        -- local brick = healBrick
+                                        local healAmount = math.ceil(brick.health/(brick.type == "big" and 160 or 80))
+                                        brick.health = brick.health + healAmount
+                                        brick.color = getBrickColor(brick.health, brick.type == "big")
+                                        healNumber(healAmount, brick.x + brick.width/2, brick.y + brick.height/2)
+                                        healThisFrame = healThisFrame + healAmount
+                                    end
                                 end
                             end
                             
@@ -1386,7 +1384,7 @@ local function gameFixedUpdate(dt)
                     bossY = brick.y + brick.height + 100
                 end
             end
-            local goalPaddleY = Player.dead and 10000 or math.max(bossY, math.max(math.max(getHighestBrickY() + brickHeight*5, screenHeight/2 + 200), -100))
+            local goalPaddleY = Player.dead and 10000 or math.max(bossY, math.max(math.max(getHighestBrickY() + brickHeight*6.5, screenHeight/2 + 200), -100))
             paddle.y = paddle.y + (goalPaddleY - paddle.y) * math.min(3 * dt, 1)
             -- paddle.y = 1050
             -- Update Balls

@@ -1,5 +1,5 @@
 uniform float targetAberration = 0.00125;
-uniform bool enableBezel = false;
+uniform bool enableBezel = true;
 
 vec4 effect(vec4 colour, Image image, vec2 textureCoords, vec2 screenCoords)
 {
@@ -8,7 +8,7 @@ vec4 effect(vec4 colour, Image image, vec2 textureCoords, vec2 screenCoords)
     vec2 centered = uv - center;
     
     // Barrel distortion parameters
-    float strength = 0.2;  // Strength of the barrel effect
+    float strength = 0.1;  // Strength of the barrel effect
     float radius = length(centered);
     
     // Apply barrel distortion only if bezel is enabled
@@ -18,6 +18,7 @@ vec4 effect(vec4 colour, Image image, vec2 textureCoords, vec2 screenCoords)
         distortedUv = center + (centered / radius) * distorted;
     }
     
+    float lightIntensity = 2.8;
     // Check if distorted UV is out of bounds
     if (enableBezel && (distortedUv.x < 0.0 || distortedUv.x > 1.0 || 
         distortedUv.y < 0.0 || distortedUv.y > 1.0)) {
@@ -55,6 +56,31 @@ vec4 effect(vec4 colour, Image image, vec2 textureCoords, vec2 screenCoords)
                 float chamfer = pow(bezelFactor, 1.2);
                 float bezelColor = mix(0.02, lighting * 0.4 * topDarkness, chamfer);
                 
+                // Add corner highlights on the bezel
+                float cornerLight = 0.0;
+                
+                // Top-left corner
+                if (uv.x < 0.1 && uv.y < 0.1) {
+                    cornerLight += (0.1 - max(uv.x, uv.y)) * lightIntensity;
+                }
+                
+                // Top-right corner
+                if (uv.x > 0.9 && uv.y < 0.1) {
+                    cornerLight += (0.1 - max(1.0 - uv.x, uv.y)) * lightIntensity;
+                }
+                
+                // Bottom-left corner
+                if (uv.x < 0.1 && uv.y > 0.9) {
+                    cornerLight += (0.1 - max(uv.x, 1.0 - uv.y)) * lightIntensity;
+                }
+                
+                // Bottom-right corner
+                if (uv.x > 0.9 && uv.y > 0.9) {
+                    cornerLight += (0.1 - max(1.0 - uv.x, 1.0 - uv.y)) * lightIntensity;
+                }
+                
+                bezelColor += cornerLight * 0.3;
+                
                 return vec4(vec3(bezelColor), 1.0);
             }
         }
@@ -78,13 +104,6 @@ vec4 effect(vec4 colour, Image image, vec2 textureCoords, vec2 screenCoords)
     // Add subtle scanlines for arcade authenticity
     float scanlines = sin(uv.y * 600.0) * 0.04 + 0.96;
     color.rgb *= scanlines;
-    
-    // Subtle highlight on the top-left corner of the bezel
-    float cornerLight = 0.0;
-    if (uv.x < 0.1 && uv.y < 0.1) {
-        cornerLight = (0.1 - max(uv.x, uv.y)) * 0.2;
-    }
-    color.rgb += cornerLight * vec3(0.3, 0.3, 0.35);
     
     return color * colour;
 }
