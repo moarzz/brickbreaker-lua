@@ -1,4 +1,4 @@
-uniform float targetAberration = 0.00125;
+uniform float targetAberration = 0.00135;
 uniform bool enableBezel = true;
 uniform float pixelationScale = 0.0;  // 0.0 = no pixelation, higher values = more pixelated
 
@@ -111,7 +111,7 @@ vec4 effect(vec4 colour, Image image, vec2 textureCoords, vec2 screenCoords)
     color.b = blueShift;
     
     // Add subtle scanlines for arcade authenticity
-    float scanlines = sin(uv.y * 600.0) * 0.04 + 0.96;
+    float scanlines = sin(uv.y * 600.0) * 0.05 + 0.95;
     color.rgb *= scanlines;
     
     return color * colour;

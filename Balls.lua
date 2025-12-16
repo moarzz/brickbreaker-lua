@@ -584,13 +584,17 @@ function dealDamage(ball, brick, burnDamage)
         damageAura(protectingAura)
     end
     if ball.name == "Arcane Missiles" then
-        damage = math.ceil(brick.health*0.35)
+        if brick.type == "boss" then
+            damage = math.ceil(brick.health * 0.0025)
+        else
+            damage = math.ceil(brick.health*0.25)
+        end
     end
     brick.health = math.ceil(brick.health - damage)
 
-    if brick.health > 0 and hasItem("Gasoline") and burnDamage then
+    if brick.health > 0 and hasItem("Gasoline") and not burnDamage then
         if ball.name == "Laser Portals" or ball.name == "Laser Beam" or ball.name == "Laser Turrets" or ball.name == "Exploding Ball" or ball.name == "Mortar Turrets" or ball.name == "Rocket Launcher" then
-            local burnChance = hasItem("Four Leafed Clover") and 50 or 25
+            local burnChance = hasItem("Four Leafed Clover") and 50 or 100
             if math.random(1,100) <= burnChance then
                 burnBrick(brick, damage, ball.name)
             end
@@ -5297,7 +5301,7 @@ function Balls.update(dt, paddle, bricks)
         -- wall bounce logic
         if orb.x < 0 then orb.speedX = -orb.speedX end
         if orb.x > screenWidth then orb.speedX = -orb.speedX end
-        if orb.y > screenHeight + 50 then
+        if orb.y > screenHeight + 80 then
             table.remove(powerups, i)
         end
 

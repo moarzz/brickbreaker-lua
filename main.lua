@@ -999,7 +999,7 @@ brickFreeze = false
 brickFreezeTime = gameTime
 function getBrickSpeedByTime()
     -- Scale speed from 0.5 to 3 over 30 minutes
-    local returnValue = mapRange(gameTime, 0, 2000, 0.3, 3) * (Player.currentCore == "Madness Core" and 2 or 1)
+    local returnValue = mapRange(gameTime, 0, 2000, 0.25, 3) * (Player.currentCore == "Madness Core" and 2 or 1)
     if brickFreeze == true then
         if gameTime - brickFreezeTime > 20 then
             brickFreeze = false
@@ -2682,7 +2682,7 @@ local old_love_keypressed = love.keypressed
 moneyScale = {scale = 1}
 function love.keypressed(key)
     if key == "space" and Player.levelingUp and (not Player.choosingUpgrade) and EventQueue:isQueueFinished() then
-        arcadeBezelShader:send("targetAberration", 0.00125);
+        arcadeBezelShader:send("targetAberration", 0.00135);
         if currentlyOnFirstLevelUp then
             if Player.getCurrentTutorialStep() == 2 then
                 EventQueue:addEventToQueue(EVENT_POINTERS.levelUp, 0);

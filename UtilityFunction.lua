@@ -984,7 +984,7 @@ function createSpriteAnimation(x, y, scale, spritesheet, frameWidth, frameHeight
     if animation.lastFrame == nil then
         animation.lastFrame = #animation.quads
     end
-    if isFire then
+    if isFire and brickId then
         fireAnimations[brickId] = animation
     else
         table.insert(animations, animation) -- Store the animation in the animations table
