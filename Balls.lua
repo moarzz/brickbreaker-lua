@@ -37,69 +37,6 @@ local fireAnims = {}
 local fireTimers = {}
 local lightningCooldowns = {} -- Table to track per-brick cooldowns for lightning spells
 
-local function burnBricksEnd(brickID)
-    if not brickID then return end
-
-    -- Cancel timers
-    if damageTimers[brickID] then
-        Timer.cancel(damageTimers[brickID])
-        damageTimers[brickID] = nil
-    end
-
-    -- Clear the burning state
-    burningBricksCooldown[brickID] = nil
-
-    -- Handle animation cleanup
-    local anim = fireAnims[brickID]
-    if anim then
-        local animation = getAnimation(anim)
-        if animation and animation.color then
-            local fadeOutTween = tween.new(0.25, animation.color, {1,1,1,0}, tween.outCubic)
-            addTweenToUpdate(fadeOutTween)
-            Timer.after(0.25, function()
-                removeAnimation(anim)
-                fireAnims[brickID] = nil
-            end)
-        else
-            removeAnimation(anim)
-            fireAnims[brickID] = nil
-        end
-    end
-end
-
-local function burnBrick(brick, damage, length, name)
-    --[[if not brick or not brick.id then return end
-
-    -- If brick is already burning, refresh duration and cancel old timer
-    if burningBricksCooldown[brick.id] then
-        burningBricksCooldown[brick.id] = math.max(burningBricksCooldown[brick.id], length)
-        return
-    elseif fireAnims[brick.id] then
-        removeAnimation(fireAnims[brick.id])
-        fireAnims[brick.id] = nil
-    end
-
-    -- Set up new burn effect
-    burningBricksCooldown[brick.id] = length
-
-    -- Create fire animation
-    fireAnims[brick.id] = createSpriteAnimation(brick.x + brick.width / 2, brick.y + brick.height / 2, 2, fireVFX, 32, 32, 0.05, 0, true, 1, 1, 0, {1,1,1,0},true, brick.id)
-    local animation = getAnimation(fireAnims[brick.id])
-    if animation then
-        local fireStartTween = tween.new(0.25, animation.color, {1,1,1,1}, tween.outCubic)
-        addTweenToUpdate(fireStartTween)
-    end
-
-    -- Set up damage timer
-    damageTimers[brick.id] = Timer.every(0.75, function()
-        if brick and brick.health and brick.health > 0 and burningBricksCooldown[brick.id] then
-            dealDamage({stats = {damage = 1}, name = name}, brick, true)
-        else
-            burnBricksEnd(brick.id)
-        end
-    end)]]
-end
-
 local bossWidth, bossHeight = 500, 300
 local function bossDestroyed(bossBrick)
     -- setTargetMusicVolume(0)
@@ -545,6 +482,54 @@ local function castArcaneMissile(ball)
     })
 end
 
+local brickFires = {}
+local function burnBrickEnd(brickID)
+    fireAnimations[brickID] = nil
+    brickFires[brickID] = nil
+end
+
+local fireTickRate = 2
+function burnBrick(brick, damage, name)
+    local brickID = brick.id
+    if brickFires[brickID] then
+        brickFires[brickID] = 5
+    else
+        createSpriteAnimation(brick.x + brick.width/2, brick.y + brick.height/2, 1, fireVFX, 32, 32, 0.05, 0, true, 1.5, 1.5, 0, {1,1,1,1}, true, brick.id)
+        brickFires[brickID] = 5
+    end
+    
+    local function burnTick()
+        Timer.after(1/fireTickRate, function()
+            if brick then
+                if brick.health > 0 and not brick.destroyed then
+                    if dealDamage({stats = {damage = damage}, name = name}, brick, true) then
+                        burnBrickEnd(brickID)
+                        return  -- Exit here, don't reschedule
+                    end
+                else
+                    burnBrickEnd(brickID)
+                    return  -- Exit here, don't reschedule
+                end
+            else
+                burnBrickEnd(brickID)
+                return  -- Exit here, don't reschedule
+            end
+            
+            if brickFires[brickID] then
+                brickFires[brickID] = brickFires[brickID] - 1
+                if brickFires[brickID] > 0 then
+                    burnTick()  -- Reschedule only if we should continue
+                else
+                    burnBrickEnd(brickID)
+                end
+            else
+                burnBrickEnd(brickID)
+            end
+        end)
+    end
+    burnTick()
+end
+
 function dealDamage(ball, brick, burnDamage)
     local chance = hasItem("Four Leafed Clover") and 70 or 35
     if hasItem("Arcane Missiles") and math.random(1,100) <= chance then
@@ -602,6 +587,15 @@ function dealDamage(ball, brick, burnDamage)
         damage = math.ceil(brick.health*0.35)
     end
     brick.health = math.ceil(brick.health - damage)
+
+    if brick.health > 0 and hasItem("Gasoline") and burnDamage then
+        if ball.name == "Laser Portals" or ball.name == "Laser Beam" or ball.name == "Laser Turrets" or ball.name == "Exploding Ball" or ball.name == "Mortar Turrets" or ball.name == "Rocket Launcher" then
+            local burnChance = hasItem("Four Leafed Clover") and 50 or 25
+            if math.random(1,100) <= burnChance then
+                burnBrick(brick, damage, ball.name)
+            end
+        end
+    end
     
     if ball.name ~= "Gold Ball" then
         local xOffset = math.random(-brick.width * 0.25, brick.width * 0.25)
@@ -629,7 +623,7 @@ function dealDamage(ball, brick, burnDamage)
     if brick.health >= 1 then
         brick.hitLastFrame = true
         if ball.name == "Flamethrower" and not burnDamage then
-            burnBrick(brick, damage, 2, "Flamethrower")
+            -- burnBrick(brick, damage, 2, "Flamethrower")
         end
     else
         kill = true
@@ -710,7 +704,7 @@ local function newLaserPortal(damage, fireRate, name)
                 self.laserBeamTimer = (self.laserBeamTimer or 0) + dt
                 print("Laser Portals laserBeamTimer:", self.laserBeamTimer)
                 if self.laserBeamBrick then
-                    local cooldownLength = 1.85/(fireRate)
+                    local cooldownLength = 2/(fireRate)
                     if hasItem("Spray and Pray") then
                         local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                         cooldownLength = cooldownLength * sprayMult
@@ -803,7 +797,7 @@ local function newLaserPortal(damage, fireRate, name)
                 love.graphics.setColor(1, 1, 1, 1)
                 drawImageCentered(runeCircleImg, self.x, self.y, runeCircleImg:getWidth()/2 * portalScale, runeCircleImg:getHeight()/2 * portalScale, angle, 0, 0)
                 -- laser draw
-                local chargeProgress = self.laserBeamTimer / (1.85/fireRate)
+                local chargeProgress = self.laserBeamTimer / (2/fireRate)
                 print("Laser Portals chargeProgress:" .. chargeProgress .. " laserBeamTimer:" .. self.laserBeamTimer)
                 if hasItem("Spray and Pray") then
                     local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
@@ -843,7 +837,7 @@ local function newLaserPortal(damage, fireRate, name)
                 love.graphics.setColor(1, 1, 1, 1)
                 drawImageCentered(runeCircleImg, self.x, self.y, runeCircleImg:getWidth()/2 * portalScale, runeCircleImg:getHeight()/2 * portalScale, angle, 0, 0)
                 -- laser draw
-                local chargeProgress = self.laserBeamTimer / (1.85/fireRate)
+                local chargeProgress = self.laserBeamTimer / (2/fireRate)
                 print("Laser Portals chargeProgress:" .. chargeProgress .. " laserBeamTimer:" .. self.laserBeamTimer)
                 if hasItem("Spray and Pray") then
                     local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
@@ -1593,7 +1587,7 @@ local function fire(techName)
                 end)
                 createCooldownVFX(cooldownValue)
             else
-                local timerLength = 6/getStat("Rocket Launcher", "fireRate")
+                local timerLength = 6.5/getStat("Rocket Launcher", "fireRate")
                 if hasItem("Spray and Pray") then
                     local timerMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                     timerLength = timerLength * timerMult
@@ -1998,6 +1992,7 @@ local function cast(spellName, brick, forcedDamage)
         local shadowBallStartTween = tween.new(0.25, shadowBalls[#shadowBalls], {radius = 7 * range}, tween.outExpo)
         addTweenToUpdate(shadowBallStartTween)
         local sprayCooldown = hasItem("Four Leafed Clover") and 7.5 or 10 -- this is correct, stop tweaking and changing it
+        sprayCooldown = sprayCooldown * 0.85
         local cooldownLength = (hasItem("Spray and Pray") and sprayCooldown/(getStat("Shadow Ball", "fireRate")) or 15/(getStat("Shadow Ball", "fireRate"))) + 2
         Timer.after(cooldownLength, function()
             -- Refill shadowBall spell after cooldown
@@ -2292,7 +2287,7 @@ local function ballListInit()
             stats = {
                 speed = 150,
                 damage = 1,
-                range = 3
+                range = 2
             },
         },
         ["Magnetic Ball"] = {
@@ -2565,6 +2560,24 @@ local function ballListInit()
                 cooldown = 12,
             },
         },
+        --[[["Lightning Strike"] = {
+            name = "Lightning Strike",
+            type = "spell",
+            x = screenWidth / 2,
+            y = screenHeight / 2,
+            size = 1,
+            noAmount = true,
+            rarity = "uncommon",
+            startingPrice = 150,
+            description = "shoot lightning strikes that cause a chain of electricity when they hit a brick.",
+            color = {1, 1, 0, 1}, -- Yellow color for Lightning Strike
+            stats = {
+                amount = 2,
+                damage = 1,
+                fireRate = 2,
+                range = 2,
+            },
+        },]]
         ["Laser Beam"] = {
             name = "Laser Beam",
             type = "tech",
@@ -3885,7 +3898,7 @@ local function techUpdate(dt)
             
             -- Deal damage if we've been on target long enough
             
-            local cooldownLength = 1/((getStat("Laser Beam", "fireRate")))
+            local cooldownLength = 1.1/((getStat("Laser Beam", "fireRate")))
             if hasItem("Spray and Pray") then
                 local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                 cooldownLength = cooldownLength * sprayMult
@@ -4622,6 +4635,8 @@ function Balls.update(dt, paddle, bricks)
         return
     end
 
+    updateBurnAnims()
+
     accelerationEndCheck()
     -- Clean up expired lightning cooldowns
     for brick, lastCastTime in pairs(lightningCooldowns) do
@@ -4730,8 +4745,8 @@ function Balls.update(dt, paddle, bricks)
         local rocketDrawY = rocket.y + dirY
         if bricksInEllipse(rocket.x, rocket.y, 20, 60) ~= false then
             local brickHit = bricksInEllipse(rocket.x, rocket.y, 20, 60)
-            local explosionX, explosionY = brickHit.x, brickHit.y
-            createExplosionAtLocation(explosionX, explosionY, 0.3 + getStat("Rocket Launcher", "range") * 0.25, unlockedBallTypes["Rocket Launcher"].stats.damage, "Rocket Launcher")
+            local explosionX, explosionY = brickHit.x + brickHit.width/2, brickHit.y + brickHit.height/2
+            createExplosionAtLocation(explosionX, explosionY, 0.3 + getStat("Rocket Launcher", "range") * 0.2, unlockedBallTypes["Rocket Launcher"].stats.damage, "Rocket Launcher")
             --[[local brickHit = bricksInEllipse(rocket.x, rocket.y, 20, 60)
             playSoundEffect(explosionSFX, 0.5, 1, false, true)
             -- Explosion damage
@@ -5481,7 +5496,7 @@ local function techDraw()
     if unlockedBallTypes["Laser Beam"] then
         -- Draw the actual Laser Beam
         -- Calculate charge progress
-        local chargeProgress = laserBeamTimer / ((1/((Player.currentCore == "Damage Core" and 1 or getStat("Laser Beam", "fireRate")))))
+        local chargeProgress = laserBeamTimer / ((1.1/((Player.currentCore == "Damage Core" and 1 or getStat("Laser Beam", "fireRate")))))
         if hasItem("Spray and Pray") then
             local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
             chargeProgress = math.min(1, chargeProgress / sprayMult)

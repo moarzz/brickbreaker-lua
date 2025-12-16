@@ -363,7 +363,7 @@ local targetMusicVolume = 1
 
 local canHeal = true
 local bossWidth, bossHeight = 500, 300
-local bossHealth = 10000
+local bossHealth = 6000
 local brickId = 1
 local bossBrickSpawnTimer
 local bossSpawnSwitch = true
@@ -686,7 +686,7 @@ local function generateRow(brickCount, yPos)
                                 end
                             end
                             
-                            Timer.after(1.75, function() healSelf(healBrick) end)
+                            Timer.after(2, function() healSelf(healBrick) end)
                         end
                     end
                     local healDelay = 1.75 - ((gameTime * 100) % 175)/100
@@ -1038,7 +1038,7 @@ function getBrickSpeedMult()
     else
         local posMult = 1
         local highestY = getHighestBrickY()
-        posMult = highestY < 350 and mapRangeClamped(highestY, 0, 350, startingBrickSpeed, 10) or mapRangeClamped(highestY, 350, 750, 10, 1.5)
+        posMult = highestY < 350 and mapRangeClamped(highestY, 0, 350, startingBrickSpeed, 10) or mapRangeClamped(highestY, 350, 750, 10, 1.25)
         if #bricks == 0 then
             return 1
         end
@@ -1083,7 +1083,7 @@ local function moveBricksDown(dt)
                 if brick.y <= screenHeight/2 then     
                     fastSpeed = mapRangeClamped(brick.y, 0, screenHeight/2, 100, 50)
                 else
-                    fastSpeed = mapRangeClamped(brick.y, screenHeight/2, screenHeight, 50, 6)
+                    fastSpeed = mapRangeClamped(brick.y, screenHeight/2, screenHeight - 50, 50, 5)
                 end
                 brick.y = brick.y + dt * mapRangeClamped(brick.y, 0, screenHeight, 80, 15) * (brick.speedMult or 1)
             else
@@ -2854,10 +2854,13 @@ function love.keypressed(key)
             Balls.addBall("Mortar Turrets")
         end
 
+        -- burn test
         if key == "8" then
             -- updateTrails = not updateTrails
             -- brickCollisions = not brickCollisions
-            Balls.addBall("Laser Turrets")
+            for _, brick in ipairs(bricks) do
+                burnBrick(brick, 1, nil)
+            end
         end
 
         if key == "9" then

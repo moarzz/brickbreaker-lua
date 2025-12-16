@@ -926,6 +926,16 @@ function resetAnimations()
     -- Don't clear quadCache as we want to reuse quads
 end
 
+function getBrickById(brickId)
+    for _, brick in ipairs(bricks) do
+        if brick.id == brickId then
+            return brick
+        end
+    end
+    return nil
+end
+
+fireAnimations = {}
 function createSpriteAnimation(x, y, scale, spritesheet, frameWidth, frameHeight, frameTime, skipFrames, looping, scaleX, scaleY, angle, color, isFire, brickId, lastFrame)
     
     looping = looping or false
@@ -974,8 +984,29 @@ function createSpriteAnimation(x, y, scale, spritesheet, frameWidth, frameHeight
     if animation.lastFrame == nil then
         animation.lastFrame = #animation.quads
     end
-    table.insert(animations, animation) -- Store the animation in the animations table
+    if isFire then
+        fireAnimations[brickId] = animation
+    else
+        table.insert(animations, animation) -- Store the animation in the animations table
+    end
+    
     return animation.id
+end
+
+function updateBurnAnims()
+    local IDToRemove = {}
+    for ID, anim in pairs(fireAnimations) do
+        local brick = getBrickById(anim.brickId)
+        if brick then
+            anim.x = brick.x + brick.width / 2 + brick.drawOffsetX
+            anim.y = brick.y + brick.height / 2 + brick.drawOffsetY - 10
+        else
+            table.insert(IDToRemove, ID)
+        end
+    end
+    for _, ID in ipairs(IDToRemove) do
+        table.remove(fireAnimations, ID)
+    end
 end
 
 local cooldownVFXs = {}
@@ -1379,6 +1410,48 @@ function updateAnimations(dt)
                     animation.currentFrame = 1
                 else
                     table.remove(animations, i) -- Remove the animation if it has finished
+                    goto continue
+                end
+            else
+                animation.currentFrame = animation.currentFrame + 1
+            end
+        end
+
+        -- Add to sprite batch using the spritesheet object as the key
+        if not spriteBatches[animation.spritesheet] then
+            spriteBatches[animation.spritesheet] = love.graphics.newSpriteBatch(animation.spritesheet, 1000)
+        end
+        
+        -- Add to batch with all the same parameters as before
+        spriteBatches[animation.spritesheet]:add(
+            animation.quads[animation.currentFrame],
+            animation.x,
+            animation.y,
+            math.rad(animation.angle),
+            animation.scale * animation.scaleX,
+            animation.scale * animation.scaleY,
+            animation.frameWidth / 2,
+            animation.frameHeight / 2,
+            0, 0, -- shearing
+            animation.color[1], animation.color[2], animation.color[3], animation.color[4]
+        )
+        ::continue::
+    end
+
+    for i = #fireAnimations, 1, -1 do
+        local animation = fireAnimations[i]
+        if not animation then
+            table.remove(fireAnimations, i) -- Remove nil animations
+            goto continue -- Skip to the next iteration
+        end
+        animation.elapsedTime = animation.elapsedTime + dt
+        if animation.elapsedTime >= animation.frameTime then
+            animation.elapsedTime = animation.elapsedTime - animation.frameTime
+            if animation.currentFrame >= animation.lastFrame then
+                if animation.looping then
+                    animation.currentFrame = 1
+                else
+                    table.remove(fireAnimations, i) -- Remove the animation if it has finished
                     goto continue
                 end
             else

@@ -1,5 +1,6 @@
 uniform float targetAberration = 0.00125;
 uniform bool enableBezel = true;
+uniform float pixelationScale = 0.0;  // 0.0 = no pixelation, higher values = more pixelated
 
 vec4 effect(vec4 colour, Image image, vec2 textureCoords, vec2 screenCoords)
 {
@@ -89,7 +90,15 @@ vec4 effect(vec4 colour, Image image, vec2 textureCoords, vec2 screenCoords)
     }
     
     // Sample the texture from the distorted coordinates
-    vec4 color = Texel(image, distortedUv);
+    vec2 sampleUv = distortedUv;
+    
+    // Apply pixelation if enabled
+    if (pixelationScale > 0.0) {
+        float pixelSize = pixelationScale / 100.0;
+        sampleUv = floor(distortedUv / pixelSize) * pixelSize;
+    }
+    
+    vec4 color = Texel(image, sampleUv);
     
     // Chromatic aberration
     float aberrationStrength = targetAberration;

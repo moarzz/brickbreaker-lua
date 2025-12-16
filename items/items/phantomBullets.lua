@@ -1,7 +1,7 @@
 local PhantomBullets = ItemBase.new();
 PhantomBullets.__index = PhantomBullets;
 PhantomBullets.name = "Phantom Bullets";
-PhantomBullets.description = "<font=bold>Bullets<font=default> have a <font=bold><spawnChance>%<font=default> chance to spawn as <font=bold>Phantom Bullets<font=default>, which pass through bricks without losing damage";
+PhantomBullets.description = "<font=bold>Bullets<font=default> have a <font=bold><spawnChance>%<font=default> chance to spawn as Phantom Bullets, which pass through bricks without losing damage";
 PhantomBullets.rarity = "rare";
 PhantomBullets.imageReference = "assets/sprites/UI/ItemIcons/Phantom-Bullets.png";
 
