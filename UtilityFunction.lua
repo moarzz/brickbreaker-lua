@@ -770,7 +770,7 @@ function createExplosionAtLocation(x, y, radius, damage, name, recast)
                 local xMult = math.cos(randomAngle)
                 local yMult = math.sin(randomAngle)
                 local distance = radius * 100
-                createExplosionAtLocation(x + distance * xMult, y + distance * yMult, radius * 0.6, math.ceil(damage/2), name, true)
+                createExplosionAtLocation(x + distance * xMult, y + distance * yMult, radius * 0.6, math.ceil(damage), name, true)
             end
         end)
     end

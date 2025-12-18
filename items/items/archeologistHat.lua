@@ -1,8 +1,8 @@
 local ArcheologistHat = ItemBase.new();
 ArcheologistHat.__index = ArcheologistHat;
 ArcheologistHat.name = "Archeologist Hat";
-ArcheologistHat.description = "<font=bold>On Level Up<font=default>\nadd a random rare or legendary item to the shop";
-ArcheologistHat.rarity = "rare";
+ArcheologistHat.description = "<font=bold>On Level Up<font=default>\nadd a random uncommon, rare or legendary item to the shop";
+ArcheologistHat.rarity = "uncommon";
 ArcheologistHat.imageReference = "assets/sprites/UI/ItemIcons/Archeologist's-Hat.png";
 
 function ArcheologistHat.new()

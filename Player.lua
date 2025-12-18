@@ -497,13 +497,16 @@ function Player.levelUp()
         else
             setItemShop({getItem("Long Term Investment")})
         end
-    -- elseif hasItem("Archeologist Hat") then
-        -- local rarity = math.random(1,100) <= 75 and "rare" or "legendary"
-        -- if hasItem("Birthday Hat") then
-            -- setItemShop({getRandomItemOfRarity(rarity, math.random(1,100) <= 20), getRandomItemOfRarity(rarity, math.random(1,100) <= 20)})
-        -- else
-            -- setItemShop({getRandomItemOfRarity(rarity, math.random(1,100) <= 20)})
-        -- end
+    elseif hasItem("Archeologist Hat") then
+        local rarity = math.random(1,100) <= 70 and "rare" or "legendary"
+        if rarity == "rare" then 
+            rarity = math.random(1,100) <= 70 and "uncommon" or "rare"
+        end
+        if hasItem("Birthday Hat") then
+            setItemShop({getRandomItemOfRarity(rarity, math.random(1,100) <= 20), getRandomItemOfRarity(rarity, math.random(1,100) <= 20)})
+        else
+            setItemShop({getRandomItemOfRarity(rarity, math.random(1,100) <= 20)})
+        end
     else
         setItemShop()
     end

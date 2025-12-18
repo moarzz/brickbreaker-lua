@@ -619,7 +619,7 @@ local function generateRow(brickCount, yPos)
                         bigBrickLocations[xPos] = true
                         unavailableXpos[xPos] = true
                         unavailableXpos[xPos+1] = true
-                        local bigBrickHealth = math.ceil((brickHealth + row[xPos+1])*2.5)
+                        local bigBrickHealth = math.ceil((brickHealth + row[xPos+1])*2)
                         local brickColor = getBrickColor(bigBrickHealth, true)
                         nextRowDebuff = brickHealth + row[xPos+1] -- Set the next row debuff to the health of the big brick
                         table.insert(bricks, {
@@ -1038,7 +1038,7 @@ function getBrickSpeedMult()
     else
         local posMult = 1
         local highestY = getHighestBrickY()
-        posMult = highestY < 350 and mapRangeClamped(highestY, 0, 350, startingBrickSpeed, 10) or mapRangeClamped(highestY, 350, 750, 10, 1.25)
+        posMult = highestY < 350 and mapRangeClamped(highestY, 0, 350, startingBrickSpeed, 10) or mapRangeClamped(highestY, 350, 750, 10, 1.15)
         if #bricks == 0 then
             return 1
         end
@@ -1161,7 +1161,7 @@ function changeMusic(newMusicStage)
         targetMusicVolume = 1
     elseif newMusicStage == "mid" then
         ref = "assets/SFX/inGame2.mp3";
-        BackgroundShader.changeShader(2); -- acid
+        BackgroundShader.changeShader(1); -- acid
     elseif newMusicStage == "intense" then
         ref = "assets/SFX/inGame3.mp3";
         BackgroundShader.changeShader(1);
@@ -2851,7 +2851,7 @@ function love.keypressed(key)
 
         -- add weapon
         if key == "7" then  
-            Balls.addBall("Mortar Turrets")
+            Balls.addBall("Laser Turrets")
         end
 
         -- burn test

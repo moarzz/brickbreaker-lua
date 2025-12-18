@@ -374,6 +374,7 @@ local function brickDestroyed(brick)
     Player.gain(brick.maxHealth)
     if brick.type == "gold" then
         local type = getRandomPowerupType()
+        print("gold brick destroyed, type : " .. type)
         createPowerup(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth, type)
     end
 
@@ -933,8 +934,8 @@ local function shoot(gunName, ball)
 
                 currentBallID = currentBallID + 1
                 local newBall = {
-                    type = "ball",
-                    name = ballTemplate.name,
+                    type = "Sudden Mitosis",
+                    name = "name",
                     id = currentBallID,
                     x = paddle.x + paddle.width / 2,
                     y = paddle.y - 6,
@@ -1125,7 +1126,7 @@ local function shoot(gunName, ball)
 
                     currentBallID = currentBallID + 1
                     local newBall = {
-                        type = "ball",
+                        type = "Sudden Mitosis",
                         name = ballTemplate.name,
                         id = currentBallID,
                         x = paddle.x + paddle.width / 2,
@@ -1200,7 +1201,7 @@ local function shoot(gunName, ball)
 
                     currentBallID = currentBallID + 1
                     local newBall = {
-                        type = "ball",
+                        type = "Sudden Mitosis",
                         name = ballTemplate.name,
                         id = currentBallID,
                         x = paddle.x + paddle.width / 2,
@@ -1260,7 +1261,7 @@ local function shoot(gunName, ball)
 
                     currentBallID = currentBallID + 1
                     local newBall = {
-                        type = "ball",
+                        type = "Sudden Mitosis",
                         name = ballTemplate.name,
                         id = currentBallID,
                         x = paddle.x + paddle.width / 2,
@@ -1400,7 +1401,7 @@ local function turretShoot(turret, typeMod)
 
             currentBallID = currentBallID + 1
             local newBall = {
-                type = "ball",
+                type = "Sudden Mitosis",
                 name = ballTemplate.name,
                 id = currentBallID,
                 x = paddle.x + paddle.width / 2,
@@ -1729,7 +1730,7 @@ local function fire(techName)
                             
                             -- Deal damage if we've been on target long enough
                             
-                            local cooldownLength = 0.5
+                            local cooldownLength = 1.65/getStat("Laser Turrets", "fireRate")
                             if hasItem("Spray and Pray") then
                                 local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                                 cooldownLength = cooldownLength * sprayMult
@@ -1863,7 +1864,7 @@ local function fire(techName)
                     rotateTurret(turret, startDir == 1, 1.5, 0.6)
                 end)
 
-                local turretLength = getStat("Laser Turrets", "ammo") * 0.7 + 3
+                local turretLength = 6.5-- getStat("Laser Turrets", "ammo") * 0.7 + 3
                 Timer.after(turretLength, function()
                     turret.alive = false -- Mark turret as dead
                     local turretDeathTween = tween.new(0.5, turret, {radius = 0}, tween.ouQuint)
@@ -2714,9 +2715,9 @@ local function ballListInit()
                 return Player.currentCore ~= "Damage Core"
             end,
             stats = {
-                ammo = 6,
-                cooldown = 11,
+                cooldown = 10,
                 damage = 1,
+                fireRate = 2,
             },
         },
         ["Mortar Turrets"] = {
@@ -3543,7 +3544,7 @@ local function paddleCollisionCheck(ball, paddle)
 
             currentBallID = currentBallID + 1
             local newBall = {
-                type = "ball",
+                type = "Sudden Mitosis",
                 name = ballTemplate.name,
                 id = currentBallID,
                 x = paddle.x + paddle.width * 0.5,
@@ -3583,14 +3584,18 @@ local function paddleCollisionCheck(ball, paddle)
     -- Bounce physics
     ball.speedY = -ball.speedY
     local hitPosition = math.max(0, math.min(1, (ball.x - paddleLeft) / paddle.width))
-    local ballSpeed = getStat(ball.name, "speed")
+    local ballSpeed = getStat(ball.name, "speed") or 300
+    if ball.name == "Sudden Mitosis" then
+        ballSpeed = 300
+    end
     ball.speedX = (hitPosition - 0.5) * 2 * math.abs(ballSpeed * 0.9)
     local speedYSquared = math.max(0, ballSpeed^2 - ball.speedX^2)
     ball.speedY = math.sqrt(speedYSquared) * (ball.speedY > 0 and 1 or -1)
     
     ball.speedExtra = math.min((ball.speedExtra or 1) + 5, 8)
-    Balls.adjustSpeed(ball.name)
-    
+    if ball.name ~= "Sudden Mitosis" then
+        Balls.adjustSpeed(ball.name)
+    end
     -- Callbacks
     for _, ballType in pairs(unlockedBallTypes) do
         if ballType.onPaddleBounce then
@@ -3902,7 +3907,7 @@ local function techUpdate(dt)
             
             -- Deal damage if we've been on target long enough
             
-            local cooldownLength = 1.1/((getStat("Laser Beam", "fireRate")))
+            local cooldownLength = 1.15/((getStat("Laser Beam", "fireRate")))
             if hasItem("Spray and Pray") then
                 local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                 cooldownLength = cooldownLength * sprayMult
@@ -5500,7 +5505,7 @@ local function techDraw()
     if unlockedBallTypes["Laser Beam"] then
         -- Draw the actual Laser Beam
         -- Calculate charge progress
-        local chargeProgress = laserBeamTimer / ((1.1/((Player.currentCore == "Damage Core" and 1 or getStat("Laser Beam", "fireRate")))))
+        local chargeProgress = laserBeamTimer / ((1.15/((Player.currentCore == "Damage Core" and 1 or getStat("Laser Beam", "fireRate")))))
         if hasItem("Spray and Pray") then
             local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
             chargeProgress = math.min(1, chargeProgress / sprayMult)
