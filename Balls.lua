@@ -273,7 +273,9 @@ local function createPowerup(x, y, amount, type)
     if gameTime - lastPowerupSpawnTime < 1.5 then
         return
     end
-    lastPowerupSpawnTime = gameTime
+    if type ~= "dollarBill" then
+        lastPowerupSpawnTime = gameTime
+    end
     local powerup = {
         x = x,
         y = y,
@@ -1730,7 +1732,7 @@ local function fire(techName)
                             
                             -- Deal damage if we've been on target long enough
                             
-                            local cooldownLength = 1.65/getStat("Laser Turrets", "fireRate")
+                            local cooldownLength = 1.2/getStat("Laser Turrets", "fireRate")
                             if hasItem("Spray and Pray") then
                                 local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                                 cooldownLength = cooldownLength * sprayMult
@@ -1815,7 +1817,8 @@ local function fire(techName)
                         -- laser beam draw
                         -- Draw the actual Laser Beam
                         -- Calculate charge progress
-                        local chargeProgress = self.laserBeamTimer / 0.5
+                        local cooldownLength = 1.2/getStat("Laser Turrets", "fireRate")
+                        local chargeProgress = self.laserBeamTimer / cooldownLength
                         if hasItem("Spray and Pray") then
                             local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                             chargeProgress = math.min(1, chargeProgress / sprayMult)
@@ -2665,7 +2668,7 @@ local function ballListInit()
             sawPositions = {}, -- Will store current positions of saws
             sawAnimations = {}, -- Will store animation IDs
             currentAngle = 0, -- Current rotation angle
-            orbitRadius = 250,
+            orbitRadius = 270,
             damageCooldowns = {}, -- Add this line to track cooldowns per saw per brick
         },
         ["Gun Turrets"] = {
@@ -2905,6 +2908,7 @@ accelerationOn = false
 -- calls ballListInit and adds a ball to it
 function Balls.initialize()
     -- clean code/s
+    lastPowerupSpawnTime = 0
     changeMusic("calm")
     endlessRun = false
     powerupPopup = {startTime = 0, type = nil, scale = 0, angle = 0}
@@ -2928,7 +2932,7 @@ function Balls.initialize()
         Player.setMoney(25)
     end
     if Player.currentCore == "Fast Study Core" then
-        Player.xpGainMult = 1.04
+        Player.xpGainMult = 1.035
     end
     Player.permanentUpgrades = {}
     inGame = true

@@ -5,7 +5,7 @@ SuddenMitosis.description = "<font=bold>On Bullet Shot<font=default>\n<mitosisCh
 SuddenMitosis.rarity = "uncommon";
 SuddenMitosis.shotCount = 0;
 SuddenMitosis.unique = true
--- CoverLaser.imageReference = "assets/sprites/UI/ItemIcons/Cover-Laser.png";
+SuddenMitosis.imageReference = "assets/sprites/UI/ItemIcons/Sudden-Mitosis.png";
 function SuddenMitosis.new()
     local instance = setmetatable({}, SuddenMitosis):init();
 

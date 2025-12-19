@@ -541,7 +541,7 @@ local function generateRow(brickCount, yPos)
     local row = usingMoneySystem and {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} or {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
     local rowOffset = 0--mapRangeClamped(math.random(0,10),0,10, 0, brickWidth)
     
-    if bossSpawned and not bossDead then
+    if bossSpawned and not bossDead and not endlessRun then
         blockedRows = {}
         local num1, num2 = usingMoneySystem and 4 or 9, usingMoneySystem and 9 or 14
         for i = num1, num2 do
@@ -550,11 +550,11 @@ local function generateRow(brickCount, yPos)
     end
 
     local blockedRowCount = math.random(0,15)
-    if bossSpawned then
+    if bossSpawned and not endlessRun then
         blockedRowCount = math.random(0,7)
     end
     if blockedRowCount ~= 0 then
-        if not bossSpawned then
+        if not bossSpawned or endlessRun then
             blockedRows = {}
         end
         for i=1, blockedRowCount do
@@ -843,7 +843,7 @@ function initializeBricks()
     rows = 3
     cols = 10
     brickSpeed = { value = 10 } -- Speed at which bricks move down (pixels per second)
-    currentRowPopulation = Player.currentCore == "Speed Core" and 100 or 1 -- Number of bricks in the first row
+    currentRowPopulation = 1 -- Number of bricks in the first row
 
     -- Generate bricks
     for i = 0, rows - 1 do
@@ -1081,9 +1081,9 @@ local function moveBricksDown(dt)
             elseif brick.type == "fast" then
                 local fastSpeed
                 if brick.y <= screenHeight/2 then     
-                    fastSpeed = mapRangeClamped(brick.y, 0, screenHeight/2, 100, 50)
+                    fastSpeed = mapRangeClamped(brick.y, 0, screenHeight/2, 100, 40)
                 else
-                    fastSpeed = mapRangeClamped(brick.y, screenHeight/2, screenHeight - 50, 50, 5)
+                    fastSpeed = mapRangeClamped(brick.y, screenHeight/2, screenHeight - 50, 40, 4)
                 end
                 brick.y = brick.y + dt * mapRangeClamped(brick.y, 0, screenHeight, 80, 15) * (brick.speedMult or 1)
             else
@@ -2846,7 +2846,12 @@ function love.keypressed(key)
         -- test ball lag
         if key == "6" then
             -- drawTrails = not drawTrails
-            ballPhysics = not ballPhysics
+            -- ballPhysics = not ballPhysics
+            Balls.addBall("Minigun")
+            Balls.addBall("Shotgun")
+            Balls.addBall("Laser Turrets")
+            Balls.addBall("Gun Turrets")
+            -- Balls.addBall("Laser Turrets")
         end
 
         -- add weapon
@@ -2864,6 +2869,7 @@ function love.keypressed(key)
         end
 
         if key == "9" then
+            gameTime = 600
             spawnBoss()
         end
 

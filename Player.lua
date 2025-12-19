@@ -448,9 +448,9 @@ function Player.levelUp()
         elseif Player.level < 10 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.65)
         elseif Player.level < 15 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.425)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.4)
         elseif Player.level < 20 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.35)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.375)
         elseif Player.level < 25 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.3)
         elseif Player.level < 30 then
@@ -472,7 +472,7 @@ function Player.levelUp()
     elseif Player.currentCore == "Size Core" then
         paddle.width = paddle.width + 20
     elseif Player.currentCore == "Fast Study Core" then
-        Player.xpGainMult = Player.xpGainMult + 0.04
+        Player.xpGainMult = Player.xpGainMult + 0.035
     elseif Player.level % 5 == 0 and Player.currentCore == "Spray and Pray Core" then -- THIS IS NOT AN ERROR
         Player.permanentUpgrades.fireRate = (Player.permanentUpgrades.fireRate or 0) + 1
     elseif "Amount Core" == Player.currentCore and Player.level % 5 == 0 then
