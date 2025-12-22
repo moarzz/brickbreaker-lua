@@ -283,6 +283,7 @@ local function loadAssets()
     bossBrickOverlayImg = love.graphics.newImage("assets/sprites/bossBrickOverlay.png")
     runeCircleImg = love.graphics.newImage("assets/sprites/runeCircle.png")
     bezelImg = love.graphics.newImage("assets/sprites/bezel.png")
+    wishlistImg = love.graphics.newImage("assets/sprites/wishlist.png")
 
     -- UI
     uiLabelImg = love.graphics.newImage("assets/sprites/UI/label.png")
@@ -533,9 +534,9 @@ local function generateRow(brickCount, yPos)
     if victoryAchieved and not endlessRun then
         return
     end
-    local rowXOffset = math.random(-15,15)
+    local rowXOffset = math.random(-15,15) + brickWidth/2
     local startLocation = usingMoneySystem and statsWidth or 30
-    local columnCount = usingMoneySystem and 12 or 22
+    local columnCount = usingMoneySystem and 12 or 21
     brickCount = brickCount - nextRowDebuff
     nextRowDebuff = 0 -- Reset next row debuff for the next row
     local row = usingMoneySystem and {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} or {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
@@ -1669,11 +1670,13 @@ function drawMenu()
         loadGameData() -- Load game data when entering upgrades screen
     end
 
-    --[[ Wishlist button
-    if suit.Button("Wishlist on steam!", {id="wishlist button", align = "center", valign = "middle"}, centerX + buttonWidth * 0.05, startY + (buttonHeight + buttonSpacing) * 3.25, buttonWidth, buttonHeight * 2).hit then
+    -- Wishlist button
+    love.graphics.draw(wishlistImg, screenWidth - 650, 100, 0, 600/wishlistImg:getWidth(), 600/wishlistImg:getWidth())
+    if suit.Button("", {id="wishlist button", align = "center", valign = "middle", color = invisButtonColor}, screenWidth - 600, 150, 550, 150).hit then
         playSoundEffect(selectSFX, 1, 0.8)
-        openBrowser("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
-    end]]
+        openBrowser("https://store.steampowered.com/app/4228900/BreakLoop/")
+        -- openBrowser("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+    end
 
     -- draw highscore
     suit.Label("Highscore : " .. formatNumber(Player.highScore), {align = "center"}, 50, 50)
