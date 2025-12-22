@@ -11,7 +11,7 @@ function PlusThreeBuff.new()
     local statUnlocked = {}
 
     local statNames = {
-        "damage";
+        -- "damage";
         "speed";
         "amount";
         "ammo";
@@ -21,7 +21,7 @@ function PlusThreeBuff.new()
     };
 
     local itemNames = {
-        "Kitchen Knife +";
+        -- "Kitchen Knife +";
         "Running Shoes +";
         "Two for One Meal Ticket +";
         "Extended Magazine +";

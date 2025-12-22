@@ -2455,7 +2455,7 @@ local function ballListInit()
             size = 1,
             rarity = "common",
             ammoMult = 2,
-            fireRateMult = 1.85,
+            fireRateMult = 1.95,
             startingPrice = 25,
             description = "Fire bullets that die on impact in bursts.",
             onBuy = function() 
@@ -3255,7 +3255,7 @@ local function brickCollisionEffects(ball, brick)
     end  
     if ball.name == "Exploding Ball" or ball.name == "Incrediball" then
         -- Create explosion using new particle system
-        local scale = getStat(ball.name, "range") * 0.15 + 0.3
+        local scale = getStat(ball.name, "range") * 0.185 + 0.3
         -- Limit Chain Lightning sprite animations to 25 at once
         --createSpriteAnimation(ball.x, ball.y, scale/2, explosionVFX, 512, 512, 0.01, 5, false, 0.9, 0.9)
 
@@ -3816,9 +3816,10 @@ local function wallCollisionCheck(ball)
         wallHit = true
     end
     if wallHit then
-        local chance = hasItem("Four Leafed Clover") and 100 or 50
-        if hasItem("Ball Attached Laser") and math.random(1,100) <= chance then
-            shootRandomLaserFromBall(ball, hitType)
+        if hasItem("Ball Attached Laser") then
+            for i=1, itemCount("Ball Attached Laser") do
+                shootRandomLaserFromBall(ball, hitType)
+            end
         end
         for _, ballType in pairs(unlockedBallTypes) do
             if ballType.onWallBounce then
@@ -4843,7 +4844,7 @@ function Balls.update(dt, paddle, bricks)
                 
                 -- Deal damage if we've been on target long enough
                 
-                local cooldownLength = 2.4/((getStat("Laser Ball", "fireRate")))
+                local cooldownLength = 2.2/((getStat("Laser Ball", "fireRate")))
                 if hasItem("Spray and Pray") then
                     local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                     cooldownLength = cooldownLength * sprayMult
@@ -5640,7 +5641,7 @@ function Balls:draw()
     for _, ball in ipairs(Balls) do
         if ball.name == "Laser Ball" then
             ball.laserBeamTimer = ball.laserBeamTimer or 0
-            local chargeProgress = ball.laserBeamTimer / ((2.4/((getStat("Laser Ball", "fireRate")))))
+            local chargeProgress = ball.laserBeamTimer / ((2.2/((getStat("Laser Ball", "fireRate")))))
             if hasItem("Spray and Pray") then
                 local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                 chargeProgress = math.min(1, chargeProgress / sprayMult)

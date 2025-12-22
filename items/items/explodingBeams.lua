@@ -5,6 +5,8 @@ ExplodingBeams.description = "<font=bold>Laser beams<font=default> have a <font=
 ExplodingBeams.rarity = "uncommon";
 ExplodingBeams.imageReference = "assets/sprites/UI/ItemIcons/Exploding-Beams.png";
 
+ExplodingBeams.unique = true;
+
 function ExplodingBeams.new()
     local instance = setmetatable({}, ExplodingBeams):init();
 

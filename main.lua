@@ -999,7 +999,7 @@ brickFreeze = false
 brickFreezeTime = gameTime
 function getBrickSpeedByTime()
     -- Scale speed from 0.5 to 3 over 30 minutes
-    local returnValue = mapRange(gameTime, 0, 2000, 0.25, 3) * (Player.currentCore == "Madness Core" and 2 or 1)
+    local returnValue = mapRange(gameTime, 0, 2000, 0.25, 2.75) * (Player.currentCore == "Madness Core" and 2 or 1)
     if brickFreeze == true then
         if gameTime - brickFreezeTime > 20 then
             brickFreeze = false
@@ -1033,7 +1033,7 @@ function getBrickSpeedMult()
     -- Get the position-based multiplier
     if Player.dead then
         return deathTweenValues.speed * getBrickSpeedByTime()
-    elseif bossSpawned and boss.y >= -boss.height and getHighestBrickY() <= (screenHeight * 3/4 - 250) then
+    elseif bossSpawned and boss.y >= -boss.height and getHighestBrickY() <= (screenHeight * 3/4 - 250) and not endlessRun then
         return mapRangeClamped(boss.y, -boss.height, screenHeight/3, 5, 1) * getBrickSpeedByTime()
     else
         local posMult = 1
@@ -2847,11 +2847,10 @@ function love.keypressed(key)
         if key == "6" then
             -- drawTrails = not drawTrails
             -- ballPhysics = not ballPhysics
-            Balls.addBall("Minigun")
-            Balls.addBall("Shotgun")
-            Balls.addBall("Laser Turrets")
-            Balls.addBall("Gun Turrets")
-            -- Balls.addBall("Laser Turrets")
+            Balls.addBall("Laser Ball")
+            Balls.addBall("Gun Ball")
+            Balls.addBall("Incrediball")
+            Balls.addBall("Ball Gun")
         end
 
         -- add weapon
