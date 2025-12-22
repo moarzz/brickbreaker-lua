@@ -270,6 +270,7 @@ local powerupColors = {
 }
 local lastPowerupSpawnTime = 0
 local function createPowerup(x, y, amount, type)
+    playSoundEffect(powerupCreationSFX, 0.7, 0.85)
     if gameTime - lastPowerupSpawnTime < 1.5 then
         return
     end
@@ -1645,6 +1646,7 @@ local function fire(techName)
         if #turrets < 50 then
             local iterations = 1
             local chance = hasItem("Four Leafed Clover") and 80 or 40
+            playSoundEffect(turretDeploySFX, 0.7, 1)
             if hasItem("Factory") and math.random(1,100) <= chance then
                 iterations = 2
             end
@@ -1696,6 +1698,7 @@ local function fire(techName)
         if #laserTurrets < 50 or true then
             local iterations = 1
             local chance = hasItem("Four Leafed Clover") and 80 or 40
+            playSoundEffect(turretDeploySFX, 0.7, 1)
             if hasItem("Factory") and math.random(1,100) <= chance then
                 iterations = 2
             end
@@ -1905,6 +1908,7 @@ local function fire(techName)
         if #mortarTurrets < 50 then
             local iterations = 1
             local chance = hasItem("Four Leafed Clover") and 80 or 40
+            playSoundEffect(turretDeploySFX, 0.7, 1)
             if hasItem("Factory") and math.random(1,100) <= chance then
                 iterations = 2
             end
