@@ -289,52 +289,11 @@ Player.availableCores = {
         price = 250,
         startingItem = "Machine Gun"
     },
-    {
-        name = "Fast Study Core",
-        description = "gain +4% experience gain per Player Level",
-        price = 500,
-        startingItem = "Laser Beam"
-    },
-    {
-        name = "Hacker Core",
-        description = "All Weapons start with an upgradePrice of 0",
-        price = 750,
-        startingItem = "Shotgun"
-    },
-    {
-        name = "Loan Core",
-        description = "gain 10$ instead of 6$ on level up. There are no items that give money in the shop",
-        price = 1000,
-        startingItem = "Rocket Launcher"
-    },
-    {
-        name = "Size Core",
-        description = "gain 7% paddle size per level",
-        price = 1250,
-        startingItem = "Gun Ball",
-    },
-    --[[{
-        name = "Farm Core",
-        description = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown).\nIt takes 100% more xp for you to level up",
-        price = 1000,
-    },
-    
-    {
-        name = "Madness Core",
-        description = "Damage is divided by 2. Cooldown is halved. Every other stat is doubled.",
-        price = 5000,
-    },]]
 }
 
 Player.coreDescriptions = {
     ["Amount Core"] = "gain +1 amount for every 5 player level",
     ["Spray and Pray Core"] = "gain +1 fireRate for every 5 Player level",
-    ["Fast Study Core"] = "gain +4% experience gain per Player Level",
-    ["Hacker Core"] = "All Weapons start with an upgradePrice of 0",
-    ["Loan Core"] = "start with 25$. gain 3$ instead of 5$ on level up.",
-    ["Size Core"] = "gain 7% paddle size per level",
-    ["Farm Core"] = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown)\nIt takes 100% more xp for you to level up and bricks grow in health 100% faster",
-    --["Madness Core"] = "Damage and coldown are reduced by 50%.\nevery other stat is doubled. bricks go twice as fast\n(can break the game)."
 }
 
 Player.coreRestrictions = {

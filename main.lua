@@ -331,6 +331,8 @@ local function loadAssets()
     lightBeamSFX = love.audio.newSource("assets/SFX/lightBeam.mp3", "static")
     gainXpSFX = love.audio.newSource("assets/SFX/gainXp.mp3", "static")
     shieldBlockSFX = love.audio.newSource("assets/SFX/shieldBlock.mp3", "static")
+    turretCreationSFX = love.audio.newSource("assets/SFX/turretCreation.mp3", "static")
+    powerupCreationSFX = love.audio.newSource("assets/SFX/powerupCreation.mp3", "static")
 
 
     -- load shaders
