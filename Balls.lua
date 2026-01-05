@@ -1474,8 +1474,8 @@ local function turretShoot(turret, typeMod)
             radius = 10,
         }
         table.insert(mortarBombs, bomb)
-        local targetX = math.min(screenWidth - 80, math.max(80, turret.x + math.random(-300, 300)))
         local targetY = math.min(screenHeight - 80, math.max(80, getHighestBrickY(false) - (math.random(0, 400))))
+        local targetX = math.max(50, math.min(screenWidth - 50, turret.x + math.tan(turret.angle) * (targetY - turret.y)))
         local bombLocationTween = tween.new(3, bomb, {x = targetX, y = targetY}, tween.linear)
         addTweenToUpdate(bombLocationTween)
         local bombScaleTween = tween.new(1.5, bomb, {radius = 25}, tween.outExpo)
@@ -1646,7 +1646,7 @@ local function fire(techName)
         if #turrets < 50 then
             local iterations = 1
             local chance = hasItem("Four Leafed Clover") and 80 or 40
-            playSoundEffect(turretDeploySFX, 0.7, 1)
+            playSoundEffect(turretCreationSFX, 0.7, 1)
             if hasItem("Factory") and math.random(1,100) <= chance then
                 iterations = 2
             end
@@ -1698,7 +1698,7 @@ local function fire(techName)
         if #laserTurrets < 50 or true then
             local iterations = 1
             local chance = hasItem("Four Leafed Clover") and 80 or 40
-            playSoundEffect(turretDeploySFX, 0.7, 1)
+            playSoundEffect(turretCreationSFX, 0.7, 1)
             if hasItem("Factory") and math.random(1,100) <= chance then
                 iterations = 2
             end
@@ -1908,14 +1908,15 @@ local function fire(techName)
         if #mortarTurrets < 50 then
             local iterations = 1
             local chance = hasItem("Four Leafed Clover") and 80 or 40
-            playSoundEffect(turretDeploySFX, 0.7, 1)
+            playSoundEffect(turretCreationSFX, 0.7, 1)
             if hasItem("Factory") and math.random(1,100) <= chance then
                 iterations = 2
             end
             for i=1, iterations do
                 local turretType = unlockedBallTypes["Mortar Turrets"]
                 local id = currentTurretId
-                local destination = {x = math.max(50, math.min(screenWidth - 50, paddle.x + math.random(-400, 400))), y = math.random(math.max(paddle.y + 25, paddle.y + 75), screenHeight - 25)}
+                local destinationY = math.random(math.max(paddle.y + 25, paddle.y + 75), screenHeight - 25)
+                local destination = {x = math.max(50, math.min(screenWidth - 50, paddle.x + math.random(-400, 400))), y = destinationY}
                 local startDir = math.random(0,1)
                 local turret = {
                     id = currentTurretId,
@@ -2001,10 +2002,10 @@ local function cast(spellName, brick, forcedDamage)
         shadowballId = shadowballId + 1
         -- Removed shadowBall hit sound effect
         table.insert(shadowBalls, shadowBall)
-        local shadowBallStartTween = tween.new(0.25, shadowBalls[#shadowBalls], {radius = 7 * range}, tween.outExpo)
+        local shadowBallStartTween = tween.new(0.25, shadowBalls[#shadowBalls], {radius = 9 * range}, tween.outExpo)
         addTweenToUpdate(shadowBallStartTween)
         local sprayCooldown = hasItem("Four Leafed Clover") and 7.5 or 10 -- this is correct, stop tweaking and changing it
-        sprayCooldown = sprayCooldown * 0.85
+        sprayCooldown = sprayCooldown * 0.5
         local cooldownLength = (hasItem("Spray and Pray") and sprayCooldown/(getStat("Shadow Ball", "fireRate")) or 15/(getStat("Shadow Ball", "fireRate"))) + 2
         Timer.after(cooldownLength, function()
             -- Refill shadowBall spell after cooldown
@@ -2237,7 +2238,7 @@ local function ballListInit()
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
-            speedMult = 2,
+            speedMult = 1.75,
             size = 1,
             rarity = "common",
             ballAmount = 1,
@@ -2373,9 +2374,9 @@ local function ballListInit()
             description = "Creates a damaging electric current between bricks on hit.",
             color = {0, 170/255, 1, 1}, -- green color
             stats = {
-                speed = 100,
+                speed = 150,
                 damage = 1,
-                range = 2
+                range = 1
             },
         },
         ["Gun Ball"] = {
@@ -2383,7 +2384,7 @@ local function ballListInit()
             type = "ball",
             x = screenWidth / 2,
             y = screenHeight / 2,
-            speedMult = 1.1,
+            speedMult = 0.85,
             size = 1,
             rarity = "uncommon",
             startingPrice = 50,
@@ -2396,7 +2397,7 @@ local function ballListInit()
                 shoot("Gun Ball", ball)
             end,
             stats = {
-                speed = 150,
+                speed = 200,
                 damage = 1,
             },
         },
@@ -2484,7 +2485,7 @@ local function ballListInit()
             size = 1,
             radius = 10,
             rarity = "uncommon",
-            speedMult = 1.5,
+            speedMult = 1.25,
             ammoMult = 3,
             fireRateMult = 6,
             startingPrice = 50,
@@ -3587,6 +3588,11 @@ local function paddleCollisionCheck(ball, paddle)
                 end)
             end)
         end
+        if hasItem("Cover Laser") then
+            if getItem("Cover Laser"):onShoot() then
+                newLaserPortal(ball.stats.damage or 3, ball.stats.fireRate or 5, ball.name)
+            end
+        end   
     end
 
     -- Bounce physics
@@ -3916,7 +3922,7 @@ local function techUpdate(dt)
             
             -- Deal damage if we've been on target long enough
             
-            local cooldownLength = 1.15/((getStat("Laser Beam", "fireRate")))
+            local cooldownLength = 1.05/((getStat("Laser Beam", "fireRate")))
             if hasItem("Spray and Pray") then
                 local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                 cooldownLength = cooldownLength * sprayMult
@@ -4289,13 +4295,13 @@ end
 local function drawShadowBall(shadowBall)
     -- Draw glow
     love.graphics.setColor(0.2, 0, 0.2, 0.65) -- Orange glow
-    love.graphics.circle("fill", shadowBall.x, shadowBall.y, shadowBall.radius * 1.6)
+    love.graphics.circle("fill", shadowBall.x, shadowBall.y, shadowBall.radius * 1.45)
 
     -- Draw trail
     for i = 1, #(shadowBall.trail or {}) do
         local p = shadowBall.trail[i]
         local t = i / #shadowBall.trail
-        local trailRadius = shadowBall.radius * math.pow(t, 2.3)
+        local trailRadius = shadowBall.radius * math.pow(t, 2.3) * 0.9
         -- Gradient from yellow to red
         love.graphics.setColor(t * 0.6, 0, t * 0.6, math.pow(t, 1.25))
         love.graphics.circle("fill", p.x, p.y, trailRadius)
@@ -5019,7 +5025,7 @@ function Balls.update(dt, paddle, bricks)
                 -- Calculate attraction
                 local attractionStrength = ball.attractionStrength or 0
                 if hasElectroItem then
-                    attractionStrength = math.max(200 * electroCount, 200)
+                    attractionStrength = attractionStrength + math.max(200 * electroCount, 200)
                 end
                 
                 local ballSpeed = ball.stats.speed + getStatItemsBonus("speed", ball) * 50 + (ball.speedExtra or 0) * 15
@@ -5514,7 +5520,7 @@ local function techDraw()
     if unlockedBallTypes["Laser Beam"] then
         -- Draw the actual Laser Beam
         -- Calculate charge progress
-        local chargeProgress = laserBeamTimer / ((1.15/((Player.currentCore == "Damage Core" and 1 or getStat("Laser Beam", "fireRate")))))
+        local chargeProgress = laserBeamTimer / ((1.05/((Player.currentCore == "Damage Core" and 1 or getStat("Laser Beam", "fireRate")))))
         if hasItem("Spray and Pray") then
             local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
             chargeProgress = math.min(1, chargeProgress / sprayMult)

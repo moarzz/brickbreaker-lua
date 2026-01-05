@@ -522,7 +522,7 @@ function resetXpStuff()
     cumulatedXp = 0
 end
 function Player.gain(amount)
-    if victoryAchieved then
+    if victoryAchieved and not endlessRun then
         return
     end
     amount = math.floor(amount)

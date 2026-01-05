@@ -331,7 +331,7 @@ local function loadAssets()
     gainXpSFX = love.audio.newSource("assets/SFX/gainXp.mp3", "static")
     shieldBlockSFX = love.audio.newSource("assets/SFX/shieldBlock.mp3", "static")
     turretCreationSFX = love.audio.newSource("assets/SFX/turretCreation.mp3", "static")
-    powerupCrationSFX = love.audio.newSource("assets/SFX/powerupCreation.mp3", "static")
+    powerupCreationSFX = love.audio.newSource("assets/SFX/powerupCreation.mp3", "static")
 
 
     -- load shaders
@@ -433,7 +433,7 @@ local function spawnBoss()
             brickId = brickId + 1
         end
     end)]]
-    local bossHealTimer = Timer.every(2.5, function()
+    local function healAll()
         if boss.y >= -bossHeight + 150 and canHeal then
             for _, brick in ipairs(bricks) do
                 if brick.type ~= "boss" then
@@ -445,6 +445,14 @@ local function spawnBoss()
                 end
             end
         end
+        if not endlessRun then
+            Timer.after(2.5, function()
+                healAll()
+            end)
+        end
+    end
+    Timer.after(2.5, function()
+        healAll()
     end)
 end
 
@@ -688,7 +696,7 @@ local function generateRow(brickCount, yPos)
                                 end
                             end
                             
-                            Timer.after(2, function() healSelf(healBrick) end)
+                            Timer.after(mapRangeClamped(gameTime, 0, 1200, 2.5, 0.5), function() healSelf(healBrick) end)
                         end
                     end
                     local healDelay = 1.75 - ((gameTime * 100) % 175)/100
@@ -780,9 +788,9 @@ local function addMoreBricks()
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
                 local addBrickMult = mapRangeClamped(Player.level, 1, 20, 2, 1)
                 if victoryAchieved then
-                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 30, 180) * mapRangeClamped(gameTime, 600, 1200, 1, 5)
+                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 30, 160) * math.max(mapRange(gameTime, 600, 900, 1, 5), 1)
                 else
-                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 30, 180)
+                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 30, 160)
                 end
                 
                 if spawnBossNextRow and not bossSpawned then
@@ -1163,7 +1171,7 @@ function changeMusic(newMusicStage)
         targetMusicVolume = 1
     elseif newMusicStage == "mid" then
         ref = "assets/SFX/inGame2.mp3";
-        BackgroundShader.changeShader(1); -- acid
+        BackgroundShader.changeShader(2); -- acid
     elseif newMusicStage == "intense" then
         ref = "assets/SFX/inGame3.mp3";
         BackgroundShader.changeShader(1);
@@ -2857,7 +2865,7 @@ function love.keypressed(key)
 
         -- add weapon
         if key == "7" then  
-            Balls.addBall("Laser Turrets")
+            Balls.addBall("Mortar Turrets")
         end
 
         -- burn test
@@ -2870,8 +2878,8 @@ function love.keypressed(key)
         end
 
         if key == "9" then
-            gameTime = 600
-            spawnBoss()
+            gameTime = 599
+            -- spawnBoss()
         end
 
         -- PERFORMANCE TEST ON OFF BLOCK
