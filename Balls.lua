@@ -3638,11 +3638,10 @@ local function shootRandomLaserFromBall(ball, hitType)
         targetBrick = nil
     }
     BallAttachedLaserId = BallAttachedLaserId + 1
-    -- set some vars, idk figure it out man
+    
     local closestDist = math.huge
     local highestBrick
 
-    -- establish starting location
     local startX = ball.x
     local startY = ball.y
 
@@ -3659,17 +3658,19 @@ local function shootRandomLaserFromBall(ball, hitType)
     end
     angle = angle + math.rad(90)
     laser.angle = angle
-    local dirX = math.sin(angle)  -- X component of direction
+    local dirX = math.sin(angle)
     local dirY = -math.cos(angle)
 
-    -- calculate angle
-    local laserLength = 2500  -- Extend past screen top
+    local laserLength = 2500
     local endX = startX + dirX * laserLength
     local endY = startY + dirY * laserLength
 
     -- check if colliding with brick
     for _, brick in ipairs(bricks) do
         if brick.health > 0 and not brick.destroyed then
+            local brickClosestDist = math.huge
+            local brickHit = false
+            
             -- Check all four sides of the brick for intersection
             local sides = {
                 {brick.x, brick.y + brick.height, brick.x + brick.width, brick.y + brick.height}, -- bottom
@@ -3692,22 +3693,31 @@ local function shootRandomLaserFromBall(ball, hitType)
                         local intersectY = y1 + ua * (y2 - y1)
                         local dist = math.sqrt((intersectX - startX)^2 + (intersectY - startY)^2)
                         
-                        table.insert(laserBricksInSight, brick)
-                        if dist < closestDist then
-                            closestDist = dist
-                            highestBrick = brick
+                        if dist < brickClosestDist then
+                            brickClosestDist = dist
+                            brickHit = true
                             laserBeamY = intersectY
                         end
-                        break
                     end
                 end
             end
+            
+            -- Only add this brick if it was actually hit, and only use closest intersection point
+            if brickHit and brickClosestDist < closestDist then
+                closestDist = brickClosestDist
+                highestBrick = brick
+            end
         end
     end
+    
     laser.laserBeamBrick = highestBrick
+    laser.targetX = nil
+    laser.targetY = nil
 
     if laser.laserBeamBrick then
         laser.targetBrick = laser.laserBeamBrick
+        laser.targetX = laser.laserBeamBrick.x + laser.laserBeamBrick.width / 2
+        laser.targetY = laser.laserBeamBrick.y + laser.laserBeamBrick.height / 2
         local chance = hasItem("Four Leafed Clover") and 60 or 30
         if hasItem("Exploding Beams") and math.random(1,100) <= chance then
             createExplosionAtLocation(laser.laserBeamBrick.x + laser.laserBeamBrick.width/2, laser.laserBeamBrick.y + laser.laserBeamBrick.height/2, 1, ball.stats.damage, ball.name)
@@ -3727,6 +3737,12 @@ local function drawBallAttachedLasers()
             table.insert(IDsToRemove, laser.id)
             goto continue
         end
+        
+        -- Check if target brick is still valid before drawing
+        if laser.laserBeamBrick and (laser.laserBeamBrick.destroyed or laser.laserBeamBrick.health <= 0) then
+            laser.laserBeamBrick = nil
+        end
+        
         love.graphics.setColor(intensity, 0, 0, intensity)
         local angle = laser.angle
         local startX = laser.x
@@ -3741,6 +3757,9 @@ local function drawBallAttachedLasers()
             local closestY = math.max(brick.y, math.min(startY, brick.y + brick.height))
             local distToBrick = math.sqrt((closestX - startX)^2 + (closestY - startY)^2)
             beamLength = distToBrick
+        elseif laser.targetX and laser.targetY then
+            local distToTarget = math.sqrt((laser.targetX - startX)^2 + (laser.targetY - startY)^2)
+            beamLength = distToTarget
         end
 
         love.graphics.push()
