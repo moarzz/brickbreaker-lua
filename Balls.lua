@@ -3333,31 +3333,32 @@ local function brickCollisionCheck(ball, bricksToCheck)
                 local dx = bx - ball.x
                 local dy = by - ball.y
                 local distSq = dx * dx + dy * dy
+                local skipBrick = false
                 if distSq > maxCullSq then
-                    goto continue_phantom
+                    skipBrick = true
                 end
+                if not skipBrick then
+                    local key = brick.id or brick
+                    local wasOverlapping = ball.currentlyOverlappingBricks[key] or false
+                    local range = rangeStat * 0.35
 
-                local key = brick.id or brick
-                local wasOverlapping = ball.currentlyOverlappingBricks[key] or false
-                local range = rangeStat * 0.35
+                    -- Check current overlap state (AABB test with scaled radius)
+                    local isOverlapping = ball.x + ball.radius * range > brick.x and 
+                                        ball.x - ball.radius * range < brick.x + brick.width and
+                                        ball.y + ball.radius * range > brick.y and 
+                                        ball.y - ball.radius * range < brick.y + brick.height
 
-                -- Check current overlap state (AABB test with scaled radius)
-                local isOverlapping = ball.x + ball.radius * range > brick.x and 
-                                    ball.x - ball.radius * range < brick.x + brick.width and
-                                    ball.y + ball.radius * range > brick.y and 
-                                    ball.y - ball.radius * range < brick.y + brick.height
-
-                if not wasOverlapping and isOverlapping then
-                    -- Only deal damage on first overlap
-                    ball.currentlyOverlappingBricks[key] = true
-                    dealDamage(ball, brick)
-                    hitAnyBrick = true
-                elseif wasOverlapping and not isOverlapping then
-                    -- Clear the overlap state when no longer overlapping
-                    ball.currentlyOverlappingBricks[key] = nil
+                    if not wasOverlapping and isOverlapping then
+                        -- Only deal damage on first overlap
+                        ball.currentlyOverlappingBricks[key] = true
+                        dealDamage(ball, brick)
+                        hitAnyBrick = true
+                    elseif wasOverlapping and not isOverlapping then
+                        -- Clear the overlap state when no longer overlapping
+                        ball.currentlyOverlappingBricks[key] = nil
+                    end
                 end
             end
-            ::continue_phantom::
         end
 
         return hitAnyBrick
@@ -3733,41 +3734,42 @@ local function drawBallAttachedLasers()
     for _, laser in ipairs(BallAttachedLasers) do
         local timeSinceStart = gameTime - laser.startTime
         local intensity = math.max(0, 2 - 4^timeSinceStart)  -- Fade out over 0.5 seconds
+        local skipLaser = false
         if timeSinceStart >= 1 then
             table.insert(IDsToRemove, laser.id)
-            goto continue
+            skipLaser = true
         end
-        
-        -- Check if target brick is still valid before drawing
-        if laser.laserBeamBrick and (laser.laserBeamBrick.destroyed or laser.laserBeamBrick.health <= 0) then
-            laser.laserBeamBrick = nil
-        end
-        
-        love.graphics.setColor(intensity, 0, 0, intensity)
-        local angle = laser.angle
-        local startX = laser.x
-        local startY = laser.y
-        local beamLength = 2500  -- Match update logic
-        
-        -- Calculate distance to target brick if we have one
-        if laser.laserBeamBrick and laser.laserBeamBrick.health > 0 then
-            local brick = laser.laserBeamBrick
-            -- Find closest point on brick to the beam origin
-            local closestX = math.max(brick.x, math.min(startX, brick.x + brick.width))
-            local closestY = math.max(brick.y, math.min(startY, brick.y + brick.height))
-            local distToBrick = math.sqrt((closestX - startX)^2 + (closestY - startY)^2)
-            beamLength = distToBrick
-        elseif laser.targetX and laser.targetY then
-            local distToTarget = math.sqrt((laser.targetX - startX)^2 + (laser.targetY - startY)^2)
-            beamLength = distToTarget
-        end
+        if not skipLaser then
+            -- Check if target brick is still valid before drawing
+            if laser.laserBeamBrick and (laser.laserBeamBrick.destroyed or laser.laserBeamBrick.health <= 0) then
+                laser.laserBeamBrick = nil
+            end
+            
+            love.graphics.setColor(intensity, 0, 0, intensity)
+            local angle = laser.angle
+            local startX = laser.x
+            local startY = laser.y
+            local beamLength = 2500  -- Match update logic
+            
+            -- Calculate distance to target brick if we have one
+            if laser.laserBeamBrick and laser.laserBeamBrick.health > 0 then
+                local brick = laser.laserBeamBrick
+                -- Find closest point on brick to the beam origin
+                local closestX = math.max(brick.x, math.min(startX, brick.x + brick.width))
+                local closestY = math.max(brick.y, math.min(startY, brick.y + brick.height))
+                local distToBrick = math.sqrt((closestX - startX)^2 + (closestY - startY)^2)
+                beamLength = distToBrick
+            elseif laser.targetX and laser.targetY then
+                local distToTarget = math.sqrt((laser.targetX - startX)^2 + (laser.targetY - startY)^2)
+                beamLength = distToTarget
+            end
 
-        love.graphics.push()
-        love.graphics.translate(startX, startY)
-        love.graphics.rotate(angle)
-        love.graphics.rectangle("fill", -1, -beamLength, 2, beamLength)
-        love.graphics.pop()
-        ::continue::
+            love.graphics.push()
+            love.graphics.translate(startX, startY)
+            love.graphics.rotate(angle)
+            love.graphics.rectangle("fill", -1, -beamLength, 2, beamLength)
+            love.graphics.pop()
+        end
     end
     for _, id in ipairs(IDsToRemove) do
         for i = #BallAttachedLasers, 1, -1 do
@@ -4810,42 +4812,44 @@ function Balls.update(dt, paddle, bricks)
         end
 
         -- Don't continue updating if the rocket was removed
-        if not rockets[i] then goto continue end
+        local skipRocket = false
+        if not rockets[i] then skipRocket = true end
 
-        -- Make rockets bounce off walls
-        local leftWallPosition = usingMoneySystem and statsWidth or 0
-        local rightWallPosition = screenWidth - (usingMoneySystem and statsWidth or 0)
+        if not skipRocket then
+            -- Make rockets bounce off walls
+            local leftWallPosition = usingMoneySystem and statsWidth or 0
+            local rightWallPosition = screenWidth - (usingMoneySystem and statsWidth or 0)
 
-        -- Bounce off side walls
-        if rocket.x - rocket.radius < leftWallPosition and rocket.speedX < 0 then
-            rocket.speedX = -rocket.speedX
-            rocket.x = leftWallPosition + rocket.radius
-            rocket.animation.x = rocket.x
-            rocket.angle = -rocket.angle -- Reflect the angle
-            rocket.animation.angle = rocket.angle
-            rocket.speedY = rocket.speedY - 50 -- Reduce vertical speed slightly
-        elseif rocket.x + rocket.radius > rightWallPosition and rocket.speedX > 0 then
-            rocket.speedX = -rocket.speedX
-            rocket.x = rightWallPosition - rocket.radius
-            rocket.animation.x = rocket.x
-            rocket.angle = -rocket.angle -- Reflect the angle
-            rocket.animation.angle = rocket.angle
-            rocket.speedY = rocket.speedY - 50 -- Reduce vertical speed slightly
+            -- Bounce off side walls
+            if rocket.x - rocket.radius < leftWallPosition and rocket.speedX < 0 then
+                rocket.speedX = -rocket.speedX
+                rocket.x = leftWallPosition + rocket.radius
+                rocket.animation.x = rocket.x
+                rocket.angle = -rocket.angle -- Reflect the angle
+                rocket.animation.angle = rocket.angle
+                rocket.speedY = rocket.speedY - 50 -- Reduce vertical speed slightly
+            elseif rocket.x + rocket.radius > rightWallPosition and rocket.speedX > 0 then
+                rocket.speedX = -rocket.speedX
+                rocket.x = rightWallPosition - rocket.radius
+                rocket.animation.x = rocket.x
+                rocket.angle = -rocket.angle -- Reflect the angle
+                rocket.animation.angle = rocket.angle
+                rocket.speedY = rocket.speedY - 50 -- Reduce vertical speed slightly
+            end
+
+            -- Bounce off bottom
+            if rocket.y + rocket.radius > screenHeight and rocket.speedY > 0 then
+                rocket.speedY = -rocket.speedY -- Bounce off bottom
+                rocket.y = screenHeight - rocket.radius
+                rocket.angle = 180 - rocket.angle -- Reflect the angle
+            end
+
+            -- Remove if it goes off the top
+            if rocket.y < -rocket.radius * 2 then
+                removeAnimation(rocket.animation.id)
+                table.remove(rockets, i)
+            end
         end
-
-        -- Bounce off bottom
-        if rocket.y + rocket.radius > screenHeight and rocket.speedY > 0 then
-            rocket.speedY = -rocket.speedY -- Bounce off bottom
-            rocket.y = screenHeight - rocket.radius
-            rocket.angle = 180 - rocket.angle -- Reflect the angle
-        end
-
-        -- Remove if it goes off the top
-        if rocket.y < -rocket.radius * 2 then
-            removeAnimation(rocket.animation.id)
-            table.remove(rockets, i)
-        end
-        ::continue::
     end
 
     -- update balls
@@ -4948,145 +4952,147 @@ function Balls.update(dt, paddle, bricks)
         end
 
         -- Skip shadow balls early
+        local skipShadow = false
         if ball.type == "spell" and ball.name == "Shadow Ball" then
-            goto continue
+            skipShadow = true
         end
         
-        -- Cache ball properties
-        local ballName = ball.name
-        local isMagnetic = ballName == "Magnetic Ball"
-        local isIncrediball = ballName == "Incrediball"
-        local needsMagnetism = isMagnetic or isIncrediball or hasElectroItem
-        local magneticSpeedMult = (isMagnetic or isIncrediball) and 0.1 or 1
-        
-        -- Physics substeps
-        if ballPhysics then
-            for i = 1, substeps do
-                -- Speed decay
-                if ball.speedExtra then
-                    ball.speedExtra = math.max(1, ball.speedExtra - math.pow(ball.speedExtra, 1.75) * dtStep * 0.5)
-                end
-                
-                -- Movement calculation
-                local speedExtra = magneticSpeedMult * (ball.speedExtra or 0)
-                if speedExtra > 0 then
-                    local multX, multY = normalizeVector(ball.speedX, ball.speedY)
-                    local extraX = speedExtra * multX * 50
-                    local extraY = speedExtra * multY * 50
-                    ball.x = ball.x + (ball.speedX + extraX) * ball.speedMult * dtStep * coreMult
-                    ball.y = ball.y + (ball.speedY + extraY) * ball.speedMult * dtStep * coreMult
-                else
-                    ball.x = ball.x + ball.speedX * ball.speedMult * dtStep * coreMult
-                    ball.y = ball.y + ball.speedY * ball.speedMult * dtStep * coreMult
-                end
-                
-                -- Collision checks
-                if collisionsOn then
-                    if paddleCollision then
-                        paddleCollisionCheck(ball, paddle)
-                    end
-                    local hitBrickThisFrame = false
-                    if brickCollisions then
-                        local hitBrickThisFrame = brickCollisionCheck(ball, visibleBricks, Player)
-                    end
-                    if not hitBrickThisFrame and wallCollision then
-                        wallCollisionCheck(ball)
-                    end
-                end
-            end
-        end
-        
-        -- Trail logic (only for ball type)
-        if ball.type == "ball" and updateTrails then
-            if ball.activeTrail then
-                ball.activeTrail:addPosition(ball.x, ball.y);
-            else
-                ball.activeTrail = Trail.new(17, 13)
-                -- table.insert(ball.activeTrail, Trail.new(20, 100));
-            end
-        end
-        
-        -- Magnetic attraction
-        if needsMagnetism then
-            ball.magneticUpdateTimer = (ball.magneticUpdateTimer or 0) + dt
+        if not skipShadow then
+            -- Cache ball properties
+            local ballName = ball.name
+            local isMagnetic = ballName == "Magnetic Ball"
+            local isIncrediball = ballName == "Incrediball"
+            local needsMagnetism = isMagnetic or isIncrediball or hasElectroItem
+            local magneticSpeedMult = (isMagnetic or isIncrediball) and 0.1 or 1
             
-            -- Update nearest brick cache periodically
-            if ball.magneticUpdateTimer >= 0.1 then
-                ball.magneticUpdateTimer = 0
-                
-                local nearestBrick = nil
-                local minDistSq = math.huge
-                
-                for _, brick in ipairs(visibleBricks) do
-                    if not brick.destroyed and brick.health > 0 and brick.y > -brick.height * 0.5 then
-                        local dx = (brick.x + brick.width * 0.5) - ball.x
-                        local dy = (brick.y + brick.height * 0.5) - ball.y
-                        local distSq = dx * dx + dy * dy
-                        
-                        if distSq < MAX_RANGE_SQ and distSq < minDistSq then
-                            minDistSq = distSq
-                            nearestBrick = brick
+            -- Physics substeps
+            if ballPhysics then
+                for i = 1, substeps do
+                    -- Speed decay
+                    if ball.speedExtra then
+                        ball.speedExtra = math.max(1, ball.speedExtra - math.pow(ball.speedExtra, 1.75) * dtStep * 0.5)
+                    end
+                    
+                    -- Movement calculation
+                    local speedExtra = magneticSpeedMult * (ball.speedExtra or 0)
+                    if speedExtra > 0 then
+                        local multX, multY = normalizeVector(ball.speedX, ball.speedY)
+                        local extraX = speedExtra * multX * 50
+                        local extraY = speedExtra * multY * 50
+                        ball.x = ball.x + (ball.speedX + extraX) * ball.speedMult * dtStep * coreMult
+                        ball.y = ball.y + (ball.speedY + extraY) * ball.speedMult * dtStep * coreMult
+                    else
+                        ball.x = ball.x + ball.speedX * ball.speedMult * dtStep * coreMult
+                        ball.y = ball.y + ball.speedY * ball.speedMult * dtStep * coreMult
+                    end
+                    
+                    -- Collision checks
+                    if collisionsOn then
+                        if paddleCollision then
+                            paddleCollisionCheck(ball, paddle)
+                        end
+                        local hitBrickThisFrame = false
+                        if brickCollisions then
+                            local hitBrickThisFrame = brickCollisionCheck(ball, visibleBricks, Player)
+                        end
+                        if not hitBrickThisFrame and wallCollision then
+                            wallCollisionCheck(ball)
                         end
                     end
                 end
-                
-                ball.cachedNearestBrick = nearestBrick
-                ball.cachedNearestDistSq = minDistSq
             end
             
-            -- Apply magnetic force
-            local nearestBrick = ball.cachedNearestBrick
-            if nearestBrick then
-                local dx = (nearestBrick.x + nearestBrick.width * 0.5) - ball.x
-                local dy = (nearestBrick.y + nearestBrick.height * 0.5) - ball.y
-                local dist = math.sqrt(dx * dx + dy * dy)
-                
-                -- Calculate attraction
-                local attractionStrength = ball.attractionStrength or 0
-                if hasElectroItem then
-                    attractionStrength = attractionStrength + math.max(200 * electroCount, 200)
+            -- Trail logic (only for ball type)
+            if ball.type == "ball" and updateTrails then
+                if ball.activeTrail then
+                    ball.activeTrail:addPosition(ball.x, ball.y);
+                else
+                    ball.activeTrail = Trail.new(17, 13)
+                    -- table.insert(ball.activeTrail, Trail.new(20, 100));
                 end
+            end
+            
+            -- Magnetic attraction
+            if needsMagnetism then
+                ball.magneticUpdateTimer = (ball.magneticUpdateTimer or 0) + dt
                 
-                local ballSpeed = ball.stats.speed + getStatItemsBonus("speed", ball) * 50 + (ball.speedExtra or 0) * 15
-                ballSpeed = ballSpeed * coreMult
-                local attraction = mapRange((attractionStrength / math.max(dist, 10)) * math.pow(ballSpeed, 1.45), 1, 10, 1, 20) * 0.0175
-                attraction = attraction * mapRangeClamped(ballSpeed, 1, 500, 0.5, 2)
-                
-                local angle = math.atan2(dy, dx)
-                ball.speedX = ball.speedX + math.cos(angle) * attraction * dt
-                ball.speedY = ball.speedY + math.sin(angle) * attraction * dt
-                
-                -- Velocity normalization
-                local speed = math.sqrt(ball.speedX * ball.speedX + ball.speedY * ball.speedY)
-                local originalSpeed = getStat(ballName, "speed")
-                
-                if speed > originalSpeed then
-                    local scale = originalSpeed / speed
-                    local dampDt = dt * 200
+                -- Update nearest brick cache periodically
+                if ball.magneticUpdateTimer >= 0.1 then
+                    ball.magneticUpdateTimer = 0
                     
-                    if ball.speedX > 0 then
-                        ball.speedX = math.max(ball.speedX * scale, ball.speedX - dampDt * mapRange(math.abs(ball.speedX * (1 - scale)), 0, 1000, 1, 10))
-                    else
-                        ball.speedX = math.min(ball.speedX * scale, ball.speedX + dampDt * mapRange(math.abs(ball.speedX * (1 - scale)), 0, 1000, 1, 10))
+                    local nearestBrick = nil
+                    local minDistSq = math.huge
+                    
+                    for _, brick in ipairs(visibleBricks) do
+                        if not brick.destroyed and brick.health > 0 and brick.y > -brick.height * 0.5 then
+                            local dx = (brick.x + brick.width * 0.5) - ball.x
+                            local dy = (brick.y + brick.height * 0.5) - ball.y
+                            local distSq = dx * dx + dy * dy
+                            
+                            if distSq < MAX_RANGE_SQ and distSq < minDistSq then
+                                minDistSq = distSq
+                                nearestBrick = brick
+                            end
+                        end
                     end
                     
-                    if ball.speedY > 0 then
-                        ball.speedY = math.max(ball.speedY * scale, ball.speedY - dampDt * mapRange(math.abs(ball.speedY * (1 - scale)), 0, 1000, 1, 10))
-                    else
-                        ball.speedY = math.min(ball.speedY * scale, ball.speedY + dampDt * mapRange(math.abs(ball.speedY * (1 - scale)), 0, 1000, 1, 10))
-                    end
+                    ball.cachedNearestBrick = nearestBrick
+                    ball.cachedNearestDistSq = minDistSq
                 end
                 
-                -- Hard cap on speed
-                if speed > originalSpeed * 1.5 then
-                    local scale = (originalSpeed * 1.5) / speed
-                    ball.speedX = ball.speedX * scale
-                    ball.speedY = ball.speedY * scale
+                -- Apply magnetic force
+                local nearestBrick = ball.cachedNearestBrick
+                if nearestBrick then
+                    local dx = (nearestBrick.x + nearestBrick.width * 0.5) - ball.x
+                    local dy = (nearestBrick.y + nearestBrick.height * 0.5) - ball.y
+                    local dist = math.sqrt(dx * dx + dy * dy)
+                    
+                    -- Calculate attraction
+                    local attractionStrength = ball.attractionStrength or 0
+                    if hasElectroItem then
+                        attractionStrength = attractionStrength + math.max(200 * electroCount, 200)
+                    end
+                    
+                    local ballSpeed = ball.stats.speed + getStatItemsBonus("speed", ball) * 50 + (ball.speedExtra or 0) * 15
+                    ballSpeed = ballSpeed * coreMult
+                    local attraction = mapRange((attractionStrength / math.max(dist, 10)) * math.pow(ballSpeed, 1.45), 1, 10, 1, 20) * 0.0175
+                    attraction = attraction * mapRangeClamped(ballSpeed, 1, 500, 0.5, 2)
+                    
+                    local angle = math.atan2(dy, dx)
+                    ball.speedX = ball.speedX + math.cos(angle) * attraction * dt
+                    ball.speedY = ball.speedY + math.sin(angle) * attraction * dt
+                    
+                    -- Velocity normalization
+                    local speed = math.sqrt(ball.speedX * ball.speedX + ball.speedY * ball.speedY)
+                    local originalSpeed = getStat(ballName, "speed")
+                    
+                    if speed > originalSpeed then
+                        local scale = originalSpeed / speed
+                        local dampDt = dt * 200
+                        
+                        if ball.speedX > 0 then
+                            ball.speedX = math.max(ball.speedX * scale, ball.speedX - dampDt * mapRange(math.abs(ball.speedX * (1 - scale)), 0, 1000, 1, 10))
+                        else
+                            ball.speedX = math.min(ball.speedX * scale, ball.speedX + dampDt * mapRange(math.abs(ball.speedX * (1 - scale)), 0, 1000, 1, 10))
+                        end
+                        
+                        if ball.speedY > 0 then
+                            ball.speedY = math.max(ball.speedY * scale, ball.speedY - dampDt * mapRange(math.abs(ball.speedY * (1 - scale)), 0, 1000, 1, 10))
+                        else
+                            ball.speedY = math.min(ball.speedY * scale, ball.speedY + dampDt * mapRange(math.abs(ball.speedY * (1 - scale)), 0, 1000, 1, 10))
+                        end
+                    end
+                    
+                    -- Hard cap on speed
+                    if speed > originalSpeed * 1.5 then
+                        local scale = (originalSpeed * 1.5) / speed
+                        ball.speedX = ball.speedX * scale
+                        ball.speedY = ball.speedY * scale
+                    end
                 end
             end
         end
         
-        ::continue::
     end
 
     -- Update bullets
@@ -5207,6 +5213,7 @@ function Balls.update(dt, paddle, bricks)
         local dirY = -bullet.speedY / math.sqrt(bullet.speedX^2 + bullet.speedY^2)
 
         -- Check for collision with visible bricks only
+        local skipBrick = false
         if bullet.y >= 0 then
             local hitBrick = false
             -- Golden bullets: only damage each brick once
@@ -5219,39 +5226,41 @@ function Balls.update(dt, paddle, bricks)
                     if bullet.x + bullet.radius * 2 > brick.x and bullet.x - bullet.radius * 4 < brick.x + brick.width and
                         bullet.y + bullet.radius * 2 > brick.y and bullet.y - bullet.radius * 4 < brick.y + brick.height then
                         -- For golden bullets, check if this brick was already hit
+                        local skipBrick = false
                         if bullet.golden then
                             bullet.hitBricks = bullet.hitBricks or {}
                             if bullet.hitBricks[brick] then
                                 -- Already hit this brick, skip
-                                goto next_brick
+                                skipBrick = true
                             else
                                 bullet.hitBricks[brick] = true
                             end
                         end
-                        if not bullet.hasTriggeredOnBulletHit then
-                            local chance = hasItem("Four Leafed Clover") and 50 or 25
-                            if hasItem("Tesla Bullets") and math.random(1,100) <= chance then
-                                cast("Chain Lightning", brick, bullet.stats.damage)
+                        if not skipBrick then
+                            if not bullet.hasTriggeredOnBulletHit then
+                                local chance = hasItem("Four Leafed Clover") and 50 or 25
+                                if hasItem("Tesla Bullets") and math.random(1,100) <= chance then
+                                    cast("Chain Lightning", brick, bullet.stats.damage)
+                                end
+                                bullet.hasTriggeredOnBulletHit = true
                             end
-                            bullet.hasTriggeredOnBulletHit = true
-                        end
-                        local damage = math.min((bullet.stats.damage or 1), brick.health)
-                        -- Deal damage to the brick
-                        local kill = dealDamage(bullet, brick)
+                            local damage = math.min((bullet.stats.damage or 1), brick.health)
+                            -- Deal damage to the brick
+                            local kill = dealDamage(bullet, brick)
 
-                        --[[if hasItem("Phantom Bullets") then
-                            bullet.stats.damage = bullet.stats.damage - 2
-                        end]]
-                        if ((not kill) and (not (bullet.golden or bullet.name == "Golden Gun"))) or bullet.stats.damage <= 0 then
-                            print("KILLING BULLET")
-                            shouldRemoveBullet = true
-                            break -- Exit brick loop once we know bullet should be removed
+                            --[[if hasItem("Phantom Bullets") then
+                                bullet.stats.damage = bullet.stats.damage - 2
+                            end]]
+                            if ((not kill) and (not (bullet.golden or bullet.name == "Golden Gun"))) or bullet.stats.damage <= 0 then
+                                print("KILLING BULLET")
+                                shouldRemoveBullet = true
+                                break -- Exit brick loop once we know bullet should be removed
+                            end
+                            hitBrick = true
+                            break
                         end
-                        hitBrick = true
-                        break
                     end
                 end
-                ::next_brick::
             end
             
             -- Remove bullet after brick loop if needed
@@ -5260,37 +5269,38 @@ function Balls.update(dt, paddle, bricks)
                 bullet.deathTime = love.timer.getTime()
                 table.insert(deadBullets, bullet)
                 table.remove(bullets, i)
-                goto continue
+                skipBrick = true
             end
             
             if hitBrick then
-                goto continue  -- Skip to next bullet if we hit a brick (unless golden)
+                skipBrick = true
             end
         end
 
-        -- Make bullets bounce off side walls and bottom
-        if bullet.x - bullet.radius < leftWallPosition and bullet.speedX < 0 then
-            bullet.speedX = -bullet.speedX
-            bullet.x = leftWallPosition + bullet.radius -- Ensure the bullet is not stuck in the wall
-            bullet.speedY = bullet.speedY - 50
-        elseif bullet.x + bullet.radius > rightWallPosition and bullet.speedX > 0 then
-            bullet.speedX = -bullet.speedX
-            bullet.x = rightWallPosition - bullet.radius -- Ensure the bullet is not stuck in the wall
-            bullet.speedY = bullet.speedY - 50
-        end
-        if bullet.y + bullet.radius > screenHeight then
-            bullet.speedY = -bullet.speedY -- Bounce off bottom with reduced speed
-            bullet.y = screenHeight - bullet.radius -- Ensure the bullet is not stuck in the wall
-        end
-        -- Remove bullets that go off-screen
-        if bullet.y <= -200 then
-            bullet.trailFade = 1
-            bullet.deathTime = love.timer.getTime()
-            table.insert(deadBullets, bullet)
-            table.remove(bullets, i)
+        if not skipBrick then
+            -- Make bullets bounce off side walls and bottom
+            if bullet.x - bullet.radius < leftWallPosition and bullet.speedX < 0 then
+                bullet.speedX = -bullet.speedX
+                bullet.x = leftWallPosition + bullet.radius -- Ensure the bullet is not stuck in the wall
+                bullet.speedY = bullet.speedY - 50
+            elseif bullet.x + bullet.radius > rightWallPosition and bullet.speedX > 0 then
+                bullet.speedX = -bullet.speedX
+                bullet.x = rightWallPosition - bullet.radius -- Ensure the bullet is not stuck in the wall
+                bullet.speedY = bullet.speedY - 50
+            end
+            if bullet.y + bullet.radius > screenHeight then
+                bullet.speedY = -bullet.speedY -- Bounce off bottom with reduced speed
+                bullet.y = screenHeight - bullet.radius -- Ensure the bullet is not stuck in the wall
+            end
+            -- Remove bullets that go off-screen
+            if bullet.y <= -200 then
+                bullet.trailFade = 1
+                bullet.deathTime = love.timer.getTime()
+                table.insert(deadBullets, bullet)
+                table.remove(bullets, i)
+            end
         end
 
-        ::continue::
     end
     for id, anim in pairs(fireAnims) do
         local animation = getAnimation(anim)
@@ -5704,53 +5714,55 @@ function Balls:draw()
             love.graphics.pop()
         end
 
+        local skipBall = false
         if ball.type == "spell" then
             drawShadowBall(ball)
-            goto continue
+            skipBall = true
         end
         
-        local ballName = ball.name
-        local ballX, ballY = ball.x, ball.y
-        local ballRadius = ball.radius or 10
-        
-        -- Draw trail (skip for phantom balls or dead balls)
-        
-        
-        -- Draw ball
-        if ballName == "Phantom Ball" then
-            local auraSize = getStat("Phantom Ball", "range") * 16
-            love.graphics.setColor(0, 0, 1, 1)
-            drawImageCentered(auraImg, ballX, ballY, auraSize, auraSize)
-            love.graphics.setColor(0.25, 0.25, 1, 0.25)
-            love.graphics.circle("fill", ballX, ballY, auraSize * 0.5)
-        else
-            -- Set ball color
-            local ballData = unlockedBallTypes[ballName]
-            if ballData then
-                local c = ballData.color
-                love.graphics.setColor(c[1], c[2], c[3], c[4])
+        if not skipBall then
+            local ballName = ball.name
+            local ballX, ballY = ball.x, ball.y
+            local ballRadius = ball.radius or 10
+            
+            -- Draw trail (skip for phantom balls or dead balls)
+            
+            
+            -- Draw ball
+            if ballName == "Phantom Ball" then
+                local auraSize = getStat("Phantom Ball", "range") * 16
+                love.graphics.setColor(0, 0, 1, 1)
+                drawImageCentered(auraImg, ballX, ballY, auraSize, auraSize)
+                love.graphics.setColor(0.25, 0.25, 1, 0.25)
+                love.graphics.circle("fill", ballX, ballY, auraSize * 0.5)
             else
-                love.graphics.setColor(1, 1, 1, 1)
-            end
-
-            -- trail draw logic
-            if not ball.dead and ballName ~= "Phantom Ball" and drawTrails then
-                if ball.activeTrail then
-                    ball.activeTrail:draw()
+                -- Set ball color
+                local ballData = unlockedBallTypes[ballName]
+                if ballData then
+                    local c = ballData.color
+                    love.graphics.setColor(c[1], c[2], c[3], c[4])
+                else
+                    love.graphics.setColor(1, 1, 1, 1)
                 end
+
+                -- trail draw logic
+                if not ball.dead and ballName ~= "Phantom Ball" and drawTrails then
+                    if ball.activeTrail then
+                        ball.activeTrail:draw()
+                    end
+                end
+                
+                if ballName == "Incrediball" then
+                    local ic = incrediballColor
+                    love.graphics.setColor(ic[1], ic[2], ic[3], ic[4])
+                end
+                
+                -- Draw ball circle
+                local finalRadius = ballRadius * (ball.drawSizeBoost or 1) * (ball.drawSizeMult or 1)
+                love.graphics.circle("fill", ballX, ballY, finalRadius)
             end
-            
-            if ballName == "Incrediball" then
-                local ic = incrediballColor
-                love.graphics.setColor(ic[1], ic[2], ic[3], ic[4])
-            end
-            
-            -- Draw ball circle
-            local finalRadius = ballRadius * (ball.drawSizeBoost or 1) * (ball.drawSizeMult or 1)
-            love.graphics.circle("fill", ballX, ballY, finalRadius)
         end
         
-        ::continue::
     end
 
     -- Draw arcane missiles

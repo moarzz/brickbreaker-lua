@@ -1259,51 +1259,53 @@ moneyBagValues = {
 function drawPopups()
     for i = #lvlUpTexts, 1, -1 do
         local popup = lvlUpTexts[i]
+        local skipPopup = false
         if not popup then
             table.remove(lvlUpTexts, i)
-            goto continue
+            skipPopup = true
         end
-        if popup.size > 0 then  -- Only draw if size is positive
+        if popup.size > 0 and not skipPopup then  -- Only draw if size is positive
             setFont(math.max(1, math.ceil(popup.size)))
             love.graphics.setColor(popup.color[1], popup.color[2], popup.color[3], popup.color[4] or 1)
             setFont(math.max(1, math.floor(popup.size)))  -- Ensure font size is at least 1 and is an integer
             love.graphics.print("Level Up!", popup.x - getTextSize("Level Up!")/2, popup.y)  -- Center the text
         end
-        ::continue::
     end
     for i = #boostTexts, 1, -1 do
         local popup = boostTexts[i]
+        local skipPopup = false
         if not popup then
             table.remove(boostTexts, i)
-            goto continue
+            skipPopup = true
         end
-        if popup.size > 0 then  -- Only draw if size is positive
+        if popup.size > 0 and not skipPopup then  -- Only draw if size is positive
             setFont(math.max(1, math.ceil(popup.size)))
             love.graphics.setColor(1,1,1,1)
             setFont(math.max(1, math.floor(popup.size)))  -- Ensure font size is at least 1 and is an integer
             love.graphics.print(popup.text, popup.x - getTextSize("Boost!")/2, popup.y)  -- Center the text
         end
-        ::continue::
     end
     for i = #xpTexts, 1, -1 do
         local popup = xpTexts[i]
+        local skipPopup = false
         if not popup then
             table.remove(xpTexts, i)
-            goto continue
+            skipPopup = true
         end
-        if popup.size > 0 then  -- Only draw if size is positive
-            setFont(math.max(1, math.ceil(popup.size)))
-            setFont(math.max(1, math.floor(popup.size)))  -- Ensure font size is at least 1 and is an integer
-            love.graphics.setColor(1,1,1,1)
-            love.graphics.print("+"..tostring(popup.value), popup.x - getTextSize("+"..tostring(popup.value).." XP")/2, popup.y)  -- Center the text
-            love.graphics.setColor(popup.color[1], popup.color[2], popup.color[3], popup.color[4] or 1)
-            love.graphics.print(" XP", popup.x - getTextSize("+"..tostring(popup.value).." XP")/2 + getTextSize("+"..tostring(popup.value)), popup.y)  -- Center the text
-            -- love.graphics.print("+"..tostring(popup.value).." XP", popup.x - getTextSize("+"..tostring(popup.value).." XP")/2, popup.y)  -- Center the text
+        if not skipPopup then
+            if popup.size > 0 then  -- Only draw if size is positive
+                setFont(math.max(1, math.ceil(popup.size)))
+                setFont(math.max(1, math.floor(popup.size)))  -- Ensure font size is at least 1 and is an integer
+                love.graphics.setColor(1,1,1,1)
+                love.graphics.print("+"..tostring(popup.value), popup.x - getTextSize("+"..tostring(popup.value).." XP")/2, popup.y)  -- Center the text
+                love.graphics.setColor(popup.color[1], popup.color[2], popup.color[3], popup.color[4] or 1)
+                love.graphics.print(" XP", popup.x - getTextSize("+"..tostring(popup.value).." XP")/2 + getTextSize("+"..tostring(popup.value)), popup.y)  -- Center the text
+                -- love.graphics.print("+"..tostring(popup.value).." XP", popup.x - getTextSize("+"..tostring(popup.value).." XP")/2, popup.y)  -- Center the text
+            end
+            if gameTime - popup.creationTime >= 2 then
+                table.remove(xpTexts, i)
+            end
         end
-        if gameTime - popup.creationTime >= 2 then
-            table.remove(xpTexts, i)
-        end
-        ::continue::
     end
     if powerupPopup and powerupPopup.type ~= nil and powerupPopup.scale ~= 0 then
         love.graphics.setColor(1, 1, 1, 1) -- Reset color to white after drawing popups
@@ -1369,16 +1371,16 @@ end
 
 function removeAnimation(id)
     for i = #animations, 1, -1 do
+        local skipAnim = false
         if animations[i] == nil then
             table.remove(animations, i)
-            goto continue -- Skip to the next iteration
+            skipAnim = true
         end
-        if animations[i].id == id then
+        if animations[i].id == id and not skipAnim then
             table.remove(animations, i)
             --animations[i] = nil
             return true -- Return true to indicate successful removal
         end
-        ::continue::
     end
     return false -- Return false if no animation with the given ID is found
 end
@@ -1398,86 +1400,92 @@ function updateAnimations(dt)
 
     for i = #animations, 1, -1 do
         local animation = animations[i]
+        local skipAnim = false
         if not animation then
             table.remove(animations, i) -- Remove nil animations
-            goto continue -- Skip to the next iteration
+            skipAnim = true
         end
-        animation.elapsedTime = animation.elapsedTime + dt
-        if animation.elapsedTime >= animation.frameTime then
-            animation.elapsedTime = animation.elapsedTime - animation.frameTime
-            if animation.currentFrame >= animation.lastFrame then
-                if animation.looping then
-                    animation.currentFrame = 1
-                else
-                    table.remove(animations, i) -- Remove the animation if it has finished
-                    goto continue
+        if not skipAnim then
+            animation.elapsedTime = animation.elapsedTime + dt
+            if animation.elapsedTime >= animation.frameTime then
+                animation.elapsedTime = animation.elapsedTime - animation.frameTime
+                if animation.currentFrame >= animation.lastFrame then
+                    if animation.looping then
+                        animation.currentFrame = 1
+                    else
+                        table.remove(animations, i) -- Remove the animation if it has finished
+                        skipAnim = true
+                    end
+                elseif not skipAnim then
+                    animation.currentFrame = animation.currentFrame + 1
                 end
-            else
-                animation.currentFrame = animation.currentFrame + 1
             end
-        end
 
-        -- Add to sprite batch using the spritesheet object as the key
-        if not spriteBatches[animation.spritesheet] then
-            spriteBatches[animation.spritesheet] = love.graphics.newSpriteBatch(animation.spritesheet, 1000)
+            -- Add to sprite batch using the spritesheet object as the key
+            if not spriteBatches[animation.spritesheet] then
+                spriteBatches[animation.spritesheet] = love.graphics.newSpriteBatch(animation.spritesheet, 1000)
+            end
+            
+            -- Add to batch with all the same parameters as before
+            spriteBatches[animation.spritesheet]:add(
+                animation.quads[animation.currentFrame],
+                animation.x,
+                animation.y,
+                math.rad(animation.angle),
+                animation.scale * animation.scaleX,
+                animation.scale * animation.scaleY,
+                animation.frameWidth / 2,
+                animation.frameHeight / 2,
+                0, 0, -- shearing
+                animation.color[1], animation.color[2], animation.color[3], animation.color[4]
+            )
         end
-        
-        -- Add to batch with all the same parameters as before
-        spriteBatches[animation.spritesheet]:add(
-            animation.quads[animation.currentFrame],
-            animation.x,
-            animation.y,
-            math.rad(animation.angle),
-            animation.scale * animation.scaleX,
-            animation.scale * animation.scaleY,
-            animation.frameWidth / 2,
-            animation.frameHeight / 2,
-            0, 0, -- shearing
-            animation.color[1], animation.color[2], animation.color[3], animation.color[4]
-        )
-        ::continue::
     end
 
     for i = #fireAnimations, 1, -1 do
         local animation = fireAnimations[i]
+        local skipAnim = false
         if not animation then
             table.remove(fireAnimations, i) -- Remove nil animations
-            goto continue -- Skip to the next iteration
+            skipAnim = true
         end
-        animation.elapsedTime = animation.elapsedTime + dt
-        if animation.elapsedTime >= animation.frameTime then
-            animation.elapsedTime = animation.elapsedTime - animation.frameTime
-            if animation.currentFrame >= animation.lastFrame then
-                if animation.looping then
-                    animation.currentFrame = 1
+        if not skipAnim then
+            animation.elapsedTime = animation.elapsedTime + dt
+            if animation.elapsedTime >= animation.frameTime then
+                animation.elapsedTime = animation.elapsedTime - animation.frameTime
+                if animation.currentFrame >= animation.lastFrame then
+                    if animation.looping then
+                        animation.currentFrame = 1
+                    else
+                        table.remove(fireAnimations, i) -- Remove the animation if it has finished
+                        skipAnim = true
+                    end
                 else
-                    table.remove(fireAnimations, i) -- Remove the animation if it has finished
-                    goto continue
+                    animation.currentFrame = animation.currentFrame + 1
                 end
-            else
-                animation.currentFrame = animation.currentFrame + 1
+            end
+
+            if not skipAnim then
+                -- Add to sprite batch using the spritesheet object as the key
+                if not spriteBatches[animation.spritesheet] then
+                    spriteBatches[animation.spritesheet] = love.graphics.newSpriteBatch(animation.spritesheet, 1000)
+                end
+                
+                -- Add to batch with all the same parameters as before
+                spriteBatches[animation.spritesheet]:add(
+                    animation.quads[animation.currentFrame],
+                    animation.x,
+                    animation.y,
+                    math.rad(animation.angle),
+                    animation.scale * animation.scaleX,
+                    animation.scale * animation.scaleY,
+                    animation.frameWidth / 2,
+                    animation.frameHeight / 2,
+                    0, 0, -- shearing
+                    animation.color[1], animation.color[2], animation.color[3], animation.color[4]
+                )
             end
         end
-
-        -- Add to sprite batch using the spritesheet object as the key
-        if not spriteBatches[animation.spritesheet] then
-            spriteBatches[animation.spritesheet] = love.graphics.newSpriteBatch(animation.spritesheet, 1000)
-        end
-        
-        -- Add to batch with all the same parameters as before
-        spriteBatches[animation.spritesheet]:add(
-            animation.quads[animation.currentFrame],
-            animation.x,
-            animation.y,
-            math.rad(animation.angle),
-            animation.scale * animation.scaleX,
-            animation.scale * animation.scaleY,
-            animation.frameWidth / 2,
-            animation.frameHeight / 2,
-            0, 0, -- shearing
-            animation.color[1], animation.color[2], animation.color[3], animation.color[4]
-        )
-        ::continue::
     end
 end
 

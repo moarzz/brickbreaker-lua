@@ -1875,42 +1875,44 @@ function drawBricks()
     local bossBrick
     for _, brick in ipairs(bricks) do
         -- skip fast bricks
+        local skipBrick = false
         if brick.type == "fast" or brick.destroyed then
-            goto continue
+            skipBrick = true
         end
-        if brick.type == "gold" then
-            table.insert(goldBricksToDraw, brick);
-        elseif brick.type == "boss" then
-            bossBrick = brick
-        else -- brick is not gold
-            brickBatch:setColor(brick.color or defColour);
-            brickBatch:add(
-                brick.x + (brick.drawOffsetX or 0),
-                brick.y + (brick.drawOffsetY or 0),
-                0,
-                brick.width / brickWidth,
-                brick.height / brickHeight
-            );
-        end
-        
-        if brick.destroyed or brick.type == "gold" or brick.type == "fast" then
-            --? dont draw a brick if its been destroyed
-        else -- brick is not gold
-            --[[local text = tostring(brick.health);
+        if not skipBrick then
+            if brick.type == "gold" then
+                table.insert(goldBricksToDraw, brick);
+            elseif brick.type == "boss" then
+                bossBrick = brick
+            else -- brick is not gold
+                brickBatch:setColor(brick.color or defColour);
+                brickBatch:add(
+                    brick.x + (brick.drawOffsetX or 0),
+                    brick.y + (brick.drawOffsetY or 0),
+                    0,
+                    brick.width / brickWidth,
+                    brick.height / brickHeight
+                );
+            end
+            
+            if brick.destroyed or brick.type == "gold" or brick.type == "fast" then
+                --? dont draw a brick if its been destroyed
+            else -- brick is not gold
+                --[[local text = tostring(brick.health);
 
-            TextBatching.addText(
-                text,
-                brick.x + brick.width / 2 + (brick.drawOffsetX or 0),
-                brick.y + brick.height / 2 + (brick.drawOffsetY or 0),
-                0,
-                1,
-                1,
-                love.graphics.getFont():getWidth(text) / 2,
-                texHeight
-            );]]
+                TextBatching.addText(
+                    text,
+                    brick.x + brick.width / 2 + (brick.drawOffsetX or 0),
+                    brick.y + brick.height / 2 + (brick.drawOffsetY or 0),
+                    0,
+                    1,
+                    1,
+                    love.graphics.getFont():getWidth(text) / 2,
+                    texHeight
+                );]]
+            end
         end
         
-        ::continue::
     end
     -- setfont(
     love.graphics.draw(brickBatch);
@@ -2008,51 +2010,54 @@ function drawBricks()
     love.graphics.setColor(1, 1, 1, 1)
 
     for _, fastBrick in ipairs(fastBricks) do
+        local skipBrick = false
         if fastBrick.health <= 0 or fastBrick.destroyed then
-            goto continue
+            skipBrick = true
         end
-        -- draw trail
-        -- draw fading trail
-        if fastBrick.trail and #fastBrick.trail > 0 then
-            local trailCount = #fastBrick.trail
-            local baseColor = {fastBrick.color[1], fastBrick.color[2], fastBrick.color[3], 1}
-            for i, pt in ipairs(fastBrick.trail) do
-                local t = 1 - (i - 1) / trailCount -- 1 = newest, 0 = oldest
 
-                local alpha = 0.2 * t -- fade from subtle to strong
-                local realW = fastBrick.width
-                local w = fastBrick.width * t * 0.9
-                local h = fastBrick.height * t
-                love.graphics.setColor(baseColor[1], baseColor[2], baseColor[3], alpha)
-                love.graphics.rectangle("fill", pt.x + (realW - w)/2, pt.y, w, h)
+        if not skipBrick then
+            -- draw trail
+            -- draw fading trail
+            if fastBrick.trail and #fastBrick.trail > 0 then
+                local trailCount = #fastBrick.trail
+                local baseColor = {fastBrick.color[1], fastBrick.color[2], fastBrick.color[3], 1}
+                for i, pt in ipairs(fastBrick.trail) do
+                    local t = 1 - (i - 1) / trailCount -- 1 = newest, 0 = oldest
+
+                    local alpha = 0.2 * t -- fade from subtle to strong
+                    local realW = fastBrick.width
+                    local w = fastBrick.width * t * 0.9
+                    local h = fastBrick.height * t
+                    love.graphics.setColor(baseColor[1], baseColor[2], baseColor[3], alpha)
+                    love.graphics.rectangle("fill", pt.x + (realW - w)/2, pt.y, w, h)
+                end
+                love.graphics.setColor(1, 1, 1, 1)
             end
-            love.graphics.setColor(1, 1, 1, 1)
-        end
 
-        if not fastBrick.destroyed then
-            love.graphics.setColor(fastBrick.color);
-            love.graphics.draw(
-                brickImg,
-                fastBrick.x + (fastBrick.drawOffsetX or 0),
-                fastBrick.y + (fastBrick.drawOffsetY or 0),
-                0,
-                fastBrick.width / brickWidth,
-                fastBrick.height / brickHeight
-            );
-            local text = tostring(fastBrick.health);
-            love.graphics.setColor(1,1,1,1)
-            --[[love.graphics.print(
-                text,
-                fastBrick.x + fastBrick.width / 2 + (fastBrick.drawOffsetX or 0),
-                fastBrick.y + fastBrick.height / 2 + (fastBrick.drawOffsetY or 0),
-                0,
-                1,
-                1,
-                love.graphics.getFont():getWidth(text) / 2,
-                texHeight
-            );]]
+            if not fastBrick.destroyed then
+                love.graphics.setColor(fastBrick.color);
+                love.graphics.draw(
+                    brickImg,
+                    fastBrick.x + (fastBrick.drawOffsetX or 0),
+                    fastBrick.y + (fastBrick.drawOffsetY or 0),
+                    0,
+                    fastBrick.width / brickWidth,
+                    fastBrick.height / brickHeight
+                );
+                local text = tostring(fastBrick.health);
+                love.graphics.setColor(1,1,1,1)
+                --[[love.graphics.print(
+                    text,
+                    fastBrick.x + fastBrick.width / 2 + (fastBrick.drawOffsetX or 0),
+                    fastBrick.y + fastBrick.height / 2 + (fastBrick.drawOffsetY or 0),
+                    0,
+                    1,
+                    1,
+                    love.graphics.getFont():getWidth(text) / 2,
+                    texHeight
+                );]]
+            end
         end
-        ::continue::
     end
 
     -- draw heal symbol on healBricks

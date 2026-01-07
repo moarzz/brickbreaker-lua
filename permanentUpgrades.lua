@@ -188,7 +188,6 @@ local function paddleCoresDraw()
         else
             suit.Label(label, {align = "center"}, x, y, colWidth, buttonHeight)
         end
-        ::continue::
     end
 end
 

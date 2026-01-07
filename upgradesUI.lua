@@ -414,7 +414,6 @@ function setLevelUpShop()
                 Balls.addBall(weaponToDisplay.name)
             end
         })
-        ::continue::
     end
 end
 
@@ -683,361 +682,365 @@ local function drawBallStats()
     
     for ballName, ballType in pairs(ballsToShow) do
         i = i + 1
+        local skipBall = false
         if tableLength(ballsToShow) > 6 then
-            if (i < (1 + currentBallShowHeight * 3)) or i > (6 + 3 * currentBallShowHeight) then goto continue
+            if (i < (1 + currentBallShowHeight * 3)) or i > (6 + 3 * currentBallShowHeight) then 
+                skipBall = true
             else
                 i = i - 3 * currentBallShowHeight
             end
         end
-        -- Reset X position at the start of each row (every 3 balls)
-        if (i-1) % 3 == 0 then
-            currentX = startX
-        end
-        y = 475 + math.floor((i-1)/3) * 300 -- Move to next row every 3 balls
-        suit.layout:reset(currentX, y, padding, padding)
 
-        -- draw window
-        love.graphics.draw(getRarityWindow(ballType.rarity, "mid"), currentX-25,y)    
-
-        -- draw title label and title
-        setFont(26)
-        love.graphics.draw(uiLabelImg, currentX + statsWidth/2-uiLabelImg:getWidth()/2-10, y-25)
-        setFont(getMaxFittingFontSize(ballType.name or "Unk", 30, uiLabelImg:getWidth()-20))
-        drawTextCenteredWithScale(ballType.name or "Unk", currentX + statsWidth/2-uiLabelImg:getWidth()/2 + 3, y - 8, 1, uiLabelImg:getWidth()-20)
-
-        -- type label
-        setFont(20)
-        local typeColor = {normal = {fg = {0.6,0.6,0.6,1}}}
-        local labelY = y + uiLabelImg:getHeight()/2
-        local bruhY = labelY
-        -- suit.Label(ballType.type or "Unk type", {color = typeColor, align = "center"}, currentX + statsWidth/2-50-7, labelY, 100, 50)
-        -- drawTextCenteredWithScale(ballType.type or "Unk type", currentX + statsWidth/2-50-7, labelY, 1, 100, {0.6,0.6,0.6,1})
-
-        -- damageDealt label (top right, mirroring price)
-        local damageDealt = ballType.damageDealt or 0
-        local dmgText = tostring(formatNumber(damageDealt)) .. " dmg"
-        setFont(25)
-        local dmgOffsetX = -math.cos(math.rad(-2.5))*getTextSize(dmgText)/2
-        local dmgTextWidth = love.graphics.getFont():getWidth(dmgText)
-
-        -- Place at top right of the window, mirroring price
-        local dmgX = currentX + statsWidth*1/4
-        local dmgY = labelY + 13
-        love.graphics.setColor(0,0,0,1)
-        -- love.graphics.print(dmgText, dmgX + 4 + dmgOffsetX, dmgY + 4,math.rad(-2.5))
-        love.graphics.setColor(1,0.25,0.25,1)
-        -- love.graphics.print(dmgText, dmgX + dmgOffsetX, dmgY, math.rad(-2.5))
-        love.graphics.setColor(1,1,1,1)
-        
-
-        labelY = labelY + 20
-        local statsX = currentX + 10
-        if #Balls.getUnlockedBallTypes() > 1 then
-        end
-        local myLayout = {
-            min_width = 410, -- Minimum width for the layout
-            pos = {statsX, labelY + 40}, -- Starting position (x, y)
-            padding = {5, 5}, -- Padding between cells
-        }
-        -- Calculate the number of rows needed for the stats
-        local rowCount = (ballType.noAmount or false) and countStringKeys(ballType.stats) or countStringKeys(ballType.stats) + 1
-        if ballType.noAmount and ballType.stats.amount then
-            rowCount = rowCount-- - 1 -- If no amount, don't count it
-        end
-        for x = 1,  rowCount do -- adds a {"fill"} for each stat in the ballType.stats table
-            table.insert(myLayout, {"fill", 30}) -- for stats
-        end
-        local definition = suit.layout:cols(myLayout)
-        statsX, labelY, w, h = definition.cell(1)
-        suit.layout:reset(10, labelY, padding, padding) -- Set padding (10px horizontal and vertical)
-        suit.layout:row(w, h)
-
-        -- Draw upgrade buttons for each stat
-        local intIndex = 1 -- keeps track of the current cell int id being checked
-        -- Define the order of keys
-        local statOrder = { "amount", "damage", "speed", "cooldown", "range", "fireRate", "ammo"} -- Order of stats to display
-
-        -- makes sure amount is only called on things that use it
-        local typeStats = {} -- Initialize the typeStats table
-        if ballType.noAmount == false then
-           typeStats = { amount = ballType.ballAmount } -- Start with amount
-        end
-        for statName, statValue in pairs(ballType.stats) do
-            typeStats[statName] = statValue -- Add stats to the table
-        end
-
-        -- loops over each stats
-        for _, statName in ipairs(statOrder) do
-            local statValue = nil
-            -- makes speed display as low value
-            if typeStats[statName] then
-                if statName == "speed" then
-                    statValue = typeStats[statName]/50 -- Add speed to the stats table
-                else
-                    statValue = typeStats[statName]
-                end
+        if not skipBall then
+            -- Reset X position at the start of each row (every 3 balls)
+            if (i-1) % 3 == 0 then
+                currentX = startX
             end
-            if statValue then -- Only process if the stat exists
-                local buttonResult = nil
-                statsX, labelY, w, h = definition.cell(intIndex)
-                suit.layout:reset(statsX, labelY, padding, padding) -- Set padding (10px horizontal and vertical)
-                setFont(20)
+            y = 475 + math.floor((i-1)/3) * 300 -- Move to next row every 3 balls
+            suit.layout:reset(currentX, y, padding, padding)
 
-                local cellWidth = (430-10*rowCount)/rowCount
-                
-                -- draw value calculations
-                suit.layout:padding(0, 0)
-                -- Add permanent upgrades to the display value
-                local permanentUpgradeValue = Player.permanentUpgrades[statName] or 0
-                local bonusValue = getStatItemsBonus(statName, ballType) or 0
-                local value = (Player.currentCore == "Cooldown Core" and statName == "cooldown") and 2 or statValue + bonusValue + permanentUpgradeValue
-                if statName == "ammo" then
-                    value = value - permanentUpgradeValue - bonusValue + bonusValue * ballType.ammoMult -- Adjust ammo value based on ammoMult
-                end
-                if (statName == "fireRate" or statName == "amount") and Player.currentCore == "Damage Core" then
-                    value = 1
-                end
-                if statName == "damage" then
-                    if Player.currentCore == "Damage Core" then
-                        value = value * 5 -- Double damage for Damage Core
-                    elseif Player.currentCore == "Phantom Core" and (ballType.type == "gun" or ballType.name == "Gun Turrets" or ballType.name == "Gun Ball")then
-                        value = value / 2
-                    end
-                    if ballName == "Sniper" then
-                        value = value * 10
-                    end
-                end
-                --[[if statName == "amount" and ballType.noAmount == false and getStatItemsBonus("amount", ballType) > 0 then
-                    value = value
-                end]]
-                if statName == "cooldown" then
-                    value = math.max(0, value)
-                end
-                if Player.currentCore == "Madness Core" then
-                    if statName == "damage" or statName == "cooldown" then
-                        value = value * 0.5 -- Half damage and cooldown for Madness Core
+            -- draw window
+            love.graphics.draw(getRarityWindow(ballType.rarity, "mid"), currentX-25,y)    
+
+            -- draw title label and title
+            setFont(26)
+            love.graphics.draw(uiLabelImg, currentX + statsWidth/2-uiLabelImg:getWidth()/2-10, y-25)
+            setFont(getMaxFittingFontSize(ballType.name or "Unk", 30, uiLabelImg:getWidth()-20))
+            drawTextCenteredWithScale(ballType.name or "Unk", currentX + statsWidth/2-uiLabelImg:getWidth()/2 + 3, y - 8, 1, uiLabelImg:getWidth()-20)
+
+            -- type label
+            setFont(20)
+            local typeColor = {normal = {fg = {0.6,0.6,0.6,1}}}
+            local labelY = y + uiLabelImg:getHeight()/2
+            local bruhY = labelY
+            -- suit.Label(ballType.type or "Unk type", {color = typeColor, align = "center"}, currentX + statsWidth/2-50-7, labelY, 100, 50)
+            -- drawTextCenteredWithScale(ballType.type or "Unk type", currentX + statsWidth/2-50-7, labelY, 1, 100, {0.6,0.6,0.6,1})
+
+            -- damageDealt label (top right, mirroring price)
+            local damageDealt = ballType.damageDealt or 0
+            local dmgText = tostring(formatNumber(damageDealt)) .. " dmg"
+            setFont(25)
+            local dmgOffsetX = -math.cos(math.rad(-2.5))*getTextSize(dmgText)/2
+            local dmgTextWidth = love.graphics.getFont():getWidth(dmgText)
+
+            -- Place at top right of the window, mirroring price
+            local dmgX = currentX + statsWidth*1/4
+            local dmgY = labelY + 13
+            love.graphics.setColor(0,0,0,1)
+            -- love.graphics.print(dmgText, dmgX + 4 + dmgOffsetX, dmgY + 4,math.rad(-2.5))
+            love.graphics.setColor(1,0.25,0.25,1)
+            -- love.graphics.print(dmgText, dmgX + dmgOffsetX, dmgY, math.rad(-2.5))
+            love.graphics.setColor(1,1,1,1)
+            
+
+            labelY = labelY + 20
+            local statsX = currentX + 10
+            if #Balls.getUnlockedBallTypes() > 1 then
+            end
+            local myLayout = {
+                min_width = 410, -- Minimum width for the layout
+                pos = {statsX, labelY + 40}, -- Starting position (x, y)
+                padding = {5, 5}, -- Padding between cells
+            }
+            -- Calculate the number of rows needed for the stats
+            local rowCount = (ballType.noAmount or false) and countStringKeys(ballType.stats) or countStringKeys(ballType.stats) + 1
+            if ballType.noAmount and ballType.stats.amount then
+                rowCount = rowCount-- - 1 -- If no amount, don't count it
+            end
+            for x = 1,  rowCount do -- adds a {"fill"} for each stat in the ballType.stats table
+                table.insert(myLayout, {"fill", 30}) -- for stats
+            end
+            local definition = suit.layout:cols(myLayout)
+            statsX, labelY, w, h = definition.cell(1)
+            suit.layout:reset(10, labelY, padding, padding) -- Set padding (10px horizontal and vertical)
+            suit.layout:row(w, h)
+
+            -- Draw upgrade buttons for each stat
+            local intIndex = 1 -- keeps track of the current cell int id being checked
+            -- Define the order of keys
+            local statOrder = { "amount", "damage", "speed", "cooldown", "range", "fireRate", "ammo"} -- Order of stats to display
+
+            -- makes sure amount is only called on things that use it
+            local typeStats = {} -- Initialize the typeStats table
+            if ballType.noAmount == false then
+            typeStats = { amount = ballType.ballAmount } -- Start with amount
+            end
+            for statName, statValue in pairs(ballType.stats) do
+                typeStats[statName] = statValue -- Add stats to the table
+            end
+
+            -- loops over each stats
+            for _, statName in ipairs(statOrder) do
+                local statValue = nil
+                -- makes speed display as low value
+                if typeStats[statName] then
+                    if statName == "speed" then
+                        statValue = typeStats[statName]/50 -- Add speed to the stats table
                     else
-                        value = value * 2 -- Double speed for Madness Core
+                        statValue = typeStats[statName]
                     end
                 end
-                -- draw stat value
-                local scaleMult = 1
-                if visualStatValues[ballType.name] then
-                    if visualStatValues[ballType.name][statName] then
-                        scaleMult = visualStatValues[ballType.name][statName].scale or 1
+                if statValue then -- Only process if the stat exists
+                    local buttonResult = nil
+                    statsX, labelY, w, h = definition.cell(intIndex)
+                    suit.layout:reset(statsX, labelY, padding, padding) -- Set padding (10px horizontal and vertical)
+                    setFont(20)
+
+                    local cellWidth = (430-10*rowCount)/rowCount
+                    
+                    -- draw value calculations
+                    suit.layout:padding(0, 0)
+                    -- Add permanent upgrades to the display value
+                    local permanentUpgradeValue = Player.permanentUpgrades[statName] or 0
+                    local bonusValue = getStatItemsBonus(statName, ballType) or 0
+                    local value = (Player.currentCore == "Cooldown Core" and statName == "cooldown") and 2 or statValue + bonusValue + permanentUpgradeValue
+                    if statName == "ammo" then
+                        value = value - permanentUpgradeValue - bonusValue + bonusValue * ballType.ammoMult -- Adjust ammo value based on ammoMult
                     end
-                end
-                setFont(35 * scaleMult)
-                local centeredLabelY = labelY - love.graphics.getFont():getHeight()/2 + 25
-                if (Player.currentCore == "Phantom Core" and ballType.type == "gun" and statName == "damage") or (Player.currentCore == "Madness Core" and (statName == "damage" or statName == "cooldown")) then
-                    drawTextCenteredWithScale(tostring(string.format("%.1f", value)), statsX, centeredLabelY-15, 1, cellWidth)
-                else
-                    drawTextCenteredWithScale(tostring(value), statsX, centeredLabelY-15, 1, cellWidth)
-                end
+                    if (statName == "fireRate" or statName == "amount") and Player.currentCore == "Damage Core" then
+                        value = 1
+                    end
+                    if statName == "damage" then
+                        if Player.currentCore == "Damage Core" then
+                            value = value * 5 -- Double damage for Damage Core
+                        elseif Player.currentCore == "Phantom Core" and (ballType.type == "gun" or ballType.name == "Gun Turrets" or ballType.name == "Gun Ball")then
+                            value = value / 2
+                        end
+                        if ballName == "Sniper" then
+                            value = value * 10
+                        end
+                    end
+                    --[[if statName == "amount" and ballType.noAmount == false and getStatItemsBonus("amount", ballType) > 0 then
+                        value = value
+                    end]]
+                    if statName == "cooldown" then
+                        value = math.max(0, value)
+                    end
+                    if Player.currentCore == "Madness Core" then
+                        if statName == "damage" or statName == "cooldown" then
+                            value = value * 0.5 -- Half damage and cooldown for Madness Core
+                        else
+                            value = value * 2 -- Double speed for Madness Core
+                        end
+                    end
+                    -- draw stat value
+                    local scaleMult = 1
+                    if visualStatValues[ballType.name] then
+                        if visualStatValues[ballType.name][statName] then
+                            scaleMult = visualStatValues[ballType.name][statName].scale or 1
+                        end
+                    end
+                    setFont(35 * scaleMult)
+                    local centeredLabelY = labelY - love.graphics.getFont():getHeight()/2 + 25
+                    if (Player.currentCore == "Phantom Core" and ballType.type == "gun" and statName == "damage") or (Player.currentCore == "Madness Core" and (statName == "damage" or statName == "cooldown")) then
+                        drawTextCenteredWithScale(tostring(string.format("%.1f", value)), statsX, centeredLabelY-15, 1, cellWidth)
+                    else
+                        drawTextCenteredWithScale(tostring(value), statsX, centeredLabelY-15, 1, cellWidth)
+                    end
 
-                -- draw stat icon
-                local iconX = statsX + cellWidth/2 - iconsImg[statName]:getWidth()*1.35/2 * 50/500 - 3
-                love.graphics.draw(iconsImg[statName], iconX, labelY + 55,0,1.35 * 50/500,1.35 * 50/500)
+                    -- draw stat icon
+                    local iconX = statsX + cellWidth/2 - iconsImg[statName]:getWidth()*1.35/2 * 50/500 - 3
+                    love.graphics.draw(iconsImg[statName], iconX, labelY + 55,0,1.35 * 50/500,1.35 * 50/500)
 
-                -- draw seperator
-                if intIndex < rowCount then
-                    love.graphics.setColor(0.4,0.4,0.4,1)
-                    love.graphics.rectangle("fill", statsX + cellWidth, labelY, 1, 125)
+                    -- draw seperator
+                    if intIndex < rowCount then
+                        love.graphics.setColor(0.4,0.4,0.4,1)
+                        love.graphics.rectangle("fill", statsX + cellWidth, labelY, 1, 125)
+                        love.graphics.setColor(1,1,1,1)
+                    end
+
+                    -- draw invis button
+                    local invisButtonColor = {
+                        normal  = {bg = {0,0,0,0}, fg = {0,0,0}},           -- invisible bg, black fg
+                        hovered = {bg = {0.19,0.6,0.73,0.2}, fg = {1,1,1}}, -- glowing bg, white fg
+                        active  = {bg = {1,0.6,0}, fg = {1,1,1}}          -- faint bg, white fg
+                    }
+                    local buttonID
+                    buttonID = generateNextButtonID() -- Generate a unique ID for the button
+                    --local upgradeStatButton = dress:Button("", {color = invisButtonColor, id = buttonID}, statsX, labelY-10, cellWidth, 150)
+                    -- Right-click to remove all queued upgrades of this stat
+                    local canUpgrade = true
+                    -- Core-specific restrictions
+                    if statName == "cooldown" and Player.currentCore == "Cooldown Core" then
+                        canUpgrade = false -- Cannot upgrade cooldown if using Cooldown Core
+                    end
+                    if ((statName == "fireRate" or statName == "amount") and Player.currentCore == "Damage Core") then
+                        canUpgrade = false -- Cannot upgrade fireRate or amount if using Damage Core
+                    end
+                    -- Ammo restrictions
+                    if statName == "ammo" and (((ballType.stats.cooldown or 1000) + getStatItemsBonus("cooldown", ballType) + (Player.permanentUpgrades["cooldown"] or 0)) <= 0 and ballType.name ~= "Gun Turrets") then
+                        canUpgrade = false -- Cannot upgrade ammo if cooldown is already at 0
+                    end
+                    local upgradeQueued = false
+                    if ballType.queuedUpgrades then
+                        if ballType.queuedUpgrades[1] == statName then
+                            upgradeQueued = true
+                        end
+                    end
+                    --[[if ((upgradeStatButton.hit or (upgradeQueued and Player.money >= math.ceil(ballType.price))) and canUpgrade) and (usingMoneySystem or Player.levelingUp) then
+                        if Player.money < math.ceil(ballType.price) then
+                            -- does nothing
+                        elseif statName == "cooldown" and getStat(ballName, "cooldown") <= 0 then
+                            print("cannot upgrade cooldown any further")
+                            playSoundEffect(upgradeSFX, 0.5, 0.95, false)
+                        else
+                            playSoundEffect(upgradeSFX, 0.5, 0.95, false)
+                            if upgradeQueued then
+                                for i, queuedUpgrade in ipairs(ballType.queuedUpgrades) do
+                                    if queuedUpgrade == statName then
+                                        table.remove(ballType.queuedUpgrades, i)
+                                        break
+                                    end
+                                end
+                            end
+                            setFont(16)
+                            print("Upgrading " .. ballType.name .. "'s " .. statName)
+                            local stat = ballType.stats[statName] or 0-- Get the current stat value
+                            if statName == "speed" then
+                                ballType.stats.speed = ballType.stats.speed + 50 -- Example action
+                                Balls.adjustSpeed(ballType.name) -- Adjust the speed of the ball
+                            elseif statName == "amount" and not ballType.noAmount then
+                                Balls.addBall(ballType.name, true) -- Add a new ball of the same type
+                                ballType.ballAmount = ballType.ballAmount + 1
+                            elseif statName == "cooldown" then
+                                ballType.stats.cooldown = ballType.stats.cooldown - 1
+                            elseif statName == "ammo" then
+                                print(ballType.name .. " ammo increased by " .. ballType.ammoMult)
+                                ballType.currentAmmo = ballType.currentAmmo + ballType.ammoMult -- Increase ammo by ammoMult
+                                ballType.stats.ammo = ballType.stats.ammo + ballType.ammoMult -- Example action
+                            else
+                                ballType.stats[statName] = ballType.stats[statName] + 1 -- Example action
+                                print( "stat ".. statName .. " increased to " .. ballType.stats[statName])
+                            end
+                            Player.pay(math.ceil(ballType.price)) -- Deduct the cost from the player's money
+                            if usingMoneySystem then
+                                ballType.price = ballType.price * 2 -- Increase the price of the ball
+                            else
+                                ballType.price = ballType.price + 1
+                            end
+                        end
+                    elseif upgradeStatButton.entered then
+                        hoveredStatName = statName
+                    elseif upgradeStatButton.left then
+                        hoveredStatName = nil
+                    end]]
+                    
+                    local upgradeCount = 0
+                    for _, queuedUpgrade in ipairs(ballType.queuedUpgrades) do
+                        if queuedUpgrade == statName then
+                            upgradeCount = upgradeCount + 1
+                        end
+                    end
+                    setFont(30)
+                    if upgradeCount > 0 then
+                        love.graphics.setColor(161/255, 231/255, 1, 1)
+                        love.graphics.print((statName == "cooldown" and "-" or "+") .. upgradeCount, statsX + cellWidth/3*2 - 5, labelY - 5) -- Display queued upgrade count\
+                    end
+                    intIndex = intIndex + 1
                     love.graphics.setColor(1,1,1,1)
-                end
 
-                -- draw invis button
-                local invisButtonColor = {
-                    normal  = {bg = {0,0,0,0}, fg = {0,0,0}},           -- invisible bg, black fg
-                    hovered = {bg = {0.19,0.6,0.73,0.2}, fg = {1,1,1}}, -- glowing bg, white fg
-                    active  = {bg = {1,0.6,0}, fg = {1,1,1}}          -- faint bg, white fg
-                }
-                local buttonID
-                buttonID = generateNextButtonID() -- Generate a unique ID for the button
-                --local upgradeStatButton = dress:Button("", {color = invisButtonColor, id = buttonID}, statsX, labelY-10, cellWidth, 150)
-                -- Right-click to remove all queued upgrades of this stat
-                local canUpgrade = true
-                -- Core-specific restrictions
-                if statName == "cooldown" and Player.currentCore == "Cooldown Core" then
-                    canUpgrade = false -- Cannot upgrade cooldown if using Cooldown Core
-                end
-                if ((statName == "fireRate" or statName == "amount") and Player.currentCore == "Damage Core") then
-                    canUpgrade = false -- Cannot upgrade fireRate or amount if using Damage Core
-                end
-                -- Ammo restrictions
-                if statName == "ammo" and (((ballType.stats.cooldown or 1000) + getStatItemsBonus("cooldown", ballType) + (Player.permanentUpgrades["cooldown"] or 0)) <= 0 and ballType.name ~= "Gun Turrets") then
-                    canUpgrade = false -- Cannot upgrade ammo if cooldown is already at 0
-                end
-                local upgradeQueued = false
-                if ballType.queuedUpgrades then
-                    if ballType.queuedUpgrades[1] == statName then
-                        upgradeQueued = true
+                    -- hover description
+                    local hoverButton = suit.Button("", {id = "bruhdmsavklsam" .. i .. ballName .. statName, color = totallyInvisButtonColor}, statsX, labelY, cellWidth - 20, 120)
+                    if hoverButton.hovered then
+                        -- local mouseX, mouseY = love.mouse.getPosition()
+                        setFont(35)
+                        dress:Label(statName, {align = "center", color = {normal = {fg = statColor[statName]}}}, statsX - 90, labelY + 100, cellWidth + 180, 150)
+                        dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 88, labelY + 98, cellWidth + 180, 150)
+                        dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 92, labelY + 98, cellWidth + 180, 150)
+                        dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 88, labelY + 102, cellWidth + 180, 150)
+                        dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 92, labelY + 102, cellWidth + 180, 150)
+                        -- drawTextCenteredWithScale(statName, mouseX, mouseY, 1, 300, {1,1,1,1})
                     end
-                end
-                --[[if ((upgradeStatButton.hit or (upgradeQueued and Player.money >= math.ceil(ballType.price))) and canUpgrade) and (usingMoneySystem or Player.levelingUp) then
-                    if Player.money < math.ceil(ballType.price) then
-                        -- does nothing
-                    elseif statName == "cooldown" and getStat(ballName, "cooldown") <= 0 then
-                        print("cannot upgrade cooldown any further")
-                        playSoundEffect(upgradeSFX, 0.5, 0.95, false)
-                    else
-                        playSoundEffect(upgradeSFX, 0.5, 0.95, false)
-                        if upgradeQueued then
-                            for i, queuedUpgrade in ipairs(ballType.queuedUpgrades) do
-                                if queuedUpgrade == statName then
-                                    table.remove(ballType.queuedUpgrades, i)
-                                    break
-                                end
-                            end
-                        end
-                        setFont(16)
-                        print("Upgrading " .. ballType.name .. "'s " .. statName)
-                        local stat = ballType.stats[statName] or 0-- Get the current stat value
-                        if statName == "speed" then
-                            ballType.stats.speed = ballType.stats.speed + 50 -- Example action
-                            Balls.adjustSpeed(ballType.name) -- Adjust the speed of the ball
-                        elseif statName == "amount" and not ballType.noAmount then
-                            Balls.addBall(ballType.name, true) -- Add a new ball of the same type
-                            ballType.ballAmount = ballType.ballAmount + 1
-                        elseif statName == "cooldown" then
-                            ballType.stats.cooldown = ballType.stats.cooldown - 1
-                        elseif statName == "ammo" then
-                            print(ballType.name .. " ammo increased by " .. ballType.ammoMult)
-                            ballType.currentAmmo = ballType.currentAmmo + ballType.ammoMult -- Increase ammo by ammoMult
-                            ballType.stats.ammo = ballType.stats.ammo + ballType.ammoMult -- Example action
-                        else
-                            ballType.stats[statName] = ballType.stats[statName] + 1 -- Example action
-                            print( "stat ".. statName .. " increased to " .. ballType.stats[statName])
-                        end
-                        Player.pay(math.ceil(ballType.price)) -- Deduct the cost from the player's money
-                        if usingMoneySystem then
-                            ballType.price = ballType.price * 2 -- Increase the price of the ball
-                        else
-                            ballType.price = ballType.price + 1
-                        end
-                    end
-                elseif upgradeStatButton.entered then
-                    hoveredStatName = statName
-                elseif upgradeStatButton.left then
-                    hoveredStatName = nil
-                end]]
-                
-                local upgradeCount = 0
-                for _, queuedUpgrade in ipairs(ballType.queuedUpgrades) do
-                    if queuedUpgrade == statName then
-                        upgradeCount = upgradeCount + 1
-                    end
-                end
-                setFont(30)
-                if upgradeCount > 0 then
-                    love.graphics.setColor(161/255, 231/255, 1, 1)
-                    love.graphics.print((statName == "cooldown" and "-" or "+") .. upgradeCount, statsX + cellWidth/3*2 - 5, labelY - 5) -- Display queued upgrade count\
-                end
-                intIndex = intIndex + 1
-                love.graphics.setColor(1,1,1,1)
-
-                -- hover description
-                local hoverButton = suit.Button("", {id = "bruhdmsavklsam" .. i .. ballName .. statName, color = totallyInvisButtonColor}, statsX, labelY, cellWidth - 20, 120)
-                if hoverButton.hovered then
-                    -- local mouseX, mouseY = love.mouse.getPosition()
-                    setFont(35)
-                    dress:Label(statName, {align = "center", color = {normal = {fg = statColor[statName]}}}, statsX - 90, labelY + 100, cellWidth + 180, 150)
-                    dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 88, labelY + 98, cellWidth + 180, 150)
-                    dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 92, labelY + 98, cellWidth + 180, 150)
-                    dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 88, labelY + 102, cellWidth + 180, 150)
-                    dress:Label(statName, {align = "center", color = {normal = {fg = {0,0,0,1}}}}, statsX - 92, labelY + 102, cellWidth + 180, 150)
-                    -- drawTextCenteredWithScale(statName, mouseX, mouseY, 1, 300, {1,1,1,1})
                 end
             end
-        end
-        suit.layout:row(statsWidth, 20) -- Add spacing for the separator
-        
-        -- price label
-        local sizeMult
-        if visualUpgradePriceValues[ballType.name] then
-            sizeMult = visualUpgradePriceValues[ballType.name].scale 
-        else
-            sizeMult = 1
-        end
-        setFont(math.ceil(50) * sizeMult)
-        local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(math.ceil(ballType.price)))/2
-        labelY = bruhY - love.graphics.getFont():getHeight()/2 + 25
-        love.graphics.setColor(0,0,0,1)
-        love.graphics.print(formatNumber(math.ceil(ballType.price)) .. "$",currentX + statsWidth/2 + 104 +moneyOffsetX, labelY+4, math.rad(5))
-        local moneyColor = Player.realMoney >= math.ceil(ballType.price) and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
-        love.graphics.setColor(moneyColor)
-        love.graphics.print(formatNumber(math.ceil(ballType.price)) .. "$",currentX + statsWidth/2 + 100 +moneyOffsetX, labelY, math.rad(5))
-        love.graphics.setColor(1,1,1,1)
-
-        -- upgrade button
-        local buttonId = ballType.name .. "_upgradeButton"
-        local upgradeStatButton = dress:Button("", {color = invisButtonColor, id = buttonId}, currentX + 10, y + 15, getRarityWindow("common"):getWidth() - 30, getRarityWindow("common"):getHeight()/2 - 30)
-        if upgradeStatButton.hit then
-            if (Player.realMoney < math.ceil(ballType.price)) or (currentlyOnFirstLevelUp and Player.getCurrentTutorialStep() ~= 4) then
-                -- does nothing
+            suit.layout:row(statsWidth, 20) -- Add spacing for the separator
+            
+            -- price label
+            local sizeMult
+            if visualUpgradePriceValues[ballType.name] then
+                sizeMult = visualUpgradePriceValues[ballType.name].scale 
             else
-                playSoundEffect(upgradeSFX, 0.5, 0.95, false)
-                Player.pay(math.ceil(ballType.price)) -- Deduct the cost from the player's money
-                local totalStats = {}
-                for statName, statValue in pairs(ballType.stats) do
-                    totalStats[statName] = statValue
-                end
-                if ballType.type == "ball" then
-                    totalStats["amount"] = ballType.ballAmount
-                end
-                local priceUpgradeCount = 0
-                for statName, statValue in pairs(totalStats) do
-                    if statName == "cooldown" and getStat(ballName, "cooldown") <= 0 then
-                        print("cannot upgrade cooldown any further")
-                    elseif statName == "ammo" and getStat(ballName, "cooldown") <= 0 and ballName ~= "Minigun" and ballName ~= "Gun Turrets" then
-                        print("cannot upgrade ammo any further")
-                    else
-                        priceUpgradeCount = priceUpgradeCount + 1
-                        if upgradeQueued then
-                            for i, queuedUpgrade in ipairs(ballType.queuedUpgrades) do
-                                if queuedUpgrade == statName then
-                                    table.remove(ballType.queuedUpgrades, i)
-                                    break
+                sizeMult = 1
+            end
+            setFont(math.ceil(50) * sizeMult)
+            local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(math.ceil(ballType.price)))/2
+            labelY = bruhY - love.graphics.getFont():getHeight()/2 + 25
+            love.graphics.setColor(0,0,0,1)
+            love.graphics.print(formatNumber(math.ceil(ballType.price)) .. "$",currentX + statsWidth/2 + 104 +moneyOffsetX, labelY+4, math.rad(5))
+            local moneyColor = Player.realMoney >= math.ceil(ballType.price) and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
+            love.graphics.setColor(moneyColor)
+            love.graphics.print(formatNumber(math.ceil(ballType.price)) .. "$",currentX + statsWidth/2 + 100 +moneyOffsetX, labelY, math.rad(5))
+            love.graphics.setColor(1,1,1,1)
+
+            -- upgrade button
+            local buttonId = ballType.name .. "_upgradeButton"
+            local upgradeStatButton = dress:Button("", {color = invisButtonColor, id = buttonId}, currentX + 10, y + 15, getRarityWindow("common"):getWidth() - 30, getRarityWindow("common"):getHeight()/2 - 30)
+            if upgradeStatButton.hit then
+                if (Player.realMoney < math.ceil(ballType.price)) or (currentlyOnFirstLevelUp and Player.getCurrentTutorialStep() ~= 4) then
+                    -- does nothing
+                else
+                    playSoundEffect(upgradeSFX, 0.5, 0.95, false)
+                    Player.pay(math.ceil(ballType.price)) -- Deduct the cost from the player's money
+                    local totalStats = {}
+                    for statName, statValue in pairs(ballType.stats) do
+                        totalStats[statName] = statValue
+                    end
+                    if ballType.type == "ball" then
+                        totalStats["amount"] = ballType.ballAmount
+                    end
+                    local priceUpgradeCount = 0
+                    for statName, statValue in pairs(totalStats) do
+                        if statName == "cooldown" and getStat(ballName, "cooldown") <= 0 then
+                            print("cannot upgrade cooldown any further")
+                        elseif statName == "ammo" and getStat(ballName, "cooldown") <= 0 and ballName ~= "Minigun" and ballName ~= "Gun Turrets" then
+                            print("cannot upgrade ammo any further")
+                        else
+                            priceUpgradeCount = priceUpgradeCount + 1
+                            if upgradeQueued then
+                                for i, queuedUpgrade in ipairs(ballType.queuedUpgrades) do
+                                    if queuedUpgrade == statName then
+                                        table.remove(ballType.queuedUpgrades, i)
+                                        break
+                                    end
                                 end
                             end
-                        end
-                        setFont(16)
-                        print("Upgrading " .. ballType.name .. "'s " .. statName)
-                        local stat = ballType.stats[statName] or 0-- Get the current stat value
-                        if statName == "speed" then
-                            ballType.stats.speed = ballType.stats.speed + 50 -- Example action
-                            Balls.adjustSpeed(ballType.name) -- Adjust the speed of the ball
-                        elseif statName == "amount" and ballType.type == "ball" then
-                            Balls.addBall(ballType.name, true) -- Add a new ball of the same type
-                            ballType.ballAmount = ballType.ballAmount + 1
-                        elseif statName == "cooldown" then
-                            ballType.stats.cooldown = ballType.stats.cooldown - 1
-                        elseif statName == "ammo" then
-                            print(ballType.name .. " ammo increased by " .. ballType.ammoMult)
-                            ballType.currentAmmo = ballType.currentAmmo + ballType.ammoMult -- Increase ammo by ammoMult
-                            ballType.stats.ammo = ballType.stats.ammo + ballType.ammoMult -- Example action
-                        else
-                            ballType.stats[statName] = ballType.stats[statName] + 1 -- Example action
-                            print( "stat ".. statName .. " increased to " .. ballType.stats[statName])
+                            setFont(16)
+                            print("Upgrading " .. ballType.name .. "'s " .. statName)
+                            local stat = ballType.stats[statName] or 0-- Get the current stat value
+                            if statName == "speed" then
+                                ballType.stats.speed = ballType.stats.speed + 50 -- Example action
+                                Balls.adjustSpeed(ballType.name) -- Adjust the speed of the ball
+                            elseif statName == "amount" and ballType.type == "ball" then
+                                Balls.addBall(ballType.name, true) -- Add a new ball of the same type
+                                ballType.ballAmount = ballType.ballAmount + 1
+                            elseif statName == "cooldown" then
+                                ballType.stats.cooldown = ballType.stats.cooldown - 1
+                            elseif statName == "ammo" then
+                                print(ballType.name .. " ammo increased by " .. ballType.ammoMult)
+                                ballType.currentAmmo = ballType.currentAmmo + ballType.ammoMult -- Increase ammo by ammoMult
+                                ballType.stats.ammo = ballType.stats.ammo + ballType.ammoMult -- Example action
+                            else
+                                ballType.stats[statName] = ballType.stats[statName] + 1 -- Example action
+                                print( "stat ".. statName .. " increased to " .. ballType.stats[statName])
+                            end
                         end
                     end
-                end
-                ballType.price = ballType.price + priceUpgradeCount
-                if currentlyOnFirstLevelUp then
-                    if Player.getCurrentTutorialStep() == 4 then
-                        Player.nextTutorialStep()
-                        currentlyOnFirstLevelUp = false
+                    ballType.price = ballType.price + priceUpgradeCount
+                    if currentlyOnFirstLevelUp then
+                        if Player.getCurrentTutorialStep() == 4 then
+                            Player.nextTutorialStep()
+                            currentlyOnFirstLevelUp = false
+                        end
                     end
                 end
             end
+            
+            -- Move to next horizontal position
+            currentX = currentX + statsWidth + 50 -- Move right for next ball (20px spacing)
+            if tableLength(ballsToShow) > 6 then
+                i = i + 3 * currentBallShowHeight
+            end
         end
-        
-        -- Move to next horizontal position
-        currentX = currentX + statsWidth + 50 -- Move right for next ball (20px spacing)
-        if tableLength(ballsToShow) > 6 then
-            i = i + 3 * currentBallShowHeight
-        end
-        ::continue::
     end
     
     local numBalls = tableLength(Balls.getUnlockedBallTypes())
@@ -1205,6 +1208,7 @@ function setItemShop(forcedItems)
 
     displayedItems = {}
     for i=1, 3 do
+        local skipItem = false
         local itemToDisplay = nil
         local itemIsGood = false
         if forcedItems[i] then
@@ -1220,24 +1224,25 @@ function setItemShop(forcedItems)
                 print("Error: No item found in setItemShop()")
             end
 
-            goto continue
+            skipItem = true
         end
         
-        while not itemIsGood do
-            itemToDisplay = Items.getRandomItem()
-            itemIsGood = true
-            if i > 1 then
-                for j=1, i-1 do
-                    if itemToDisplay.name == displayedItems[j].name then
-                        itemIsGood = false
-                        break
+        if not skipItem then
+            while not itemIsGood do
+                itemToDisplay = Items.getRandomItem()
+                itemIsGood = true
+                if i > 1 then
+                    for j=1, i-1 do
+                        if itemToDisplay.name == displayedItems[j].name then
+                            itemIsGood = false
+                            break
+                        end
                     end
                 end
             end
+            displayedItems[i] = itemToDisplay.new();
         end
-        displayedItems[i] = itemToDisplay.new();
 
-        ::continue::
         Items.addInvisibleItem(itemToDisplay.filteredName);
     end
 end
