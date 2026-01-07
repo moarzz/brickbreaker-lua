@@ -11,20 +11,20 @@ vec4 effect(vec4 colour, Image tex, vec2 textureCoords, vec2 screenCoords)
     // set adjustable parameters
     float scaleMult = 0.35 + intensity * 0.65; // Adjust the scale multiplier based on intensity
     float brightnessMultBoost = brightness * 1.0 + intensity * 0.5;
-    float brightnessOffsetBoost = -1;
+    float brightnessOffsetBoost = -1.0;
 
     // Create our output colour variable
     vec4 fragColor = vec4(0.0, 0.0, 0.0, 1.0);  // Initialize with alpha = 1.0
     
     // Use screen coordinates as input (similar to Shadertoy's fragCoord)
-    vec2 I = textureCoords * vec2(1920, 1080);
+    vec2 I = textureCoords * vec2(1920.0, 1080.0);
     
     // Iterator, raymarch depth and step distance
-    float i = 0.0, z = 0.0, d = 0.0;
+    float z = 0.0, d = 0.0;
     
     // Remove the time > 2.0 condition so we see something immediately
     // Raymarch 50 steps
-    for(i = 0.0; i < 50.0; i++)
+    for(int i = 0; i < 50; i++)
     {
         // Compute raymarch point from raymarch distance and ray direction
         vec3 p = z * normalize(vec3((I - vec2(1920.0, 1080.0) * 0.5) * 2.0, 1080.0));

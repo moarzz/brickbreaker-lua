@@ -1,16 +1,14 @@
-uniform number fade = 0.0;
-
+// Changed 'number' to 'float' for standard GLSL compatibility
+uniform float fade; 
 uniform Image fadeOut;
-
-// uniform bool fadeIn = true;
 
 vec4 effect(vec4 colour, Image fadeIn, vec2 textureCoords, vec2 screenCoords)
 {
     vec4 fadeInColour = Texel(fadeIn, textureCoords);
 
-    // fadeIn
-    float innerDist = sqrt(2) * (fade - 0.2) / 0.8;
-    float outerDist = sqrt(2) * fade / 0.6 * 1.5;
+    // Fixed: Added .0 to integers inside math functions
+    float innerDist = sqrt(2.0) * (fade - 0.2) / 0.8;
+    float outerDist = sqrt(2.0) * fade / 0.6 * 1.5;
 
     float dist = length(textureCoords * 2.0 - vec2(1.0));
 
@@ -27,8 +25,9 @@ vec4 effect(vec4 colour, Image fadeIn, vec2 textureCoords, vec2 screenCoords)
 
     vec4 fadeOutColour = Texel(fadeOut, textureCoords);
 
-    innerDist = sqrt(2) * fade;
-    outerDist = sqrt(2) * fade * 1.5;
+    // Fixed: Added .0 to sqrt argument
+    innerDist = sqrt(2.0) * fade;
+    outerDist = sqrt(2.0) * fade * 1.5;
 
     dist = length(textureCoords * 2.0 - vec2(1.0));
 
@@ -43,6 +42,7 @@ vec4 effect(vec4 colour, Image fadeIn, vec2 textureCoords, vec2 screenCoords)
         fadeOutColour.a = (dist - innerDist) / (outerDist - innerDist);
     }
 
+    // Blend the two textures based on their calculated alpha
     vec3 finalColour = fadeInColour.rgb * fadeInColour.a + fadeOutColour.rgb * fadeOutColour.a;
 
     return vec4(finalColour, 1.0);
