@@ -244,6 +244,17 @@ function resetGame()
     resetLvlUpPopups()
 end
 
+function createCanvas(w, h)
+    local formats = love.graphics.getCanvasFormats()
+    if formats.rgba8 then
+        canvas = love.graphics.newCanvas(w, h, { format = "rgba8" })
+    elseif formats.rgba4 then
+        canvas = love.graphics.newCanvas(w, h, { format = "rgba4" })
+    else
+        canvas = love.graphics.newCanvas(w, h)
+    end
+end
+
 local function loadAssets()
 
     EventQueue = EventQueueRef.new()
@@ -283,6 +294,7 @@ local function loadAssets()
     bossBrickOverlayImg = love.graphics.newImage("assets/sprites/bossBrickOverlay.png")
     runeCircleImg = love.graphics.newImage("assets/sprites/runeCircle.png")
     bezelImg = love.graphics.newImage("assets/sprites/bezel.png")
+    screenContour = love.graphics.newImage("assets/sprites/screenContour1.png")
 
     -- UI
     uiLabelImg = love.graphics.newImage("assets/sprites/UI/label.png")
@@ -338,6 +350,7 @@ local function loadAssets()
     -- backgroundShader = love.graphics.newShader("background", "Shaders/background.glsl")
     glowShader = love.graphics.newShader("glow", "Shaders/glow.glsl")
     arcadeBezelShader = love.graphics.newShader("arcadeBezel", "Shaders/arcadeBezel.frag")
+    colorGradingShader = love.graphics.newShader("colorGrading", "Shaders/colorGrading.frag")
 
     -- load spriteSheets
     impactVFX = love.graphics.newImage("assets/sprites/VFX/Impact.png")
@@ -356,7 +369,6 @@ local function loadAssets()
     Player.loadJsonValues()
     damageRipples.load()
     Crooky:load()
-    
 end
 
 dmgVFXOn = true
@@ -904,6 +916,9 @@ end
 local backgroundOpacity = {value = 0}
 local loadTime
 function love.load()
+    print(love.graphics.getRendererInfo())
+    print(love.graphics.getCanvasFormats())
+
     love.mouse.setVisible(true)
     math.randomseed(os.time())
 

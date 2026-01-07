@@ -16,4 +16,5 @@ function love.conf(t)
     -- Performance
     --t.gammacorrect = true                    -- Enable gamma-correct rendering
     --t.window.refreshrate = 120                -- Target refresh rate (cap FPS)
+    
 end

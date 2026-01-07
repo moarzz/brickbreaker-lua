@@ -4599,7 +4599,7 @@ function powerupPickup(powerup, length)
     end
     print("powerup type : " .. powerup.type)
     if powerup.type == "dollarBill" then
-        local moneyGain = math.random(1,5)
+        local moneyGain = math.random(1,4)
         if moneyGain > 2 then
             moneyGain = 1
         end   
