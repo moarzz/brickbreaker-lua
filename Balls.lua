@@ -385,9 +385,9 @@ local function brickDestroyed(brick)
     if hasItem("Scavenger") then
         for i=1, itemCount("Scavenger") do
             if hasItem("Four Leafed Clover") then
-                chanceMult = chanceMult + 1.2
+                chanceMult = chanceMult + 1.5
             else
-                chanceMult = chanceMult + 0.6
+                chanceMult = chanceMult + 0.75
             end
         end
     end
@@ -912,7 +912,7 @@ local function shoot(gunName, ball)
             local speedYref = math.sin(angle) * bulletSpeed
             if shootSFXCooldown <= 0 then
                 playSoundEffect(gunShootSFX, 1, 0.9, false, true)
-                shootSFXCooldown = 0.05
+                shootSFXCooldown = 0.02
             end
             local critChance = hasItem("Four Leafed Clover") and 40 or 20
             table.insert(bullets, {
@@ -990,7 +990,7 @@ local function shoot(gunName, ball)
             end
             if shootSFXCooldown <= 0 then
                 playSoundEffect(gunShootSFX, 1, 0.9, false, true)
-                shootSFXCooldown = 0.05
+                shootSFXCooldown = 0.02
             end
             local speedOffset = (paddle.currentSpeedX or 0) * 0.4
             local bulletDamage = getStat(gun.name, "damage")
@@ -1375,7 +1375,7 @@ local function turretShoot(turret, typeMod)
         local currentTime = love.timer.getTime()
         if shootSFXCooldown <= 0 then
             playSoundEffect(gunShootSFX, 1, 0.9, false, true)
-            shootSFXCooldown = 0.05
+            shootSFXCooldown = 0.02
         end
         local bulletSpeed = turretType.bulletSpeed or 2000
         local speed = {x =math.cos((turret.angle + turret.angleOffset) - math.pi/2) * bulletSpeed, y = math.sin((turret.angle + turret.angleOffset) - math.pi/2) * bulletSpeed}
@@ -1653,7 +1653,7 @@ local function fire(techName)
             for i=1, iterations do
                 local turretType = unlockedBallTypes["Gun Turrets"]
                 local id = currentTurretId
-                local destination = {x = (math.random(50, screenWidth - 50)), y = math.random(math.max(paddle.y + 50, screenHeight - 300), screenHeight - 25)}
+                local destination = {x = (math.random(math.max(50, paddle.x + paddle.width/2 - 100), math.min(screenWidth - 50, paddle.x + paddle.width/2 + 100))), y = math.random(math.max(paddle.y + 50, screenHeight - 300), screenHeight - 25)}
                 local startDir = math.random(0,1)
                 local turret = {
                     id = currentTurretId,
@@ -1705,7 +1705,7 @@ local function fire(techName)
             for i=1, iterations do
                 local turretType = unlockedBallTypes["Laser Turrets"]
                 local id = currentTurretId
-                local destination = {x = (math.random(50, screenWidth - 50)), y = math.random(math.max(paddle.y + 50, screenHeight - 300), screenHeight - 25)}
+                local destination = {x = (math.random(math.max(50, paddle.x + paddle.width/2 - 100), math.min(screenWidth - 50, paddle.x + paddle.width/2 + 100))), y = math.random(math.max(paddle.y + 50, screenHeight - 300), screenHeight - 25)}
                 local startDir = math.random(0,1)
                 local turretValueX = mapRangeClamped(destination.x, 0, screenWidth, -100, 100)
                 local turret = {
@@ -1916,7 +1916,7 @@ local function fire(techName)
                 local turretType = unlockedBallTypes["Mortar Turrets"]
                 local id = currentTurretId
                 local destinationY = math.random(math.max(paddle.y + 25, paddle.y + 75), screenHeight - 25)
-                local destination = {x = math.max(50, math.min(screenWidth - 50, paddle.x + math.random(-400, 400))), y = destinationY}
+                local destination = {x = (math.random(math.max(50, paddle.x + paddle.width/2 - 100), math.min(screenWidth - 50, paddle.x + paddle.width/2 + 100))), y = math.random(math.max(paddle.y + 50, screenHeight - 300), screenHeight - 25)}
                 local startDir = math.random(0,1)
                 local turret = {
                     id = currentTurretId,

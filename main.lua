@@ -1896,7 +1896,7 @@ function drawBricks()
         if brick.destroyed or brick.type == "gold" or brick.type == "fast" then
             --? dont draw a brick if its been destroyed
         else -- brick is not gold
-            local text = tostring(brick.health);
+            --[[local text = tostring(brick.health);
 
             TextBatching.addText(
                 text,
@@ -1907,7 +1907,7 @@ function drawBricks()
                 1,
                 love.graphics.getFont():getWidth(text) / 2,
                 texHeight
-            );
+            );]]
         end
         
         ::continue::
@@ -1952,11 +1952,11 @@ function drawBricks()
             -- Draw health text (black outline)
             local text = tostring(brick.health)
             love.graphics.setColor(0, 0, 0)
-            love.graphics.print(text, centerX, centerY, 0, 1, 1, love.graphics.getFont():getWidth(text) / 2, love.graphics.getFont():getHeight() / 2)
+            -- love.graphics.print(text, centerX, centerY, 0, 1, 1, love.graphics.getFont():getWidth(text) / 2, love.graphics.getFont():getHeight() / 2)
             
             -- Draw health text (white)
             love.graphics.setColor(1, 1, 1)
-            love.graphics.print(text, centerX, centerY, 0, 1, 1, love.graphics.getFont():getWidth(text) / 2, love.graphics.getFont():getHeight() / 2)
+            -- love.graphics.print(text, centerX, centerY, 0, 1, 1, love.graphics.getFont():getWidth(text) / 2, love.graphics.getFont():getHeight() / 2)
         end
     end
 
@@ -2041,7 +2041,7 @@ function drawBricks()
             );
             local text = tostring(fastBrick.health);
             love.graphics.setColor(1,1,1,1)
-            love.graphics.print(
+            --[[love.graphics.print(
                 text,
                 fastBrick.x + fastBrick.width / 2 + (fastBrick.drawOffsetX or 0),
                 fastBrick.y + fastBrick.height / 2 + (fastBrick.drawOffsetY or 0),
@@ -2050,7 +2050,7 @@ function drawBricks()
                 1,
                 love.graphics.getFont():getWidth(text) / 2,
                 texHeight
-            );
+            );]]
         end
         ::continue::
     end

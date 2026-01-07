@@ -2,7 +2,7 @@ local BallAttachedLaser = ItemBase.new();
 BallAttachedLaser.__index = BallAttachedLaser;
 BallAttachedLaser.name = "Ball Attached Laser";
 BallAttachedLaser.description = "<font=bold>On wall bounce<font=default>\nBalls shoot a laser in a random direction that deals their <color=damage>damage";
-BallAttachedLaser.rarity = "common";
+BallAttachedLaser.rarity = "rare";
 BallAttachedLaser.imageReference = "assets/sprites/UI/ItemIcons/Ball-Laser.png";
 
 function BallAttachedLaser.new()

@@ -724,9 +724,9 @@ local function drawBallStats()
         local dmgX = currentX + statsWidth*1/4
         local dmgY = labelY + 13
         love.graphics.setColor(0,0,0,1)
-        love.graphics.print(dmgText, dmgX + 4 + dmgOffsetX, dmgY + 4,math.rad(-2.5))
+        -- love.graphics.print(dmgText, dmgX + 4 + dmgOffsetX, dmgY + 4,math.rad(-2.5))
         love.graphics.setColor(1,0.25,0.25,1)
-        love.graphics.print(dmgText, dmgX + dmgOffsetX, dmgY, math.rad(-2.5))
+        -- love.graphics.print(dmgText, dmgX + dmgOffsetX, dmgY, math.rad(-2.5))
         love.graphics.setColor(1,1,1,1)
         
 
