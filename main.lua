@@ -8,7 +8,7 @@ Trail = require("trail") -- trail logic
 EventQueueRef = require("Libraries.eventQueue.eventQueue")
 Events = require("Libraries.eventQueue.events")
 
--- require("limitFPS"); -- limit the fps
+require("limitFPS"); -- limit the fps
 
 UtilityFunction = require("UtilityFunction") -- utility functions
 DifficultyModifiers = require("difficultyModifiers") -- difficulty modifiers

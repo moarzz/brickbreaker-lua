@@ -178,7 +178,7 @@ function saveGameData()
         }
     }
     local encoded = json.encode(data, { indent = true })
-    -- love.filesystem.write(saveFilePath, encoded)
+    love.filesystem.write(saveFilePath, encoded)
 end
 
 -- This file contains the player class, it manages his level, his abilities and his stats

@@ -2,6 +2,7 @@ local WindowCorrector = {}; -- not a class
 local self = WindowCorrector; -- for readability, does not affect anything outside of this script
 
 local defaultCanvasCount = 3;
+local isWeb = love.system.getOS() == "Web";
 
 function WindowCorrector.init(canvasCount)
     -- target dimmensions for screen
@@ -402,16 +403,26 @@ function WindowCorrector.stopDraw()
     love.graphics.setColor(1,1,1,1);
     
 
-    -- apply arcade bezel shader as post-process effect
-    if arcadeBezelOn then
+    -- apply arcade bezel shader as post-process effect (skip on web builds)
+    if not isWeb and arcadeBezelOn then
         love.graphics.setShader("arcadeBezel")
     end
+    love.graphics.setCanvas(); -- back to screen
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(self.canvases[1]);
-    -- love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
-    love.graphics.setShader()
-    love.graphics.draw(screenContour,0,0)
-    -- love.graphics.draw(bezelImg, 0, 0)
+
+    love.graphics.setShader();
+    love.graphics.setColor(1, 1, 1, 1);
+    
+    -- Draw screenContour only if it exists and we're not on web
+    if screenContour and not isWeb then
+        local actualWidth = love.graphics.getWidth();
+        local actualHeight = love.graphics.getHeight();
+        local scaleX = actualWidth / self.targetWidth;
+        local scaleY = actualHeight / self.targetHeight;
+        love.graphics.draw(screenContour, 0, 0, 0, scaleX, scaleY);
+    end
+    print("realWidth:", self.realWidth, "realHeight:", self.realHeight, "targetWidth:", self.targetWidth, "targetHeight:", self.targetHeight);
 
     self.errorDrawCalls = true; -- error draw calls since theyre not done in the WindowCorrector
 end
