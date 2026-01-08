@@ -1,5 +1,6 @@
 local targetFPS = 60;
 local targetDT = 1 / targetFPS;
+local isWeb = love.system.getOS() == "Web";
 
 function love.run()
     LoveAffix.makeFunctionInjectable("timer", "getDelta");

@@ -173,13 +173,17 @@ end
 
 local moneyPopups = {}
 local moneyPopupId = 0
+local isWeb = love.system.getOS() == "Web"
 function createMoneyPopup(value, x, y)
+    if isWeb then
+        return -- Disable money popups on WebGL for performance
+    end
     local xOffset, yOffset = math.random(-70,70), math.random(-60,-80)
     local popup = {
         x = x,
         y = y,
-        speedX = xSpeed,
-        speedY = ySpeed,
+        speedX = 0,
+        speedY = 0,
         value = value,
         scale = 0,
         id = "Money Popup : " .. moneyPopupId,
@@ -213,8 +217,8 @@ function plusStatPopup(text, x, y)
         text = text,
         x = x,
         y = y,
-        speedX = xSpeed,
-        speedY = ySpeed,
+        speedX = 0,
+        speedY = 0,
         scale = 0,
         id = "Plus Stat Popup : " .. plusStatPopupId,
     }
@@ -298,6 +302,7 @@ function gainMoneyWithAnimations(moneyGain, itemID, playSFX)
     
     print("gaining money: " .. moneyGain .. " with itemID: " .. (itemID or "NO ID"))
     EventQueue:addEventToQueue(EVENT_POINTERS.money_gain, 0.3, function() 
+        
         -- First event: Show animation and add money
         if itemID then -- Changed from itemId to itemName check
             itemTriggerAnimation(itemID)

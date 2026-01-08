@@ -8,7 +8,7 @@ Trail = require("trail") -- trail logic
 EventQueueRef = require("Libraries.eventQueue.eventQueue")
 Events = require("Libraries.eventQueue.events")
 
-require("limitFPS"); -- limit the fps
+-- require("limitFPS"); -- limit the fps
 
 UtilityFunction = require("UtilityFunction") -- utility functions
 DifficultyModifiers = require("difficultyModifiers") -- difficulty modifiers
@@ -1102,7 +1102,7 @@ local function moveBricksDown(dt)
                 if brick.y <= screenHeight/2 then     
                     fastSpeed = mapRangeClamped(brick.y, 0, screenHeight/2, 100, 40)
                 else
-                    fastSpeed = mapRangeClamped(brick.y, screenHeight/2, screenHeight - 50, 40, 4)
+                    fastSpeed = mapRangeClamped(brick.y, screenHeight/2, screenHeight - 75, 40, 4)
                 end
                 brick.y = brick.y + dt * mapRangeClamped(brick.y, 0, screenHeight, 80, 15) * (brick.speedMult or 1)
             else
