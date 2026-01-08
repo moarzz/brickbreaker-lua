@@ -2937,7 +2937,8 @@ function love.keypressed(key)
         if key == "n" then
             -- local moneyBefore = Player.money
 
-            Player.setMoney(0);
+            local testTween = tween.new(2, moneyScale, {scale = 0}, 'inOutQuad')
+            addTweenToUpdate(testTween)
             -- Player.money = 0
             -- richGetRicherUpdate(moneyBefore, Player.money)
         end

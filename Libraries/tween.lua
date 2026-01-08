@@ -28,6 +28,9 @@ local tween = {
   ]]
 }
 
+-- Detect if we're on web
+local isWeb = love.system and love.system.getOS() == "Web"
+
 -- easing
 
 -- Adapted from https://github.com/EmmanuelOga/easing. See LICENSE.txt for credits.
@@ -262,6 +265,9 @@ local function copyTables(destination, keysTable, valuesTable)
 end
 
 local function checkSubjectAndTargetRecursively(subject, target, path)
+  -- SKIP VALIDATION ON WEB - it causes freezes
+  if isWeb then return end
+  
   path = path or {}
   local targetType, newPath
   for k,targetValue in pairs(target) do
@@ -302,14 +308,10 @@ local function performEasingOnSubject(subject, target, initial, clock, duration,
   local t,b,c,d
   for k,v in pairs(target) do
     if type(v) == 'table' then
-      if subject and subject[k] and initial and initial[k] then
-        performEasingOnSubject(subject[k], v, initial[k], clock, duration, easing)
-      end
+      performEasingOnSubject(subject[k], v, initial[k], clock, duration, easing)
     else
-      if subject and initial and initial[k] then
-        t,b,c,d = clock, initial[k], v - initial[k], duration
-        subject[k] = easing(t,b,c,d)
-      end
+      t,b,c,d = clock, initial[k], v - initial[k], duration
+      subject[k] = easing(t,b,c,d)
     end
   end
 end
@@ -377,7 +379,7 @@ function tween.new(duration, subject, target, easing, id, updateWhenPaused)
     target    = target,
     easing    = easing,
     clock     = 0,
-    updateWhenPaused = updateWhenPaused or false  -- defaults to true
+    updateWhenPaused = updateWhenPaused or false
   }, Tween_mt)
 end
 
