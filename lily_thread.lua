@@ -27,6 +27,14 @@
 local love = require("love")
 require("love.event")
 require("love.data")
+
+-- Check if we're in a thread (arguments will be passed)
+local isThread = select(1, ...) ~= nil
+if not isThread then
+	-- Not in a thread, exit (web build will handle this)
+	return
+end
+
 -- Non-thread-safe modules
 local ntsModules = {"graphics", "window"}
 -- But love.graphics must be treated specially
@@ -122,13 +130,13 @@ if love.filesystem then
 		return assert(love.filesystem.read(t[1], t[2]))
 	end)
 	lilyHandlerFunc("readFile", 1, function(t)
-		return t[1].read(t[1], t[2])
+		return t[1]:read(t[2])
 	end)
 	lilyHandlerFunc("write", 2, function(t)
 		return assert(love.filesystem.write(t[1], t[2], t[3]))
 	end)
 	lilyHandlerFunc("writeFile", 2, function(t)
-		return t[1].write(t[1], t[2], t[3])
+		return t[1]:write(t[2], t[3])
 	end)
 end
 
@@ -166,7 +174,7 @@ end
 
 if love.image then
 	lilyHandlerFunc("encodeImageData", 1, function(t)
-		return t[1].encode(t[1], t[2])
+		return t[1]:encode(t[2])
 	end)
 	lilyHandlerFunc("newImageData", 1, function(t)
 		return love.image.newImageData(t[1])
@@ -175,7 +183,7 @@ if love.image then
 		return love.image.newCompressedData(t[1])
 	end)
 	lilyHandlerFunc("pasteImageData", 7, function(t)
-		return t[1].paste(t[1], t[2], t[3], t[4], t[5], t[6], t[7])
+		return t[1]:paste(t[2], t[3], t[4], t[5], t[6], t[7])
 	end)
 end
 

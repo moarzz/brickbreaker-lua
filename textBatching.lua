@@ -59,27 +59,25 @@ function TextBatching.init()
 end
 
 function TextBatching.generateTexture()
-    local canv = love.graphics.newCanvas(self.fontWidth[11] * 10, self.fontHeight);
+    local canv = love.graphics.newCanvas(self.fontWidth[11] * 10, self.fontHeight)
 
-    setFont(self.fontSize);
+    setFont(self.fontSize)
 
-    love.graphics.setCanvas(canv);
-    love.graphics.setShader(); -- no shader
-    love.graphics.setColor(1,1,1); -- white
+    love.graphics.setCanvas(canv)
+    love.graphics.setShader()
+    love.graphics.setColor(1,1,1)
 
     for i = 1, 10 do
-        local char = string.sub(tostring(i), -1,-1);
-
-        love.graphics.print(char, (i - 1) * self.fontWidth[11], 0);
+        local char = string.sub(tostring(i), -1,-1)
+        love.graphics.print(char, (i - 1) * self.fontWidth[11], 0)
     end
 
-    love.graphics.setCanvas();
+    love.graphics.setCanvas()
 
-    local imgData = canv:newImageData();
-
-    imgData:encode("png", self.filename);
-    self.image = love.graphics.newImage(imgData);
+    -- 🔥 WEB-SAFE FIX:
+    self.image = canv
 end
+
 
 function TextBatching.generateQuads()
     self.quads = {}; -- table of quads to each sub sprite

@@ -17,22 +17,23 @@
 --    misrepresented as being the original software.
 -- 3. This notice may not be removed or altered from any source distribution.
 
--- NOTICE: For custom `love.run` users.
--- 1. You have to explicitly pass event with name "lily_resp"
---    to `love.handlers.lily_resp` along with all of it's arguments.
--- 2. When you're handling "quit" event and you integrate Lily into
---    your `love.run` loop, call `lily.quit` before `return`.
-
 -- Need love module
 local love = require("love")
 assert(love._version >= "11.0", "Lily v3.x require at least LOVE 11.0")
--- Need love.event and love.thread
+-- Need love.event
 assert(love.event, "Lily requires love.event. Enable it in conf.lua or require it manually!")
-assert(love.thread, "Lily requires love.thread. Enable it in conf.lua or require it manually!")
+
+-- Check if we're on web (no threading support)
+local isWeb = love.system and love.system.getOS() == "Web"
+local hasThreads = not isWeb and love.thread ~= nil
+
+if not isWeb and not hasThreads then
+	error("Lily requires love.thread on non-web platforms. Enable it in conf.lua or require it manually!")
+end
 
 local modulePath = select(1, ...):match("(.-)[^%.]+$")
 local lily = {
-	_VERSION = "3.0.12",
+	_VERSION = "3.0.12-web",
 	-- Loaded modules
 	modules = {},
 	-- List of threads
@@ -40,11 +41,12 @@ local lily = {
 	-- Function handler
 	handlers = {},
 	-- Request list
-	request = {}
+	request = {},
+	-- Web mode flag
+	isWebMode = isWeb
 }
 
 -- List of excluded modules to be loaded (doesn't make sense to be async)
--- PS: "event" module will be always loaded regardless.
 local excludedModules = {
 	"event",
 	"joystick",
@@ -74,58 +76,69 @@ for name in pairs(love._modules) do
 	end
 end
 
--- We have some ways to get processor count
+-- Variables used for threading (only if not web)
 local amountOfCPU = 1
-if love.system then
-	-- love.system is loaded. We can use that.
-	amountOfCPU = love.system.getProcessorCount()
-elseif love._os == "Windows" then
-	-- Windows. Use NUMBER_OF_PROCESSORS environment variable
-	amountOfCPU = tonumber(os.getenv("NUMBER_OF_PROCESSORS"))
-
-	-- We still have some workaround if that fails
-	if not(amountOfCPU) and os.execute("wmic exit") == 0 then
-		-- Use WMIC
-		local a = io.popen("wmic cpu get NumberOfLogicalProcessors")
-		a:read("*l")
-		amountOfCPU = a:read("*n")
-		a:close()
-	end
-
-	-- If it's fallback to 1, it's either very weird system configuration!
-	-- (except if the CPU only has 1 processor)
-	amountOfCPU = amountOfCPU or 1
-elseif os.execute() == 1 then
-	-- Ok we have shell support
-	if os.execute("nproc") == 0 then
-		-- Use nproc
-		local a = io.popen("nproc", "r")
-		amountOfCPU = a:read("*n")
-		a:close()
-	end
-	-- Fallback to single core (discouraged, it will perform same as love-loader)
-end
--- Limit CPU to 4. Imagine how many threads will be created when
--- someone runs this in threadripper.
-amountOfCPU = math.min(amountOfCPU, 4)
-
--- Dummy channel used to signal main thread that there's error
-local errorChannel = love.thread.newChannel()
--- Main channel used to push task
-lily.taskChannel = love.thread.newChannel()
--- Main channel used to pull task
-lily.dataPullChannel = love.thread.newChannel()
--- Main channel to determine how to push event
-lily.updateModeChannel = love.thread.newChannel()
-lily.updateModeChannel:push("automatic") -- Use LOVE event handling by default
-
--- Variable used to indicate that embedded code should be used
--- instead of loading file (lily_single)
+local errorChannel, taskChannel, dataPullChannel, updateModeChannel
 local lilyThreadScript = nil
+
+if hasThreads then
+	-- We have some ways to get processor count
+	if love.system then
+		-- love.system is loaded. We can use that.
+		amountOfCPU = love.system.getProcessorCount()
+	elseif love._os == "Windows" then
+		-- Windows. Use NUMBER_OF_PROCESSORS environment variable
+		amountOfCPU = tonumber(os.getenv("NUMBER_OF_PROCESSORS"))
+
+		-- We still have some workaround if that fails
+		if not(amountOfCPU) and os.execute("wmic exit") == 0 then
+			-- Use WMIC
+			local a = io.popen("wmic cpu get NumberOfLogicalProcessors")
+			a:read("*l")
+			amountOfCPU = a:read("*n")
+			a:close()
+		end
+
+		-- If it's fallback to 1, it's either very weird system configuration!
+		-- (except if the CPU only has 1 processor)
+		amountOfCPU = amountOfCPU or 1
+	elseif os.execute() == 1 then
+		-- Ok we have shell support
+		if os.execute("nproc") == 0 then
+			-- Use nproc
+			local a = io.popen("nproc", "r")
+			amountOfCPU = a:read("*n")
+			a:close()
+		end
+		-- Fallback to single core (discouraged, it will perform same as love-loader)
+	end
+	-- Limit CPU to 4. Imagine how many threads will be created when
+	-- someone runs this in threadripper.
+	amountOfCPU = math.min(amountOfCPU, 4)
+
+	-- Dummy channel used to signal main thread that there's error
+	errorChannel = love.thread.newChannel()
+	-- Main channel used to push task
+	taskChannel = love.thread.newChannel()
+	lily.taskChannel = taskChannel
+	-- Main channel used to pull task
+	dataPullChannel = love.thread.newChannel()
+	lily.dataPullChannel = dataPullChannel
+	-- Main channel to determine how to push event
+	updateModeChannel = love.thread.newChannel()
+	lily.updateModeChannel = updateModeChannel
+	updateModeChannel:push("automatic") -- Use LOVE event handling by default
+end
+
+-- Web mode synchronous execution queue
+local webQueue = {}
+local webProcessing = false
 
 -- Function to initialize threads. Must be declared as local
 -- then called later
 local function initThreads()
+	if not hasThreads then return end
+	
 	for i = 1, amountOfCPU do
 		-- Create thread
 		local a = love.thread.newThread(
@@ -138,7 +151,7 @@ local function initThreads()
 		-- taskChannel
 		-- dataPullChannel
 		-- updateModeChannel
-		a:start(lily.modules, errorChannel, lily.taskChannel, lily.dataPullChannel, lily.updateModeChannel)
+		a:start(lily.modules, errorChannel, taskChannel, dataPullChannel, updateModeChannel)
 		lily.threads[i] = a
 	end
 end
@@ -301,7 +314,7 @@ local function lilyEventHandler(reqID, v1, v2)
 		lily.request[reqID] = nil
 
 		-- Check for error
-		if v1 == errorChannel then
+		if v1 == errorChannel or (isWeb and v1 == "error") then
 			-- Second argument is the error message
 			lilyObject.error(lilyObject.userdata, v2, lilyObject.trace)
 		else
@@ -321,14 +334,17 @@ local function lilyEventHandler(reqID, v1, v2)
 		end
 	end
 end
+
 -- Add Lily event handler to love.handlers (lily_resp)
-love.handlers.lily_resp = lilyEventHandler
+if hasThreads then
+	love.handlers.lily_resp = lilyEventHandler
+end
 
 --- Get amount of thread for processing
 -- In most cases, this is amount of logical CPU available.
 -- @treturn number Amount of threads used by Lily.
 function lily.getThreadCount()
-	return amountOfCPU
+	return hasThreads and amountOfCPU or 0
 end
 
 --- Uninitializes Lily and used threads.
@@ -336,15 +352,17 @@ end
 -- Not calling this function in iOS and Android can cause
 -- strange crash when re-starting your game!
 function lily.quit()
+	if not hasThreads then return end
+	
 	-- Clear up the task channel
-	while lily.taskChannel:getCount() > 0 do
-		lily.taskChannel:pop()
+	while taskChannel:getCount() > 0 do
+		taskChannel:pop()
 	end
 
 	-- Push quit request in task channel
 	-- Anything that is not a table is considered as "exit"
 	for i = 1, amountOfCPU do
-		lily.taskChannel:push(i)
+		taskChannel:push(i)
 	end
 
 	-- Clean up threads
@@ -364,8 +382,8 @@ end
 
 do
 local function atomicSetUpdateMode(_, mode)
-	lily.updateModeChannel:pop()
-	lily.updateModeChannel:push(mode)
+	updateModeChannel:pop()
+	updateModeChannel:push(mode)
 end
 --- Set update mode.
 -- tell Lily to pull data by using LOVE event handler or by
@@ -375,18 +393,22 @@ function lily.setUpdateMode(mode)
 	if mode ~= "automatic" and mode ~= "manual" then
 		error("bad argument #1 to 'setUpdateMode' (\"automatic\" or \"manual\" expected)", 2)
 	end
-	-- Set update mode
-	lily.updateModeChannel:performAtomic(atomicSetUpdateMode, mode)
+	
+	if hasThreads then
+		-- Set update mode
+		updateModeChannel:performAtomic(atomicSetUpdateMode, mode)
+	end
+	-- Web mode is always "automatic" (synchronous)
 end
 end -- do
 
 local function manualProcessSingleData()
-	local count = lily.dataPullChannel:getCount()
+	local count = dataPullChannel:getCount()
 	local processed = false
 
 	if count > 0 then
 		-- Pop data
-		local data = lily.dataPullChannel:pop()
+		local data = dataPullChannel:pop()
 		-- Pass to event handler
 		lilyEventHandler(data[1], data[2], data[3])
 		processed = true
@@ -395,9 +417,91 @@ local function manualProcessSingleData()
 	return count, processed
 end
 
+-- Web mode: process one item from queue per frame
+local function webProcessQueue()
+	if #webQueue == 0 then
+		webProcessing = false
+		return
+	end
+	
+	local task = table.remove(webQueue, 1)
+	local reqID = task.reqID
+	local requestType = task.requestType
+	local args = task.args
+	
+	-- Execute synchronously
+	local success, result = pcall(function()
+		-- Get the actual LOVE function based on request type
+		if requestType == "newSource" then
+			return {love.audio.newSource(args[1], args[2])}
+		elseif requestType == "compress" then
+			return {love.data.compress("data", args[1] or "lz4", args[2], args[3]):getString()}
+		elseif requestType == "decompress" then
+			return {love.data.decompress("data", args[1], args[2]):getString()}
+		elseif requestType == "append" then
+			return {assert(love.filesystem.append(args[1], args[2], args[3]))}
+		elseif requestType == "newFileData" then
+			return {assert(love.filesystem.newFileData(args[1], args[2], args[3]))}
+		elseif requestType == "read" then
+			return {assert(love.filesystem.read(args[1], args[2]))}
+		elseif requestType == "readFile" then
+			return {args[1]:read(args[2])}
+		elseif requestType == "write" then
+			return {assert(love.filesystem.write(args[1], args[2], args[3]))}
+		elseif requestType == "writeFile" then
+			return {args[1]:write(args[2], args[3])}
+		elseif requestType == "newFont" then
+			return {love.graphics.newFont(args[1], args[2])}
+		elseif requestType == "newImage" then
+			local s, x = pcall(love.image.newImageData, args[1])
+			local imgData = s and x or love.image.newCompressedData(args[1])
+			return {love.graphics.newImage(imgData, args[2])}
+		elseif requestType == "newVideo" then
+			return {love.graphics.newVideo(args[1]), args[2]}
+		elseif requestType == "encodeImageData" then
+			return {args[1]:encode(args[2])}
+		elseif requestType == "newImageData" then
+			return {love.image.newImageData(args[1])}
+		elseif requestType == "newCompressedData" then
+			return {love.image.newCompressedData(args[1])}
+		elseif requestType == "pasteImageData" then
+			return {args[1]:paste(args[2], args[3], args[4], args[5], args[6], args[7])}
+		elseif requestType == "newSoundData" then
+			return {love.sound.newSoundData(args[1], args[2], args[3], args[4])}
+		elseif requestType == "newVideoStream" then
+			return {love.video.newVideoStream(args[1])}
+		else
+			error("Unknown request type: " .. tostring(requestType))
+		end
+	end)
+	
+	if success then
+		lilyEventHandler(reqID, true, result)
+	else
+		lilyEventHandler(reqID, "error", result)
+	end
+end
+
+-- Hook into love.update to process web queue
+if isWeb then
+	local oldUpdate = love.update
+	function love.update(dt)
+		if oldUpdate then oldUpdate(dt) end
+		webProcessQueue()
+	end
+end
+
 --- Pull processed data from other threads.
 -- Signals other loader object (calling their callback function) when necessary.
 function lily.update(timeout)
+	if isWeb then
+		-- Web mode: process all pending items
+		while #webQueue > 0 do
+			webProcessQueue()
+		end
+		return 0, 0
+	end
+	
 	timeout = timeout or -1
 	local left = -1
 	local count = 0
@@ -462,15 +566,25 @@ local function newLilyFunction(requestType, handlerFunc)
 		this.values = nil
 		this.trace = debug.traceback(tracebackname)
 
-		-- Push task
-		-- See structure in lily_thread.lua
-		local treq = {reqID, requestType, #args}
-		-- Push arguments
-		for i = 1, #args do
-			treq[i + 3] = args[i]
+		if isWeb then
+			-- Web mode: add to synchronous queue
+			table.insert(webQueue, {
+				reqID = reqID,
+				requestType = requestType,
+				args = args
+			})
+			webProcessing = true
+		else
+			-- Thread mode: push task
+			local treq = {reqID, requestType, #args}
+			-- Push arguments
+			for i = 1, #args do
+				treq[i + 3] = args[i]
+			end
+			-- Add to task channel
+			taskChannel:push(treq)
 		end
-		-- Add to task channel
-		lily.taskChannel:push(treq)
+		
 		-- Insert to request table (to prevent GC collecting it)
 		lily.request[reqID] = this
 		-- Return
@@ -601,9 +715,20 @@ if love.graphics then
 			if #multiCount == 0 then
 				-- Insert to request table
 				lily.request[reqID] = this
-				-- Create and push new task
-				local treq = {reqID, "newImage", 2, layers, setting}
-				lily.taskChannel:push(treq)
+				
+				if isWeb then
+					-- Web mode
+					table.insert(webQueue, {
+						reqID = reqID,
+						requestType = "newImage",
+						args = {layers, setting}
+					})
+					webProcessing = true
+				else
+					-- Create and push new task
+					local treq = {reqID, "newImage", 2, layers, setting}
+					taskChannel:push(treq)
+				end
 			else
 				this.multi = lily.loadMulti(multiCount)
 				:setUserData({this, setting})
@@ -677,89 +802,7 @@ function lily.loadMulti(tabdecl)
 end
 
 -- do not remove this comment!
-initThreads()
+if hasThreads then
+	initThreads()
+end
 return lily
-
---[[
-Changelog:
-v3.0.12: 23-11-2021
-> Fixed lily.update count value always 1 if no timeout is specified and there are no pending queues.
-
-v3.0.11: 01-10-2021
-> Added timeout parameter to lily.update. Requires love.timer.
-
-v3.0.10: 23-07-2021
-> Fixed lily.newArrayImage and lily.newVolumeImage
-
-v3.0.9: 14-06-2021
-> Any lily request now saves the traceback of the caller and will be printed on error
-
-v3.0.8: 11-03-2021
-> Fixed `lily.setUpdateMode`
-> Thread: call `collectgarbage()` twice before serving
-
-v3.0.7: 15-06-2020
-> Fixed `lily.newFont` ignores type hinting and DPI scale
-
-v3.0.6: 08-04-2019
-> Reorder lily.newImage image loading function
-> Fixed lily.newCubeImage is missing
-
-v3.0.5: 26-12-2018
-> Limit threads to 4
-
-v3.0.4: 25-11-2018
-> Fixed `lily.decompress` error when passing Data object in LOVE 11.1 and earlier
-> Fixed `lily.compress` error
-> Make error message more comprehensive
-
-v3.0.3: 12-09-2018
-> Explicitly check for LOVE 11.0
-> `lily.compress` and `lily.decompress` now follows v2.x API
-> Fixed multi:getValues() errors even multi:isComplete() is true
-
-v3.0.2: 18-07-2018
-> Fixed calling `lily.newCompressedData` cause Lily thread to crash (fix issue #1)
-
-v3.0.1: 16-07-2018
-> Fixed `lily.newFont` ignores size parameter
-
-v3.0.0: 13-06-2018
-> Major refactoring
-> Allow to set update mode, whetever to use Lily style (automatic) or love-loader style (manual)
-> New functions: newArrayImage and newVolumeImage (only on supported systems)
-> Loading speed improvements
-
-v2.0.8: 09-06-2018
-> Fixed additional arguments were not passed to task handler in separate thread
-> Make error message more meaningful (but the stack traceback is still meaningless)
-
-v2.0.7: 06-06-2018
-> Fixed `lily.quit` deadlock.
-
-v2.0.6: 05-06-2018
-> Added `lily.newCubeImage`
-> Fix error handler function signature incorrect for MultiLilyObject
-> Added `MultiLilyObject:getLoadedCount()`
-
-v2.0.5: 02-05-2018
-> Fixed LOVE 11.0 detection
-
-v2.0.4: 09-01-2018
-> Fixed if love.data emulation is used in 0.10.0
-
-v2.0.2: 04-01-2018
-> Fixed random crash (again)
-> Fixed when lily in folder, it doesn't work
-
-v2.0.1: 03-01-2018
-> Fixed random crash
-
-v2.0.0: 01-01-2018
-> Support `newVideoStream`
-> Support multi loading (`lily.loadMulti`)
-> More methods for `LilyObject`
-
-v1.0.0: 21-12-2017
-> Initial Release
-]]

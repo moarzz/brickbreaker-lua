@@ -33,6 +33,7 @@ local Explosion = require("particleSystems.explosion") -- Explosion particle sys
 BackgroundShader = require("backgroundShader");
 TextBatching = require("textBatching");
 
+
 usingMoneySystem = false
 usingNormalXpSystem = true
 goldEarnedFrl = 0 -- ignore, mais delete pas
@@ -1518,7 +1519,7 @@ local function memLeakCheck(dt)
         memLeakLog = memLeakLog .. logText
 
         -- Write entire log to file (overwrites old content)
-        love.filesystem.write("memoryCheckLog.txt", memLeakLog)
+        -- love.filesystem.write("memoryCheckLog.txt", memLeakLog)
 
         -- (Optional) print where it's being written
         print(logText)

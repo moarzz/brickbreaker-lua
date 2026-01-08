@@ -308,7 +308,7 @@ function createPowerupG(Type)
 end
 
 local function getRandomPowerupType()
-    local powerupTypes = {"moneyBag", "nuke", "acceleration", "doubleDamage"}
+    local powerupTypes = {"moneyBag", "nuke", --[["acceleration",]] "doubleDamage"}
     local powerup = powerupTypes[math.random(#powerupTypes)] 
     --[[if getHighestBrickY() < screenHeight - 400 then
         local powerupTypesNoFreeze = {"moneyBag", "nuke", "acceleration", "doubleDamage"}
@@ -2698,7 +2698,7 @@ local function ballListInit()
             end,
             stats = {
                 ammo = 9,
-                cooldown = 11,
+                cooldown = 10,
                 damage = 1,
             },
         },
