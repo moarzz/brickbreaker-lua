@@ -2,7 +2,7 @@ local W95_CursorIndicator = {}
 
 W95_CursorIndicator.__index = W95_CursorIndicator
 
-Textures.getTexture('crooky/mouse/hand', true)
+-- Textures.getTexture('crooky/mouse/hand', true)
 
 function W95_CursorIndicator.newCursorIndicator(pointAtX, pointAtY, pointDir, timerOffset, pointType)
     local instance = setmetatable({}, W95_CursorIndicator)

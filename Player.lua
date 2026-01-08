@@ -178,7 +178,7 @@ function saveGameData()
         }
     }
     local encoded = json.encode(data, { indent = true })
-    love.filesystem.write(saveFilePath, encoded)
+    -- love.filesystem.write(saveFilePath, encoded)
 end
 
 -- This file contains the player class, it manages his level, his abilities and his stats
@@ -432,11 +432,6 @@ function Player.levelUp()
         Player.choosingUpgrade = true -- Set the flag to indicate leveling up
     else
         Player.onLevelUp()
-    end
-
-    -- crooky
-    if (not firstRunCompleted) and Player.level == 2 then
-        Crooky:giveInfo("run", "firstLevelUp")
     end
 
     Player.xp = 0

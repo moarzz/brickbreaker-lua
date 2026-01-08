@@ -10,9 +10,6 @@ Events = require("Libraries.eventQueue.events")
 
 require("limitFPS"); -- limit the fps
 
-Textures = require("textures") -- for CROOKYYYYY
-Crooky = require("crooky") -- tax evasion goat
-
 UtilityFunction = require("UtilityFunction") -- utility functions
 DifficultyModifiers = require("difficultyModifiers") -- difficulty modifiers
 Player = require("Player") -- player logic
@@ -351,7 +348,6 @@ local function loadAssets()
     -- backgroundShader = love.graphics.newShader("background", "Shaders/background.glsl")
     glowShader = love.graphics.newShader("glow", "Shaders/glow.glsl")
     arcadeBezelShader = love.graphics.newShader("arcadeBezel", "Shaders/arcadeBezel.frag")
-    colorGradingShader = love.graphics.newShader("colorGrading", "Shaders/colorGrading.frag")
 
     -- load spriteSheets
     impactVFX = love.graphics.newImage("assets/sprites/VFX/Impact.png")
@@ -369,7 +365,6 @@ local function loadAssets()
 
     Player.loadJsonValues()
     damageRipples.load()
-    Crooky:load()
 end
 
 dmgVFXOn = true
@@ -992,12 +987,10 @@ function love.load()
 
     loadGameData()
     love.audio.setVolume(globalVolume or 1)
-    Crooky:setVisible(not firstRunCompleted)
 
     backgroundMusic:setVolume(musicVolume/3)
     love.window.setFullscreen(fullScreenCheckbox);
 
-    Crooky:giveInfo("game", "open")
     loadTime = love.timer.getTime()
     
 end
@@ -1307,7 +1300,6 @@ local function gameFixedUpdate(dt)
         print("Draw calls: " .. stats.drawcallsbatched, 10, 10)
     end
 
-    Crooky:update(dt) -- Update Crooky character
 
     -- Update confetti system
     if confettiSystem then
@@ -1657,7 +1649,6 @@ function drawMenu()
         playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.START_SELECT -- Go to selection screen
         love.mouse.setVisible(true)
-        -- Crooky:giveInfo("game", "startSelect")
 
         -- add paddle core select
         playSoundEffect(selectSFX, 1, 0.8)
@@ -1674,8 +1665,6 @@ function drawMenu()
             print("Adding weapon : " .. startingItem)
         end
 
-        -- crooky logic
-        Crooky:giveInfo("run", "start")
     end
 
     -- Settings button
@@ -1860,8 +1849,6 @@ local function drawStartSelect()
             Balls.addBall(item.name)
         end
 
-        -- crooky logic
-        Crooky:giveInfo("run", "start")
     end
 end
 
@@ -2425,9 +2412,6 @@ local function fullDraw()
         drawMenu()
         -- Draw SUIT UI elements
         suit.draw()
-        if not firstRunCompleted and false then
-            Crooky:draw()
-        end
         local opacity = mapRange(love.timer.getTime() - loadTime, 0, 2.5, 1, 0)
         love.graphics.setColor(0,0,0, opacity)
         love.graphics.rectangle("fill", -screenWidth, -screenHeight, screenWidth*3, screenHeight*3)
@@ -2448,9 +2432,7 @@ local function fullDraw()
             love.mouse.setVisible(true)
         end
         suit.draw()
-        if not firstRunCompleted and false then
-            Crooky:draw()
-        end
+
         return
     end
 
@@ -2475,9 +2457,7 @@ local function fullDraw()
             love.mouse.setVisible(true)
         end
 
-        if not firstRunCompleted and false then
-            Crooky:draw()
-        end
+
         return
     end
 
@@ -2602,9 +2582,6 @@ local function fullDraw()
     suit.draw()
     
 
-    if (not firstRunCompleted) and currentGameState == GameState.PLAYING and false then
-        Crooky:draw()
-    end
 
     -- why is this not being displayed in front of Player.money???????
     drawMoneyPopups()
@@ -2699,10 +2676,7 @@ function finishUpgrading()
     setMusicEffect("normal")
     love.mouse.setVisible(false)
 
-    -- crooky logic
-    if Player.level == 2 and not firstRunCompleted then
-        Crooky:giveInfo("run", "firstLevelUpEnd")
-    end
+
 end
 
 damageNumbersOn = true
