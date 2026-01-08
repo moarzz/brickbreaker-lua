@@ -404,7 +404,7 @@ function WindowCorrector.stopDraw()
     
 
     -- apply arcade bezel shader as post-process effect (skip on web builds)
-    if not isWeb and arcadeBezelOn then
+    if arcadeBezelOn then
         love.graphics.setShader("arcadeBezel")
     end
     love.graphics.setCanvas(); -- back to screen
@@ -415,14 +415,13 @@ function WindowCorrector.stopDraw()
     love.graphics.setColor(1, 1, 1, 1);
     
     -- Draw screenContour only if it exists and we're not on web
-    if screenContour and not isWeb then
-        local actualWidth = love.graphics.getWidth();
-        local actualHeight = love.graphics.getHeight();
+    if screenContour then
+        local actualWidth = love.graphics.getPixelWidth();
+        local actualHeight = love.graphics.getPixelHeight();
         local scaleX = actualWidth / self.targetWidth;
         local scaleY = actualHeight / self.targetHeight;
         love.graphics.draw(screenContour, 0, 0, 0, scaleX, scaleY);
     end
-    print("realWidth:", self.realWidth, "realHeight:", self.realHeight, "targetWidth:", self.targetWidth, "targetHeight:", self.targetHeight);
 
     self.errorDrawCalls = true; -- error draw calls since theyre not done in the WindowCorrector
 end

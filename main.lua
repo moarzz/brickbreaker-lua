@@ -35,6 +35,7 @@ usingMoneySystem = false
 usingNormalXpSystem = true
 goldEarnedFrl = 0 -- ignore, mais delete pas
 local startingItemName = nil
+local isWeb = love.system.getOS() == "Web";
 
 -- Cache for brick HP text objects
 local brickTextCache = {
@@ -2704,7 +2705,7 @@ function love.keypressed(key)
         end
     end
 
-    if key == "escape" then
+    if (key == "escape" and not isWeb) or (key == "p" and isWeb) then
         if currentGameState == GameState.PLAYING then
             playSoundEffect(selectSFX, 1, 0.8)
             if not Player.dead then
