@@ -302,10 +302,14 @@ local function performEasingOnSubject(subject, target, initial, clock, duration,
   local t,b,c,d
   for k,v in pairs(target) do
     if type(v) == 'table' then
-      performEasingOnSubject(subject[k], v, initial[k], clock, duration, easing)
+      if subject and subject[k] and initial and initial[k] then
+        performEasingOnSubject(subject[k], v, initial[k], clock, duration, easing)
+      end
     else
-      t,b,c,d = clock, initial[k], v - initial[k], duration
-      subject[k] = easing(t,b,c,d)
+      if subject and initial and initial[k] then
+        t,b,c,d = clock, initial[k], v - initial[k], duration
+        subject[k] = easing(t,b,c,d)
+      end
     end
   end
 end

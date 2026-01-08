@@ -2972,6 +2972,7 @@ function Balls.initialize()
     resetGoldBricksValues()
     permanentItemBonuses = {}
     resetXpStuff()
+    resetBallAttachedLasers()
 
     -- sets which items should be visible
     Items.setAllVisible(true)
@@ -3629,6 +3630,10 @@ end
 
 local BallAttachedLasers = {}
 local BallAttachedLaserId = 0
+function resetBallAttachedLasers()
+    BallAttachedLasers = {}
+    BallAttachedLaserId = 0
+end
 local function shootRandomLaserFromBall(ball, hitType)
     local laser = {
         id = BallAttachedLaserId,

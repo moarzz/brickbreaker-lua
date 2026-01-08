@@ -999,7 +999,7 @@ function getHighestBrickY(lowestInstead)
     lowestInstead = lowestInstead or false
     -- Defensive: ensure bricks is always a table
     if type(bricks) ~= "table" then bricks = {} end
-    local highestY = -math.huge  -- Start with lowest possible number
+    local highestY = -999999  -- Start with lowest possible number (WebGL safe)
     for _, brick in ipairs(bricks) do
         if lowestInstead then
             if not brick.destroyed and brick.y < highestY then

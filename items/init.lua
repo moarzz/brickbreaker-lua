@@ -212,7 +212,7 @@ function Items.getRandomItem(allowInvisible)
     local multiplier = 1
     if hasItem("Rabbit's Foot") then
         for i=1, itemCount("Rabbit's Foot") do
-            multiplier = multiplier + 0.4
+            multiplier = multiplier + 0.5
         end
     end
     local randRarity = math.min(1, love.math.random() * multiplier); -- [0-1)

@@ -287,6 +287,15 @@ local pausedUpgradeNumbers = {}
 
 function gainMoneyWithAnimations(moneyGain, itemID, playSFX)
     playSFX = playSFX or false
+    
+    -- Safety initialization for WebGL compatibility
+    if not visualMoneyValues then
+        visualMoneyValues = {scale = 1}
+    end
+    if not visualMoneyValues.scale then
+        visualMoneyValues.scale = 1
+    end
+    
     print("gaining money: " .. moneyGain .. " with itemID: " .. (itemID or "NO ID"))
     EventQueue:addEventToQueue(EVENT_POINTERS.money_gain, 0.3, function() 
         -- First event: Show animation and add money
