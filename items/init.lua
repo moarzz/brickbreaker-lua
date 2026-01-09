@@ -215,7 +215,7 @@ function Items.getRandomItem(allowInvisible)
             multiplier = multiplier + 0.5
         end
     end
-    local randRarity = math.min(1, love.math.random() * multiplier); -- [0-1)
+    local randRarity = math.min(1, love.math.random()) * multiplier; -- [0-1)
     local rarity = nil;
     -- local dif = 0;
     -- print(randRarity);

@@ -8,7 +8,10 @@ Trail = require("trail") -- trail logic
 EventQueueRef = require("Libraries.eventQueue.eventQueue")
 Events = require("Libraries.eventQueue.events")
 
-require("limitFPS"); -- limit the fps
+local isWeb = love.system.getOS() == "Web";
+if not isWeb then
+    require("limitFPS"); -- limit the fps
+end
 
 UtilityFunction = require("UtilityFunction") -- utility functions
 DifficultyModifiers = require("difficultyModifiers") -- difficulty modifiers
@@ -35,7 +38,7 @@ usingMoneySystem = false
 usingNormalXpSystem = true
 goldEarnedFrl = 0 -- ignore, mais delete pas
 local startingItemName = nil
-local isWeb = love.system.getOS() == "Web";
+
 
 -- Cache for brick HP text objects
 local brickTextCache = {
@@ -263,6 +266,7 @@ local function loadAssets()
     auraImg = love.graphics.newImage("assets/sprites/aura.png")
     healImg = love.graphics.newImage("assets/sprites/heal.png")
     brickImg = love.graphics.newImage("assets/sprites/brick.png")
+    brickShadowImg = love.graphics.newImage("assets/sprites/brickShadow.png")
     goldBrickImg = love.graphics.newImage("assets/sprites/goldBrick.png")
     bossBrickImg = love.graphics.newImage("assets/sprites/bossBrick.png")
     crownImg = love.graphics.newImage("assets/sprites/crown.png")
@@ -797,9 +801,9 @@ local function addMoreBricks()
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
                 local addBrickMult = mapRangeClamped(Player.level, 1, 20, 2, 1)
                 if victoryAchieved then
-                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 30, 160) * math.max(mapRange(gameTime, 600, 900, 1, 5), 1)
+                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 30, 160) * math.max(mapRange(gameTime, 600, 900, 1, 8), 1)
                 else
-                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 30, 160)
+                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 30, 160) 
                 end
                 
                 if spawnBossNextRow and not bossSpawned then
@@ -1019,7 +1023,7 @@ brickFreeze = false
 brickFreezeTime = gameTime
 function getBrickSpeedByTime()
     -- Scale speed from 0.5 to 3 over 30 minutes
-    local returnValue = mapRange(gameTime, 0, 2000, 0.25, 2.75) * (Player.currentCore == "Madness Core" and 2 or 1)
+    local returnValue = mapRange(gameTime, 0, 600, 0.25, 1) * (Player.currentCore == "Madness Core" and 2 or 1) * math.max(1, mapRange(gameTime, 600, 900, 1, 3))
     if brickFreeze == true then
         if gameTime - brickFreezeTime > 20 then
             brickFreeze = false
@@ -1925,6 +1929,14 @@ function drawBricks()
     for _, brick in ipairs(goldBricksToDraw) do
         love.graphics.setColor(1,1,1,1);
         love.graphics.draw(
+            brickShadowImg,
+            brick.x + (brick.drawOffsetX or 0),
+            brick.y + (brick.drawOffsetY or 0),
+            0,
+            brick.width / brickWidth,
+            brick.height / brickHeight
+        );
+        love.graphics.draw(
             goldBrickImg,
             brick.x + (brick.drawOffsetX or 0),
             brick.y + (brick.drawOffsetY or 0),
@@ -2040,6 +2052,14 @@ function drawBricks()
 
             if not fastBrick.destroyed then
                 love.graphics.setColor(fastBrick.color);
+                love.graphics.draw(
+                    brickShadowImg,
+                    fastBrick.x + (fastBrick.drawOffsetX or 0),
+                    fastBrick.y + (fastBrick.drawOffsetY or 0),
+                    0,
+                    fastBrick.width / brickWidth,
+                    fastBrick.height / brickHeight
+                );
                 love.graphics.draw(
                     brickImg,
                     fastBrick.x + (fastBrick.drawOffsetX or 0),

@@ -1,7 +1,7 @@
 local GrowCube = ItemBase.new();
 GrowCube.__index = GrowCube;
 GrowCube.name = "Grow Cube";
-GrowCube.description = "<font=bold>On Level Up<font=default>pay 1$ and this Item gains +1 to a random stat";
+GrowCube.description = "<font=bold>On Level Up<font=default>\nthis Item gains +1 to a random stat";
 GrowCube.rarity = "uncommon";
 GrowCube.imageReference = "assets/sprites/UI/ItemIcons/Grow-Cube.png";
 

@@ -11,6 +11,8 @@ local ballCategories = {}
 local ballList = {}
 local bouncyCoreSpeedBoost = 5
 
+local isWeb = love.system.getOS() == "Web";
+
 function Balls.getBallList()
     return ballList
 end
@@ -1475,7 +1477,7 @@ local function turretShoot(turret, typeMod)
         }
         table.insert(mortarBombs, bomb)
         local targetY = math.min(screenHeight - 80, math.max(80, getHighestBrickY(false) - (math.random(0, 400))))
-        local targetX = math.max(50, math.min(screenWidth - 50, turret.x + math.tan(turret.angle) * (targetY - turret.y)))
+        local targetX = math.max(50, math.min(screenWidth - 50, turret.x - math.tan(turret.angle + turret.angleOffset) * (targetY - turret.y)))
         local bombLocationTween = tween.new(3, bomb, {x = targetX, y = targetY}, tween.linear)
         addTweenToUpdate(bombLocationTween)
         local bombScaleTween = tween.new(1.5, bomb, {radius = 25}, tween.outExpo)
@@ -1735,7 +1737,7 @@ local function fire(techName)
                             
                             -- Deal damage if we've been on target long enough
                             
-                            local cooldownLength = 1.2/getStat("Laser Turrets", "fireRate")
+                            local cooldownLength = 1.6/getStat("Laser Turrets", "fireRate")
                             if hasItem("Spray and Pray") then
                                 local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                                 cooldownLength = cooldownLength * sprayMult
@@ -1820,7 +1822,7 @@ local function fire(techName)
                         -- laser beam draw
                         -- Draw the actual Laser Beam
                         -- Calculate charge progress
-                        local cooldownLength = 1.2/getStat("Laser Turrets", "fireRate")
+                        local cooldownLength = 1.6/getStat("Laser Turrets", "fireRate")
                         local chargeProgress = self.laserBeamTimer / cooldownLength
                         if hasItem("Spray and Pray") then
                             local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
@@ -5008,8 +5010,18 @@ function Balls.update(dt, paddle, bricks)
             end
             
             -- Trail logic (only for ball type)
-            if ball.type == "ball" and updateTrails then
+            local shouldUpdateTrail = true
+            if ball.lastTrailUpdate then
+                if gameTime - ball.lastTrailUpdate < 1/60 then
+                    shouldUpdateTrail = false
+                end
+            end
+            if not isWeb then
+                shouldUpdateTrail = true
+            end
+            if ball.type == "ball" and updateTrails and shouldUpdateTrail then
                 if ball.activeTrail then
+                    ball.lastTrailUpdate = gameTime
                     ball.activeTrail:addPosition(ball.x, ball.y);
                 else
                     ball.activeTrail = Trail.new(17, 13)
@@ -5617,6 +5629,7 @@ local function techDraw()
             love.graphics.circle("fill", bomb.x, bomb.y, bomb.radius)
         end
 
+        -- draw turret
         love.graphics.setColor(1,1,1,1)
         for _, turret in ipairs(mortarTurrets) do
             local angle = math.atan2(-turret.y, screenWidth/2 - turret.x)
