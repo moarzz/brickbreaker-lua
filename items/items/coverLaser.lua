@@ -5,7 +5,7 @@ CoverLaser.description = "After every 20 <font=big>bullets<font=default> fired, 
 CoverLaser.rarity = "uncommon";
 CoverLaser.shotCount = 0;
 CoverLaser.unique = true
--- CoverLaser.imageReference = "assets/sprites/UI/ItemIcons/Cover-Laser.png";
+CoverLaser.imageReference = "assets/sprites/UI/ItemIcons/Cover-Laser.png";
 function CoverLaser.new()
     local instance = setmetatable({}, CoverLaser):init();
 
