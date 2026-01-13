@@ -2854,11 +2854,14 @@ function love.keypressed(key)
             wallCollision = not wallCollision
         end
         if key == "3" then
-            damageThisFrame = 50
+            local powerup = {
+                type = "doubleDamage",        
+            }
+            powerupPickup(powerup, 1)
         end
 
         if key == "4" then
-            createMoneyPopup(3 ,paddle.x + paddle.width/2, paddle.y, 1000)
+            createPowerupG("acceleration")
         end
 
         -- get powerup

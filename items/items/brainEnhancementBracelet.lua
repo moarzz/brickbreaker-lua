@@ -1,7 +1,7 @@
 local brainEnhancementBracelet = ItemBase.new();
 brainEnhancementBracelet.__index = brainEnhancementBracelet;
 brainEnhancementBracelet.name = "Brain Enhancement Bracelet";
-brainEnhancementBracelet.description = "Increase XP gain by <font=bold>25%";
+brainEnhancementBracelet.description = "Increase XP gain by <font=bold>30%";
 brainEnhancementBracelet.rarity = "common";
 brainEnhancementBracelet.imageReference = "assets/sprites/UI/ItemIcons/Brain-Enhancement-Bracelet.png";
 
@@ -11,7 +11,7 @@ function brainEnhancementBracelet.new()
 end
 
 function brainEnhancementBracelet:purchase()
-    Player.xpGainMult = Player.xpGainMult + 0.25
+    Player.xpGainMult = Player.xpGainMult + 0.30
 end
 
 return brainEnhancementBracelet;
