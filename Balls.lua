@@ -312,10 +312,6 @@ end
 local function getRandomPowerupType()
     local powerupTypes = {"moneyBag", "nuke", "acceleration", "doubleDamage"}
     local powerup = powerupTypes[math.random(#powerupTypes)] 
-    --[[if getHighestBrickY() < screenHeight - 400 then
-        local powerupTypesNoFreeze = {"moneyBag", "nuke", "acceleration", "doubleDamage"}
-        powerup = powerupTypesNoFreeze[math.random(#powerupTypesNoFreeze)]
-    end]]
     return powerup
 end
 
@@ -4872,7 +4868,7 @@ function Balls.update(dt, paddle, bricks)
     local dtStep = dt / substeps
     local isMadnessCore = Player.currentCore == "Madness Core"
     local coreMult = 1
-    local hasElectroItem = (hasItem("Electromagnetic Alignment") and ball.name ~= "Phantom Ball")
+    local hasElectroItem = (hasItem("Electromagnetic Alignment"))
     local electroCount = hasElectroItem and itemCount("Electromagnetic Alignment") or 0
     local MAX_RANGE_SQ = 500 * 500
     for _, ball in ipairs(Balls) do
@@ -4977,7 +4973,7 @@ function Balls.update(dt, paddle, bricks)
             local ballName = ball.name
             local isMagnetic = ballName == "Magnetic Ball"
             local isIncrediball = ballName == "Incrediball"
-            local needsMagnetism = isMagnetic or isIncrediball or hasElectroItem
+            local needsMagnetism = isMagnetic or isIncrediball or (hasElectroItem and ball.name ~= "Phantom Ball")
             local magneticSpeedMult = (isMagnetic or isIncrediball) and 0.1 or 1
             
             -- Physics substeps
