@@ -1590,7 +1590,7 @@ local function fire(techName)
                 if accelerationOn then
                     cooldownValue = cooldownValue * 0.5
                 end
-                local timeUntilNextShot = math.max(cooldownValue, 5/getStat("Rocket Launcher", "fireRate"))
+                local timeUntilNextShot = math.max(cooldownValue, 4.5/getStat("Rocket Launcher", "fireRate"))
                 Timer.after(timeUntilNextShot, function()
                     unlockedBallTypes["Rocket Launcher"].currentAmmo = getStat("Rocket Launcher", "ammo")
                     fire("Rocket Launcher")
@@ -2752,8 +2752,8 @@ local function ballListInit()
             end,
             stats = {
                 ammo = 3,
-                cooldown = 12,
-                damage = 1,
+                cooldown = 11,
+                damage = 2,
                 range = 3,
             },
         },
@@ -2910,12 +2910,20 @@ local commonWeapons = {}
 local uncommonWeapons = {}
 local addBallsQueued = false
 
+local lastPaddleHitSoundTime = 0
+local lastWallBoopSFXTime = 0
+local function resetBoopSFXTimer()
+    lastPaddleHitSoundTime = 0
+    lastWallBoopSFXTime = 0
+end
+
 statDoubled = nil
 accelerationOn = false
 -- calls ballListInit and adds a ball to it
 function Balls.initialize()
     -- clean code/s
     lastPowerupSpawnTime = 0
+    resetBoopSFXTimer()
     changeMusic("calm")
     endlessRun = false
     powerupPopup = {startTime = 0, type = nil, scale = 0, angle = 0}
@@ -3447,7 +3455,7 @@ local function brickCollisionCheck(ball, bricksToCheck)
     return false
 end
 
-local lastPaddleHitSoundTime = 0
+
 local function paddleCollisionCheck(ball, paddle)
     if ball.name == "Phantom Ball" then
         return false
@@ -3788,7 +3796,7 @@ local function drawBallAttachedLasers()
     end
 end
 
-local lastWallBoopSFXTime = 0
+
 local function wallCollisionCheck(ball)
     local hitType = nil
     local leftWallPosition = usingMoneySystem and statsWidth or 0
