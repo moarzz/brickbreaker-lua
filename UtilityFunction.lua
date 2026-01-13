@@ -1681,12 +1681,12 @@ function damageAura(aura)
                 break
             end
         end
-        if gameTime - lastShieldSFX >= 0.1 then
+        if gameTime - lastShieldSFX >= 0.05 then
             playSoundEffect(shieldBlockSFX, 1, 1, false)
             lastShieldSFX = gameTime
         end
     else
-        if gameTime - lastShieldSFX >= 0.1 then
+        if gameTime - lastShieldSFX >= 0.05 then
             playSoundEffect(shieldBlockSFX, 1, 1, false)
             lastShieldSFX = gameTime
         end

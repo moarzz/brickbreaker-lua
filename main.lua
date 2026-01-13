@@ -2884,7 +2884,7 @@ function love.keypressed(key)
 
         -- add weapon
         if key == "7" then  
-            Balls.addBall("Mortar Turrets")
+            Balls.addBall("Laser Portals")
         end
 
         -- burn test
