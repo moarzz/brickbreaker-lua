@@ -1,7 +1,7 @@
 local Recession = ItemBase.new();
 Recession.__index = Recession;
 Recession.name = "Recession";
-Recession.description = "<font=bold>On Level Up<font=default>\npay <color=money>2$<color=white>reduce the upgrade price of all your items by 1 (min 0)";
+Recession.description = "<font=bold>On Level Up<font=default>\nreduce the upgrade price of all your items by 1 (min 0)";
 Recession.rarity = "uncommon";
 Recession.imageReference = "assets/sprites/UI/ItemIcons/Recession.png";
 
@@ -14,9 +14,6 @@ function Recession.new()
 end
 
 function Recession.events:levelUp()
-    --pay 2 dollars
-    Player.changeMoney(-2);
-
     -- reduce the price of all weapons by 1
     for _, weaponType in pairs(Balls.getUnlockedBallTypes()) do
         reducePriceWithAnimations(1, weaponType.name, self.id);

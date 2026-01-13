@@ -1185,7 +1185,7 @@ function changeMusic(newMusicStage)
         targetMusicVolume = 1
     elseif newMusicStage == "mid" then
         ref = "assets/SFX/inGame2.mp3";
-        BackgroundShader.changeShader(2); -- acid
+        BackgroundShader.changeShader(1); -- acid
     elseif newMusicStage == "intense" then
         ref = "assets/SFX/inGame3.mp3";
         BackgroundShader.changeShader(1);

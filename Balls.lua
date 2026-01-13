@@ -914,7 +914,7 @@ local function shoot(gunName, ball)
             local speedYref = math.sin(angle) * bulletSpeed
             if shootSFXCooldown <= 0 then
                 playSoundEffect(gunShootSFX, 1, 0.9, false, true)
-                shootSFXCooldown = 0.02
+                shootSFXCooldown = 0.03
             end
             local critChance = hasItem("Four Leafed Clover") and 40 or 20
             table.insert(bullets, {
@@ -940,7 +940,7 @@ local function shoot(gunName, ball)
                 currentBallID = currentBallID + 1
                 local newBall = {
                     type = "Sudden Mitosis",
-                    name = "name",
+                    name = "Sudden Mitosis",
                     id = currentBallID,
                     x = paddle.x + paddle.width / 2,
                     y = paddle.y - 6,
@@ -992,7 +992,7 @@ local function shoot(gunName, ball)
             end
             if shootSFXCooldown <= 0 then
                 playSoundEffect(gunShootSFX, 1, 0.9, false, true)
-                shootSFXCooldown = 0.02
+                shootSFXCooldown = 0.03
             end
             local speedOffset = (paddle.currentSpeedX or 0) * 0.4
             local bulletDamage = getStat(gun.name, "damage")
@@ -1132,7 +1132,7 @@ local function shoot(gunName, ball)
                     currentBallID = currentBallID + 1
                     local newBall = {
                         type = "Sudden Mitosis",
-                        name = ballTemplate.name,
+                        name = "Sudden Mitosis",
                         id = currentBallID,
                         x = paddle.x + paddle.width / 2,
                         y = paddle.y - 6,
@@ -1207,7 +1207,7 @@ local function shoot(gunName, ball)
                     currentBallID = currentBallID + 1
                     local newBall = {
                         type = "Sudden Mitosis",
-                        name = ballTemplate.name,
+                        name = "Sudden Mitosis",
                         id = currentBallID,
                         x = paddle.x + paddle.width / 2,
                         y = paddle.y - 6,
@@ -1267,7 +1267,7 @@ local function shoot(gunName, ball)
                     currentBallID = currentBallID + 1
                     local newBall = {
                         type = "Sudden Mitosis",
-                        name = ballTemplate.name,
+                        name = "Sudden Mitosis",
                         id = currentBallID,
                         x = paddle.x + paddle.width / 2,
                         y = paddle.y - 6,
@@ -1377,7 +1377,7 @@ local function turretShoot(turret, typeMod)
         local currentTime = love.timer.getTime()
         if shootSFXCooldown <= 0 then
             playSoundEffect(gunShootSFX, 1, 0.9, false, true)
-            shootSFXCooldown = 0.02
+            shootSFXCooldown = 0.03
         end
         local bulletSpeed = turretType.bulletSpeed or 2000
         local speed = {x =math.cos((turret.angle + turret.angleOffset) - math.pi/2) * bulletSpeed, y = math.sin((turret.angle + turret.angleOffset) - math.pi/2) * bulletSpeed}
@@ -1407,7 +1407,7 @@ local function turretShoot(turret, typeMod)
             currentBallID = currentBallID + 1
             local newBall = {
                 type = "Sudden Mitosis",
-                name = ballTemplate.name,
+                name = "Sudden Mitosis",
                 id = currentBallID,
                 x = paddle.x + paddle.width / 2,
                 y = paddle.y - 6,
@@ -2939,7 +2939,7 @@ function Balls.initialize()
         Player.setMoney(25)
     end
     if Player.currentCore == "Fast Study Core" then
-        Player.xpGainMult = 1.035
+        Player.xpGainMult = 1.03
     end
     Player.permanentUpgrades = {}
     inGame = true
@@ -3231,7 +3231,7 @@ end
 --increases the particular stat
 function Balls.adjustSpeed(ballName)
     for _, ball in ipairs(Balls) do
-        if ball.name == ballName then
+        if ball.name == ballName and ball.name ~= "Sudden Mitosis" then
             local normalisedSpeedX, normalisedSpeedY = normalizeVector(ball.speedX, ball.speedY)
             -- Calculate total speed by adding all bonuses first, then multiply by base speed
             local totalSpeed = getStat(ballName, "speed")
@@ -3424,7 +3424,7 @@ local function brickCollisionCheck(ball, bricksToCheck)
                 if ball.name == "Ping-Pong ball" and ball.speedY < 0 then
                     ball.speedY = ball.speedY - 150
                 end
-                if ball.name == "Magnetic Ball" or ball.name == "Incrediball" or hasItem("Electromagnetic Alignment") then
+                if ball.name == "Magnetic Ball" or ball.name == "Incrediball" or (hasItem("Electromagnetic Alignment") and ball.name ~= "Phantom Ball") then
                     local currentBallSpeed = (unlockedBallTypes[ball.name].stats.speed + getStatItemsBonus("speed", ballList[ball.name]) * 50 + (Player.permanentUpgrades.speed or 0) * 50) * (Player.currentCore == "Madness Core" and 2 or 1)
                     local normalizedSpeedX, normalizedSpeedY = normalizeVector(ball.x - (brick.x + brick.width/2), ball.y - (brick.y + brick.height/2))
                     local speed = math.sqrt(ball.speedX^2 + ball.speedY^2)
@@ -3558,7 +3558,7 @@ local function paddleCollisionCheck(ball, paddle)
             currentBallID = currentBallID + 1
             local newBall = {
                 type = "Sudden Mitosis",
-                name = ballTemplate.name,
+                name = "Sudden Mitosis",
                 id = currentBallID,
                 x = paddle.x + paddle.width * 0.5,
                 y = paddle.y - 6,
@@ -4864,7 +4864,7 @@ function Balls.update(dt, paddle, bricks)
     local dtStep = dt / substeps
     local isMadnessCore = Player.currentCore == "Madness Core"
     local coreMult = 1
-    local hasElectroItem = hasItem("Electromagnetic Alignment")
+    local hasElectroItem = (hasItem("Electromagnetic Alignment") and ball.name ~= "Phantom Ball")
     local electroCount = hasElectroItem and itemCount("Electromagnetic Alignment") or 0
     local MAX_RANGE_SQ = 500 * 500
     for _, ball in ipairs(Balls) do
