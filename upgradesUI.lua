@@ -704,14 +704,17 @@ local function drawBallStats()
 
             -- draw title label and title
             setFont(26)
-            love.graphics.draw(uiLabelImg, currentX + statsWidth/2-uiLabelImg:getWidth()/2-10, y-25)
+            -- love.graphics.draw(uiLabelImg, currentX + statsWidth/2-uiLabelImg:getWidth()/2-10, y-25)
             setFont(getMaxFittingFontSize(ballType.name or "Unk", 30, uiLabelImg:getWidth()-20))
-            drawTextCenteredWithScale(ballType.name or "Unk", currentX + statsWidth/2-uiLabelImg:getWidth()/2 + 3, y - 8, 1, uiLabelImg:getWidth()-20)
+            drawTextCenteredWithScale(ballType.name or "Unk", currentX + statsWidth/2-uiLabelImg:getWidth()/2 + 3 - 125, y + 35, 1, uiLabelImg:getWidth()-20)
+
+            love.graphics.setColor(0.5,0.5,0.5,0.5)
+            love.graphics.line(currentX + 35, y + 80, currentX + statsWidth - 70, y + 80)
 
             -- type label
             setFont(20)
             local typeColor = {normal = {fg = {0.6,0.6,0.6,1}}}
-            local labelY = y + uiLabelImg:getHeight()/2
+            local labelY = y + uiLabelImg:getHeight()/2 -- price
             local bruhY = labelY
             -- suit.Label(ballType.type or "Unk type", {color = typeColor, align = "center"}, currentX + statsWidth/2-50-7, labelY, 100, 50)
             -- drawTextCenteredWithScale(ballType.type or "Unk type", currentX + statsWidth/2-50-7, labelY, 1, 100, {0.6,0.6,0.6,1})
@@ -833,9 +836,9 @@ local function drawBallStats()
                     setFont(35 * scaleMult)
                     local centeredLabelY = labelY - love.graphics.getFont():getHeight()/2 + 25
                     if (Player.currentCore == "Phantom Core" and ballType.type == "gun" and statName == "damage") or (Player.currentCore == "Madness Core" and (statName == "damage" or statName == "cooldown")) then
-                        drawTextCenteredWithScale(tostring(string.format("%.1f", value)), statsX, centeredLabelY-15, 1, cellWidth)
+                        drawTextCenteredWithScale(tostring(string.format("%.1f", value)), statsX, centeredLabelY, 1, cellWidth)
                     else
-                        drawTextCenteredWithScale(tostring(value), statsX, centeredLabelY-15, 1, cellWidth)
+                        drawTextCenteredWithScale(tostring(value), statsX, centeredLabelY, 1, cellWidth)
                     end
 
                     -- draw stat icon
@@ -962,14 +965,14 @@ local function drawBallStats()
             else
                 sizeMult = 1
             end
-            setFont(math.ceil(50) * sizeMult)
+            setFont(math.ceil(40) * sizeMult)
             local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(math.ceil(ballType.price)))/2
-            labelY = bruhY - love.graphics.getFont():getHeight()/2 + 25
+            labelY = bruhY - love.graphics.getFont():getHeight()/2 + 20
             love.graphics.setColor(0,0,0,1)
-            love.graphics.print(formatNumber(math.ceil(ballType.price)) .. "$",currentX + statsWidth/2 + 104 +moneyOffsetX, labelY+4, math.rad(5))
+            love.graphics.print(formatNumber(math.ceil(ballType.price)) .. "$",currentX + statsWidth/2 + 104 +moneyOffsetX, labelY+4)
             local moneyColor = Player.realMoney >= math.ceil(ballType.price) and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
             love.graphics.setColor(moneyColor)
-            love.graphics.print(formatNumber(math.ceil(ballType.price)) .. "$",currentX + statsWidth/2 + 100 +moneyOffsetX, labelY, math.rad(5))
+            love.graphics.print(formatNumber(math.ceil(ballType.price)) .. "$",currentX + statsWidth/2 + 100 +moneyOffsetX, labelY)
             love.graphics.setColor(1,1,1,1)
 
             -- upgrade button
