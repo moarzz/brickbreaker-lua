@@ -572,7 +572,7 @@ function dealDamage(ball, brick, burnDamage)
         damage = math.floor(damage / 2)
     end
 
-    local critChance = hasItem("Four Leafed Clover") and 40 or 20
+    local critChance = hasItem("Four Leafed Clover") and 30 or 15
     if hasItem("Assassin's Dagger") and math.random(1,100) <= critChance and ball.type ~= "bullet" then
         damage = damage * 2
     end
@@ -913,7 +913,7 @@ local function shoot(gunName, ball)
                 playSoundEffect(gunShootSFX, 1, 0.9, false, true)
                 shootSFXCooldown = 0.03
             end
-            local critChance = hasItem("Four Leafed Clover") and 40 or 20
+            local critChance = hasItem("Four Leafed Clover") and 30 or 15
             table.insert(bullets, {
                 name = gunName,
                 type = "bullet",
@@ -1099,7 +1099,7 @@ local function shoot(gunName, ball)
             elseif gun.name == "Shotgun" then
                 for i = 1, 7 do
                     local speedXref = spray and (math.random(-gun.bulletSpeed * 0.8, gun.bulletSpeed * 0.8) + speedOffset) or (math.random(-250, 250) + speedOffset)
-                    local critChance = hasItem("Four Leafed Clover") and 40 or 20
+                    local critChance = hasItem("Four Leafed Clover") and 30 or 15
                     table.insert(bullets, {
                         name = "Shotgun",
                         type = "bullet",
@@ -1179,7 +1179,7 @@ local function shoot(gunName, ball)
                     speedXref = 0
                     speedYref = -bulletSpeed -- Default to straight up if no target found
                 end
-                local critChance = hasItem("Four Leafed Clover") and 40 or 20
+                local critChance = hasItem("Four Leafed Clover") and 30 or 15
                 table.insert(bullets, {
                     name = gun.name,
                     type = "bullet",
@@ -1240,7 +1240,7 @@ local function shoot(gunName, ball)
             else -- default shooting behavior
                 local speedXref = spray and (math.random(-gun.bulletSpeed * 0.8, gun.bulletSpeed * 0.8) + speedOffset) or (math.random(-150, 150) + speedOffset)
                 local xBruh = paddle.x + paddle.width / 2 + ((speedXref - speedOffset)/(spray and gun.bulletSpeed * 0.8 or 200))*50
-                local critChance = hasItem("Four Leafed Clover") and 40 or 20
+                local critChance = hasItem("Four Leafed Clover") and 30 or 15
                 table.insert(bullets, {
                     name = gun.name,
                     type = "bullet",
@@ -1381,7 +1381,7 @@ local function turretShoot(turret, typeMod)
         local normalizedSpeedX, normalizedSpeedY = normalizeVector(speed.x, speed.y)
         local bulletDamage = getStat("Gun Turrets", "damage")
         if Player.currentCore == "Phantom Core" then bulletDamage = math.max(math.floor(bulletDamage /2),1) end
-        local critChance = hasItem("Four Leafed Clover") and 40 or 20
+        local critChance = hasItem("Four Leafed Clover") and 30 or 15
         local bullet = {
             x = turret.x + normalizedSpeedX * turret.radius,
             y = turret.y + normalizedSpeedY * turret.radius * 0.8,
@@ -3534,7 +3534,7 @@ local function paddleCollisionCheck(ball, paddle)
         local speedYMag = math.sqrt(bulletSpeed * bulletSpeed - speedX * speedX)
         local hasDagger = hasItem("Assassin's Dagger")
         local hasClover = hasItem("Four Leafed Clover")
-        local critChance = hasClover and 40 or 20
+        local critChance = hasClover and 30 or 15
         
         local bullet = {
             x = paddle.x + paddle.width * 0.5,
