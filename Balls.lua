@@ -310,7 +310,10 @@ function createPowerupG(Type)
 end
 
 local function getRandomPowerupType()
-    local powerupTypes = {"moneyBag", "nuke", "acceleration", "doubleDamage"}
+    local powerupTypes = {"moneyBag", "nuke", --[["acceleration",]] "doubleDamage"}
+    if gameTime <= 300 then
+        table.insert(powerupTypes, "acceleration")
+    end
     local powerup = powerupTypes[math.random(#powerupTypes)] 
     return powerup
 end
@@ -1302,13 +1305,13 @@ local function shoot(gunName, ball)
             if gun.currentAmmo > 0 then
                 if gun.name == "Minigun" then
                     local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
-                    local timeUntilNextShot = gun.fireRateMult * (mapRangeClamped(getStat("Minigun", "ammo") - gun.currentAmmo, 0, 25, 4, 0.5) * (spray and sprayMult or 1))/(getStat(gun.name, "fireRate") * bulletStormMult)
+                    local timeUntilNextShot = gun.fireRateMult * 1.1 * (mapRangeClamped(getStat("Minigun", "ammo") - gun.currentAmmo, 0, 25, 4, 0.5) * (spray and sprayMult or 1))/(getStat(gun.name, "fireRate") * bulletStormMult)
                     Timer.after(timeUntilNextShot, function() shoot(gunName) end)
                     createFireRateVFX(timeUntilNextShot)
                     -- createCooldownVFX(cooldownValue)
                 else
                     local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
-                    local timeUntilNextShot = (gun.fireRateMult * 3.0 * (spray and sprayMult or 1))/(getStat(gun.name, "fireRate") * bulletStormMult)
+                    local timeUntilNextShot = (gun.fireRateMult * 3.0 * 1.1 * (spray and sprayMult or 1))/(getStat(gun.name, "fireRate") * bulletStormMult)
                     Timer.after(timeUntilNextShot, function() shoot(gunName) end)
                     createFireRateVFX(timeUntilNextShot)
                     -- createCooldownVFX(cooldownValue)
@@ -3456,7 +3459,7 @@ local function paddleCollisionCheck(ball, paddle)
     end
     local effectiveRadius = ball.name == "Phantom Ball" and getStat(ball.name, "range") * 8 or ball.radius
     
-    -- Cache paddle bounds
+    -- Cache paddle bounds (computed once)
     local paddleLeft = paddle.x
     local paddleRight = paddle.x + paddle.width
     local paddleTop = paddle.y - 10
@@ -3469,40 +3472,54 @@ local function paddleCollisionCheck(ball, paddle)
         return false
     end
     
-    -- Store previous position if not already stored
-    ball.prevY = ball.prevY or ball.y
+    -- Early exit: check if ball is moving away from paddle
+    local ballTop = ball.y - effectiveRadius
+    local ballBottom = ball.y + effectiveRadius
+    local ballAbovePaddle = ballBottom < paddleTop
+    local ballBelowPaddle = ballTop > paddleBottom
     
-    -- Determine which surface was hit based on PREVIOUS position
-    local wasAbove = (ball.prevY + effectiveRadius) <= paddleTop
-    local wasBelow = (ball.prevY - effectiveRadius) >= paddleBottom
-    local isNowInside = (ball.y + effectiveRadius > paddleTop) and (ball.y - effectiveRadius < paddleBottom)
-    
-    -- Only trigger collision if ball crossed from outside to inside
-    if not isNowInside then
-        ball.prevY = ball.y
-        return false  -- Ball is not overlapping
+    if (ballAbovePaddle and ball.speedY < 0) or (ballBelowPaddle and ball.speedY > 0) then
+        return false  -- Moving away
     end
     
-    -- Determine which side was crossed
-    local hitTop = wasAbove and (ball.y + effectiveRadius > paddleTop)
-    local hitBottom = wasBelow and (ball.y - effectiveRadius < paddleBottom)
+    -- Check for collision (either overlapping or swept)
+    local collision = false
+    local hitY = nil
     
-    -- If both conditions are true, use velocity to determine actual surface
-    if hitTop and hitBottom then
-        hitTop = ball.speedY > 0  -- Moving down = hit top
-        hitBottom = ball.speedY < 0  -- Moving up = hit bottom
+    -- Direct overlap check
+    if (ballBottom > paddleTop and ball.speedY > 0) and (ballTop < paddleBottom and ball.speedY < 0) then
+        -- Ball is overlapping paddle vertically
+        if (ball.speedY > 0 and ballTop <= paddleTop) or 
+           (ball.speedY < 0 and ballBottom >= paddleBottom) then
+            collision = true
+            hitY = ball.speedY > 0 and (paddleTop - effectiveRadius) or (paddleBottom + effectiveRadius)
+        end
+    else
+        -- Sweep test for fast-moving balls (only when needed)
+        local prevY = ball.y - ball.speedY * 0.05
+        local targetY
+        
+        if ball.speedY > 0 and prevY < paddleTop and ball.y > paddleTop then
+            -- Ball crossed top face
+            targetY = paddleTop - effectiveRadius
+        elseif ball.speedY < 0 and prevY > paddleBottom and ball.y < paddleBottom then
+            -- Ball crossed bottom face
+            targetY = paddleBottom + effectiveRadius
+        end
+        
+        if targetY then
+            collision = true
+            hitY = targetY
+        end
     end
     
-    if not (hitTop or hitBottom) then
-        ball.prevY = ball.y
+    if not collision then
         return false
     end
     
-    -- Clamp ball to correct surface
-    if hitTop then
-        ball.y = paddleTop - effectiveRadius
-    else
-        ball.y = paddleBottom + effectiveRadius
+    -- Process collision (only when detected)
+    if hitY then
+        -- ball.y = hitY
     end
     
     if gameTime - lastPaddleHitSoundTime >= 0.1 then
@@ -3615,7 +3632,6 @@ local function paddleCollisionCheck(ball, paddle)
         ball.speedY = ball.speedY - 150
     end
     
-    ball.prevY = ball.y  -- Update previous Y for next frame
     return true
 end
 
@@ -5099,8 +5115,6 @@ function Balls.update(dt, paddle, bricks)
             end
         end
         
-        -- Update previous Y position for next frame's collision detection
-        ball.prevY = ball.y
     end
 
     -- Update bullets

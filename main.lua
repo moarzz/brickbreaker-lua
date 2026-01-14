@@ -801,9 +801,9 @@ local function addMoreBricks()
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
                 local addBrickMult = mapRangeClamped(Player.level, 1, 20, 2, 1)
                 if victoryAchieved then
-                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 30, 160) * math.max(mapRange(gameTime, 600, 900, 1, 8), 1)
+                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 30, 200) * math.max(mapRange(gameTime, 600, 900, 1, 8), 1)
                 else
-                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 30, 160) 
+                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 30, 200) 
                 end
                 
                 if spawnBossNextRow and not bossSpawned then
@@ -1023,7 +1023,7 @@ brickFreeze = false
 brickFreezeTime = gameTime
 function getBrickSpeedByTime()
     -- Scale speed from 0.5 to 3 over 30 minutes
-    local returnValue = mapRange(gameTime, 0, 600, 0.25, 1) * (Player.currentCore == "Madness Core" and 2 or 1) * math.max(1, mapRange(gameTime, 600, 900, 1, 3))
+    local returnValue = mapRange(gameTime, 0, 600, 0.25, 1.2) * (Player.currentCore == "Madness Core" and 2 or 1) * math.max(1, mapRange(gameTime, 600, 900, 1, 3))
     if brickFreeze == true then
         if gameTime - brickFreezeTime > 20 then
             brickFreeze = false
