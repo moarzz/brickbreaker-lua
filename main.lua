@@ -2876,10 +2876,13 @@ function love.keypressed(key)
         if key == "6" then
             -- drawTrails = not drawTrails
             -- ballPhysics = not ballPhysics
-            Balls.addBall("Laser Ball")
-            Balls.addBall("Gun Ball")
-            Balls.addBall("Incrediball")
-            Balls.addBall("Ball Gun")
+            Balls.addBall("Rocket Launcher")
+            Balls.addBall("Fireballs")
+            Balls.addBall("Mortar Turrets")
+            Balls.addBall("Phantom Ball")
+            Balls.addBall("Exploding Ball")
+            currentRowPopulation = 800
+            gameTime = 480
         end
 
         -- add weapon

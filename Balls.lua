@@ -392,7 +392,7 @@ local function brickDestroyed(brick)
             end
         end
     end
-    local BricksRequired = mapRangeClamped(Player.level,1, 12, 25, 100)
+    local BricksRequired = mapRangeClamped(Player.level,1, 12, 25, 125)
     if bricksDestroyedSinceLastDrop >= math.floor(BricksRequired/chanceMult) then
         createPowerup(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.maxHealth, "dollarBill")
         bricksDestroyedSinceLastDrop = 0
@@ -712,7 +712,7 @@ local function newLaserPortal(damage, fireRate, name)
                 -- laser logic
                 self.laserBeamTimer = (self.laserBeamTimer or 0) + dt
                 if self.laserBeamBrick then
-                    local cooldownLength = 2/(fireRate)
+                    local cooldownLength = 2.25/(fireRate)
                     if hasItem("Spray and Pray") then
                         local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                         cooldownLength = cooldownLength * sprayMult
@@ -805,7 +805,7 @@ local function newLaserPortal(damage, fireRate, name)
                 love.graphics.setColor(1, 1, 1, 1)
                 drawImageCentered(runeCircleImg, self.x, self.y, runeCircleImg:getWidth()/2 * portalScale, runeCircleImg:getHeight()/2 * portalScale, angle, 0, 0)
                 -- laser draw
-                local chargeProgress = self.laserBeamTimer / (2/fireRate)
+                local chargeProgress = self.laserBeamTimer / (2.25/fireRate)
                 if hasItem("Spray and Pray") then
                     local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                     chargeProgress = math.min(1, chargeProgress / sprayMult)
@@ -844,7 +844,7 @@ local function newLaserPortal(damage, fireRate, name)
                 love.graphics.setColor(1, 1, 1, 1)
                 drawImageCentered(runeCircleImg, self.x, self.y, runeCircleImg:getWidth()/2 * portalScale, runeCircleImg:getHeight()/2 * portalScale, angle, 0, 0)
                 -- laser draw
-                local chargeProgress = self.laserBeamTimer / (2/fireRate)
+                local chargeProgress = self.laserBeamTimer / (2.25/fireRate)
 
                 if hasItem("Spray and Pray") then
                     local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
@@ -4611,7 +4611,7 @@ function powerupPickup(powerup, length)
     end
     print("powerup type : " .. powerup.type)
     if powerup.type == "dollarBill" then
-        local moneyGain = math.random(1,4)
+        local moneyGain = math.random(1,5)
         if moneyGain > 2 then
             moneyGain = 1
         end   
