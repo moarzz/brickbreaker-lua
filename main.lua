@@ -2861,7 +2861,7 @@ function love.keypressed(key)
         end
 
         if key == "4" then
-            createPowerupG("acceleration")
+            createPowerupG("nuke")
         end
 
         -- get powerup
@@ -2876,11 +2876,11 @@ function love.keypressed(key)
         if key == "6" then
             -- drawTrails = not drawTrails
             -- ballPhysics = not ballPhysics
-            Balls.addBall("Rocket Launcher")
-            Balls.addBall("Fireballs")
-            Balls.addBall("Mortar Turrets")
+            Balls.addBall("Laser Portals")
+            Balls.addBall("Laser Ball")
+            -- Balls.addBall("Laser Turrets")
+            Balls.addBall("Gun Turrets")
             Balls.addBall("Phantom Ball")
-            Balls.addBall("Exploding Ball")
             currentRowPopulation = 800
             gameTime = 480
         end
@@ -2900,7 +2900,8 @@ function love.keypressed(key)
         end
 
         if key == "9" then
-            gameTime = 599
+            gameTime = 480
+            currentRowPopulation = 800
             -- spawnBoss()
         end
 

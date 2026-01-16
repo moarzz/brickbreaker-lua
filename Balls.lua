@@ -2486,7 +2486,7 @@ local function ballListInit()
             rarity = "uncommon",
             speedMult = 1.25,
             ammoMult = 3,
-            fireRateMult = 6,
+            fireRateMult = 7,
             startingPrice = 50,
             description = "A gun that shoots balls. \nDoesn't need to reload. \nSlow fire rate.",
             onBuy = function() 
@@ -2819,27 +2819,6 @@ local function ballListInit()
                 cast("Light Beam")
             end,
         },
-        --[[
-        ["Lightning Pulse"] = {
-            name = "Lightning Pulse",
-            type = "spell",
-            x = screenWidth / 2,
-            y = screenHeight / 2,
-            size = 1,
-            noAmount = true,
-            rarity = "uncommon",
-            startingPrice = 50,
-            description = "every [cooldown] seconds, pulses of lightning appear at random positions on the screen, dealing damage.",
-            color = {0.8, 0.8, 0.2, 1},
-            onBuy = function()
-                cast("Lightning Pulse")
-            end,
-            stats = {
-                cooldown = 9,
-                damage = 2,
-                amount = 2, -- Amount of Lightning Pulses
-            },
-        },]]
         ["Gun Ball Gun"] = {
             name = "Gun Ball Gun",
             type = "gun",
@@ -2847,7 +2826,7 @@ local function ballListInit()
             y = screenHeight / 2,
             size = 1,
             noAmount = true,
-            fireRateMult = 6,
+            fireRateMult = 7,
             rarity = "legendary",
             startingPrice = 500,
             description = "A powerful gun that shoots Gun Balls. \nDoesn't need to reload. \nSlow fire rate.",
