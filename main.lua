@@ -801,9 +801,9 @@ local function addMoreBricks()
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
                 local addBrickMult = mapRangeClamped(Player.level, 1, 20, 2, 1)
                 if victoryAchieved then
-                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 30, 200) * math.max(mapRange(gameTime, 600, 900, 1, 8), 1)
+                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 50, 200) * math.max(mapRange(gameTime, 600, 900, 1, 8), 1)
                 else
-                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 30, 200) 
+                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 50, 200) 
                 end
                 
                 if spawnBossNextRow and not bossSpawned then
@@ -1107,7 +1107,7 @@ local function moveBricksDown(dt)
                 if brick.y <= screenHeight/2 then     
                     fastSpeed = mapRangeClamped(brick.y, 0, screenHeight/2, 100, 40)
                 else
-                    fastSpeed = mapRangeClamped(brick.y, screenHeight/2, screenHeight - 50, 40, 4)
+                    fastSpeed = mapRangeClamped(brick.y, screenHeight/2, screenHeight - 120, 40, 4)
                 end
                 brick.y = brick.y + dt * mapRangeClamped(brick.y, 0, screenHeight, 80, 15) * (brick.speedMult or 1)
             else

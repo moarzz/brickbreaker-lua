@@ -256,6 +256,9 @@ function Items.getRandomItem(allowInvisible)
             if item and item.instancesLeft then
                 instances = item.instancesLeft
             end
+            if item.unique then
+                instances = 3
+            end
             -- Ensure at least weight 1
             local w = math.max(1, instances)
             w = (w-1) * 2 + 1

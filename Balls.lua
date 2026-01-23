@@ -535,7 +535,8 @@ function burnBrick(brick, damage, name)
     burnTick()
 end
 
-function dealDamage(ball, brick, burnDamage)
+function dealDamage(ball, brick, burnDamage, patternRecognition)
+    patternRecognition = patternRecognition or false
     local chance = hasItem("Four Leafed Clover") and 70 or 35
     if hasItem("Arcane Missiles") and math.random(1,100) <= chance then
         castArcaneMissile(ball)
@@ -594,6 +595,10 @@ function dealDamage(ball, brick, burnDamage)
         else
             damage = math.ceil(brick.health*0.25)
         end
+    end
+    if hasItem("Pattern Recognition") and (not patternRecognition) then
+        local patternRecognitionItem = getItem("Pattern Recognition")
+        patternRecognitionItem:onDamageDealt(brick.health, damage)
     end
     brick.health = math.ceil(brick.health - damage)
 
@@ -2006,6 +2011,7 @@ local function cast(spellName, brick, forcedDamage)
         local sprayCooldown = hasItem("Four Leafed Clover") and 7.5 or 10 -- this is correct, stop tweaking and changing it
         sprayCooldown = sprayCooldown * 0.5
         local cooldownLength = (hasItem("Spray and Pray") and sprayCooldown/(getStat("Shadow Ball", "fireRate")) or 15/(getStat("Shadow Ball", "fireRate"))) + 2
+        cooldownLength = cooldownLength * 0.9
         Timer.after(cooldownLength, function()
             -- Refill shadowBall spell after cooldown
             cast("Shadow Ball")
@@ -3375,7 +3381,7 @@ local function brickCollisionCheck(ball, bricksToCheck)
                 
                 -- Apply your existing effects
                 if Player.currentCore == "Bouncy Core" then
-                    ball.speedExtra = math.max(math.min((ball.speedExtra or 1) + 4, 8), ball.speedExtra)
+                    ball.speedExtra = math.max(math.min((ball.speedExtra or 1) + 7, 12), ball.speedExtra)
                 end
                 
                 brickCollisionEffects(ball, brick)
@@ -3594,7 +3600,7 @@ local function paddleCollisionCheck(ball, paddle)
     local speedYSquared = math.max(0, ballSpeed^2 - ball.speedX^2)
     ball.speedY = math.sqrt(speedYSquared) * (ball.speedY > 0 and 1 or -1)
     
-    ball.speedExtra = math.min((ball.speedExtra or 1) + 5, 8)
+    ball.speedExtra = math.min((ball.speedExtra or 1) + 7, 12)
     if ball.name ~= "Sudden Mitosis" then
         Balls.adjustSpeed(ball.name)
     end
@@ -3789,7 +3795,7 @@ local function wallCollisionCheck(ball)
         end
         ball.x = leftWallPosition + effectiveRadius -- Ensure the ball is not stuck in the wall
         if Player.currentCore == "Bouncy Core" or hasItem("Bouncy Walls") then
-            ball.speedExtra = math.min((ball.speedExtra or 1) + 6, 12)
+            ball.speedExtra = math.min((ball.speedExtra or 1) + 7, 12)
         end
         if ball.y < screenWidth and gameTime - lastWallBoopSFXTime > 0.1 then
             playSoundEffect(wallBoopSFX, 0.5, 0.6)
@@ -3801,7 +3807,7 @@ local function wallCollisionCheck(ball)
         ball.speedX = -ball.speedX
         ball.x = rightWallPosition - effectiveRadius -- Ensure the ball is not stuck in the 
         if Player.currentCore == "Bouncy Core" or hasItem("Bouncy Walls") then
-            ball.speedExtra = math.min((ball.speedExtra or 1) + 6, 12)
+            ball.speedExtra = math.min((ball.speedExtra or 1) + 7, 12)
         end
         if ball.y < screenWidth and gameTime - lastWallBoopSFXTime > 0.1 then
             playSoundEffect(wallBoopSFX, 0.5, 0.6)
@@ -3814,7 +3820,7 @@ local function wallCollisionCheck(ball)
         ball.speedY = -ball.speedY
         ball.y = effectiveRadius -- Ensure the ball is not stuck in the wall
         if Player.currentCore == "Bouncy Core" or hasItem("Bouncy Walls") then
-            ball.speedExtra = math.min((ball.speedExtra or 1) + 6, 12)
+            ball.speedExtra = math.min((ball.speedExtra or 1) + 7, 12)
         end
         if gameTime - lastWallBoopSFXTime > 0.1 then
             playSoundEffect(wallBoopSFX, 0.5, 0.6)
@@ -3826,7 +3832,7 @@ local function wallCollisionCheck(ball)
         ball.speedY = -ball.speedY
         ball.y = math.max(screenHeight, paddle.y + 150) - effectiveRadius
         if Player.currentCore == "Bouncy Core" or hasItem("Bouncy Walls") then
-            ball.speedExtra = math.min((ball.speedExtra or 1) + 6, 12)
+            ball.speedExtra = math.min((ball.speedExtra or 1) + 7, 12)
         end
         if gameTime - lastWallBoopSFXTime > 0.1 then
             playSoundEffect(wallBoopSFX, 0.5, 0.6)
@@ -3972,7 +3978,7 @@ local function techUpdate(dt)
         local orbitRadius = sawBlades.orbitRadius --* (math.sin(gameTime/2.5)/2 + 1) * 0.9
         local paddleCenterX = paddle.x + paddle.width / 2
         local paddleCenterY = paddle.y + paddle.height / 2
-        local speed = getStat("Saw Blades", "speed") * 20
+        local speed = getStat("Saw Blades", "speed") * 25
         sawBlades.sawPositions = sawBlades.sawPositions or {}
         sawBlades.sawAnimations = sawBlades.sawAnimations or {}
         sawBlades.damageCooldowns = sawBlades.damageCooldowns or {} -- Initialize cooldown table
@@ -4961,7 +4967,7 @@ function Balls.update(dt, paddle, bricks)
                 for i = 1, substeps do
                     -- Speed decay
                     if ball.speedExtra then
-                        ball.speedExtra = math.max(1, ball.speedExtra - math.pow(ball.speedExtra, 1.75) * dtStep * 0.5)
+                        ball.speedExtra = math.max(1, ball.speedExtra - math.pow(ball.speedExtra, 1.6) * dtStep * 0.5)
                     end
                     
                     -- Movement calculation
@@ -4970,11 +4976,11 @@ function Balls.update(dt, paddle, bricks)
                         local multX, multY = normalizeVector(ball.speedX, ball.speedY)
                         local extraX = speedExtra * multX * 50
                         local extraY = speedExtra * multY * 50
-                        ball.x = ball.x + (ball.speedX + extraX) * ball.speedMult * dtStep * coreMult
-                        ball.y = ball.y + (ball.speedY + extraY) * ball.speedMult * dtStep * coreMult
+                        ball.x = ball.x + (ball.speedX + extraX) * ball.speedMult * dtStep * coreMult * 0.925
+                        ball.y = ball.y + (ball.speedY + extraY) * ball.speedMult * dtStep * coreMult * 0.925
                     else
-                        ball.x = ball.x + ball.speedX * ball.speedMult * dtStep * coreMult
-                        ball.y = ball.y + ball.speedY * ball.speedMult * dtStep * coreMult
+                        ball.x = ball.x + ball.speedX * ball.speedMult * dtStep * coreMult * 0.925
+                        ball.y = ball.y + ball.speedY * ball.speedMult * dtStep * coreMult * 0.925
                     end
                     
                     -- Collision checks
