@@ -2,8 +2,8 @@ local PatternRecognition = ItemBase.new();
 PatternRecognition.__index = PatternRecognition;
 PatternRecognition.name = "Pattern Recognition";
 PatternRecognition.description = "<font=bold>On Damage Dealt<font=default>\ndeal damage to another brick with the same health (if there is one)";
-PatternRecognition.rarity = "common";
--- PatternRecognition.imageReference = "assets/sprites/UI/ItemIcons/Phantom-Bullets.png";
+PatternRecognition.rarity = "rare";
+PatternRecognition.imageReference = "assets/sprites/UI/ItemIcons/Pattern-Recognition.png";
 
 PatternRecognition.unique = true; -- does smthn ig
 
