@@ -771,7 +771,7 @@ function createExplosionAtLocation(x, y, radius, damage, name, recast)
     for _, touchingBrick in ipairs(bricksTouchingCircle) do
         if touchingBrick then -- Ensure not nil and not the original brick
             if touchingBrick.health > 0 then
-                dealDamage({stats = {damage = damage}, name = name}, touchingBrick) -- Deal damage to the touched bricks
+                dealDamage({stats = {damage = damage}, name = name}, touchingBrick, nil, nil, true) -- Deal damage to the touched bricks
             end
         end
     end
@@ -1012,8 +1012,8 @@ function updateBurnAnims()
     for ID, anim in pairs(fireAnimations) do
         local brick = getBrickById(anim.brickId)
         if brick then
-            anim.x = brick.x + brick.width / 2 + brick.drawOffsetX
-            anim.y = brick.y + brick.height / 2 + brick.drawOffsetY - 10
+            anim.x = brick.x + brick.width / 2 + (brick.drawOffsetX or 0)
+            anim.y = brick.y + brick.height / 2 + (brick.drawOffsetY or 0) - 10
         else
             table.insert(IDToRemove, ID)
         end
@@ -1456,7 +1456,8 @@ function updateAnimations(dt)
         end
     end
 
-    for i = #fireAnimations, 1, -1 do
+    -- for i = #fireAnimations, 1, -1 do
+    for i, _ in pairs(fireAnimations) do
         local animation = fireAnimations[i]
         local skipAnim = false
         if not animation then

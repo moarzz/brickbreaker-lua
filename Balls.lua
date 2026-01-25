@@ -535,7 +535,8 @@ function burnBrick(brick, damage, name)
     burnTick()
 end
 
-function dealDamage(ball, brick, burnDamage, patternRecognition)
+function dealDamage(ball, brick, burnDamage, patternRecognition, GasolineDmg)
+    GasolineDmg = GasolineDmg or false
     patternRecognition = patternRecognition or false
     local chance = hasItem("Four Leafed Clover") and 70 or 35
     if hasItem("Arcane Missiles") and math.random(1,100) <= chance then
@@ -603,10 +604,10 @@ function dealDamage(ball, brick, burnDamage, patternRecognition)
     brick.health = math.ceil(brick.health - damage)
 
     if brick.health > 0 and hasItem("Gasoline") and not burnDamage then
-        if ball.name == "Laser Portals" or ball.name == "Laser Beam" or ball.name == "Laser Turrets" or ball.name == "Exploding Ball" or ball.name == "Mortar Turrets" or ball.name == "Rocket Launcher" then
+        if GasolineDmg or ball.name == "Laser Portals" or ball.name == "Laser Beam" or ball.name == "Laser Turrets" or ball.name == "Exploding Ball" or ball.name == "Mortar Turrets" or ball.name == "Rocket Launcher" or ball.name == "Fireballs" then
             local burnChance = hasItem("Four Leafed Clover") and 50 or 100
             if math.random(1,100) <= burnChance then
-                burnBrick(brick, damage, ball.name)
+                burnBrick(brick, damage, nil)
             end
         end
     end
