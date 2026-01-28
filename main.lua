@@ -801,9 +801,9 @@ local function addMoreBricks()
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
                 local addBrickMult = mapRangeClamped(Player.level, 1, 20, 2, 1)
                 if victoryAchieved then
-                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 50, 200) * math.max(mapRange(gameTime, 600, 900, 1, 8), 1)
+                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 65, 200) * math.max(mapRange(gameTime, 600, 900, 1, 8), 1)
                 else
-                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 50, 200) 
+                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 65, 200) 
                 end
                 
                 if spawnBossNextRow and not bossSpawned then
@@ -1023,7 +1023,7 @@ brickFreeze = false
 brickFreezeTime = gameTime
 function getBrickSpeedByTime()
     -- Scale speed from 0.5 to 3 over 30 minutes
-    local returnValue = mapRangeClamped(gameTime, 0, 600, 0.25, 1.2) * (Player.currentCore == "Madness Core" and 2 or 1) * math.max(1, mapRange(gameTime, 600, 900, 1, 3))
+    local returnValue = mapRangeClamped(gameTime, 0, 600, 0.35, 1.35) * (Player.currentCore == "Madness Core" and 2 or 1) * math.max(1, mapRange(gameTime, 600, 900, 1, 3))
     if brickFreeze == true then
         if gameTime - brickFreezeTime > 20 then
             brickFreeze = false
@@ -1101,7 +1101,7 @@ local function moveBricksDown(dt)
                 end
             end
             if brick.type == "boss" then
-                brick.y = brick.y + brickSpeed.value * dt * speedMult * mapRangeClamped(brick.y, - boss.height * 1.5, -boss.height, 5, 0.5)
+                brick.y = brick.y + brickSpeed.value * dt * speedMult * mapRangeClamped(brick.y, - boss.height * 1.5, -boss.height, 3.5, 0.25)
             elseif brick.type == "fast" then
                 local fastSpeed
                 if brick.y <= screenHeight/2 then     
@@ -1457,6 +1457,9 @@ local function gameFixedUpdate(dt)
             end
             VFX.update(dt) -- Update VFX
         end
+    else
+        updatePausedTweens(dt)
+        GlobalTimer:update(dt)
     end    
 end
 
@@ -2436,6 +2439,7 @@ local function fullDraw()
         local opacity = mapRange(love.timer.getTime() - loadTime, 0, 2.5, 1, 0)
         love.graphics.setColor(0,0,0, opacity)
         love.graphics.rectangle("fill", -screenWidth, -screenHeight, screenWidth*3, screenHeight*3)
+        drawTextPopups()
         return
     end
     
@@ -2847,7 +2851,8 @@ function love.keypressed(key)
         -----------------------------------
 
         if key == "1" then
-            paddleCollision = not paddleCollision
+            local mouseX, mouseY = love.mouse.getPosition()
+            textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)
         end
 
         if key == "2" then
@@ -2866,10 +2871,7 @@ function love.keypressed(key)
 
         -- get powerup
         if key == "5" then
-            local powerup = {
-                type = "acceleration",        
-            }
-            powerupPickup(powerup, 1)
+            generateTurret("Gun Turrets")
         end
 
         -- test ball lag

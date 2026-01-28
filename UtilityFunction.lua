@@ -243,6 +243,43 @@ function plusStatPopup(text, x, y)
     end)
 end
 
+local textPopupId = 0
+local textPopups = {}
+function textPopup(text, x, y, color, scale)
+    scale = scale or 40
+    local xOffset, yOffset = math.random(-80,80), math.random(-35,-130)
+    local popup = {
+        text = text,
+        x = x,
+        y = y,
+        speedX = 0,
+        speedY = 0,
+        scale = 0,    
+        id = "textPopup : " .. textPopupId,
+        updateWhenPaused = true,
+        color = {0,1,0}
+    }
+    textPopupId = textPopupId + 1
+    table.insert(textPopups, popup)
+    local inTween = tween.new(0.2, popup, {scale = scale}, tween.easing.outCirc, nil, true)
+    addTweenToUpdate(inTween)
+    local entireInTween = tween.new(2, popup, {x = popup.x + xOffset, y = popup.y + yOffset}, tween.easing.outCirc, nil, true)
+    addTweenToUpdate(entireInTween)
+    GlobalTimer:after(1.5, function()
+        local outTween = tween.new(0.5, popup, {scale = 0}, tween.easing.inCirc, nil, true)
+        addTweenToUpdate(outTween)
+        GlobalTimer:after(0.5, function()
+            -- Remove the popup from the list after the animation
+            for i, p in ipairs(textPopups) do
+                if p.id == popup.id then
+                    table.remove(textPopups, i)
+                    break
+                end
+            end
+        end)
+    end)
+end
+
 visualItemValues = {}
 function itemTriggerAnimation(itemIdentifier)
     -- Accept either an item id or an item name; resolve to item name for the visual key
@@ -1379,6 +1416,21 @@ function drawMoneyPopups()
         love.graphics.print(popup.text, popup.x - getTextSize(popup.text)/2 + 1, popup.y - 1)
         love.graphics.print(popup.text, popup.x - getTextSize(popup.text)/2 - 1, popup.y - 1)
         love.graphics.setColor(14/255, 202/255, 92/255, 1)
+        love.graphics.print(popup.text, popup.x - getTextSize(popup.text)/2, popup.y)
+    end
+end
+
+function drawTextPopups()
+    for i = #textPopups, 1, -1 do
+        local popup = textPopups[i]
+        setFont(math.max(math.ceil(popup.scale), 1))
+        love.graphics.setColor(0,0,0,1)
+        local outlineOffset = 2
+        love.graphics.print(popup.text, popup.x - getTextSize(popup.text)/2 + outlineOffset, popup.y + outlineOffset)
+        love.graphics.print(popup.text, popup.x - getTextSize(popup.text)/2 - outlineOffset, popup.y + outlineOffset)
+        love.graphics.print(popup.text, popup.x - getTextSize(popup.text)/2 + outlineOffset, popup.y - outlineOffset)
+        love.graphics.print(popup.text, popup.x - getTextSize(popup.text)/2 - outlineOffset, popup.y - outlineOffset)
+        love.graphics.setColor(popup.color[1], popup.color[2], popup.color[3], 1)
         love.graphics.print(popup.text, popup.x - getTextSize(popup.text)/2, popup.y)
     end
 end

@@ -1963,6 +1963,10 @@ local function fire(techName)
     end
 end
 
+function generateTurret(turretName)
+    fire(turretName)
+end
+
 local shadowBalls = {}
 local fireballs = {}
 local lightBeams = {}
