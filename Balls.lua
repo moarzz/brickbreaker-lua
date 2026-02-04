@@ -3291,6 +3291,17 @@ function Balls.adjustSpeed(ballName)
     end
 end
 
+function adjustBallSpeed(ball)
+    if ball.name ~= "Sudden Mitosis" then
+        local normalisedSpeedX, normalisedSpeedY = normalizeVector(ball.speedX, ball.speedY)
+        -- Calculate total speed by adding all bonuses first, then multiply by base speed
+        local totalSpeed = getStat(ball.name, "speed")
+        print("Adjusting speed for " .. ball.name .. ": totalSpeed = " .. totalSpeed)
+        ball.speedX = totalSpeed * normalisedSpeedX
+        ball.speedY = totalSpeed * normalisedSpeedY
+    end
+end
+
 function ballHitVFX(ball)
     for _, tweenID in ipairs(ball.drawSizeBoostTweens) do
         removeTween(tweenID) -- Remove the previous tween if it exists
@@ -3661,7 +3672,7 @@ local function paddleCollisionCheck(ball, paddle)
     
     ball.speedExtra = math.min((ball.speedExtra or 1) + 7, 12)
     if ball.name ~= "Sudden Mitosis" then
-        Balls.adjustSpeed(ball.name)
+        adjustBallSpeed(ball)
     end
     -- Callbacks
     for _, ballType in pairs(unlockedBallTypes) do
@@ -4909,7 +4920,7 @@ function Balls.update(dt, paddle, bricks)
     end
 
     -- update balls
-    local substeps = 2
+    local substeps = 5
     local dtStep = dt / substeps
     local isMadnessCore = Player.currentCore == "Madness Core"
     local coreMult = 1
@@ -5023,37 +5034,39 @@ function Balls.update(dt, paddle, bricks)
             
             -- Physics substeps
             if ballPhysics then
+                -- Speed decay
+                if ball.speedExtra then
+                    ball.speedExtra = math.max(1, ball.speedExtra - math.pow(ball.speedExtra, 1.6) * dtStep * 0.5)
+                end
+                
+                -- Movement calculation
+                local speedExtra = magneticSpeedMult * (ball.speedExtra or 0)
+                if speedExtra > 0 then
+                    local multX, multY = normalizeVector(ball.speedX, ball.speedY)
+                    local extraX = speedExtra * multX * 50
+                    local extraY = speedExtra * multY * 50
+                    ball.x = ball.x + (ball.speedX + extraX) * ball.speedMult * dtStep * coreMult * 0.925 * 2
+                    ball.y = ball.y + (ball.speedY + extraY) * ball.speedMult * dtStep * coreMult * 0.925 * 2
+                else
+                    ball.x = ball.x + ball.speedX * ball.speedMult * dtStep * coreMult * 0.925 * 2
+                    ball.y = ball.y + ball.speedY * ball.speedMult * dtStep * coreMult * 0.925 * 2
+                end
+
                 for i = 1, substeps do
-                    -- Speed decay
-                    if ball.speedExtra then
-                        ball.speedExtra = math.max(1, ball.speedExtra - math.pow(ball.speedExtra, 1.6) * dtStep * 0.5)
+                    -- Paddle collision check (with substeps)
+                    if collisionsOn and paddleCollision then
+                        paddleCollisionCheck(ball, paddle)
                     end
-                    
-                    -- Movement calculation
-                    local speedExtra = magneticSpeedMult * (ball.speedExtra or 0)
-                    if speedExtra > 0 then
-                        local multX, multY = normalizeVector(ball.speedX, ball.speedY)
-                        local extraX = speedExtra * multX * 50
-                        local extraY = speedExtra * multY * 50
-                        ball.x = ball.x + (ball.speedX + extraX) * ball.speedMult * dtStep * coreMult * 0.925
-                        ball.y = ball.y + (ball.speedY + extraY) * ball.speedMult * dtStep * coreMult * 0.925
-                    else
-                        ball.x = ball.x + ball.speedX * ball.speedMult * dtStep * coreMult * 0.925
-                        ball.y = ball.y + ball.speedY * ball.speedMult * dtStep * coreMult * 0.925
+                end
+                
+                -- Brick and wall collision checks (single check per frame, not substeps)
+                if collisionsOn then
+                    local hitBrickThisFrame = false
+                    if brickCollisions then
+                        hitBrickThisFrame = brickCollisionCheck(ball, visibleBricks, Player)
                     end
-                    
-                    -- Collision checks
-                    if collisionsOn then
-                        if paddleCollision then
-                            paddleCollisionCheck(ball, paddle)
-                        end
-                        local hitBrickThisFrame = false
-                        if brickCollisions then
-                            local hitBrickThisFrame = brickCollisionCheck(ball, visibleBricks, Player)
-                        end
-                        if not hitBrickThisFrame and wallCollision then
-                            wallCollisionCheck(ball)
-                        end
+                    if not hitBrickThisFrame and wallCollision then
+                        wallCollisionCheck(ball)
                     end
                 end
             end

@@ -2860,32 +2860,33 @@ function love.keypressed(key)
             Player.changeMoney(1000)
         end
         if key == "3" then
-            local powerup = {
+            --[[local powerup = {
                 type = "doubleDamage",        
             }
-            powerupPickup(powerup, 1)
+            powerupPickup(powerup, 1)]]
+            brickCollisions = not brickCollisions
         end
 
         if key == "4" then
-            createPowerupG("nuke")
+            paddleCollision = not paddleCollision
         end
 
         -- get powerup
         if key == "5" then
-            generateTurret("Gun Turrets")
+            collisionsOn = not collisionsOn
         end
 
         -- test ball lag
         if key == "6" then
             -- drawTrails = not drawTrails
-            -- ballPhysics = not ballPhysics
-            Balls.addBall("Laser Portals")
+            ballPhysics = not ballPhysics
+           --[[ Balls.addBall("Laser Portals")
             Balls.addBall("Laser Ball")
             -- Balls.addBall("Laser Turrets")
             Balls.addBall("Gun Turrets")
             Balls.addBall("Phantom Ball")
             currentRowPopulation = 800
-            gameTime = 480
+            gameTime = 480]]
         end
 
         -- add weapon
