@@ -1006,7 +1006,18 @@ local function shoot(gunName, ball)
 
             -- decrease ammo
             if gun.name ~= "Ball Gun" and gun.name ~= "Gun Ball Gun" then
-                gun.currentAmmo = gun.currentAmmo - 1
+                local useAmmo = true
+                if hasItem("Magic Mag") then
+                    for i=1, itemCount("Magic Mag") do
+                        if math.random(1,100) <= 35 then
+                            useAmmo = false
+                            break
+                        end
+                    end
+                end
+                if useAmmo then
+                    gun.currentAmmo = gun.currentAmmo - 1
+                end
             end
 
             -- shoot function for each different gun and default
@@ -1443,7 +1454,18 @@ local function turretShoot(turret, typeMod)
                 end)
             end)
         end
-        turret.currentAmmo = turret.currentAmmo - 1
+        local useAmmo = true
+        if hasItem("Magic Mag") then
+            for i=1, itemCount("Magic Mag") do
+                if math.random(1,100) <= 35 then
+                    useAmmo = false
+                    break
+                end
+            end
+        end
+        if useAmmo then
+            turret.currentAmmo = turret.currentAmmo - 1
+        end
         if turret.currentAmmo > 0 then
             Timer.after(0.5, function()
                 turretShoot(turret) -- Restart shooting after ammo refill
@@ -1503,7 +1525,18 @@ local function turretShoot(turret, typeMod)
         end)
 
         -- ammo logic
-        turret.currentAmmo = turret.currentAmmo - 1
+        local useAmmo = true
+        if hasItem("Magic Mag") then
+            for i=1, itemCount("Magic Mag") do
+                if math.random(1,100) <= 35 then
+                    useAmmo = false
+                    break
+                end
+            end
+        end
+        if useAmmo then
+            turret.currentAmmo = turret.currentAmmo - 1
+        end
         if turret.currentAmmo > 0 then
             Timer.after(2, function()
                 turretShoot(turret, "mortar") -- Restart shooting after ammo refill
@@ -1585,8 +1618,18 @@ local function fire(techName)
             
             -- Add the rocket to the rockets table
             table.insert(rockets, rocket)
-
-            unlockedBallTypes["Rocket Launcher"].currentAmmo = unlockedBallTypes["Rocket Launcher"].currentAmmo - 1
+            local useAmmo = true
+            if hasItem("Magic Mag") then
+                for i=1, itemCount("Magic Mag") do
+                    if math.random(1,100) <= 35 then
+                        useAmmo = false
+                        break
+                    end
+                end
+            end
+            if useAmmo then
+                unlockedBallTypes["Rocket Launcher"].currentAmmo = unlockedBallTypes["Rocket Launcher"].currentAmmo - 1
+            end
             -- Reset ammo and set cooldown
             if unlockedBallTypes["Rocket Launcher"].currentAmmo <= 0 then
                 local cooldownValue = getStat("Rocket Launcher", "cooldown") * 0.8
@@ -1627,7 +1670,18 @@ local function fire(techName)
             flamethrower.shooting = true
             -- Start ammo depletion timer
             ammoDepletionTimer = Timer.every(0.4, function()
-                flamethrower.currentAmmo = flamethrower.currentAmmo - 1
+                local useAmmo = true
+                if hasItem("Magic Mag") then
+                    for i=1, itemCount("Magic Mag") do
+                        if math.random(1,100) <= 35 then
+                            useAmmo = false
+                            break
+                        end
+                    end
+                end
+                if useAmmo then
+                    flamethrower.currentAmmo = flamethrower.currentAmmo - 1
+                end
                 if flamethrower.currentAmmo <= 0 then
                     flamethrower.vfx:stop()
                     flamethrower.shooting = false

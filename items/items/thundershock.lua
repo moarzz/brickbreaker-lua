@@ -1,13 +1,17 @@
 local Thundershock = ItemBase.new();
 Thundershock.__index = Thundershock;
 Thundershock.name = "Thundershock";
-Thundershock.description = "<font=bold>On brick destroyed<font=default>\nSummon a lightning bolt that deals 35% of a random brick's health";
+Thundershock.description = "<font=bold>On brick destroyed<font=default>\nSummon a lightning bolt that deals <thundershockDamage>% of a random brick's health";
 Thundershock.rarity = "uncommon";
 Thundershock.shotCount = 0;
 Thundershock.unique = true
 Thundershock.imageReference = "assets/sprites/UI/ItemIcons/Thundershock.png";
 function Thundershock.new()
     local instance = setmetatable({}, Thundershock):init();
+
+    instance.descriptionPointers = {
+        thundershockDamage = hasItem("Four Leafed Clover") and 60 or 30;
+    };
 
     return instance;
 end
@@ -34,7 +38,7 @@ function Thundershock:onBrickDestroyed()
     end
     createSpriteAnimation(randomBrick.x + randomBrick.width/2, randomBrick.y + randomBrick.height/2, 0.25, sparkVFX, 512, 512, 0.075, 1)
 
-    local thunderDamage = math.ceil(randomBrick.health * (hasItem("Four Leafed Clover") and 0.7 or 0.35))
+    local thunderDamage = math.ceil(randomBrick.health * (hasItem("Four Leafed Clover") and 0.6 or 0.3))
     Timer.after(0.125, function()
         if randomBrick.type ~= "boss" then
             dealDamage({stats = {damage = thunderDamage}}, randomBrick)

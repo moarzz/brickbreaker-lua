@@ -1,8 +1,8 @@
-local Gasoline = ItemBase.new();
+local Gasoline = ItemBase.new(); -- THIS ITEM CAUSES TOO MUCH LAG
 Gasoline.__index = Gasoline;
 Gasoline.name = "Gasoline";
 Gasoline.description = "<font=bold>Laser or explosion Damage<font=default>\ncauses bricks to burn";
-Gasoline.rarity = "uncommon";
+Gasoline.rarity = "rare";
 Gasoline.imageReference = "assets/sprites/UI/ItemIcons/Gasoline.png";
 
 function Gasoline.new()

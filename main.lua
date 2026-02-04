@@ -1073,7 +1073,7 @@ function getBrickSpeedMult()
         end
         
         if bossSpawned then
-            posMult = posMult * mapRangeClamped(boss.y, 350, screenHeight, 1, 0.5)
+            posMult = posMult * mapRangeClamped(boss.y, 350, screenHeight, 1, 0.25)
         end
         -- Combine with time-based multiplier
         return posMult * getBrickSpeedByTime()
@@ -2856,7 +2856,8 @@ function love.keypressed(key)
         end
 
         if key == "2" then
-            wallCollision = not wallCollision
+            -- wallCollision = not wallCollision
+            Player.changeMoney(1000)
         end
         if key == "3" then
             local powerup = {
