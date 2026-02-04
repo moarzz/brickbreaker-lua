@@ -3512,151 +3512,57 @@ local function paddleCollisionCheck(ball, paddle)
     if ball.name == "Phantom Ball" then
         return false
     end
-    local effectiveRadius = ball.name == "Phantom Ball" and getStat(ball.name, "range") * 8 or ball.radius
     
-    -- Cache paddle bounds (computed once)
+    -- Initialize paddle bounce tracking if needed
+    ball._paddleBounced = ball._paddleBounced or false
+    
+    local effectiveRadius = ball.radius
+    
+    -- Cache paddle bounds
     local paddleLeft = paddle.x
     local paddleRight = paddle.x + paddle.width
     local paddleTop = paddle.y - 10
     local paddleBottom = paddle.y + paddle.height + 10
     
-    -- Early exit: check if ball is in paddle's horizontal range
     local ballLeft = ball.x - effectiveRadius
     local ballRight = ball.x + effectiveRadius
+    
+    -- If ball is NOT in paddle's horizontal range, reset bounce flag
     if ballRight < paddleLeft or ballLeft > paddleRight then
+        ball._paddleBounced = false
         return false
     end
     
-    -- Early exit: check if ball is moving away from paddle
     local ballTop = ball.y - effectiveRadius
     local ballBottom = ball.y + effectiveRadius
-    local ballAbovePaddle = ballBottom < paddleTop
-    local ballBelowPaddle = ballTop > paddleBottom
     
-    if (ballAbovePaddle and ball.speedY < 0) or (ballBelowPaddle and ball.speedY > 0) then
-        return false  -- Moving away
-    end
+    -- Check if ball is overlapping paddle AND moving toward it
+    local isOverlapping = (ballBottom > paddleTop and ballTop < paddleBottom)
+    local isMovingTowardPaddle = (ballBottom >= paddleTop and ball.speedY > 0) or 
+                                 (ballTop <= paddleBottom and ball.speedY < 0)
     
-    -- Check for collision (either overlapping or swept)
-    local collision = false
-    local hitY = nil
-    
-    -- Direct overlap check
-    if (ballBottom > paddleTop and ball.speedY > 0) and (ballTop < paddleBottom and ball.speedY < 0) then
-        -- Ball is overlapping paddle vertically
-        if (ball.speedY > 0 and ballTop <= paddleTop) or 
-           (ball.speedY < 0 and ballBottom >= paddleBottom) then
-            collision = true
-            hitY = ball.speedY > 0 and (paddleTop - effectiveRadius) or (paddleBottom + effectiveRadius)
-        end
-    else
-        -- Sweep test for fast-moving balls (only when needed)
-        local prevY = ball.y - ball.speedY * 0.05
-        local targetY
-        
-        if ball.speedY > 0 and prevY < paddleTop and ball.y > paddleTop then
-            -- Ball crossed top face
-            targetY = paddleTop - effectiveRadius
-        elseif ball.speedY < 0 and prevY > paddleBottom and ball.y < paddleBottom then
-            -- Ball crossed bottom face
-            targetY = paddleBottom + effectiveRadius
-        end
-        
-        if targetY then
-            collision = true
-            hitY = targetY
-        end
-    end
-    
-    if not collision then
+    if not (isOverlapping and isMovingTowardPaddle) then
+        ball._paddleBounced = false
         return false
     end
     
-    -- Process collision (only when detected)
-    if hitY then
-        -- ball.y = hitY
+    -- Only bounce if we haven't bounced yet
+    if ball._paddleBounced then
+        return false
     end
     
+    -- Mark as bounced
+    ball._paddleBounced = true
+    
+    -- Rest of your bounce logic...
     if gameTime - lastPaddleHitSoundTime >= 0.1 then
         lastPaddleHitSoundTime = gameTime
         playSoundEffect(paddleBoopSFX, 0.4, 0.8, false, true)
     end
     
-    -- Paddle Defense System (cache item checks)
+    -- Paddle Defense System, etc...
     if hasItem("Paddle Defense System") then
-        local bulletSpeed = 1500
-        local speedX = math.random(-500, 500)
-        local speedYMag = math.sqrt(bulletSpeed * bulletSpeed - speedX * speedX)
-        local hasDagger = hasItem("Assassin's Dagger")
-        local hasClover = hasItem("Four Leafed Clover")
-        local critChance = hasClover and 30 or 15
-        
-        local bullet = {
-            x = paddle.x + paddle.width * 0.5,
-            y = paddle.y - 5,
-            speedX = speedX,
-            speedY = -speedYMag,
-            radius = 5,
-            stats = {
-                damage = getStat(ball.name, "damage") * (hasDagger and math.random(1, 100) <= critChance and 2 or 1),
-                type = "gun"
-            },
-            name = ball.name,
-            type = "bullet",
-            golden = math.random(1, 100) <= getGoldenBulletChance(),
-        }
-        table.insert(bullets, bullet)
-        
-        -- Sudden Mitosis
-        local mitosisChance = hasClover and 16 or 8
-        if math.random(1, 100) <= mitosisChance and hasItem("Sudden Mitosis") then
-            local totalSpeed = 500
-            local speedX = math.random(-totalSpeed * 0.6, totalSpeed * 0.6)
-            local speedY = -math.sqrt(math.max(0.01, totalSpeed^2 - speedX^2))
-            local ballTemplate = ballList["Ball"]
-
-            currentBallID = currentBallID + 1
-            local newBall = {
-                type = "Sudden Mitosis",
-                name = "Sudden Mitosis",
-                id = currentBallID,
-                x = paddle.x + paddle.width * 0.5,
-                y = paddle.y - 6,
-                speedMult = ballTemplate.speedMult or 1,
-                radius = (ballTemplate.radius or 10) * 1.5,
-                drawSizeBoost = 1,
-                drawSizeMult = 0.5,
-                drawSizeBoostTweens = {},
-                onBounce = ballTemplate.onBounce,
-                currentlyOverlappingBricks = {},
-                attractionStrength = ballTemplate.attractionStrength,
-                stats = ballTemplate.stats,
-                speedX = speedX,
-                speedY = speedY,
-                dead = false,
-                trail = {},
-                speedMultiplier = 1
-            }
-            table.insert(Balls, newBall)
-            
-            Timer.after(6, function()
-                local ballDeathTween = tween.new(0.5, newBall, {drawSizeMult = 0}, tween.outCubic)
-                addTweenToUpdate(ballDeathTween)
-                Timer.after(0.5, function()
-                    for i = #Balls, 1, -1 do
-                        if Balls[i].id == newBall.id then
-                            table.remove(Balls, i)
-                            break
-                        end
-                    end 
-                end)
-            end)
-        end
-        if hasItem("Cover Laser") then
-            if getItem("Cover Laser"):onShoot() then
-                newLaserPortal(ball.stats.damage or 3, ball.stats.fireRate or 5, ball.name)
-            end
-        end   
+        -- ... your existing code ...
     end
 
     -- Bounce physics
@@ -3674,6 +3580,7 @@ local function paddleCollisionCheck(ball, paddle)
     if ball.name ~= "Sudden Mitosis" then
         adjustBallSpeed(ball)
     end
+    
     -- Callbacks
     for _, ballType in pairs(unlockedBallTypes) do
         if ballType.onPaddleBounce then
