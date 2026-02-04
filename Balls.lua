@@ -5036,7 +5036,7 @@ function Balls.update(dt, paddle, bricks)
             if ballPhysics then
                 -- Speed decay
                 if ball.speedExtra then
-                    ball.speedExtra = math.max(1, ball.speedExtra - math.pow(ball.speedExtra, 1.6) * dtStep * 0.5)
+                    ball.speedExtra = math.max(1, ball.speedExtra - math.pow(ball.speedExtra, 1.6) * dtStep * 1.75)
                 end
                 
                 -- Movement calculation
@@ -5045,11 +5045,11 @@ function Balls.update(dt, paddle, bricks)
                     local multX, multY = normalizeVector(ball.speedX, ball.speedY)
                     local extraX = speedExtra * multX * 50
                     local extraY = speedExtra * multY * 50
-                    ball.x = ball.x + (ball.speedX + extraX) * ball.speedMult * dtStep * coreMult * 0.925 * 2
-                    ball.y = ball.y + (ball.speedY + extraY) * ball.speedMult * dtStep * coreMult * 0.925 * 2
+                    ball.x = ball.x + (ball.speedX + extraX * 1.6) * ball.speedMult * dtStep * coreMult * 0.925 * 4
+                    ball.y = ball.y + (ball.speedY + extraY * 1.6) * ball.speedMult * dtStep * coreMult * 0.925 * 4
                 else
-                    ball.x = ball.x + ball.speedX * ball.speedMult * dtStep * coreMult * 0.925 * 2
-                    ball.y = ball.y + ball.speedY * ball.speedMult * dtStep * coreMult * 0.925 * 2
+                    ball.x = ball.x + ball.speedX * ball.speedMult * dtStep * coreMult * 0.925 * 4
+                    ball.y = ball.y + ball.speedY * ball.speedMult * dtStep * coreMult * 0.925 * 4
                 end
 
                 for i = 1, substeps do
