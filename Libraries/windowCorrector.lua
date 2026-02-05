@@ -415,7 +415,7 @@ function WindowCorrector.stopDraw()
     love.graphics.setColor(1, 1, 1, 1);
     
     -- Draw screenContour only if it exists and we're not on web
-    if screenContour then
+    if screenContour and arcadeBezelOn then
         local actualWidth = love.graphics.getPixelWidth();
         local actualHeight = love.graphics.getPixelHeight();
         local scaleX = actualWidth / self.targetWidth;

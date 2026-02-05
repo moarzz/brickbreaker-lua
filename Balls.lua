@@ -310,7 +310,7 @@ function createPowerupG(Type)
 end
 
 local function getRandomPowerupType()
-    local powerupTypes = {"moneyBag", "nuke", --[["acceleration",]] "doubleDamage"}
+    local powerupTypes = {"moneyBag", "nuke"--[[, "acceleration", "doubleDamage"]]}
     if gameTime <= 300 then
         table.insert(powerupTypes, "acceleration")
     end
@@ -928,7 +928,7 @@ local function shoot(gunName, ball)
                 speedX = speedXref,
                 speedY = speedYref,
                 radius = 5,
-                stats = {damage = bulletDamage * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1)},
+                stats = {damage = bulletDamage * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1) * (statDoubled == "damage" and 2 or 1)},
                 hasSplit = false,
                 hasTriggeredOnBulletHit = false,
                 golden = math.random(1,100) <= getGoldenBulletChance(),
@@ -1125,7 +1125,7 @@ local function shoot(gunName, ball)
                         speedX = speedXref + math.random(-90, 90),
                         speedY = -math.sqrt(bulletSpeed^2 - (speedXref + math.random(-80, 80))^2),
                         radius = 5,
-                        stats = {damage = bulletDamage * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1)},
+                        stats = {damage = bulletDamage * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1) * (statDoubled == "damage" and 2 or 1)},
                         hasSplit = false,
                         hasTriggeredOnBulletHit = false,
                         golden = math.random(1,100) <= getGoldenBulletChance(),
@@ -1206,7 +1206,7 @@ local function shoot(gunName, ball)
                     speedX = speedXref,
                     speedY = speedYref,
                     radius = 5,
-                    stats = {damage = bulletDamage * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1)},
+                    stats = {damage = bulletDamage * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1) * (statDoubled == "damage" and 2 or 1)},
                     hasSplit = false,
                     hasTriggeredOnBulletHit = false,
                     golden = math.random(1,100) <= getGoldenBulletChance(),
@@ -1266,7 +1266,7 @@ local function shoot(gunName, ball)
                     speedX = speedXref,
                     speedY = -math.sqrt(bulletSpeed^2 - speedXref^2),
                     radius = 5,
-                    stats = {damage = bulletDamage * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1)},
+                    stats = {damage = bulletDamage * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1) * (statDoubled == "damage" and 2 or 1)},
                     hasSplit = false,
                     hasTriggeredOnBulletHit = false,
                     golden = math.random(1,100) <= getGoldenBulletChance(),
@@ -1405,7 +1405,7 @@ local function turretShoot(turret, typeMod)
             speedX = speed.x,
             speedY = speed.y,
             radius = 5,
-            stats = {damage = bulletDamage * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1), type = "tech"},
+            stats = {damage = bulletDamage * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1) * (statDoubled == "damage" and 2 or 1), type = "tech"},
             name = "Gun Turrets",
             type = "bullet",
             golden = math.random(1,100) <= getGoldenBulletChance(),
@@ -3108,11 +3108,12 @@ function getStat(ballTypeName, statName)
         else
             totalValue = baseValue + bonusValue
         end
-        if statDoubled == statName then
+        --[[if statDoubled == statName then
             totalValue = totalValue * 2
-        elseif accelerationOn and (statName == "fireRate" or statName == "speed") then
+        end]]
+        --[[if accelerationOn and (statName == "fireRate" or statName == "speed") then
             totalValue = totalValue * 2
-        end
+        end]]
         if statName == "cooldown" then
             totalValue = math.max(0, totalValue)
         else

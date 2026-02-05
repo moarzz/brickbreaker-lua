@@ -2860,15 +2860,19 @@ function love.keypressed(key)
             Player.changeMoney(1000)
         end
         if key == "3" then
-            --[[local powerup = {
-                type = "doubleDamage",        
+            local powerup = {
+                type = "acceleration",        
             }
-            powerupPickup(powerup, 1)]]
-            brickCollisions = not brickCollisions
+            powerupPickup(powerup, 1)
+            -- brickCollisions = not brickCollisions
         end
 
         if key == "4" then
-            paddleCollision = not paddleCollision
+            local powerup = {
+                type = "doubleDamage",        
+            }
+            powerupPickup(powerup, 1)
+            -- brickCollisions = not brickCollisions
         end
 
         -- get powerup
