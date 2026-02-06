@@ -2868,11 +2868,7 @@ function love.keypressed(key)
         end
 
         if key == "4" then
-            local powerup = {
-                type = "doubleDamage",        
-            }
-            powerupPickup(powerup, 1)
-            -- brickCollisions = not brickCollisions
+            paddleCollisions = not paddleCollisions
         end
 
         -- get powerup

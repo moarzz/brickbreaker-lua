@@ -578,9 +578,9 @@ function dealDamage(ball, brick, burnDamage, patternRecognition, GasolineDmg)
     if hasItem("Assassin's Dagger") and math.random(1,100) <= critChance and ball.type ~= "bullet" then
         damage = damage * 2
     end
-    if statDoubled == "damage" and ball.type ~= "bullet" then
+    --[[if statDoubled == "damage" and ball.type ~= "bullet" then
         damage = damage * 2
-    end
+    end]]
     
     damage = math.floor(damage)
     damage = math.min(damage, brick.health)
@@ -3111,9 +3111,9 @@ function getStat(ballTypeName, statName)
         --[[if statDoubled == statName then
             totalValue = totalValue * 2
         end]]
-        --[[if accelerationOn and (statName == "fireRate" or statName == "speed") then
+        if accelerationOn and (statName == "fireRate" or statName == "speed") then
             totalValue = totalValue * 2
-        end]]
+        end
         if statName == "cooldown" then
             totalValue = math.max(0, totalValue)
         else
@@ -4629,7 +4629,7 @@ function powerupPickup(powerup, length)
             end
         end)
     elseif powerup.type == "doubleDamage" then
-        statDoubled = "damage"
+        -- statDoubled = "damage"
         Timer.after(12, function() 
             local outTween = tween.new(0.15, powerupPopup, {scale = 0}, tween.easing.inCirc)
             addTweenToUpdate(outTween)
