@@ -347,6 +347,7 @@ local function loadAssets()
     shieldBlockSFX = love.audio.newSource("assets/SFX/shieldBlock.mp3", "static")
     turretCreationSFX = love.audio.newSource("assets/SFX/turretCreation.mp3", "static")
     powerupCreationSFX = love.audio.newSource("assets/SFX/powerupCreation.mp3", "static")
+    unavailableSFX = love.audio.newSource("assets/SFX/unavailable.mp3", "static")
 
 
     -- load shaders
@@ -1676,21 +1677,38 @@ function drawMenu()
     end
 
     -- Settings button
-    love.graphics.draw(uiWindowImg, centerX - screenWidth/4 - 135 + buttonWidth * 0.15,  startY - 40, 0, buttonWidth * 0.7/uiWindowImg:getWidth(), buttonHeight * 1.5/uiWindowImg:getHeight())
-    if suit.Button("Settings", {id="menu settings buttons", valign = "middle", color = invisButtonColor}, centerX - screenWidth/4 - 135 + buttonWidth * 0.15, startY - 40, buttonWidth * 0.7, buttonHeight * 1.5).hit then
+    love.graphics.draw(uiWindowImg, centerX - screenWidth/4 - 135 + buttonWidth * 0.15,  startY + 200, 0, buttonWidth * 0.7/uiWindowImg:getWidth(), buttonHeight * 1.5/uiWindowImg:getHeight())
+    if suit.Button("Settings", {id="menu settings buttons", valign = "middle", color = invisButtonColor}, centerX - screenWidth/4 - 135 + buttonWidth * 0.15, startY + 200, buttonWidth * 0.7, buttonHeight * 1.5).hit then
         playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.SETTINGS
         love.mouse.setVisible(true)
     end
 
     -- Upgrades button
-    love.graphics.draw(uiWindowImg, centerX + screenWidth/4 + 135 + buttonWidth * 0.15, startY - 40, 0, buttonWidth * 0.7/uiWindowImg:getWidth(), buttonHeight * 1.5/uiWindowImg:getHeight())
-    if suit.Button("Shop", {id="menu shop button", valign = "middle", color = invisButtonColor}, centerX + screenWidth/4 + 135 + buttonWidth * 0.15, startY - 40, buttonWidth * 0.7, buttonHeight * 1.5).hit then
+    love.graphics.draw(uiWindowImg, centerX + screenWidth/4 + 135 + buttonWidth * 0.15, startY + 200, 0, buttonWidth * 0.7/uiWindowImg:getWidth(), buttonHeight * 1.5/uiWindowImg:getHeight())
+    if suit.Button("Shop", {id="menu shop button", valign = "middle", color = invisButtonColor}, centerX + screenWidth/4 + 135 + buttonWidth * 0.15, startY + 200, buttonWidth * 0.7, buttonHeight * 1.5).hit then
         playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.UPGRADES
         love.mouse.setVisible(true)
         loadGameData() -- Load game data when entering upgrades screen
     end
+
+    -- difficulty button
+    setFont(22)
+    love.graphics.draw(uiWindowImg, centerX + buttonWidth * 0.25 + 375, startY - 40, 0, buttonWidth * 0.5/uiWindowImg:getWidth(), buttonHeight * 2/uiWindowImg:getHeight())
+    if suit.Button("Difficulty\nModifiers", {id="difficulty button", valign = "middle", color = invisButtonColor}, centerX + buttonWidth * 0.25 + 380, startY - 40, buttonWidth * 0.5, buttonHeight * 2).hit then
+        playSoundEffect(unavailableSFX, 1, 0.8)
+        local mouseX, mouseY = love.mouse.getPosition()
+        textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)
+    end
+
+    love.graphics.draw(uiWindowImg, centerX + buttonWidth * 0.25 - 375, startY - 40, 0, buttonWidth * 0.5/uiWindowImg:getWidth(), buttonHeight * 2/uiWindowImg:getHeight())
+    if suit.Button("Challenge\nRuns", {id="challenge button", valign = "middle", color = invisButtonColor}, centerX + buttonWidth * 0.25 -370, startY - 40, buttonWidth * 0.5, buttonHeight * 2).hit then
+        playSoundEffect(unavailableSFX, 1, 0.8)
+        local mouseX, mouseY = love.mouse.getPosition()
+        textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)
+    end
+
 
     --[[ Wishlist button
     if suit.Button("Wishlist on steam!", {id="wishlist button", align = "center", valign = "middle"}, centerX + buttonWidth * 0.05, startY + (buttonHeight + buttonSpacing) * 3.25, buttonWidth, buttonHeight * 2).hit then

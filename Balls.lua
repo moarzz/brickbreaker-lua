@@ -1338,9 +1338,6 @@ local function shoot(gunName, ball)
                 gun.currentAmmo = getStat(gun.name, "ammo")
 
                 local cooldownValue = getStat(gun.name, "cooldown") * 0.5
-                if accelerationOn then
-                    cooldownValue = cooldownValue * 0.5
-                end
                 Timer.after(cooldownValue, function() shoot(gunName) end)
                 createCooldownVFX(cooldownValue)
             end
@@ -1633,9 +1630,6 @@ local function fire(techName)
             -- Reset ammo and set cooldown
             if unlockedBallTypes["Rocket Launcher"].currentAmmo <= 0 then
                 local cooldownValue = getStat("Rocket Launcher", "cooldown") * 0.8
-                if accelerationOn then
-                    cooldownValue = cooldownValue * 0.5
-                end
                 local timeUntilNextShot = math.max(cooldownValue, 4.5/getStat("Rocket Launcher", "fireRate"))
                 Timer.after(timeUntilNextShot, function()
                     unlockedBallTypes["Rocket Launcher"].currentAmmo = getStat("Rocket Launcher", "ammo")
@@ -1688,9 +1682,6 @@ local function fire(techName)
                     Timer.cancel(ammoDepletionTimer)
                     -- Refill ammo after cooldown
                     local cooldownValue = getStat("Flamethrower", "cooldown") * 0.7
-                    if accelerationOn then
-                        cooldownValue = cooldownValue * 0.5
-                    end
                     Timer.after(cooldownValue, function()
                         flamethrower.currentAmmo = getStat("Flamethrower", "ammo")
                         fire("Flamethrower")
@@ -1740,9 +1731,6 @@ local function fire(techName)
                 end)
             end
             local cooldownValue = 1.5 + getStat("Gun Turrets", "cooldown") * 0.4
-            if accelerationOn then
-                cooldownValue = cooldownValue * 0.5
-            end
             Timer.after(cooldownValue, function()
                 -- Refill ammo after cooldown
                 fire("Gun Turrets")
@@ -1950,9 +1938,6 @@ local function fire(techName)
                 end)
             end
             local cooldownValue = 1 + getStat("Laser Turrets", "cooldown") * 0.4
-            if accelerationOn then
-                cooldownValue = cooldownValue * 0.5
-            end
             Timer.after(cooldownValue, function()
                 -- Refill ammo after cooldown
                 fire("Laser Turrets")
@@ -2003,9 +1988,6 @@ local function fire(techName)
                 end)
             end
             local cooldownValue = 1.5 + getStat("Mortar Turrets", "cooldown") * 0.4
-            if accelerationOn then
-                cooldownValue = cooldownValue * 0.5
-            end
             Timer.after(cooldownValue, function()
                 -- Refill ammo after cooldown
                 fire("Mortar Turrets")
@@ -2145,9 +2127,6 @@ local function cast(spellName, brick, forcedDamage)
                 end)
             end)        end
         local cooldownValue = getStat("Light Beam", "cooldown")
-        if accelerationOn then
-            cooldownValue = cooldownValue * 0.4
-        end
         local cooldownLength = 0.3 * ammoValue + math.max(cooldownValue, 0) + 0.05
         Timer.after(cooldownLength, function()
             cast("Light Beam")
@@ -2187,9 +2166,6 @@ local function cast(spellName, brick, forcedDamage)
             end)
         end
         local cooldownValue = getStat("Lightning Pulse", "cooldown")
-        if accelerationOn then
-            cooldownValue = cooldownValue * 0.5
-        end
         local timeUntilNextCast = (1 + math.max(cooldownValue, 0))/5
         Timer.after(timeUntilNextCast, function()
             cast("Lightning Pulse")
@@ -3111,9 +3087,9 @@ function getStat(ballTypeName, statName)
         --[[if statDoubled == statName then
             totalValue = totalValue * 2
         end]]
-        if accelerationOn and (statName == "fireRate" or statName == "speed") then
+        --[[if accelerationOn and (statName == "fireRate" or statName == "speed") then
             totalValue = totalValue * 2
-        end
+        end]]
         if statName == "cooldown" then
             totalValue = math.max(0, totalValue)
         else
@@ -3846,9 +3822,6 @@ local function techUpdate(dt)
         if unlockedBallTypes["Laser"].charging then
             unlockedBallTypes["Laser"].currentChargeTime = unlockedBallTypes["Laser"].currentChargeTime + dt
             local cooldownValue = (Player.currentCore == "Madness Core" and 0.5 or 1) * math.max(getStat("Laser", "cooldown") + 1.75, 1)
-            if accelerationOn then
-                cooldownValue = cooldownValue * 0.5
-            end
             if unlockedBallTypes["Laser"].currentChargeTime >= (cooldownValue) then
                 unlockedBallTypes["Laser"].charging = false
                 unlockedBallTypes["Laser"].currentChargeTime = 0
@@ -5515,9 +5488,6 @@ local function techDraw()
         -- draw charging bars
         if unlockedBallTypes["Laser"].charging then
             local cooldownValue = (((Player.currentCore == "Cooldown Core" and 2 or math.max(getStat("Laser", "cooldown") + 2, 1))) * (Player.currentCore == "Madness Core" and 0.5 or 1))
-            if accelerationOn then
-                cooldownValue = cooldownValue * 0.5
-            end
             local chargeProgress = unlockedBallTypes["Laser"].currentChargeTime / cooldownValue
             local opacityMult = mapRangeClamped(chargeProgress, 0.6, 1, 0, 0.75)
             love.graphics.setColor(0.85, 0.85, 0.85, opacityMult)

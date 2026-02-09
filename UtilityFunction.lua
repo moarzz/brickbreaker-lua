@@ -257,15 +257,15 @@ function textPopup(text, x, y, color, scale)
         scale = 0,    
         id = "textPopup : " .. textPopupId,
         updateWhenPaused = true,
-        color = {0,1,0}
+        color = {1,0,0}
     }
     textPopupId = textPopupId + 1
     table.insert(textPopups, popup)
     local inTween = tween.new(0.2, popup, {scale = scale}, tween.easing.outCirc, nil, true)
     addTweenToUpdate(inTween)
-    local entireInTween = tween.new(2, popup, {x = popup.x + xOffset, y = popup.y + yOffset}, tween.easing.outCirc, nil, true)
+    local entireInTween = tween.new(1.7, popup, {x = popup.x + xOffset, y = popup.y + yOffset}, tween.easing.outCirc, nil, true)
     addTweenToUpdate(entireInTween)
-    GlobalTimer:after(1.5, function()
+    GlobalTimer:after(1.2, function()
         local outTween = tween.new(0.5, popup, {scale = 0}, tween.easing.inCirc, nil, true)
         addTweenToUpdate(outTween)
         GlobalTimer:after(0.5, function()
