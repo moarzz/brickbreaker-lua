@@ -1090,7 +1090,8 @@ local function moveBricksDown(dt)
     local isInHitState = (currentTime - Player.lastHitTime) < 2.0 -- Check if within 2 seconds of hit
     -- Normal speed calculation
     currentBrickSpeed = getBrickSpeedMult()-- < currentBrickSpeed and math.max(currentBrickSpeed - dt * 10, getBrickSpeedMult()) or math.min(currentBrickSpeed + dt * 5, getBrickSpeedMult())
-    local speedMult = currentBrickSpeed -- Get the combined speed multiplier
+    local speedMult = 0.85
+    local speedMult = currentBrickSpeed * speedMult -- Get the combined speed multiplier
     for _, brick in ipairs(bricks) do
         if not brick.destroyed and brick.health > 0 then
             if brick.type == "gold" then
@@ -1104,13 +1105,7 @@ local function moveBricksDown(dt)
             if brick.type == "boss" then
                 brick.y = brick.y + brickSpeed.value * dt * speedMult * mapRangeClamped(brick.y, - boss.height * 1.5, -boss.height, 3.5, 0.25)
             elseif brick.type == "fast" then
-                local fastSpeed
-                if brick.y <= screenHeight/2 then     
-                    fastSpeed = mapRangeClamped(brick.y, 0, screenHeight/2, 100, 40)
-                else
-                    fastSpeed = mapRangeClamped(brick.y, screenHeight/2, screenHeight - 120, 40, 4)
-                end
-                brick.y = brick.y + dt * mapRangeClamped(brick.y, 0, screenHeight, 80, 15) * (brick.speedMult or 1)
+                brick.y = brick.y + dt * mapRangeClamped(brick.y, 0, screenHeight - 100, 80, 15) * (brick.speedMult or 1) * speedMult
             else
                 brick.y = brick.y + brickSpeed.value * dt * speedMult * (brick.speedMult or 1)
             end
