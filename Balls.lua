@@ -311,9 +311,9 @@ end
 
 local function getRandomPowerupType()
     local powerupTypes = {"moneyBag", "nuke"--[[, "acceleration", "doubleDamage"]]}
-    if gameTime <= 300 then
+    --[[if gameTime <= 300 then
         table.insert(powerupTypes, "acceleration")
-    end
+    end]]
     local powerup = powerupTypes[math.random(#powerupTypes)] 
     return powerup
 end
@@ -2361,7 +2361,7 @@ local function ballListInit()
             },
             attractionStrength = 425
         },
-        ["Laser Ball"] = {
+        --[[["Laser Ball"] = {
             name = "Laser Ball",
             type = "ball",
             x = screenWidth / 2,
@@ -2400,7 +2400,7 @@ local function ballListInit()
                 fireRate = 2,
                 cooldown = 10,
             },
-        },
+        },]]
         ["Lightning Ball"] = {
             name = "Lightning Ball",
             type = "ball",
@@ -2441,7 +2441,7 @@ local function ballListInit()
                 damage = 1,
             },
         },
-        ["Incrediball"] = {
+        --[[["Incrediball"] = {
             name = "Incrediball",
             type = "ball",
             x = screenWidth / 2,
@@ -2465,7 +2465,7 @@ local function ballListInit()
             },
             canBuy = function() return hasItem("Superhero t-shirt") end,
             attractionStrength = 600
-        },
+        },]]
         ["Machine Gun"] = {
             name = "Machine Gun",
             type = "gun",
@@ -2631,7 +2631,7 @@ local function ballListInit()
                 range = 2,
             },
         },]]
-        ["Laser Beam"] = {
+        --[[["Laser Beam"] = {
             name = "Laser Beam",
             type = "tech",
             x = screenWidth / 2,
@@ -2671,7 +2671,7 @@ local function ballListInit()
                 cooldown = 12,
             },
             canBuy = function() return Player.currentCore ~= "Damage Core" end
-        },
+        },]]
         ["Rocket Launcher"] = {
             name = "Rocket Launcher",
             type = "tech",
@@ -2742,7 +2742,7 @@ local function ballListInit()
                 damage = 1,
             },
         },
-        ["Laser Turrets"] = {
+        --[[["Laser Turrets"] = {
             name = "Laser Turrets",
             type = "tech",
             x = screenWidth / 2,
@@ -2794,7 +2794,7 @@ local function ballListInit()
                 damage = 2,
                 range = 3,
             },
-        },
+        },]]
         ["Shadow Ball"] = {
             name = "Shadow Ball",
             type = "spell",
@@ -2818,7 +2818,7 @@ local function ballListInit()
                 fireRate = 3,
             }
         },
-        ["Fireballs"] = {
+        --[[["Fireballs"] = {
             name = "Fireballs",
             type = "spell",
             x = screenWidth / 2,
@@ -2896,7 +2896,7 @@ local function ballListInit()
             onBuy = function()
                 shoot("Gun Ball Gun")
             end,
-        }
+        }]]
         
     }
     for _, ball in pairs(ballList) do

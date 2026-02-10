@@ -379,7 +379,7 @@ local targetMusicVolume = 1
 
 local canHeal = true
 local bossWidth, bossHeight = 500, 300
-local bossHealth = 6000
+local bossHealth = 5000
 local brickId = 1
 local bossBrickSpawnTimer
 local bossSpawnSwitch = true
@@ -802,9 +802,9 @@ local function addMoreBricks()
                 generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
                 local addBrickMult = mapRangeClamped(Player.level, 1, 20, 2, 1)
                 if victoryAchieved then
-                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 65, 200) * math.max(mapRange(gameTime, 600, 900, 1, 8), 1)
+                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 80, 250) * math.max(mapRange(gameTime, 600, 900, 1, 8), 1)
                 else
-                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 65, 200) 
+                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 80, 250) 
                 end
                 
                 if spawnBossNextRow and not bossSpawned then
@@ -1024,7 +1024,7 @@ brickFreeze = false
 brickFreezeTime = gameTime
 function getBrickSpeedByTime()
     -- Scale speed from 0.5 to 3 over 30 minutes
-    local returnValue = mapRangeClamped(gameTime, 0, 600, 0.35, 1.35) * (Player.currentCore == "Madness Core" and 2 or 1) * math.max(1, mapRange(gameTime, 600, 900, 1, 3))
+    local returnValue = mapRangeClamped(gameTime, 0, 600, 0.25, 1.35) * (Player.currentCore == "Madness Core" and 2 or 1) * math.max(1, mapRange(gameTime, 600, 900, 1, 3))
     if brickFreeze == true then
         if gameTime - brickFreezeTime > 20 then
             brickFreeze = false
@@ -1621,22 +1621,28 @@ function drawMenu()
     
     -- buttons hit logic
     if btn2Next.hit then
-        playSoundEffect(selectSFX, 1, 0.8)
+        playSoundEffect(unavailableSFX, 1, 0.8)
+        local mouseX, mouseY = love.mouse.getPosition()
+        textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)
+        --[[playSoundEffect(selectSFX, 1, 0.8)
         currentSelectedCoreID = currentSelectedCoreID + 1
         if currentSelectedCoreID > #paddleCores then
             currentSelectedCoreID = 1
         end
         core = paddleCores[currentSelectedCoreID]
-        currentSelectedCore = core
+        currentSelectedCore = core]]
     end
     if btn2Before.hit then
-        playSoundEffect(selectSFX, 1, 0.8)
+        playSoundEffect(unavailableSFX, 1, 0.8)
+        local mouseX, mouseY = love.mouse.getPosition()
+        textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)
+        --[[playSoundEffect(selectSFX, 1, 0.8)
         currentSelectedCoreID = currentSelectedCoreID - 1
         if currentSelectedCoreID < 1 then
             currentSelectedCoreID = #paddleCores
         end
         core = paddleCores[currentSelectedCoreID]
-        currentSelectedCore = core.name
+        currentSelectedCore = core.name]]
     end
 
     local btnY = btnY + buttonHeight + 80
@@ -1687,10 +1693,13 @@ function drawMenu()
     -- Upgrades button
     love.graphics.draw(uiWindowImg, centerX + screenWidth/4 + 135 + buttonWidth * 0.15, startY + 200, 0, buttonWidth * 0.7/uiWindowImg:getWidth(), buttonHeight * 1.5/uiWindowImg:getHeight())
     if suit.Button("Shop", {id="menu shop button", valign = "middle", color = invisButtonColor}, centerX + screenWidth/4 + 135 + buttonWidth * 0.15, startY + 200, buttonWidth * 0.7, buttonHeight * 1.5).hit then
-        playSoundEffect(selectSFX, 1, 0.8)
+        playSoundEffect(unavailableSFX, 1, 0.8)
+        local mouseX, mouseY = love.mouse.getPosition()
+        textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)
+        --[[playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.UPGRADES
         love.mouse.setVisible(true)
-        loadGameData() -- Load game data when entering upgrades screen
+        loadGameData() -- Load game data when entering upgrades screen]]
     end
 
     -- difficulty button
@@ -2272,11 +2281,14 @@ function drawVictoryScreen()
 
     -- Keep Going button (new)
     if suit.Button("Keep Going", {id = "keep_going"}, startX, y, buttonW, buttonH).hit then
-        changeMusic("intense")
+        playSoundEffect(unavailableSFX, 1, 0.8)
+        local mouseX, mouseY = love.mouse.getPosition()
+        textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)
+        --[[changeMusic("intense")
         playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.PLAYING  -- Set state back to playing
         endlessRun = true
-        love.mouse.setVisible(false)
+        love.mouse.setVisible(false)]]
     end
 
     -- Main Menu button
@@ -2289,12 +2301,15 @@ function drawVictoryScreen()
     end
     -- Upgrades button
     if suit.Button("Shop", {id = "victory_upgrades"}, startX + (buttonW + spacing) * 2, y, buttonW, buttonH).hit then
+        playSoundEffect(unavailableSFX, 1, 0.8)
+        local mouseX, mouseY = love.mouse.getPosition()
+        textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)
         -- changeMusic("menu")
-        playSoundEffect(selectSFX, 1, 0.8)
+        --[[playSoundEffect(selectSFX, 1, 0.8)
         resetGame()
         currentGameState = GameState.UPGRADES
         love.mouse.setVisible(true)
-        loadGameData()
+        loadGameData()]]
     end
 
     -- Draw SUIT UI elements (buttons)
