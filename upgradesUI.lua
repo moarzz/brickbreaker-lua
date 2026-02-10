@@ -505,7 +505,7 @@ local function drawPlayerUpgrades()
 
             local buttonID
             buttonID = generateNextButtonID() -- Generate a unique ID for the button
-            local upgradeStatButton = dress:Button("", {color = invisButtonColor, id = buttonID}, x+5, y-20, cellWidth, cellHeight*4)
+            local upgradeStatButton = dress:Button("", {color = invisButtonColor, id = buttonID}, x, y-20, cellWidth, cellHeight*4)
             -- Check if the player has enough money to upgrade
             local upgradeQueued = false
             if Player.queuedUpgrades then
@@ -979,7 +979,7 @@ local function drawBallStats()
 
             -- upgrade button
             local buttonId = ballType.name .. "_upgradeButton"
-            local upgradeStatButton = dress:Button("", {color = invisButtonColor, id = buttonId}, currentX + 10, y + 15, getRarityWindow("common"):getWidth() - 30, getRarityWindow("common"):getHeight()/2 - 30)
+            local upgradeStatButton = dress:Button("", {color = invisButtonColor, id = buttonId}, currentX + 5, y + 14, getRarityWindow("common"):getWidth() - 24, getRarityWindow("common"):getHeight()/2 - 27)
             if upgradeStatButton.hit then
                 if (Player.realMoney < math.ceil(ballType.price)) or (currentlyOnFirstLevelUp and Player.getCurrentTutorialStep() ~= 4) then
                     -- does nothing

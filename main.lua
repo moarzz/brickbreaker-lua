@@ -1684,7 +1684,7 @@ function drawMenu()
 
     -- Settings button
     love.graphics.draw(uiWindowImg, centerX - screenWidth/4 - 135 + buttonWidth * 0.15,  startY + 200, 0, buttonWidth * 0.7/uiWindowImg:getWidth(), buttonHeight * 1.5/uiWindowImg:getHeight())
-    if suit.Button("Settings", {id="menu settings buttons", valign = "middle", color = invisButtonColor}, centerX - screenWidth/4 - 135 + buttonWidth * 0.15, startY + 200, buttonWidth * 0.7, buttonHeight * 1.5).hit then
+    if suit.Button("Settings", {id="menu settings buttons", valign = "middle", color = invisButtonColor}, centerX - screenWidth/4 - 135 + buttonWidth * 0.15 + 10, startY + 200, buttonWidth * 0.7 - 10, buttonHeight * 1.5).hit then
         playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.SETTINGS
         love.mouse.setVisible(true)
@@ -1692,7 +1692,7 @@ function drawMenu()
 
     -- Upgrades button
     love.graphics.draw(uiWindowImg, centerX + screenWidth/4 + 135 + buttonWidth * 0.15, startY + 200, 0, buttonWidth * 0.7/uiWindowImg:getWidth(), buttonHeight * 1.5/uiWindowImg:getHeight())
-    if suit.Button("Shop", {id="menu shop button", valign = "middle", color = invisButtonColor}, centerX + screenWidth/4 + 135 + buttonWidth * 0.15, startY + 200, buttonWidth * 0.7, buttonHeight * 1.5).hit then
+    if suit.Button("Shop", {id="menu shop button", valign = "middle", color = invisButtonColor}, centerX + screenWidth/4 + 135 + buttonWidth * 0.15 + 10, startY + 200, buttonWidth * 0.7 - 10, buttonHeight * 1.5).hit then
         playSoundEffect(unavailableSFX, 1, 0.8)
         local mouseX, mouseY = love.mouse.getPosition()
         textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)
@@ -1716,6 +1716,15 @@ function drawMenu()
         playSoundEffect(unavailableSFX, 1, 0.8)
         local mouseX, mouseY = love.mouse.getPosition()
         textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)
+    end
+
+    -- exit game button
+    love.graphics.draw(uiWindowImg, screenWidth - buttonWidth * 0.7 - 105, 95, 0, buttonWidth * 0.7/uiWindowImg:getWidth(), buttonHeight * 1.5/uiWindowImg:getHeight())
+    if suit.Button("Exit game", {id="exit game buttons", valign = "middle", color = invisButtonColor}, screenWidth - buttonWidth * 0.7 - 100 + 10, 100, buttonWidth * 0.7 - 25, buttonHeight * 1.5 - 10).hit then
+        playSoundEffect(selectSFX, 1, 0.8)
+        -- "escape"
+        love.event.quit()
+        return
     end
 
 
@@ -2801,7 +2810,7 @@ function love.keypressed(key)
             return
         end
     end
-
+    --[[
     if key == "t" then 
         testingMode = not testingMode
         print("Testing mode: " .. tostring(testingMode))
@@ -2811,7 +2820,7 @@ function love.keypressed(key)
 
         -- PERFORMANCE STRESS TESTS
 
-        --[[if key == "q" then
+        if key == "q" then
             for i=1, 100 do
                 local speedRef = 2500
                 local speedXref = math.random(-1000,1000)
@@ -2830,7 +2839,7 @@ function love.keypressed(key)
                 }
                 Balls.insertBullet(bullet)
             end
-        end]]
+        end
         if key == "x" then
             for i=1, 500 do
                 local randomBrickIdx = math.random(1, #bricks)
@@ -2913,18 +2922,18 @@ function love.keypressed(key)
         if key == "6" then
             -- drawTrails = not drawTrails
             ballPhysics = not ballPhysics
-           --[[ Balls.addBall("Laser Portals")
+            Balls.addBall("Laser Portals")
             Balls.addBall("Laser Ball")
             -- Balls.addBall("Laser Turrets")
             Balls.addBall("Gun Turrets")
             Balls.addBall("Phantom Ball")
             currentRowPopulation = 800
-            gameTime = 480]]
+            gameTime = 480
         end
 
         -- add weapon
         if key == "7" then  
-            Balls.addBall("Laser Portals")
+            Balls.addBall("Ball Gun")
         end
 
         -- burn test
@@ -3055,7 +3064,7 @@ function love.keypressed(key)
                 createSpriteAnimation(x, y, 1, explosionVFX, 512, 512, 0.01, 0, false)
             end
         end
-    end
+    end]]
 end
 
 function love.mousepressed(x, y, button)
