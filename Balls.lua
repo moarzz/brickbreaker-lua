@@ -3539,7 +3539,62 @@ local function paddleCollisionCheck(ball, paddle)
     
     -- Paddle Defense System, etc...
     if hasItem("Paddle Defense System") then
-        -- ... your existing code ...
+        local bulletSpeed = 1500
+        local speedX = math.random(-500,500)
+        local speed = {x = speedX, y = -math.sqrt(bulletSpeed*bulletSpeed - speedX*speedX)}
+        local critChance = hasItem("Four Leafed Clover") and 50 or 25
+        local bullet = {
+            x = paddle.x + paddle.width/2,
+            y = paddle.y - 5,
+            speedX = speed.x,
+            speedY = speed.y,
+            radius = 5,
+            stats = {damage = getStat(ball.name, "damage") * ((hasItem("Assassin's Dagger") and math.random(1,100) <= critChance) and 2 or 1), type = "gun"},
+            name = "Paddle Defense System",
+            type = "bullet",
+            golden = math.random(1,100) <= getGoldenBulletChance(),
+        }
+        table.insert(bullets, bullet)
+        local chance = hasItem("Four Leafed Clover") and 20 or 10
+        if math.random(1,100) <= chance and hasItem("Sudden Mitosis") then
+            local totalSpeed = 500
+            local speedX = math.random(-totalSpeed*0.6, totalSpeed*0.6)
+            local speedY = -math.sqrt(math.max(0.01, totalSpeed^2 - speedX^2))
+            local ballTemplate = ballList["Ball"]
+            local newBall = {
+                type = "ball",
+                name = ballTemplate.name,
+                x = paddle.x + paddle.width / 2,
+                y = paddle.y - 6,
+                speedMult = ballTemplate.speedMult or 1,
+                radius = (ballTemplate.radius or 10) * 1.5,
+                drawSizeBoost = 1,
+                drawSizeMult = 0.5,
+                drawSizeBoostTweens = {},
+                onBounce = ballTemplate.onBounce or nil,
+                currentlyOverlappingBricks = {},
+                attractionStrength = ballTemplate.attractionStrength or nil,
+                stats = ballTemplate.stats,
+                speedX = speedX,
+                speedY = speedY,
+                dead = false,
+                trail = Trail.new(ballTemplate.trail:getTrailData()),
+                speedMultiplier = 1
+            }
+            table.insert(Balls, newBall)
+            Timer.after(8, function()
+                local ballDeathTween = tween.new(0.5, newBall, {drawSizeMult = 0}, tween.outCubic)
+                addTweenToUpdate(ballDeathTween)
+                Timer.after(0.5, function()
+                    for i, b in ipairs(Balls) do
+                        if b == newBall then
+                            table.remove(Balls, i)
+                            break
+                        end
+                    end 
+                end)
+            end)
+        end
     end
 
     -- Bounce physics
