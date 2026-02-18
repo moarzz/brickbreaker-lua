@@ -1199,7 +1199,7 @@ end
 local targetMusicPitch = 1
 local currentMusicRef = nil
 function changeMusic(newMusicStage)
-    if newMusicStage == "intense" and currentMusicRef == "boss" then
+    if (newMusicStage == "intense" or newMusicStage == "mid") and currentMusicRef == "boss" then
         return
     end
     if newMusicStage == currentMusicRef then
@@ -1226,7 +1226,7 @@ function changeMusic(newMusicStage)
         BackgroundShader.changeShader(1);
     elseif newMusicStage == "boss" then
         ref = "assets/SFX/inGameBoss.mp3";
-        BackgroundShader.changeShader(1);
+        BackgroundShader.changeShader(3);
     elseif newMusicStage == "victory" then
         ref = "assets/SFX/victoryTheme.mp3"
         targetMusicVolume = 1
@@ -2845,13 +2845,12 @@ function love.keypressed(key)
         end
     end
     
-    --[[
     if key == "t" then 
         testingMode = not testingMode
         print("Testing mode: " .. tostring(testingMode))
     end
 
-
+    
     if testingMode then
 
         -- PERFORMANCE STRESS TESTS
@@ -2982,7 +2981,7 @@ function love.keypressed(key)
         end
 
         if key == "9" then
-            gameTime = 480
+            gameTime = 600
             currentRowPopulation = 800
             -- spawnBoss()
         end
@@ -3101,7 +3100,6 @@ function love.keypressed(key)
             end
         end
     end
-    ]]
 end
 
 function love.mousepressed(x, y, button)
