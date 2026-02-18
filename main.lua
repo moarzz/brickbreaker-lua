@@ -2850,7 +2850,7 @@ function love.keypressed(key)
         print("Testing mode: " .. tostring(testingMode))
     end
 
-    
+    --[[
     if testingMode then
 
         -- PERFORMANCE STRESS TESTS
@@ -3100,6 +3100,7 @@ function love.keypressed(key)
             end
         end
     end
+    ]]
 end
 
 function love.mousepressed(x, y, button)
