@@ -3608,7 +3608,13 @@ local function paddleCollisionCheck(ball, paddle)
     local speedYSquared = math.max(0, ballSpeed^2 - ball.speedX^2)
     ball.speedY = math.sqrt(speedYSquared) * (ball.speedY > 0 and 1 or -1)
     
-    ball.speedExtra = math.min((ball.speedExtra or 1) + 7, 12)
+    if ball.speedY < 0 then
+        ball.speedExtra = math.min((ball.speedExtra or 1) + 7, 12)
+    else
+        local addition = mapRangeClamped(paddle.y, screenHeight/2, screenHeight, 5, 0)
+        ball.speedExtra = math.min((ball.speedExtra or 1) + addition, 12)
+    end
+
     if ball.name ~= "Sudden Mitosis" then
         adjustBallSpeed(ball)
     end

@@ -171,7 +171,7 @@ function resetGame()
         _width = 300, -- Base width + size upgrade
         widthMult = 1,
         height = 20,
-        speed = 700,
+        speed = 800,
         currrentSpeedX = 0,
         speedMult = 1
     }
@@ -488,9 +488,40 @@ function fastBricksReset()
     fastBricks = {}
     lastFastBrickCreateTime = 0
 end
+
+local function getCurrentColumnCount()
+    if Player.level < 3 then
+        return 16
+    elseif Player.level < 5 then
+        return 17
+    elseif Player.level < 7 then
+        return 18
+    elseif Player.level < 9 then
+        return 19
+    elseif Player.level < 11 then
+        return 20
+    elseif Player.level < 13 then
+        return 21
+    elseif Player.level < 15 then
+        return 22
+    elseif Player.level < 17 then
+        return 23
+    elseif Player.level < 19 then
+        return 24
+    elseif Player.level < 21 then
+        return 25
+    end
+end
+
+local function getCurrentBrickWidthMult()
+    local columnCount = getCurrentColumnCount()
+    return 22/columnCount
+end
+
 local function createFastBrick()
     local brickHealth = math.max(math.floor(currentRowPopulation/35), 1)
     local brickColor = getBrickColor(brickHealth)
+    local currentBrickWidthMult = getCurrentBrickWidthMult()
     local fastBrick ={
         type = "fast",
         id = brickId,
@@ -500,8 +531,8 @@ local function createFastBrick()
         drawOffsetY = 0,
         drawOffsetRot = 0,
         drawScale = 1,
-        width = brickWidth,
-        height = brickHeight,
+        width = brickWidth * currentBrickWidthMult,
+        height = brickHeight * currentBrickWidthMult,
         destroyed = false,
         health = brickHealth,
         maxHealth = brickHealth,
@@ -547,6 +578,8 @@ local function fastBricksUpdate()
     end
 end
 
+
+
 endlessRun = false
 local healBricks = {}
 local unavailableXpos = {}
@@ -559,11 +592,13 @@ local function generateRow(brickCount, yPos)
     end
     local rowXOffset = math.random(-15,15)
     local startLocation = usingMoneySystem and statsWidth or 30
-    local columnCount = usingMoneySystem and 12 or 22
+    local columnCount = getCurrentColumnCount()
     brickCount = brickCount - nextRowDebuff
     nextRowDebuff = 0 -- Reset next row debuff for the next row
     local row = usingMoneySystem and {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} or {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
     local rowOffset = 0--mapRangeClamped(math.random(0,10),0,10, 0, brickWidth)
+
+    local currentBrickWidthMult = getCurrentBrickWidthMult()
     
     if bossSpawned and not bossDead and not endlessRun then
         blockedRows = {}
@@ -649,14 +684,14 @@ local function generateRow(brickCount, yPos)
                         table.insert(bricks, {
                             type = "big",
                             id = brickId,
-                            x = startLocation + (xPos - 1) * (brickWidth + brickSpacing) + 5 + rowOffset + rowXOffset,
-                            y = yPos - (brickHeight + brickSpacing/2),
+                            x = startLocation + (xPos - 1) * (brickWidth * currentBrickWidthMult + brickSpacing) + 5 + rowOffset + rowXOffset,
+                            y = yPos - (brickHeight * currentBrickWidthMult + brickSpacing/2),
                             drawOffsetX = 0,
                             drawOffsetY = 0,
                             drawOffsetRot = 0,
                             drawScale = 1,
-                            width = brickWidth*2,
-                            height = brickHeight*2,
+                            width = brickWidth*2 * currentBrickWidthMult,
+                            height = brickHeight*2 * currentBrickWidthMult,
                             destroyed = false,
                             health = bigBrickHealth,
                             maxHealth = bigBrickHealth,
@@ -676,14 +711,14 @@ local function generateRow(brickCount, yPos)
                     local healBrick = {
                         type = "heal",
                         id = brickId,
-                        x = startLocation + (xPos - 1) * (brickWidth + brickSpacing) + 5 + rowOffset + rowXOffset,
+                        x = startLocation + (xPos - 1) * (brickWidth * currentBrickWidthMult  + brickSpacing) + 5 + rowOffset + rowXOffset,
                         y = yPos,
                         drawOffsetX = 0,
                         drawOffsetY = 0,
                         drawOffsetRot = 0,
                         drawScale = 1,
-                        width = brickWidth,
-                        height = brickHeight,
+                        width = brickWidth * currentBrickWidthMult,
+                        height = brickHeight * currentBrickWidthMult,
                         destroyed = false,
                         health = math.ceil(brickHealth/2),
                         maxHealth = math.ceil(brickHealth/2),
@@ -722,14 +757,14 @@ local function generateRow(brickCount, yPos)
                     local shieldAura = {
                         type = "shield",
                         id = brickId,
-                        x = startLocation + (xPos - 1) * (brickWidth + brickSpacing) + 5 + rowOffset + rowXOffset,
+                        x = startLocation + (xPos - 1) * (brickWidth * currentBrickWidthMult  + brickSpacing) + 5 + rowOffset + rowXOffset,
                         y = yPos,
                         drawOffsetX = 0,
                         drawOffsetY = 0,
                         drawOffsetRot = 0,
                         drawScale = 1,
-                        width = brickWidth,
-                        height = brickHeight,
+                        width = brickWidth * currentBrickWidthMult,
+                        height = brickHeight * currentBrickWidthMult,
                         destroyed = false,
                         health = shieldHealth,
                         maxHealth = shieldHealth,
@@ -745,14 +780,14 @@ local function generateRow(brickCount, yPos)
                     local goldBrick = {
                         type = "gold",
                         id = brickId,
-                        x = startLocation + (xPos - 1) * (brickWidth + brickSpacing) + 5 + rowOffset + rowXOffset,
+                        x = startLocation + (xPos - 1) * (brickWidth * currentBrickWidthMult  + brickSpacing) + 5 + rowOffset + rowXOffset,
                         y = yPos,
                         drawOffsetX = 0,
                         drawOffsetY = 0,
                         drawOffsetRot = 0,
                         drawScale = 1,
-                        width = brickWidth,
-                        height = brickHeight,
+                        width = brickWidth * currentBrickWidthMult,
+                        height = brickHeight * currentBrickWidthMult,
                         destroyed = false,
                         health = brickHealth,
                         maxHealth =     brickHealth,
@@ -768,14 +803,14 @@ local function generateRow(brickCount, yPos)
                     table.insert(bricks, {
                         type = "small",
                         id = brickId,
-                        x = startLocation + (xPos - 1) * (brickWidth + brickSpacing) + 5 + rowOffset + rowXOffset,
+                        x = startLocation + (xPos - 1) * (brickWidth * currentBrickWidthMult + brickSpacing) + 5 + rowOffset + rowXOffset,
                         y = yPos,
                         drawOffsetX = 0,
                         drawOffsetY = 0,
                         drawOffsetRot = 0,
                         drawScale = 1,
-                        width = brickWidth,
-                        height = brickHeight,
+                        width = brickWidth * currentBrickWidthMult,
+                        height = brickHeight * currentBrickWidthMult,
                         destroyed = false,
                         health = brickHealth,
                         maxHealth = brickHealth,
@@ -798,8 +833,10 @@ local function addMoreBricks()
     if bricks[#bricks] then
         if bricks[#bricks].y > -50 then
             print("spawning more bricks")
+            local columnCount = getCurrentColumnCount()
+            local currentBrickWidthMult = getCurrentBrickWidthMult()
             for i=1 , 10 do
-                generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing) - 45) --generate 100 scaling rows of bricks
+                generateRow(currentRowPopulation, i * -(brickHeight * currentBrickWidthMult + brickSpacing) - 45) --generate 100 scaling rows of bricks
                 local addBrickMult = mapRangeClamped(Player.level, 1, 20, 2, 1)
                 if victoryAchieved then
                     currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 80, 250) * math.max(mapRange(gameTime, 600, 900, 1, 8), 1)
@@ -870,8 +907,10 @@ function initializeBricks()
     currentRowPopulation = 1 -- Number of bricks in the first row
 
     -- Generate bricks
+    local columnCount = getCurrentColumnCount()
+    local currentBrickWidthMult = getCurrentBrickWidthMult()
     for i = 0, rows - 1 do
-        generateRow(currentRowPopulation, i * -(brickHeight + brickSpacing)) --generate 100 scaling rows of bricks
+        generateRow(currentRowPopulation, i * -(brickHeight * currentBrickWidthMult + brickSpacing)) --generate 100 scaling rows of bricks
         currentRowPopulation = currentRowPopulation + (gameTime)/mapRange(gameTime, 0, 600, 15, 150) 
     end
 
@@ -971,7 +1010,7 @@ function love.load()
         _width = 300, -- Base width + size upgrade
         widthMult = 1,
         height = 20,
-        speed = 700, -- Base speed + speed upgrade
+        speed = 800, -- Base speed + speed upgrade
         currrentSpeedX = 0,
         speedMult = 1
     }
@@ -1181,7 +1220,7 @@ function changeMusic(newMusicStage)
         targetMusicVolume = 1
     elseif newMusicStage == "mid" then
         ref = "assets/SFX/inGame2.mp3";
-        BackgroundShader.changeShader(1); -- acid
+        BackgroundShader.changeShader(2); -- acid
     elseif newMusicStage == "intense" then
         ref = "assets/SFX/inGame3.mp3";
         BackgroundShader.changeShader(1);
@@ -2805,7 +2844,7 @@ function love.keypressed(key)
             return
         end
     end
-    --[[
+    
     if key == "t" then 
         testingMode = not testingMode
         print("Testing mode: " .. tostring(testingMode))
@@ -3059,7 +3098,7 @@ function love.keypressed(key)
                 createSpriteAnimation(x, y, 1, explosionVFX, 512, 512, 0.01, 0, false)
             end
         end
-    end]]
+    end
 end
 
 function love.mousepressed(x, y, button)
