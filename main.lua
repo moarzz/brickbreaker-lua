@@ -2845,10 +2845,12 @@ function love.keypressed(key)
         end
     end
     
+    --[[
     if key == "t" then 
         testingMode = not testingMode
         print("Testing mode: " .. tostring(testingMode))
     end
+
 
     if testingMode then
 
@@ -3099,6 +3101,7 @@ function love.keypressed(key)
             end
         end
     end
+    ]]
 end
 
 function love.mousepressed(x, y, button)

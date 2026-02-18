@@ -9,7 +9,7 @@ uniform float brightness;
 vec4 effect(vec4 colour, Image tex, vec2 textureCoords, vec2 screenCoords)
 {
     // set adjustable parameters
-    float scaleMult = 0.35 + intensity * 0.65; // Adjust the scale multiplier based on intensity
+    float scaleMult = 0.35 + intensity; // Adjust the scale multiplier based on intensity
     float brightnessMultBoost = brightness * 0.001 + intensity * 0.75 + 0.2;
     float brightnessOffsetBoost = 0.2;
 
