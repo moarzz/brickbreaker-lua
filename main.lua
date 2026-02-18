@@ -1144,7 +1144,7 @@ local function moveBricksDown(dt)
             if brick.type == "boss" then
                 brick.y = brick.y + brickSpeed.value * dt * speedMult * mapRangeClamped(brick.y, - boss.height * 1.5, -boss.height, 3.5, 0.25)
             elseif brick.type == "fast" then
-                brick.y = brick.y + dt * mapRangeClamped(brick.y, 0, screenHeight - 100, 80, 15) * (brick.speedMult or 1) * speedMult
+                brick.y = brick.y + dt * mapRangeClamped(brick.y, 0, screenHeight - 135, 65, 13) * (brick.speedMult or 1) * speedMult
             else
                 brick.y = brick.y + brickSpeed.value * dt * speedMult * (brick.speedMult or 1)
             end
@@ -2849,7 +2849,6 @@ function love.keypressed(key)
         testingMode = not testingMode
         print("Testing mode: " .. tostring(testingMode))
     end
-
     --[[
     if testingMode then
 
