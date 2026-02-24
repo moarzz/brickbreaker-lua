@@ -25,7 +25,7 @@ vec4 effect(vec4 colour, Image tex, vec2 textureCoords, vec2 screenCoords)
     // Fix 2: Moved global initializations inside effect 
     float actualIntensity = intensity * 0.4 + 0.3;
     float actualBrightness = brightness * 0.4 + 0.3;
-    float actualTime = time / 2.0; // Ensure 2.0 is a float 
+    float actualTime = time / 3.0; // Ensure 2.0 is a float 
 
     vec2 uv = (screenCoords * 2.0 - love_ScreenSize.xy) / min(love_ScreenSize.x, love_ScreenSize.y);
     uv *= rot(sin(actualTime / 17.4) * 1.1);

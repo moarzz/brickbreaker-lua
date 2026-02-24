@@ -510,6 +510,8 @@ local function getCurrentColumnCount()
         return 24
     elseif Player.level < 21 then
         return 25
+    else
+        return 26
     end
 end
 
@@ -2849,7 +2851,7 @@ function love.keypressed(key)
         testingMode = not testingMode
         print("Testing mode: " .. tostring(testingMode))
     end
-    --[[
+    
     if testingMode then
 
         -- PERFORMANCE STRESS TESTS
@@ -3099,7 +3101,7 @@ function love.keypressed(key)
             end
         end
     end
-    ]]
+    
 end
 
 function love.mousepressed(x, y, button)

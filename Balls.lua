@@ -2713,7 +2713,7 @@ local function ballListInit()
             sawPositions = {}, -- Will store current positions of saws
             sawAnimations = {}, -- Will store animation IDs
             currentAngle = 0, -- Current rotation angle
-            orbitRadius = 335,
+            orbitRadius = 320,
             damageCooldowns = {}, -- Add this line to track cooldowns per saw per brick
         },
         ["Gun Turrets"] = {
@@ -3578,7 +3578,7 @@ local function paddleCollisionCheck(ball, paddle)
                 speedX = speedX,
                 speedY = speedY,
                 dead = false,
-                trail = Trail.new(ballTemplate.trail:getTrailData()),
+                trail = {},
                 speedMultiplier = 1
             }
             table.insert(Balls, newBall)
@@ -3903,7 +3903,7 @@ local function techUpdate(dt)
         local startY = paddle.y
         -- Calculate end point of laser using direction vector from angle
         local dirX = math.sin(angle)  -- X component of direction
-        local dirY = -math.cos(angle) -- Y component of direction (negative because we're going up)
+        local dirY = -math.cos(angle) -- Y component of direction (negative because we're going up) trail
         local laserLength = 2500  -- Extend past screen top
         local endX = startX + dirX * laserLength
         local endY = startY + dirY * laserLength

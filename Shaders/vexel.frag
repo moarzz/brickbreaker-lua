@@ -31,7 +31,7 @@ vec4 effect(vec4 colour, Image tex, vec2 textureCoords, vec2 screenCoords)
         vec3 v;
         
         // Scroll forward and change depth colour offset
-        p.z += time;
+        p.z += time * 0.5;
         
         // Shift the position to modulate colors
         float hueShift = time * 0.25;  // Speed of colour cycling

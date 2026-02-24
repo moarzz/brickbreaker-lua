@@ -1,7 +1,7 @@
-uniform number time; // Removed = 0.0
+uniform float time; // Removed = 0.0
 uniform float intensity;
 uniform float brightness;
-uniform number exponentMult; // Removed = 0.5
+uniform float exponentMult; // Removed = 0.5
 
 // Use const for global values
 const float TAU = 6.28318;
@@ -21,6 +21,7 @@ float box(vec3 pos, float scale)
 
 float box_set(vec3 pos, float iTime, float gTime)
 {
+    iTime = iTime * 0.5;
     float tt = mod(iTime / 10.0, TAU / 4.0);
     vec3 pos_origin = pos;
 
@@ -56,12 +57,13 @@ float box_set(vec3 pos, float iTime, float gTime)
 
 vec4 effect(vec4 colour, Image tex, vec2 textureCoords, vec2 screenCoords)
 {
+    float adjustedTime = time * 0.5;
     vec2 p = (screenCoords.xy * 2.0 - love_ScreenSize.xy) / min(love_ScreenSize.x, love_ScreenSize.y);
-    vec3 ro = vec3(0.0, -0.2 , time * 4.0);
+    vec3 ro = vec3(0.0, -0.2 , adjustedTime * 4.0);
     vec3 ray = normalize(vec3(p, 1.5));
     
-    ray.xy = ray.xy * rot(sin(time * 0.03) * 1.4);
-    ray.yz = ray.yz * rot(sin(time * 0.05) * 0.2);
+    ray.xy = ray.xy * rot(sin(adjustedTime * 0.03) * 1.4);
+    ray.yz = ray.yz * rot(sin(adjustedTime * 0.05) * 0.2);
 
     float t = 0.1;
     vec3 col = vec3(0.0);
@@ -73,7 +75,7 @@ vec4 effect(vec4 colour, Image tex, vec2 textureCoords, vec2 screenCoords)
         float tens = mod(pos.z / 4.0, 6.0);
         
         pos = mod(pos - 2.0, 4.0) - 2.0;
-        float gTime = time - float(i) * 0.01;
+        float gTime = adjustedTime - float(i) * 0.01;
         
         float d = box_set(pos, time, gTime);
         d = max(abs(d), 0.01);
@@ -99,7 +101,7 @@ vec4 effect(vec4 colour, Image tex, vec2 textureCoords, vec2 screenCoords)
     }
 
     col = ac * 0.05 * (0.475 + intensity * 0.0001) * (0.8 + brightness * 0.0001);
-    col *= 1.0 - t * (0.02 + 0.02 * sin(time));
+    col *= 1.0 - t * (0.02 + 0.02 * sin(adjustedTime));
     col = max(col, 0.0);
 
     return vec4(col, 1.0);
