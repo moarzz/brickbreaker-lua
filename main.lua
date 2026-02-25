@@ -2852,6 +2852,7 @@ function love.keypressed(key)
         print("Testing mode: " .. tostring(testingMode))
     end
     
+    --[[
     if testingMode then
 
         -- PERFORMANCE STRESS TESTS
@@ -3100,7 +3101,7 @@ function love.keypressed(key)
                 createSpriteAnimation(x, y, 1, explosionVFX, 512, 512, 0.01, 0, false)
             end
         end
-    end
+    end]]
     
 end
 
