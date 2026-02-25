@@ -2291,22 +2291,6 @@ local function ballListInit()
             },
             canBuy = function() return true end,
         },
-        --[[["Spear"] = {
-            name = "Spear",
-            type = "tech",
-            x = screenWidth / 2,
-            y = screenHeight / 2,
-            size = 1,
-            rarity = "common",
-            startingPrice = 5,
-            description = "Strikes in front of the paddle, dealing damage in an area",
-            color = {1, 1, 1, 1}, -- White color
-            stats = {
-                speed = 150,
-                damage = 1,
-                range = 2
-            },
-        },]]
         ["Exploding Ball"] = {
             name = "Exploding Ball",
             type = "ball",
@@ -2361,46 +2345,6 @@ local function ballListInit()
             },
             attractionStrength = 425
         },
-        --[[["Laser Ball"] = {
-            name = "Laser Ball",
-            type = "ball",
-            x = screenWidth / 2,
-            y = screenHeight / 2,
-            speedMult = 0.85,
-            size = 1,
-            ballAmount = 1,
-            rarity = "uncommon",
-            startingPrice = 50,
-            description = "shoots a continuous laser beam that rotates around the ball",
-            color = {1, 0, 1, 1}, -- red color
-            stats = {
-                speed = 100,
-                damage = 1,
-                fireRate = 1,
-            },
-        },
-        ["Laser Portals"] = {
-            name = "Laser Portals",
-            type = "spell",
-            x = screenWidth / 2,
-            y = screenHeight / 2,
-            speedMult = 1,
-            size = 1,
-            rarity = "uncommon",
-            noAmount = true,
-            startingPrice = 75,
-            description = "Creates linked portals on hit that shoot lasers between them.",
-            color = {1, 0.5, 0, 1}, -- orange color
-            onBuy = function()
-                cast("Laser Portals")
-            end,
-            stats = {
-                amount = 1,
-                damage = 1,
-                fireRate = 2,
-                cooldown = 10,
-            },
-        },]]
         ["Lightning Ball"] = {
             name = "Lightning Ball",
             type = "ball",
@@ -2441,31 +2385,6 @@ local function ballListInit()
                 damage = 1,
             },
         },
-        --[[["Incrediball"] = {
-            name = "Incrediball",
-            type = "ball",
-            x = screenWidth / 2,
-            y = screenHeight / 2,
-            speedMult = 1.25,
-            size = 1,
-            rarity = "legendary",
-            startingPrice = 50,
-            ballAmount = 1,
-            description = "Has the effects of every other ball (except phantom ball).",
-            color = {0.5, 0.5, 0.5, 1}, -- Orange color
-            bulletSpeed = 1000,
-            currentAmmo = 1,
-            onBounce = function(ball)
-                shoot("Incrediball", ball)
-            end,
-            stats = {
-                speed = 50,
-                damage = 1,
-                range = 2,
-            },
-            canBuy = function() return hasItem("Superhero t-shirt") end,
-            attractionStrength = 600
-        },]]
         ["Machine Gun"] = {
             name = "Machine Gun",
             type = "gun",
@@ -2613,65 +2532,6 @@ local function ballListInit()
                 cooldown = 12,
             },
         },
-        --[[["Lightning Strike"] = {
-            name = "Lightning Strike",
-            type = "spell",
-            x = screenWidth / 2,
-            y = screenHeight / 2,
-            size = 1,
-            noAmount = true,
-            rarity = "uncommon",
-            startingPrice = 150,
-            description = "shoot lightning strikes that cause a chain of electricity when they hit a brick.",
-            color = {1, 1, 0, 1}, -- Yellow color for Lightning Strike
-            stats = {
-                amount = 2,
-                damage = 1,
-                fireRate = 2,
-                range = 2,
-            },
-        },]]
-        --[[["Laser Beam"] = {
-            name = "Laser Beam",
-            type = "tech",
-            x = screenWidth / 2,
-            y = screenHeight / 2,
-            size = 1,
-            noAmount = true,
-            rarity = "common",
-            startingPrice = 25,
-            description = "Fire a thin Laser Beam beam in front of the paddle.",
-            color = {1, 0, 0, 1}, -- Red color for Laser Beam
-            stats = {
-                damage = 1,
-                fireRate = 2,
-            },
-            angle = 0
-        },
-        ["Flamethrower"] = {
-            name = "Flamethrower",
-            type = "tech",
-            x = screenWidth / 2,
-            y = screenHeight / 2,
-            size = 1,
-            noAmount = true,
-            ammoMult = 3,
-            rarity = "uncommon",
-            startingPrice = 25,
-            description = "A flamethrower that shoots fire at a fast rate. Can burn bricks dealing damage over time.",
-            color = {1, 0.5, 0, 1}, -- Orange color for Flamethrower
-            currentAmmo = 3 + ((Player.permanentUpgrades.ammo or 0)) * 3,
-            shooting = false,
-            onBuy = function()
-                fire("Flamethrower")
-            end,
-            stats = {
-                damage = 1,
-                ammo = 6,
-                cooldown = 12,
-            },
-            canBuy = function() return Player.currentCore ~= "Damage Core" end
-        },]]
         ["Rocket Launcher"] = {
             name = "Rocket Launcher",
             type = "tech",
@@ -2742,59 +2602,6 @@ local function ballListInit()
                 damage = 1,
             },
         },
-        --[[["Laser Turrets"] = {
-            name = "Laser Turrets",
-            type = "tech",
-            x = screenWidth / 2,
-            y = screenHeight / 2,
-            size = 1,
-            noAmount = true,
-            ammoMult = 2,
-            rarity = "uncommon",
-            startingPrice = 50,
-            description = "Generates turrets that shoot laser beams forward. \n(max 20)",
-            bulletSpeed = 1500,
-            color = {0.5, 0.5, 0.5, 1}, -- Grey color for Turret Generator
-            currentAmmo = 6 + ((Player.permanentUpgrades.ammo or 0)) * 2,
-            onBuy = function() 
-                fire("Laser Turrets")
-            end,
-            canBuy = function()
-                return Player.currentCore ~= "Damage Core"
-            end,
-            stats = {
-                cooldown = 10,
-                damage = 1,
-                fireRate = 2,
-            },
-        },
-        ["Mortar Turrets"] = {
-            name = "Mortar Turrets",
-            type = "tech",
-            x = screenWidth / 2,
-            y = screenHeight / 2,
-            size = 1,
-            noAmount = true,
-            ammoMult = 1,
-            rarity = "uncommon",
-            startingPrice = 50,
-            description = "Generates turrets that shoot explosive shells forward. \n(max 20)",
-            bulletSpeed = 1500,
-            color = {0.5, 0.5, 0.5, 1}, -- Grey color for Turret Generator
-            currentAmmo = 3 + ((Player.permanentUpgrades.ammo or 0)) * 1,
-            onBuy = function() 
-                fire("Mortar Turrets")
-            end,
-            canBuy = function()
-                return Player.currentCore ~= "Damage Core"
-            end,
-            stats = {
-                ammo = 3,
-                cooldown = 11,
-                damage = 2,
-                range = 3,
-            },
-        },]]
         ["Shadow Ball"] = {
             name = "Shadow Ball",
             type = "spell",
@@ -2818,85 +2625,6 @@ local function ballListInit()
                 fireRate = 3,
             }
         },
-        --[[["Fireballs"] = {
-            name = "Fireballs",
-            type = "spell",
-            x = screenWidth / 2,
-            y = screenHeight / 2,
-            size = 1,
-            noAmount = true,
-            rarity = "rare",
-            startingPrice = 100,
-            description = "shoot fireballs that explodes on impact, dealing area damage.",
-            color = {1, 0.3, 0, 1}, -- Orange color for Fireball
-            onBuy = function()
-                cast("Fireballs")
-            end,
-
-            stats = {
-                amount = 2,
-                damage = 2,
-                fireRate = 1,
-                range = 2
-            },
-        },
-        ["Light Beam"] = {
-            name = "Light Beam",
-            type = "spell",
-            x = screenWidth / 2,
-            y = screenHeight / 2,
-            size = 1,
-            noAmount = true,
-            rarity = "rare",
-            startingPrice = 100,
-            description = "Fires beams of light that pierces through bricks, dealing huge aoe damage.",
-            color = {1, 1, 0.5, 1}, -- Yellow color for Light Beam
-            stats = {
-                damage = 2,
-                amount = 2,
-                cooldown = 11
-            },
-            onBuy = function()
-                cast("Light Beam")
-            end,
-        },
-        ["Gun Ball Gun"] = {
-            name = "Gun Ball Gun",
-            type = "gun",
-            x = screenWidth / 2,
-            y = screenHeight / 2,
-            size = 1,
-            noAmount = true,
-            fireRateMult = 7,
-            rarity = "legendary",
-            startingPrice = 500,
-            description = "A powerful gun that shoots Gun Balls. \nDoesn't need to reload. \nSlow fire rate.",
-            color = {0.8, 0.4, 0.1, 1},
-            stats = {
-                damage = 1,
-                amount = 1,
-                fireRate = 2,
-                speed = 200
-            },
-            onBounce = function(ball)
-                shoot("Gun Ball Gun", ball)
-            end,
-            canBuy = function()
-                local hasBallGun = false
-                local hasGunBall = false
-                for _, ballType in pairs(unlockedBallTypes) do
-                    if ballType.name == "Ball Gun" then
-                        hasBallGun = true
-                    elseif ballType.name == "Gun Ball" then
-                        hasGunBall = true
-                    end
-                end
-                return hasBallGun and hasGunBall and #unlockedBallTypes >= 4
-            end,
-            onBuy = function()
-                shoot("Gun Ball Gun")
-            end,
-        }]]
         
     }
     for _, ball in pairs(ballList) do
