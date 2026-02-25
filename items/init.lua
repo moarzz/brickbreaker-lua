@@ -270,8 +270,20 @@ function Items.getRandomItem(allowInvisible)
     end
 
     if totalWeight == 0 then
-        -- no visible items in this rarity, fallback to first common
-        return lookingInList["common"][1]
+        -- no visible items in this rarity, fallback to non-unique items (even if invisible)
+        local fallbackPool = {}
+        for i, item in ipairs(lookingInList[rarity]) do
+            if item and not item.unique then
+                table.insert(fallbackPool, item)
+            end
+        end
+        
+        if #fallbackPool > 0 then
+            return fallbackPool[love.math.random(1, #fallbackPool)]
+        else
+            -- last resort: return first item
+            return lookingInList[rarity][1]
+        end
     end
 
     local pick = love.math.random(1, totalWeight)

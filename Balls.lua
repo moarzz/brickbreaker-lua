@@ -3485,7 +3485,7 @@ local function brickCollisionCheck(ball, bricksToCheck)
 end
 
 
-local function paddleCollisionCheck(ball, paddle)
+local function paddleCollisionCheck(ball, paddle) -- trail
     if ball.name == "Phantom Ball" then
         return false
     end
