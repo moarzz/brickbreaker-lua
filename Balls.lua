@@ -1322,13 +1322,15 @@ local function shoot(gunName, ball)
             if gun.currentAmmo > 0 then
                 if gun.name == "Minigun" then
                     local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
-                    local timeUntilNextShot = gun.fireRateMult * 1 * (mapRangeClamped(getStat("Minigun", "ammo") - gun.currentAmmo, 0, 25, 4, 0.5) * (spray and sprayMult or 1))/(getStat(gun.name, "fireRate") * bulletStormMult)
+                    local timeUntilNextShot = gun.fireRateMult * 1 * (mapRangeClamped(getStat("Minigun", "ammo") - gun.currentAmmo, 0, 25, 4, 0.75) * (spray and sprayMult or 1))/(getStat(gun.name, "fireRate") * bulletStormMult)
+                    timeUntilNextShot = timeUntilNextShot * 1.15
                     Timer.after(timeUntilNextShot, function() shoot(gunName) end)
                     createFireRateVFX(timeUntilNextShot)
                     -- createCooldownVFX(cooldownValue)
                 else
                     local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                     local timeUntilNextShot = (gun.fireRateMult * 3.0 * 1 * (spray and sprayMult or 1))/(getStat(gun.name, "fireRate") * bulletStormMult)
+                    timeUntilNextShot = timeUntilNextShot * 1.15
                     Timer.after(timeUntilNextShot, function() shoot(gunName) end)
                     createFireRateVFX(timeUntilNextShot)
                     -- createCooldownVFX(cooldownValue)
@@ -1630,7 +1632,7 @@ local function fire(techName)
             -- Reset ammo and set cooldown
             if unlockedBallTypes["Rocket Launcher"].currentAmmo <= 0 then
                 local cooldownValue = getStat("Rocket Launcher", "cooldown") * 0.8
-                local timeUntilNextShot = math.max(cooldownValue, 4.5/getStat("Rocket Launcher", "fireRate"))
+                local timeUntilNextShot = math.max(cooldownValue, 3.8/getStat("Rocket Launcher", "fireRate"))
                 Timer.after(timeUntilNextShot, function()
                     unlockedBallTypes["Rocket Launcher"].currentAmmo = getStat("Rocket Launcher", "ammo")
                     fire("Rocket Launcher")
@@ -2331,7 +2333,7 @@ local function ballListInit()
             x = screenWidth / 2,
             y = screenHeight / 2,
             ballAmount = 1,
-            speedMult = 0.5,
+            speedMult = 0.65,
             size = 2,
             rarity = "rare",
             startingPrice = 100,
@@ -2361,7 +2363,7 @@ local function ballListInit()
             },
             attractionStrength = 425
         },
-        --[[["Laser Ball"] = {
+        ["Laser Ball"] = {
             name = "Laser Ball",
             type = "ball",
             x = screenWidth / 2,
@@ -2400,7 +2402,7 @@ local function ballListInit()
                 fireRate = 2,
                 cooldown = 10,
             },
-        },]]
+        },
         ["Lightning Ball"] = {
             name = "Lightning Ball",
             type = "ball",
@@ -2441,7 +2443,7 @@ local function ballListInit()
                 damage = 1,
             },
         },
-        --[[["Incrediball"] = {
+        ["Incrediball"] = {
             name = "Incrediball",
             type = "ball",
             x = screenWidth / 2,
@@ -2465,7 +2467,7 @@ local function ballListInit()
             },
             canBuy = function() return hasItem("Superhero t-shirt") end,
             attractionStrength = 600
-        },]]
+        },
         ["Machine Gun"] = {
             name = "Machine Gun",
             type = "gun",
@@ -2631,7 +2633,7 @@ local function ballListInit()
                 range = 2,
             },
         },]]
-        --[[["Laser Beam"] = {
+        ["Laser Beam"] = {
             name = "Laser Beam",
             type = "tech",
             x = screenWidth / 2,
@@ -2671,7 +2673,7 @@ local function ballListInit()
                 cooldown = 12,
             },
             canBuy = function() return Player.currentCore ~= "Damage Core" end
-        },]]
+        },
         ["Rocket Launcher"] = {
             name = "Rocket Launcher",
             type = "tech",
@@ -2742,7 +2744,7 @@ local function ballListInit()
                 damage = 1,
             },
         },
-        --[[["Laser Turrets"] = {
+        ["Laser Turrets"] = {
             name = "Laser Turrets",
             type = "tech",
             x = screenWidth / 2,
@@ -2794,7 +2796,7 @@ local function ballListInit()
                 damage = 2,
                 range = 3,
             },
-        },]]
+        },
         ["Shadow Ball"] = {
             name = "Shadow Ball",
             type = "spell",
@@ -2818,7 +2820,7 @@ local function ballListInit()
                 fireRate = 3,
             }
         },
-        --[[["Fireballs"] = {
+        ["Fireballs"] = {
             name = "Fireballs",
             type = "spell",
             x = screenWidth / 2,
@@ -2896,7 +2898,7 @@ local function ballListInit()
             onBuy = function()
                 shoot("Gun Ball Gun")
             end,
-        }]]
+        }
         
     }
     for _, ball in pairs(ballList) do
@@ -3486,6 +3488,7 @@ end
 
 
 local function paddleCollisionCheck(ball, paddle) -- trail
+    if not paddleCollisions then return false end
     if ball.name == "Phantom Ball" then
         return false
     end
@@ -3799,7 +3802,7 @@ local function wallCollisionCheck(ball)
     local leftWallPosition = usingMoneySystem and statsWidth or 0
     local rightWallPosition = screenWidth - (usingMoneySystem and statsWidth or 0)
     local wallHit = false
-    local effectiveRadius = ball.name == "Phantom Ball" and getStat(ball.name, "range") * 8 or ball.radius
+    local effectiveRadius = ball.name == "Phantom Ball" and getStat(ball.name, "range") * 9 or ball.radius
     if ball.x - effectiveRadius < leftWallPosition and ball.speedX < 0 then
         hitType = "left"
         ball.speedX = -ball.speedX
@@ -4800,7 +4803,7 @@ function Balls.update(dt, paddle, bricks)
         if bricksInEllipse(rocket.x, rocket.y, 20, 60) ~= false then
             local brickHit = bricksInEllipse(rocket.x, rocket.y, 20, 60)
             local explosionX, explosionY = brickHit.x + brickHit.width/2, brickHit.y + brickHit.height/2
-            createExplosionAtLocation(explosionX, explosionY, 0.3 + getStat("Rocket Launcher", "range") * 0.2, unlockedBallTypes["Rocket Launcher"].stats.damage, "Rocket Launcher")
+            createExplosionAtLocation(explosionX, explosionY, 0.3 + getStat("Rocket Launcher", "range") * 0.25, unlockedBallTypes["Rocket Launcher"].stats.damage, "Rocket Launcher")
             --[[local brickHit = bricksInEllipse(rocket.x, rocket.y, 20, 60)
             playSoundEffect(explosionSFX, 0.5, 1, false, true)
             -- Explosion damage
@@ -5749,7 +5752,7 @@ function Balls:draw()
             
             -- Draw ball
             if ballName == "Phantom Ball" then
-                local auraSize = getStat("Phantom Ball", "range") * 16
+                local auraSize = getStat("Phantom Ball", "range") * 18
                 love.graphics.setColor(0, 0, 1, 1)
                 drawImageCentered(auraImg, ballX, ballY, auraSize, auraSize)
                 love.graphics.setColor(0.25, 0.25, 1, 0.25)

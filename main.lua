@@ -2788,6 +2788,7 @@ ballTrailsOn = true
 local testingMode = false
 local old_love_keypressed = love.keypressed
 moneyScale = {scale = 1}
+paddleCollisions = true
 function love.keypressed(key)
     if key == "space" and Player.levelingUp and (not Player.choosingUpgrade) and EventQueue:isQueueFinished() then
         arcadeBezelShader:send("targetAberration", 0.00135);
@@ -2851,7 +2852,7 @@ function love.keypressed(key)
         testingMode = not testingMode
         print("Testing mode: " .. tostring(testingMode))
     end
-    
+
     if testingMode then
 
         -- PERFORMANCE STRESS TESTS
