@@ -1630,7 +1630,7 @@ local function fire(techName)
             -- Reset ammo and set cooldown
             if unlockedBallTypes["Rocket Launcher"].currentAmmo <= 0 then
                 local cooldownValue = getStat("Rocket Launcher", "cooldown") * 0.8
-                local timeUntilNextShot = math.max(cooldownValue, 4.5/getStat("Rocket Launcher", "fireRate"))
+                local timeUntilNextShot = math.max(cooldownValue, 3.85/getStat("Rocket Launcher", "fireRate"))
                 Timer.after(timeUntilNextShot, function()
                     unlockedBallTypes["Rocket Launcher"].currentAmmo = getStat("Rocket Launcher", "ammo")
                     fire("Rocket Launcher")
@@ -2315,7 +2315,7 @@ local function ballListInit()
             x = screenWidth / 2,
             y = screenHeight / 2,
             ballAmount = 1,
-            speedMult = 0.5,
+            speedMult = 0.65,
             size = 2,
             rarity = "rare",
             startingPrice = 100,
@@ -3527,7 +3527,7 @@ local function wallCollisionCheck(ball)
     local leftWallPosition = usingMoneySystem and statsWidth or 0
     local rightWallPosition = screenWidth - (usingMoneySystem and statsWidth or 0)
     local wallHit = false
-    local effectiveRadius = ball.name == "Phantom Ball" and getStat(ball.name, "range") * 8 or ball.radius
+    local effectiveRadius = ball.name == "Phantom Ball" and getStat(ball.name, "range") * 9 or ball.radius
     if ball.x - effectiveRadius < leftWallPosition and ball.speedX < 0 then
         hitType = "left"
         ball.speedX = -ball.speedX
@@ -4528,7 +4528,7 @@ function Balls.update(dt, paddle, bricks)
         if bricksInEllipse(rocket.x, rocket.y, 20, 60) ~= false then
             local brickHit = bricksInEllipse(rocket.x, rocket.y, 20, 60)
             local explosionX, explosionY = brickHit.x + brickHit.width/2, brickHit.y + brickHit.height/2
-            createExplosionAtLocation(explosionX, explosionY, 0.3 + getStat("Rocket Launcher", "range") * 0.2, unlockedBallTypes["Rocket Launcher"].stats.damage, "Rocket Launcher")
+            createExplosionAtLocation(explosionX, explosionY, 0.3 + getStat("Rocket Launcher", "range") * 0.25, unlockedBallTypes["Rocket Launcher"].stats.damage, "Rocket Launcher")
             --[[local brickHit = bricksInEllipse(rocket.x, rocket.y, 20, 60)
             playSoundEffect(explosionSFX, 0.5, 1, false, true)
             -- Explosion damage
@@ -5477,7 +5477,7 @@ function Balls:draw()
             
             -- Draw ball
             if ballName == "Phantom Ball" then
-                local auraSize = getStat("Phantom Ball", "range") * 16
+                local auraSize = getStat("Phantom Ball", "range") * 18
                 love.graphics.setColor(0, 0, 1, 1)
                 drawImageCentered(auraImg, ballX, ballY, auraSize, auraSize)
                 love.graphics.setColor(0.25, 0.25, 1, 0.25)
