@@ -1657,28 +1657,22 @@ function drawMenu()
     
     -- buttons hit logic
     if btn2Next.hit then
-        playSoundEffect(unavailableSFX, 1, 0.8)
-        local mouseX, mouseY = love.mouse.getPosition()
-        textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)
-        --[[playSoundEffect(selectSFX, 1, 0.8)
+        playSoundEffect(selectSFX, 1, 0.8)
         currentSelectedCoreID = currentSelectedCoreID + 1
         if currentSelectedCoreID > #paddleCores then
             currentSelectedCoreID = 1
         end
         core = paddleCores[currentSelectedCoreID]
-        currentSelectedCore = core]]
+        currentSelectedCore = core
     end
     if btn2Before.hit then
-        playSoundEffect(unavailableSFX, 1, 0.8)
-        local mouseX, mouseY = love.mouse.getPosition()
-        textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)
-        --[[playSoundEffect(selectSFX, 1, 0.8)
+        playSoundEffect(selectSFX, 1, 0.8)
         currentSelectedCoreID = currentSelectedCoreID - 1
         if currentSelectedCoreID < 1 then
             currentSelectedCoreID = #paddleCores
         end
         core = paddleCores[currentSelectedCoreID]
-        currentSelectedCore = core.name]]
+        currentSelectedCore = core.name
     end
 
     local btnY = btnY + buttonHeight + 80
@@ -1729,29 +1723,26 @@ function drawMenu()
     -- Upgrades button
     love.graphics.draw(uiWindowImg, centerX + screenWidth/4 + 135 + buttonWidth * 0.15, startY + 200, 0, buttonWidth * 0.7/uiWindowImg:getWidth(), buttonHeight * 1.5/uiWindowImg:getHeight())
     if suit.Button("Shop", {id="menu shop button", valign = "middle", color = invisButtonColor}, centerX + screenWidth/4 + 135 + buttonWidth * 0.15 + 10, startY + 200, buttonWidth * 0.7 - 10, buttonHeight * 1.5).hit then
-        playSoundEffect(unavailableSFX, 1, 0.8)
-        local mouseX, mouseY = love.mouse.getPosition()
-        textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)
-        --[[playSoundEffect(selectSFX, 1, 0.8)
+        playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.UPGRADES
         love.mouse.setVisible(true)
-        loadGameData() -- Load game data when entering upgrades screen]]
+        loadGameData() -- Load game data when entering upgrades screen
     end
 
     -- difficulty button
     setFont(22)
     love.graphics.draw(uiWindowImg, centerX + buttonWidth * 0.25 + 375, startY - 40, 0, buttonWidth * 0.5/uiWindowImg:getWidth(), buttonHeight * 2/uiWindowImg:getHeight())
     if suit.Button("Difficulty\nModifiers", {id="difficulty button", valign = "middle", color = invisButtonColor}, centerX + buttonWidth * 0.25 + 380, startY - 40, buttonWidth * 0.5, buttonHeight * 2).hit then
-        playSoundEffect(unavailableSFX, 1, 0.8)
+        --[[playSoundEffect(unavailableSFX, 1, 0.8)
         local mouseX, mouseY = love.mouse.getPosition()
-        textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)
+        textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)]]
     end
 
     love.graphics.draw(uiWindowImg, centerX + buttonWidth * 0.25 - 375, startY - 40, 0, buttonWidth * 0.5/uiWindowImg:getWidth(), buttonHeight * 2/uiWindowImg:getHeight())
     if suit.Button("Challenge\nRuns", {id="challenge button", valign = "middle", color = invisButtonColor}, centerX + buttonWidth * 0.25 -370, startY - 40, buttonWidth * 0.5, buttonHeight * 2).hit then
-        playSoundEffect(unavailableSFX, 1, 0.8)
+        --[[playSoundEffect(unavailableSFX, 1, 0.8)
         local mouseX, mouseY = love.mouse.getPosition()
-        textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)
+        textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)]]
     end
 
     -- exit game button
@@ -2326,14 +2317,11 @@ function drawVictoryScreen()
 
     -- Keep Going button (new)
     if suit.Button("Keep Going", {id = "keep_going"}, startX, y, buttonW, buttonH).hit then
-        playSoundEffect(unavailableSFX, 1, 0.8)
-        local mouseX, mouseY = love.mouse.getPosition()
-        textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)
-        --[[changeMusic("intense")
+        changeMusic("intense")
         playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.PLAYING  -- Set state back to playing
         endlessRun = true
-        love.mouse.setVisible(false)]]
+        love.mouse.setVisible(false)
     end
 
     -- Main Menu button
@@ -2346,15 +2334,12 @@ function drawVictoryScreen()
     end
     -- Upgrades button
     if suit.Button("Shop", {id = "victory_upgrades"}, startX + (buttonW + spacing) * 2, y, buttonW, buttonH).hit then
-        playSoundEffect(unavailableSFX, 1, 0.8)
-        local mouseX, mouseY = love.mouse.getPosition()
-        textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)
-        -- changeMusic("menu")
-        --[[playSoundEffect(selectSFX, 1, 0.8)
+        changeMusic("menu")
+        playSoundEffect(selectSFX, 1, 0.8)
         resetGame()
         currentGameState = GameState.UPGRADES
         love.mouse.setVisible(true)
-        loadGameData()]]
+        loadGameData()
     end
 
     -- Draw SUIT UI elements (buttons)
