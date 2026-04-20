@@ -561,7 +561,7 @@ local function createFastBrickUpdate()
     if bossSpawned then 
         fastBrickTimer = gameTime - lastFastBrickCreateTime >= 2
     else
-        fastBrickTimer = gameTime - lastFastBrickCreateTime >= mapRangeClamped(Player.level, 5, 20, 8, 2)
+        fastBrickTimer = gameTime - lastFastBrickCreateTime >= mapRangeClamped(Player.level, 5, 20, 8, 2) * 0.75
     end
     if Player.level >= 5 and fastBrickTimer then
         createFastBrick()
@@ -2356,7 +2356,7 @@ end
 
 inGame = false
 globalVolume = 1
-arcadeBezelOn = true
+arcadeBezelOn = false
 -- Add a function to draw the settings menu with SUIT sliders
 function drawSettingsMenu()
     local centerX = screenWidth / 2 - buttonWidth / 2

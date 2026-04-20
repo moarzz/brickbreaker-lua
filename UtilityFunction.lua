@@ -1875,6 +1875,7 @@ function healNumber(number, x, y)
     end
 end
 
+
 function drawTextCenteredWithScale(text, x, y, scale, maxWidth, color)
     color = color or {1, 1, 1, 1}
     love.graphics.setColor(color)
@@ -1927,7 +1928,6 @@ function drawTextCenteredWithScale(text, x, y, scale, maxWidth, color)
         end
     end
 end
-
 function drawDamageNumbers()
     -- Initialize font if not cached
     if not damageNumberFont then
