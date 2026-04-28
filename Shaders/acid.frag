@@ -23,7 +23,7 @@ vec3 palette(float t)
 vec4 effect(vec4 colour, Image tex, vec2 textureCoords, vec2 screenCoords)
 {
     // Fix 2: Moved global initializations inside effect 
-    float actualIntensity = intensity * 0.4 + 0.3;
+    float actualIntensity = intensity * 0.4 + 0.5;
     float actualBrightness = brightness * 0.4 + 0.3;
     float actualTime = time / 3.0; // Ensure 2.0 is a float 
 

@@ -1293,6 +1293,9 @@ local function drawItemShop()
             if hasItem("Elon's Shmuck") then
                 upgradePrice = 2
             end
+            if Player.currentAscension >= 3 then
+                upgradePrice = upgradePrice + 1
+            end
             for i=1, itemCount("Coupon Collector") do
                 upgradePrice = math.max(upgradePrice - 1, 0)
             end

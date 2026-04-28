@@ -32,6 +32,8 @@ local KeywordSystem = require("KeywordSystem") -- Keyword system for text parsin
 local Explosion = require("particleSystems.explosion") -- Explosion particle system
 BackgroundShader = require("backgroundShader");
 TextBatching = require("textBatching");
+Ascensions = require("Ascensions") -- Ascension system
+ChallengeRuns = require("ChallengeRuns") -- Challenge run system
 
 
 usingMoneySystem = false
@@ -561,7 +563,7 @@ local function createFastBrickUpdate()
     if bossSpawned then 
         fastBrickTimer = gameTime - lastFastBrickCreateTime >= 2
     else
-        fastBrickTimer = gameTime - lastFastBrickCreateTime >= mapRangeClamped(Player.level, 5, 20, 8, 2)
+        fastBrickTimer = gameTime - lastFastBrickCreateTime >= mapRangeClamped(Player.level, 5, 20, 8, 2) / (Player.currentAscension >= 2 and 2 or 1)
     end
     if Player.level >= 5 and fastBrickTimer then
         createFastBrick()
@@ -830,6 +832,10 @@ local function generateRow(brickCount, yPos)
 end
 
 local bossSpawnTime = 600
+function setBossSpawnTime(newTime)
+    bossSpawnTime = newTime
+end
+
 --This function is called every 0.5 seconds to see if we should add more bricks, if we should, it adds 10 rows using the generateRow() function
 local function addMoreBricks()
     if bricks[#bricks] then
@@ -840,10 +846,14 @@ local function addMoreBricks()
             for i=1 , 10 do
                 generateRow(currentRowPopulation, i * -(brickHeight * currentBrickWidthMult + brickSpacing) - 45) --generate 100 scaling rows of bricks
                 local addBrickMult = mapRangeClamped(Player.level, 1, 20, 2, 1)
+                local scaleMult = 1
+                if Player.currentAscension >= 1 then
+                    scaleMult = 1.2
+                end
                 if victoryAchieved then
-                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 80, 250) * math.max(mapRange(gameTime, 600, 900, 1, 8), 1)
+                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 80, 250) * math.max(mapRange(gameTime, 600, 900, 1, 8), 1) * scaleMult
                 else
-                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 80, 250) 
+                    currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 80, 250) * scaleMult
                 end
                 
                 if spawnBossNextRow and not bossSpawned then
@@ -1657,28 +1667,22 @@ function drawMenu()
     
     -- buttons hit logic
     if btn2Next.hit then
-        playSoundEffect(unavailableSFX, 1, 0.8)
-        local mouseX, mouseY = love.mouse.getPosition()
-        textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)
-        --[[playSoundEffect(selectSFX, 1, 0.8)
+        playSoundEffect(selectSFX, 1, 0.8)
         currentSelectedCoreID = currentSelectedCoreID + 1
         if currentSelectedCoreID > #paddleCores then
             currentSelectedCoreID = 1
         end
         core = paddleCores[currentSelectedCoreID]
-        currentSelectedCore = core]]
+        currentSelectedCore = core
     end
     if btn2Before.hit then
-        playSoundEffect(unavailableSFX, 1, 0.8)
-        local mouseX, mouseY = love.mouse.getPosition()
-        textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)
-        --[[playSoundEffect(selectSFX, 1, 0.8)
+        playSoundEffect(selectSFX, 1, 0.8)
         currentSelectedCoreID = currentSelectedCoreID - 1
         if currentSelectedCoreID < 1 then
             currentSelectedCoreID = #paddleCores
         end
         core = paddleCores[currentSelectedCoreID]
-        currentSelectedCore = core.name]]
+        currentSelectedCore = core.name
     end
 
     local btnY = btnY + buttonHeight + 80
@@ -1729,29 +1733,20 @@ function drawMenu()
     -- Upgrades button
     love.graphics.draw(uiWindowImg, centerX + screenWidth/4 + 135 + buttonWidth * 0.15, startY + 200, 0, buttonWidth * 0.7/uiWindowImg:getWidth(), buttonHeight * 1.5/uiWindowImg:getHeight())
     if suit.Button("Shop", {id="menu shop button", valign = "middle", color = invisButtonColor}, centerX + screenWidth/4 + 135 + buttonWidth * 0.15 + 10, startY + 200, buttonWidth * 0.7 - 10, buttonHeight * 1.5).hit then
-        playSoundEffect(unavailableSFX, 1, 0.8)
-        local mouseX, mouseY = love.mouse.getPosition()
-        textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)
-        --[[playSoundEffect(selectSFX, 1, 0.8)
+        playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.UPGRADES
         love.mouse.setVisible(true)
-        loadGameData() -- Load game data when entering upgrades screen]]
+        loadGameData() -- Load game data when entering upgrades screen
     end
 
     -- difficulty button
     setFont(22)
-    love.graphics.draw(uiWindowImg, centerX + buttonWidth * 0.25 + 375, startY - 40, 0, buttonWidth * 0.5/uiWindowImg:getWidth(), buttonHeight * 2/uiWindowImg:getHeight())
-    if suit.Button("Difficulty\nModifiers", {id="difficulty button", valign = "middle", color = invisButtonColor}, centerX + buttonWidth * 0.25 + 380, startY - 40, buttonWidth * 0.5, buttonHeight * 2).hit then
-        playSoundEffect(unavailableSFX, 1, 0.8)
-        local mouseX, mouseY = love.mouse.getPosition()
-        textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)
-    end
+    love.graphics.draw(uiWindowImg, centerX + buttonWidth * 0.25 + 350, startY - 90, 0, buttonWidth * 1/uiWindowImg:getWidth(), buttonHeight * 2.5/uiWindowImg:getHeight())
+    drawCenteredText("Ascension : " .. Player.currentAscension, centerX + buttonWidth * 0.25 + 350, startY - 90, buttonWidth * 1, buttonHeight * 2.5)
 
     love.graphics.draw(uiWindowImg, centerX + buttonWidth * 0.25 - 375, startY - 40, 0, buttonWidth * 0.5/uiWindowImg:getWidth(), buttonHeight * 2/uiWindowImg:getHeight())
     if suit.Button("Challenge\nRuns", {id="challenge button", valign = "middle", color = invisButtonColor}, centerX + buttonWidth * 0.25 -370, startY - 40, buttonWidth * 0.5, buttonHeight * 2).hit then
-        playSoundEffect(unavailableSFX, 1, 0.8)
-        local mouseX, mouseY = love.mouse.getPosition()
-        textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)
+        
     end
 
     -- exit game button
@@ -2326,14 +2321,11 @@ function drawVictoryScreen()
 
     -- Keep Going button (new)
     if suit.Button("Keep Going", {id = "keep_going"}, startX, y, buttonW, buttonH).hit then
-        playSoundEffect(unavailableSFX, 1, 0.8)
-        local mouseX, mouseY = love.mouse.getPosition()
-        textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)
-        --[[changeMusic("intense")
+        changeMusic("intense")
         playSoundEffect(selectSFX, 1, 0.8)
         currentGameState = GameState.PLAYING  -- Set state back to playing
         endlessRun = true
-        love.mouse.setVisible(false)]]
+        love.mouse.setVisible(false)
     end
 
     -- Main Menu button
@@ -2346,15 +2338,12 @@ function drawVictoryScreen()
     end
     -- Upgrades button
     if suit.Button("Shop", {id = "victory_upgrades"}, startX + (buttonW + spacing) * 2, y, buttonW, buttonH).hit then
-        playSoundEffect(unavailableSFX, 1, 0.8)
-        local mouseX, mouseY = love.mouse.getPosition()
-        textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)
-        -- changeMusic("menu")
-        --[[playSoundEffect(selectSFX, 1, 0.8)
+        changeMusic("menu")
+        playSoundEffect(selectSFX, 1, 0.8)
         resetGame()
         currentGameState = GameState.UPGRADES
         love.mouse.setVisible(true)
-        loadGameData()]]
+        loadGameData()
     end
 
     -- Draw SUIT UI elements (buttons)
@@ -2369,9 +2358,26 @@ function drawVictoryScreen()
     local startX = (screenWidth - totalWidth) / 2
 end
 
+local ascensionLevel = 0
+local shouldDrawDifficultyModifier = false
+function drawDifficultyModifier()
+    if shouldDrawDifficultyModifier then
+        love.graphics.setColor(1, 1, 1, 1)
+        local x, y = screenWidth * 3 / 4 + 50, screenHeight / 2 - 50
+        love.graphics.draw(uiBigWindowImg, x, y, 0, 1.15, 0.75, uiBigWindowImg:getWidth()/2, uiBigWindowImg:getHeight()/2)
+        local startY = y - uiBigWindowImg:getHeight()/2 * 0.75 + 50
+        setFont(45)
+        drawTextCenteredWithScale("ascension : " .. tostring(ascensionLevel), x - uiBigWindowImg:getWidth()/4 * 1.5, startY, 0.8, uiBigWindowImg:getWidth()/2 * 1.5)
+    end
+end
+
+function getAscensionLevel()
+    return ascensionLevel
+end
+
 inGame = false
 globalVolume = 1
-arcadeBezelOn = true
+arcadeBezelOn = false
 -- Add a function to draw the settings menu with SUIT sliders
 function drawSettingsMenu()
     local centerX = screenWidth / 2 - buttonWidth / 2
@@ -2518,6 +2524,8 @@ local function fullDraw()
         love.graphics.setColor(0,0,0, opacity)
         love.graphics.rectangle("fill", -screenWidth, -screenHeight, screenWidth*3, screenHeight*3)
         drawTextPopups()
+
+        drawDifficultyModifier()
         return
     end
     
@@ -2930,8 +2938,9 @@ function love.keypressed(key)
         -----------------------------------
 
         if key == "1" then
-            local mouseX, mouseY = love.mouse.getPosition()
-            textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)
+            shouldDrawDifficultyModifier = not shouldDrawDifficultyModifier
+            --[[local mouseX, mouseY = love.mouse.getPosition()
+            textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)]]
         end
 
         if key == "2" then

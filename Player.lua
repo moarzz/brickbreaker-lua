@@ -97,6 +97,7 @@ Player = {
     bricksDestroyed = 0,
     lives = 1,
     currentCore = "Amount Core",
+    currentAscension = 0,
     levelingUp = false,
     choosingUpgrade = false,
     price = 1,
