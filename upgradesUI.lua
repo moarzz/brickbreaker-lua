@@ -967,25 +967,31 @@ local function drawBallStats()
             else
                 sizeMult = 1
             end
+
+            local upgradePrice = ballType.price
+            if Ascensions.getCurrentAscension() >= 6 then
+                upgradePrice = upgradePrice + 1
+            end
+
             setFont(math.ceil(40) * sizeMult)
-            local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(math.ceil(ballType.price)))/2
+            local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(math.ceil(upgradePrice)))/2
             labelY = bruhY - love.graphics.getFont():getHeight()/2 + 20
             love.graphics.setColor(0,0,0,1)
-            love.graphics.print(formatNumber(math.ceil(ballType.price)) .. "$",currentX + statsWidth/2 + 104 +moneyOffsetX, labelY+4)
-            local moneyColor = Player.realMoney >= math.ceil(ballType.price) and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
+            love.graphics.print(formatNumber(math.ceil(upgradePrice)) .. "$",currentX + statsWidth/2 + 104 +moneyOffsetX, labelY+4)
+            local moneyColor = Player.realMoney >= math.ceil(upgradePrice) and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
             love.graphics.setColor(moneyColor)
-            love.graphics.print(formatNumber(math.ceil(ballType.price)) .. "$",currentX + statsWidth/2 + 100 +moneyOffsetX, labelY)
+            love.graphics.print(formatNumber(math.ceil(upgradePrice)) .. "$",currentX + statsWidth/2 + 100 +moneyOffsetX, labelY)
             love.graphics.setColor(1,1,1,1)
 
             -- upgrade button
             local buttonId = ballType.name .. "_upgradeButton"
             local upgradeStatButton = dress:Button("", {color = invisButtonColor, id = buttonId}, currentX + 5, y + 14, getRarityWindow("common"):getWidth() - 24, getRarityWindow("common"):getHeight()/2 - 27)
             if upgradeStatButton.hit then
-                if (Player.realMoney < math.ceil(ballType.price)) or (currentlyOnFirstLevelUp and Player.getCurrentTutorialStep() ~= 4) then
+                if (Player.realMoney < math.ceil(upgradePrice)) or (currentlyOnFirstLevelUp and Player.getCurrentTutorialStep() ~= 4) then
                     -- does nothing
                 else
                     playSoundEffect(upgradeSFX, 0.5, 0.95, false)
-                    Player.pay(math.ceil(ballType.price)) -- Deduct the cost from the player's money
+                    Player.pay(math.ceil(upgradePrice)) -- Deduct the cost from the player's money
                     local totalStats = {}
                     for statName, statValue in pairs(ballType.stats) do
                         totalStats[statName] = statValue
@@ -1293,7 +1299,7 @@ local function drawItemShop()
             if hasItem("Elon's Shmuck") then
                 upgradePrice = 2
             end
-            if Player.currentAscension >= 3 then
+            if Ascensions.getCurrentAscension() >= 3 then
                 upgradePrice = upgradePrice + 1
             end
             for i=1, itemCount("Coupon Collector") do

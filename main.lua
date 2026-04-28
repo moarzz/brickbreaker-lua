@@ -563,7 +563,7 @@ local function createFastBrickUpdate()
     if bossSpawned then 
         fastBrickTimer = gameTime - lastFastBrickCreateTime >= 2
     else
-        fastBrickTimer = gameTime - lastFastBrickCreateTime >= mapRangeClamped(Player.level, 5, 20, 8, 2) / (Player.currentAscension >= 2 and 2 or 1)
+        fastBrickTimer = gameTime - lastFastBrickCreateTime >= mapRangeClamped(Player.level, 5, 20, 8, 2) / (Ascensions.getCurrentAscension() >= 2 and 2 or 1)
     end
     if Player.level >= 5 and fastBrickTimer then
         createFastBrick()
@@ -677,7 +677,7 @@ local function generateRow(brickCount, yPos)
     for xPos, brickHealth in ipairs(row) do
         if brickHealth > 0 then
             if (not bigBrickLocations[xPos-1]) then
-                if xPos < 11 and math.random(1, 100) < math.floor(mapRangeClamped(brickCount, 1, 500, 0, 20)) and row[xPos+1] > 0 and not bossSpawned then
+                if xPos < 11 and math.random(1, 100) < math.floor(mapRangeClamped(brickCount, 1, 500, 0, 20)) * (Ascensions.getCurrentAscension() >= 5 and 2 or 1) and row[xPos+1] > 0 and not bossSpawned then
                     if (brickHealth + row[xPos+1]) * 2 >= 50 then
                         bigBrickLocations[xPos] = true
                         unavailableXpos[xPos] = true
@@ -844,10 +844,11 @@ local function addMoreBricks()
             local columnCount = getCurrentColumnCount()
             local currentBrickWidthMult = getCurrentBrickWidthMult()
             for i=1 , 10 do
-                generateRow(currentRowPopulation, i * -(brickHeight * currentBrickWidthMult + brickSpacing) - 45) --generate 100 scaling rows of bricks
+                local brickHealthMult = Ascensions.getCurrentAscension() >= 7 and 1.25 or 1
+                generateRow(math.floor(currentRowPopulation * brickHealthMult), i * -(brickHeight * currentBrickWidthMult + brickSpacing) - 45) --generate 100 scaling rows of bricks
                 local addBrickMult = mapRangeClamped(Player.level, 1, 20, 2, 1)
                 local scaleMult = 1
-                if Player.currentAscension >= 1 then
+                if Ascensions.getCurrentAscension() >= 1 then
                     scaleMult = 1.2
                 end
                 if victoryAchieved then
@@ -1143,6 +1144,9 @@ local function moveBricksDown(dt)
     currentBrickSpeed = getBrickSpeedMult()-- < currentBrickSpeed and math.max(currentBrickSpeed - dt * 10, getBrickSpeedMult()) or math.min(currentBrickSpeed + dt * 5, getBrickSpeedMult())
     local speedMult = 0.85
     local speedMult = currentBrickSpeed * speedMult -- Get the combined speed multiplier
+    if scensions.getCurrentAscension() >= 8 then
+        speedMult = speedMult * 1.25
+    end
     for _, brick in ipairs(bricks) do
         if not brick.destroyed and brick.health > 0 then
             if brick.type == "gold" then
@@ -1740,10 +1744,36 @@ function drawMenu()
     end
 
     -- difficulty button
-    setFont(22)
-    love.graphics.draw(uiWindowImg, centerX + buttonWidth * 0.25 + 350, startY - 90, 0, buttonWidth * 1/uiWindowImg:getWidth(), buttonHeight * 2.5/uiWindowImg:getHeight())
-    drawCenteredText("Ascension : " .. Player.currentAscension, centerX + buttonWidth * 0.25 + 350, startY - 90, buttonWidth * 1, buttonHeight * 2.5)
+    setFont(30)
+    love.graphics.draw(uiWindowImg, centerX + buttonWidth * 0.25 + 400, startY - 90, 0, buttonWidth * 1/uiWindowImg:getWidth(), buttonHeight * 2.5/uiWindowImg:getHeight())
+    drawTextCenteredWithScale("Ascension : " .. Ascensions.getCurrentAscension(), centerX + buttonWidth * 0.25 + 405, startY - 50, 1, buttonWidth * 1)
+    setFont(20)
+    if Ascensions[Ascensions.getCurrentAscension() + 1] then
+        drawTextCenteredWithScale(Ascensions[Ascensions.getCurrentAscension() + 1].description, centerX + buttonWidth * 0.25 + 425, startY + 10, 1, buttonWidth * 0.9)
+    else
+        print("No description for current ascension, current ascensions : " .. Ascensions.getCurrentAscension())
+    end
+    -- last ascension button
+    love.graphics.setColor(0.75,0.75,0.75,1)
+    local arrowX, arrowY = centerX + buttonWidth * 0.25 + 557 - 230, startY - 50
+    love.graphics.draw(leftArrowImg, arrowX, arrowY, 0, 100 / leftArrowImg:getWidth(), 100 / leftArrowImg:getHeight())
+    love.graphics.setColor(1,1,1,1)
+    local ascensionBtnBefore = suit.Button("", {id = "back_difficulty", color = invisButtonColor, valign = "center"}, arrowX, arrowY, 100, 100)
+    if ascensionBtnBefore.hit then
+        Ascensions.reduceAscension()
+    end
+    -- next ascension button
+    love.graphics.setColor(0.75,0.75,0.75,1)
+    local arrowX, arrowY = centerX + buttonWidth * 0.25 + 557 + 230, startY - 50
+    love.graphics.draw(rightArrowImg, arrowX, arrowY, 0, 100 / rightArrowImg:getWidth(), 100 / rightArrowImg:getHeight())
+    love.graphics.setColor(1,1,1,1)
+    local ascensionBtnAfter = suit.Button("", {id = "next_difficulty", color = invisButtonColor}, arrowX, arrowY, 100, 100)
+    if ascensionBtnAfter.hit then
+        Ascensions.increaseAscension()
+    end
 
+    -- challenge runs
+    setFont(22)
     love.graphics.draw(uiWindowImg, centerX + buttonWidth * 0.25 - 375, startY - 40, 0, buttonWidth * 0.5/uiWindowImg:getWidth(), buttonHeight * 2/uiWindowImg:getHeight())
     if suit.Button("Challenge\nRuns", {id="challenge button", valign = "middle", color = invisButtonColor}, centerX + buttonWidth * 0.25 -370, startY - 40, buttonWidth * 0.5, buttonHeight * 2).hit then
         
