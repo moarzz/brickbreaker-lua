@@ -2333,7 +2333,7 @@ local function ballListInit()
             x = screenWidth / 2,
             y = screenHeight / 2,
             ballAmount = 1,
-            speedMult = 0.65,
+            speedMult = 0.8,
             size = 2,
             rarity = "rare",
             startingPrice = 100,
@@ -3002,6 +3002,7 @@ function Balls.initialize()
     permanentItemBonuses = {}
     resetXpStuff()
     resetBallAttachedLasers()
+    Player.setMoney(2)
 
     -- sets which items should be visible
     Items.setAllVisible(true)

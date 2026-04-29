@@ -10,7 +10,7 @@ function loadGameData()
     local data = {
         highScore = 0,
         gold = 0,
-        startingMoney = 0,
+        startingMoney = 1,
         permanentUpgrades = {},
         paddleCores = {["Amount Core"] = true},  -- Initialize paddleCores
         permanentUpgradePrices = {
@@ -35,7 +35,7 @@ function loadGameData()
             if fileData then
                 data.highScore = fileData.highScore or 0
                 data.gold = fileData.gold or 0
-                data.startingMoney = fileData.startingMoney or 0
+                data.startingMoney = fileData.startingMoney or 1
                 -- data.permanentUpgrades = fileData.permanentUpgrades or {}
                 data.paddleCores = fileData.paddleCores or { ["Amount Core"] = true }
                 -- data.permanentUpgradePrices = fileData.permanentUpgradePrices or data.permanentUpgradePrices
@@ -446,7 +446,7 @@ function Player.levelUp()
         elseif Player.level < 15 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.435)
         elseif Player.level < 20 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.25)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.35)
         elseif Player.level < 25 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.3)
         elseif Player.level < 30 then

@@ -12,7 +12,6 @@ function GrowCube.new()
 end
 
 function GrowCube.events:levelUp()
-    Player.changeMoney(-1, self.id);
     itemTriggerAnimation(self.name);
     local statNames = {"damage", "speed", "amount", "ammo", "fireRate", "cooldown", "range"};
     local randomStatName = table.remove(statNames, math.random(1, #statNames));

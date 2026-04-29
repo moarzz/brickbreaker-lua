@@ -17,14 +17,14 @@ local Ascensions = {
     },
     {
         name = "Ascension 4",
-        description = "Boss spawns after 8 minutes instead of 10",
+        description = "Boss spawns after 9 minutes instead of 10",
         onMatchStart = function()
-            setBossSpawnTime(480)
+            setBossSpawnTime(540)
         end
     },
     {
         name = "Ascension 5",
-        description = "healing Bricks appear twice as often",
+        description = "healing Bricks appear 50% more often",
     },
     {
         name = "Ascension 6",

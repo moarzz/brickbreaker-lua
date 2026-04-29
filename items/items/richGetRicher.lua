@@ -5,7 +5,7 @@ RichGetRicher.description = "+1 for every <color=money><font=big>10$<color=white
 RichGetRicher.rarity = "uncommon"; 
 RichGetRicher.imageReference = "assets/sprites/UI/ItemIcons/Rich-Get-Richer.png";
 
-local maxDamageBonus = 3;
+local maxDamageBonus = 4;
 
 function RichGetRicher.new()
     local instance = setmetatable({}, RichGetRicher):init();

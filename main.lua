@@ -677,7 +677,7 @@ local function generateRow(brickCount, yPos)
     for xPos, brickHealth in ipairs(row) do
         if brickHealth > 0 then
             if (not bigBrickLocations[xPos-1]) then
-                if xPos < 11 and math.random(1, 100) < math.floor(mapRangeClamped(brickCount, 1, 500, 0, 20)) * (Ascensions.getCurrentAscension() >= 5 and 2 or 1) and row[xPos+1] > 0 and not bossSpawned then
+                if xPos < 11 and math.random(1, 100) < math.floor(mapRangeClamped(brickCount, 1, 500, 0, 20)) and row[xPos+1] > 0 and not bossSpawned then
                     if (brickHealth + row[xPos+1]) * 2 >= 50 then
                         bigBrickLocations[xPos] = true
                         unavailableXpos[xPos] = true
@@ -707,7 +707,7 @@ local function generateRow(brickCount, yPos)
                         brickId = brickId + 1
                         nextRowDebuff = brickHealth + row[xPos+1]
                     end
-                elseif Player.level >= 8 and math.random(1, 250) <= math.floor(mapRangeClamped(Player.level, 8, 25, 1, 12)) 
+                elseif Player.level >= 8 and math.random(1, 250) <= math.floor(mapRangeClamped(Player.level, 8, 25, 1, 12))  * (Ascensions.getCurrentAscension() >= 5 and 1.5 or 1)
                 and not (row.healBrickPositions and (row.healBrickPositions[xPos-1] or row.healBrickPositions[xPos+1])) then
                     if not row.healBrickPositions then row.healBrickPositions = {} end
                     row.healBrickPositions[xPos] = true
@@ -849,7 +849,7 @@ local function addMoreBricks()
                 local addBrickMult = mapRangeClamped(Player.level, 1, 20, 2, 1)
                 local scaleMult = 1
                 if Ascensions.getCurrentAscension() >= 1 then
-                    scaleMult = 1.2
+                    scaleMult = scaleMult * 1.25
                 end
                 if victoryAchieved then
                     currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 80, 250) * math.max(mapRange(gameTime, 600, 900, 1, 8), 1) * scaleMult
