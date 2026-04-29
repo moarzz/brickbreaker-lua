@@ -1144,7 +1144,7 @@ local function moveBricksDown(dt)
     currentBrickSpeed = getBrickSpeedMult()-- < currentBrickSpeed and math.max(currentBrickSpeed - dt * 10, getBrickSpeedMult()) or math.min(currentBrickSpeed + dt * 5, getBrickSpeedMult())
     local speedMult = 0.85
     local speedMult = currentBrickSpeed * speedMult -- Get the combined speed multiplier
-    if scensions.getCurrentAscension() >= 8 then
+    if Ascensions.getCurrentAscension() >= 8 then
         speedMult = speedMult * 1.25
     end
     for _, brick in ipairs(bricks) do
