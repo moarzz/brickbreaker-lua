@@ -2968,7 +2968,7 @@ function Balls.initialize()
     if Player.currentCore == "Fast Study Core" then
         Player.xpGainMult = 1.03
     end
-    Player.permanentUpgrades = {}
+    -- Player.permanentUpgrades = {}
     inGame = true
     deathTimerOver = false
     deathTweenValues = {speed = 1, overlayOpacity = 0}
@@ -3002,7 +3002,7 @@ function Balls.initialize()
     permanentItemBonuses = {}
     resetXpStuff()
     resetBallAttachedLasers()
-    Player.setMoney(2)
+    Player.setMoney(Player.startingMoney)
 
     -- sets which items should be visible
     Items.setAllVisible(true)

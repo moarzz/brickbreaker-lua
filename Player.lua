@@ -16,7 +16,6 @@ function loadGameData()
         permanentUpgradePrices = {
             amount = 100,
             speed = 100,
-            damage = 100,
             -- ... other default prices
         },
         startingItems = {"Ball", "Nothing"},
@@ -36,9 +35,9 @@ function loadGameData()
                 data.highScore = fileData.highScore or 0
                 data.gold = fileData.gold or 0
                 data.startingMoney = fileData.startingMoney or 1
-                -- data.permanentUpgrades = fileData.permanentUpgrades or {}
+                data.permanentUpgrades = fileData.permanentUpgrades or {}
                 data.paddleCores = fileData.paddleCores or { ["Amount Core"] = true }
-                -- data.permanentUpgradePrices = fileData.permanentUpgradePrices or data.permanentUpgradePrices
+                data.permanentUpgradePrices = fileData.permanentUpgradePrices or data.permanentUpgradePrices
                 data.startingItems = fileData.startingItems or data.startingItems
                 data.fastestTime = fileData.fastestTime or 100000000000
                 data.settings = fileData.settings or data.settings
@@ -84,7 +83,7 @@ function loadGameData()
     return data
 end
 
-local defaultPermanentUpgrades = {speed = 0, damage = 0, cooldown = 0, amount = 0, fireRate = 0, ammo = 0, range = 0}
+local defaultPermanentUpgrades = {speed = 0, cooldown = 0, amount = 0, fireRate = 0, ammo = 0, range = 0}
 Player = {
     hiddenMoney = 0;
     realMoney = 0;
@@ -154,21 +153,21 @@ function saveGameData()
         fastestTime = Player.fastestTime,
         gold = Player.gold,
         startingMoney = Player.startingMoney,
-        --[[permanentUpgrades = {
+        permanentUpgrades = {
             -- paddleSize = Player.permanentUpgrades.paddleSize or 0,
             -- paddleSpeed = Player.permanentUpgrades.paddleSpeed or 0,
             -- Keep other upgrades...
             speed = Player.permanentUpgrades.speed or 0,
-            damage = Player.permanentUpgrades.damage or 0,
+            -- damage = Player.permanentUpgrades.damage or 0,
             cooldown = Player.permanentUpgrades.cooldown or 0,
             fireRate = Player.permanentUpgrades.fireRate or 0,
             ammo = Player.permanentUpgrades.ammo or 0,
             range = Player.permanentUpgrades.range or 0,
             amount = Player.permanentUpgrades.amount or 0,
-            health = Player.permanentUpgrades.health or 0,
-        },]]
+            -- health = Player.permanentUpgrades.health or 0,
+        },
         paddleCores = Player.paddleCores or {["Amount Core"] = true},  -- Change this line
-        -- permanentUpgradePrices = Player.permanentUpgradePrices,
+        permanentUpgradePrices = Player.permanentUpgradePrices,
         startingItems = Player.startingItems or {"Ball"},
         settings = {
             globalVolume = globalVolume,
@@ -192,7 +191,8 @@ function Player.loadJsonValues() -- wtf is this bootleg function?
     Player.gold = gameData.gold or 0
     Player.highScore = gameData.highScore or 0
     Player.fastestTime = gameData.fastestTime or 10000
-    -- Player.permanentUpgrades = gameData.permanentUpgrades or {}
+    Player.permanentUpgrades = gameData.permanentUpgrades or {}
+    Player.permanentUpgradePrices = gameData.permanentUpgradePrices or {}
     -- Apply paddle upgrades after loading
     if paddle then
         Player.bonusUpgrades.paddleSpeed()
@@ -217,9 +217,7 @@ Player.bonusesList = {
 
 Player.permanentUpgradePrices = {
     speed = 100,
-    damage = 100,
-    ballDamage = 100,
-    bulletDamage = 100,
+    -- damage = 100,
     cooldown = 100,
     fireRate = 100,
     ammo = 100,

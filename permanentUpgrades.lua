@@ -15,7 +15,7 @@ local invisButtonColor = {
 -- List of all permanent upgrades
 local upgrades = data.upgrades and {
     speed = data.upgrades.speed or 0,
-    damage = data.upgrades.damage or 0,
+    -- damage = data.upgrades.damage or 0,
     cooldown = data.upgrades.cooldown or 0,
     fireRate = data.upgrades.fireRate or 0,
     ammo = data.upgrades.ammo or 0,
@@ -25,7 +25,7 @@ local upgrades = data.upgrades and {
     health = data.upgrades.health or 0,
 } or {
     speed = 0,
-    damage = 0,
+    -- damage = 0,
     cooldown = 0,
     fireRate = 0,
     ammo = 0,
@@ -193,11 +193,15 @@ end
 
 local function startingMoneyDraw()
     local startingMoney = Player.startingMoney or 0
-    local menuX = 500
+    local menuX = 1400
     local menuY = 110
-    local menuWidth = 300
+    local menuWidth = 400
     local buttonHeight = 150
-    suit.Label("starting money", {align = "center"}, menuX - menuWidth, menuY, menuWidth*2, 40)
+    love.graphics.setColor(1,1,1)
+    setFont(32)
+    suit.Label("starting money", {align = "center"}, menuX, menuY, menuWidth, 40)
+    local y = menuY + 80
+    drawTextCenteredWithScale(startingMoney .. "$", menuX , y, 1, menuWidth, {14/255, 202/255, 92/255})
 end
 
 function permanentUpgrades.draw()
@@ -235,7 +239,7 @@ function permanentUpgrades.draw()
     -- Draw rest of UI (title and upgrades)
     y = y + 90  -- Add spacing after money/score display
     setFont(28)
-    --[[suit.Label("Stat Upgrades", {align = "center", valign = "center"}, x - 85, y, uiLabelImg:getWidth()*1.5, uiLabelImg:getHeight())
+    suit.Label("Stat Upgrades", {align = "center", valign = "center"}, x - 85, y, uiLabelImg:getWidth()*1.5, uiLabelImg:getHeight())
     y = y - 120
 
     -- Draw upgrades in a grid
@@ -303,7 +307,7 @@ function permanentUpgrades.draw()
                 print(upgradeName .. " upgraded to " .. Player.permanentUpgrades[upgradeName])
             end
         end
-    end]]
+    end
     
     -- Grid layout settings
     local gridStartX = 100

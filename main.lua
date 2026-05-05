@@ -300,6 +300,7 @@ local function loadAssets()
     runeCircleImg = love.graphics.newImage("assets/sprites/runeCircle.png")
     bezelImg = love.graphics.newImage("assets/sprites/bezel.png")
     screenContour = love.graphics.newImage("assets/sprites/screenContour1.png")
+    goldImg = love.graphics.newImage("assets/sprites/UI/gold.png")
 
     -- UI
     uiLabelImg = love.graphics.newImage("assets/sprites/UI/label.png")
@@ -2968,7 +2969,9 @@ function love.keypressed(key)
         -----------------------------------
 
         if key == "1" then
-            shouldDrawDifficultyModifier = not shouldDrawDifficultyModifier
+            for upgradeName, upgradeValue in pairs(Player.permanentUpgrades) do
+                print(upgradeName .. ": " .. tostring(upgradeValue))
+            end
             --[[local mouseX, mouseY = love.mouse.getPosition()
             textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)]]
         end
