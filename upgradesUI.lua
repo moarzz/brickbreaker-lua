@@ -969,7 +969,7 @@ local function drawBallStats()
             end
 
             local upgradePrice = ballType.price
-            if Ascensions.getCurrentAscension() >= 6 then
+            if Ascensions.getCurrentAscension() >= 7 then
                 upgradePrice = upgradePrice + 1
             end
 

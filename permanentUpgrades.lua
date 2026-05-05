@@ -191,11 +191,21 @@ local function paddleCoresDraw()
     end
 end
 
+local function startingMoneyDraw()
+    local startingMoney = Player.startingMoney or 0
+    local menuX = 500
+    local menuY = 110
+    local menuWidth = 300
+    local buttonHeight = 150
+    suit.Label("starting money", {align = "center"}, menuX - menuWidth, menuY, menuWidth*2, 40)
+end
+
 function permanentUpgrades.draw()
     local padding = 20
     local cellWidth = 200
     local x, y = padding, padding    
     -- startingItemsDraw()  -- Draw the starting items menu
+    startingMoneyDraw()
     paddleCoresDraw()
 
     -- Draw money and score at the top

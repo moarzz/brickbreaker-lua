@@ -5,7 +5,7 @@ local Ascensions = {
     },
     { -- done
         name = "Ascension 1",
-        description = "Bricks scale in health 25% faster",
+        description = "Bricks scale in health 20% faster",
     },
     { -- done
         name = "Ascension 2",
@@ -28,21 +28,15 @@ local Ascensions = {
     },
     {
         name = "Ascension 6",
-        description = "weapon upgrades cost 1$ more",
+        description = "bricks have 20% more health",
     },
     {
         name = "Ascension 7",
-        description = "bricks have 25% more health",
-        onMatchStart = function()
-            Player.brickHealthScalingMult = (Player.brickHealthScalingMult or 1) * 1.2
-        end
+        description = "weapon upgrades cost 1$ more",
     },
     {
         name = "Ascension 8",
-        description = "bricks move 25% faster",
-        onMatchStart = function()
-            Player.brickHealthScalingMult = (Player.brickHealthScalingMult or 1) * 1.2
-        end
+        description = "bricks move 20% faster",
     },
     {
         name = "Ascension 9",

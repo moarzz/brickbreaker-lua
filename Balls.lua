@@ -1076,7 +1076,7 @@ local function shoot(gunName, ball)
                         type = "ball",
                         name = "Gun Ball Gun",
                         x = paddle.x + paddle.width / 2,
-                        y = paddle.y - 6,
+                        y = paddle.y - 25,
                         speedMult = ballTemplate.speedMult or 1,
                         radius = (ballTemplate.radius or 10) * 1.5,
                         drawSizeBoost = 1,
