@@ -798,7 +798,7 @@ local function drawBallStats()
                     -- Add permanent upgrades to the display value
                     local permanentUpgradeValue = Player.permanentUpgrades[statName] or 0
                     local bonusValue = getStatItemsBonus(statName, ballType) or 0
-                    local value = (Player.currentCore == "Cooldown Core" and statName == "cooldown") and 2 or statValue + bonusValue + permanentUpgradeValue
+                    local value = (Player.currentCore == "Cooldown Core" and statName == "cooldown") and 2 or statValue + bonusValue + permanentUpgradeValue + (Player.paddleUpgrades[statName] or 0)
                     if statName == "ammo" then
                         value = value - permanentUpgradeValue - bonusValue + bonusValue * ballType.ammoMult -- Adjust ammo value based on ammoMult
                     end

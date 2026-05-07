@@ -3191,7 +3191,7 @@ function Balls.addBall(ballName, singleBall)
             return
         end
         if ballTemplate.type == "ball" then
-            local loops = (Player.currentCore == "Damage Core") and 1 or (singleBall and 1 or (getStatItemsBonus("amount", ballTemplate) + (Player.permanentUpgrades.amount or 0) + 1)) * (Player.currentCore == "Madness Core" and 2 or 1)
+            local loops = (Player.currentCore == "Damage Core") and 1 or (singleBall and 1 or (getStatItemsBonus("amount", ballTemplate) + (Player.permanentUpgrades.amount or 0) + 1)) * (Player.currentCore == "Madness Core" and 2 or 1) + (Player.paddleUpgrades.amount or 0)
             loops = Player.currentCore == "IncrediCore" and 1 or loops
             for i=1, loops do
                 local totalSpeed = getStat(ballName, "speed")

@@ -502,12 +502,12 @@ function FancyText:draw()
 
             love.graphics.setColor(colour);
             love.graphics.print(v.text, x, y, 0, scale,scale);
-            print(v.height);
-            print(v.text);
+            -- print(v.height);
+            -- print(v.text);
         end
 
         y = y + v.height; -- move the next line downwards by the height of this line
-        print("")
+        -- print("")
     end
 
     love.graphics.pop();

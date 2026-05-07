@@ -270,18 +270,24 @@ function Items.getRandomItem(allowInvisible)
     end
 
     if totalWeight == 0 then
-        -- no visible items in this rarity, fallback to non-unique items (even if invisible)
+        -- no visible items in this rarity, fallback to consumables (always) or items with instances left
+        local isConsumableList = (lookingInList == self.allConsumables)
         local fallbackPool = {}
         for i, item in ipairs(lookingInList[rarity]) do
-            if item and not item.unique then
-                table.insert(fallbackPool, item)
+            if item then
+                -- Consumables always appear; non-consumables check instancesLeft
+                if isConsumableList then
+                    table.insert(fallbackPool, item)
+                end
             end
         end
         
         if #fallbackPool > 0 then
+            print("return fallback item from rarity " .. rarity .. " because no visible items are available");
             return fallbackPool[love.math.random(1, #fallbackPool)]
         else
             -- last resort: return first item
+            print("no items available in rarity " .. rarity .. ", returning first item as fallback");
             return lookingInList[rarity][1]
         end
     end

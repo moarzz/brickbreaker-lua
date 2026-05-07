@@ -118,6 +118,7 @@ Player = {
     dead = false,
     lastHitTime = 0,
     items = {},
+    paddleUpgrades = {},
     queuedUpgrades = {},    
     permanentUpgrades = {}, -- Store permanent upgrades
     permanentUpgradePrices = {
