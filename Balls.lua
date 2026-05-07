@@ -3077,7 +3077,7 @@ end
 function getStat(ballTypeName, statName)
     if unlockedBallTypes[ballTypeName] then
         local baseValue = unlockedBallTypes[ballTypeName].stats[statName] or 0
-        local bonusValue = getStatItemsBonus(statName, ballList[ballTypeName]) + (Player.permanentUpgrades[statName] or 0)
+        local bonusValue = getStatItemsBonus(statName, ballList[ballTypeName]) + (Player.permanentUpgrades[statName] or 0) + (Player.paddleUpgrades[statName] or 0 )
         local totalValue
         if statName == "ammo" then
             totalValue = baseValue + bonusValue * (unlockedBallTypes[ballTypeName].ammoMult or 1)

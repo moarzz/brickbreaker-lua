@@ -229,12 +229,13 @@ function permanentUpgrades.draw()
     local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(Player.gold))/2
     suit.Label("Money", {align = "center"}, screenWidth/2 + moneyOffsetX, y, moneyOffsetX*2, h)
     setFont(35)
-    love.graphics.setColor(0,0,0,1)
-    love.graphics.print(formatNumber(Player.gold) .. "$", screenWidth/2 + moneyOffsetX, y+30, math.rad(1.5))
+    --[[love.graphics.setColor(0,0,0,1)
+    love.graphics.print(formatNumber(Player.gold) .. "$", screenWidth/2 + moneyOffsetX, y+30, math.rad(1.5))]]
     local moneyColor = {14/255, 202/255, 92/255,1}
-    love.graphics.setColor(moneyColor)
-    love.graphics.print(formatNumber(Player.gold) .. "$", screenWidth/2 + moneyOffsetX, y + 26, math.rad(1.5))
+    love.graphics.setColor(1,200/255,0)
+    love.graphics.print(formatNumber(Player.gold), screenWidth/2 + moneyOffsetX, y + 26)
     love.graphics.setColor(1,1,1,1)
+    love.graphics.draw(goldImg, screenWidth/2 + moneyOffsetX + getTextSize(formatNumber(Player.gold)), y - 5, 0, 0.15, 0.15)
 
     -- Draw rest of UI (title and upgrades)
     y = y + 90  -- Add spacing after money/score display

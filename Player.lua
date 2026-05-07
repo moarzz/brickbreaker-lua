@@ -19,6 +19,15 @@ function loadGameData()
             -- ... other default prices
         },
         startingItems = {"Ball", "Nothing"},
+        coreHighestAscension = {
+                ["Amount Core"] = 0,
+                ["Spray and Pray Core"] = 0,
+                ["Fast Study Core"] = 0,
+                ["Hacker Core"] = 0,
+                ["Loan Core"] = 0,
+                ["Size Core"] = 0,
+                ["Farm Core"] = 0,
+        },
         settings = {
             globalVolume = 1,
             musicVolume = 1,
@@ -38,6 +47,7 @@ function loadGameData()
                 data.permanentUpgrades = fileData.permanentUpgrades or {}
                 data.paddleCores = fileData.paddleCores or { ["Amount Core"] = true }
                 data.permanentUpgradePrices = fileData.permanentUpgradePrices or data.permanentUpgradePrices
+                data.coreHighestAscension = fileData.coreHighestAscension or data.coreHighestAscension
                 data.startingItems = fileData.startingItems or data.startingItems
                 data.fastestTime = fileData.fastestTime or 100000000000
                 data.settings = fileData.settings or data.settings
@@ -56,12 +66,14 @@ function loadGameData()
     Player.permanentUpgradePrices = data.permanentUpgradePrices
     Player.startingItems = data.startingItems
     Player.paddleCores = data.paddleCores
+    Player.coreHighestAscension = data.coreHighestAscension
     globalVolume = data.settings.globalVolume
     musicVolume = data.settings.musicVolume
     sfxVolume = data.settings.sfxVolume
     fullScreenCheckbox = data.settings.fullscreen
     damageNumbersOn = data.settings.damageNumbersOn
     firstRunCompleted = data.firstRunCompleted or false
+    Player.coreHighestAscension = data.coreHighestAscension or {}
 
     -- Sync unlockedStartingBalls with startingItems for compatibility with UI
     Player.unlockedStartingBalls = {}
@@ -110,6 +122,7 @@ Player = {
     permanentUpgrades = {}, -- Store permanent upgrades
     permanentUpgradePrices = {
     },
+    coreHighestAscension = {},
     bonuses = { -- These bonuses are percentages
     },
     perks = {},
@@ -166,6 +179,15 @@ function saveGameData()
             amount = Player.permanentUpgrades.amount or 0,
             -- health = Player.permanentUpgrades.health or 0,
         },
+        coreHighestAscension = {
+            ["Amount Core"] = Player.coreHighestAscension and Player.coreHighestAscension["Amount Core"] or 0,
+            ["Spray and Pray Core"] = Player.coreHighestAscension and Player.coreHighestAscension["Spray and Pray Core"] or 0,
+            ["Fast Study Core"] = Player.coreHighestAscension and Player.coreHighestAscension["Fast Study Core"] or 0,
+            ["Hacker Core"] = Player.coreHighestAscension and Player.coreHighestAscension["Hacker Core"] or 0,
+            ["Loan Core"] = Player.coreHighestAscension and Player.coreHighestAscension["Loan Core"] or 0,
+            ["Size Core"] = Player.coreHighestAscension and Player.coreHighestAscension["Size Core"] or 0,
+            ["Farm Core"] = Player.coreHighestAscension and Player.coreHighestAscension["Farm Core"] or 0,
+        },
         paddleCores = Player.paddleCores or {["Amount Core"] = true},  -- Change this line
         permanentUpgradePrices = Player.permanentUpgradePrices,
         startingItems = Player.startingItems or {"Ball"},
@@ -193,6 +215,7 @@ function Player.loadJsonValues() -- wtf is this bootleg function?
     Player.fastestTime = gameData.fastestTime or 10000
     Player.permanentUpgrades = gameData.permanentUpgrades or {}
     Player.permanentUpgradePrices = gameData.permanentUpgradePrices or {}
+    Player.coreHighestAscension = gameData.coreHighestAscension or {}
     -- Apply paddle upgrades after loading
     if paddle then
         Player.bonusUpgrades.paddleSpeed()
@@ -224,6 +247,15 @@ Player.permanentUpgradePrices = {
     range = 100,
     amount = 100,
     --paddleSize = 100, -- This is now handled in permanentUpgrades.lua
+}
+Player.coreHighestAscension = {
+    ["Amount Core"] = 0,
+    ["Spray and Pray Core"] = 0,
+    ["Fast Study Core"] = 0,
+    ["Hacker Core"] = 0,
+    ["Loan Core"] = 0,
+    ["Size Core"] = 0,
+    ["Farm Core"] = 0,
 }
 
 Player.bonusUpgrades = {
@@ -468,9 +500,9 @@ function Player.levelUp()
     elseif Player.currentCore == "Fast Study Core" then
         Player.xpGainMult = Player.xpGainMult + 0.03
     elseif Player.level % 5 == 0 and Player.currentCore == "Spray and Pray Core" then -- THIS IS NOT AN ERROR
-        Player.permanentUpgrades.fireRate = (Player.permanentUpgrades.fireRate or 0) + 1
+        Player.paddleUpgrades.fireRate = (Player.paddleUpgrades.fireRate or 0) + 1
     elseif "Amount Core" == Player.currentCore and Player.level % 5 == 0 then
-        Player.permanentUpgrades.amount = (Player.permanentUpgrades.amount or 0) + 1
+        Player.paddleUpgrades.amount = (Player.paddleUpgrades.amount or 0) + 1
         for _, weapon in pairs(Balls.getUnlockedBallTypes()) do
             if weapon.type == "ball" then
                 Balls.addBall(weapon.name, true)
