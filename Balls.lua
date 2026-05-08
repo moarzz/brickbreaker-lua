@@ -1323,14 +1323,14 @@ local function shoot(gunName, ball)
                 if gun.name == "Minigun" then
                     local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                     local timeUntilNextShot = gun.fireRateMult * 1 * (mapRangeClamped(getStat("Minigun", "ammo") - gun.currentAmmo, 0, 25, 4, 0.75) * (spray and sprayMult or 1))/(getStat(gun.name, "fireRate") * bulletStormMult)
-                    timeUntilNextShot = timeUntilNextShot * 1.15
+                    timeUntilNextShot = timeUntilNextShot * 1.25
                     Timer.after(timeUntilNextShot, function() shoot(gunName) end)
                     createFireRateVFX(timeUntilNextShot)
                     -- createCooldownVFX(cooldownValue)
                 else
                     local sprayMult = hasItem("Four Leafed Clover") and 0.56 or 0.714
                     local timeUntilNextShot = (gun.fireRateMult * 3.0 * 1 * (spray and sprayMult or 1))/(getStat(gun.name, "fireRate") * bulletStormMult)
-                    timeUntilNextShot = timeUntilNextShot * 1.15
+                    timeUntilNextShot = timeUntilNextShot * 1.25
                     Timer.after(timeUntilNextShot, function() shoot(gunName) end)
                     createFireRateVFX(timeUntilNextShot)
                     -- createCooldownVFX(cooldownValue)
@@ -3003,6 +3003,12 @@ function Balls.initialize()
     resetXpStuff()
     resetBallAttachedLasers()
     Player.setMoney(Player.startingMoney)
+    if Ascensions.getCurrentAscension() >= 4 then
+        setBossSpawnTime(540)
+    else
+        setBossSpawnTime(600)
+    end
+    
 
     -- sets which items should be visible
     Items.setAllVisible(true)

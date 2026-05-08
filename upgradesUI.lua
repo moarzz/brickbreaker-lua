@@ -1225,12 +1225,9 @@ function setItemShop(forcedItems)
         if forcedItems[i] then
             itemToDisplay = forcedItems[i]
             if itemToDisplay then
-                -- if itemToDisplay.onInShop then
-                    -- itemToDisplay.onInShop(itemToDisplay)
-                -- end
-
                 getItemFullDescription(itemToDisplay)
                 displayedItems[i] = itemToDisplay.new();
+                Items.addInvisibleItem(itemToDisplay.filteredName);  -- MOVED HERE
             else
                 print("Error: No item found in setItemShop()")
             end
@@ -1252,9 +1249,8 @@ function setItemShop(forcedItems)
                 end
             end
             displayedItems[i] = itemToDisplay.new();
+            Items.addInvisibleItem(itemToDisplay.filteredName);  -- MOVED HERE
         end
-
-        Items.addInvisibleItem(itemToDisplay.filteredName);
     end
 end
 

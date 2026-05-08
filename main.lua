@@ -398,7 +398,8 @@ local function spawnBoss()
     print("Spawning boss brick")
     local bossX = screenWidth / 2 - bossWidth / 2
     local bossY = -bossHeight * 2
-    local brickColor = getBrickColor(bossHealth, false, true)
+    local actualBossHealth = Ascensions.getCurrentAscension() >= 9 and bossHealth * 2 or bossHealth
+    local brickColor = getBrickColor(actualBossHealth, false, true)
     boss = {
         type = "boss",
         id = brickId,
@@ -411,7 +412,7 @@ local function spawnBoss()
         width = bossWidth,
         height = bossHeight,
         destroyed = false,
-        health = bossHealth,
+        health = actualBossHealth,
         color = {brickColor[1], brickColor[2], brickColor[3], 1},
         hitLastFrame = false,
         lastHitVfxTime = 0,
@@ -845,12 +846,12 @@ local function addMoreBricks()
             local columnCount = getCurrentColumnCount()
             local currentBrickWidthMult = getCurrentBrickWidthMult()
             for i=1 , 10 do
-                local brickHealthMult = Ascensions.getCurrentAscension() >= 6 and 1.2 or 1
+                local brickHealthMult = Ascensions.getCurrentAscension() >= 6 and 1.15 or 1
                 generateRow(math.floor(currentRowPopulation * brickHealthMult), i * -(brickHeight * currentBrickWidthMult + brickSpacing) - 45) --generate 100 scaling rows of bricks
                 local addBrickMult = mapRangeClamped(Player.level, 1, 20, 2, 1)
                 local scaleMult = 1
                 if Ascensions.getCurrentAscension() >= 1 then
-                    scaleMult = scaleMult * 1.2
+                    scaleMult = scaleMult * 1.15
                 end
                 if victoryAchieved then
                     currentRowPopulation = currentRowPopulation + gameTime/mapRange(gameTime, 0, 600, 80, 250) * math.max(mapRange(gameTime, 600, 900, 1, 8), 1) * scaleMult
@@ -1146,7 +1147,7 @@ local function moveBricksDown(dt)
     local speedMult = 0.85
     local speedMult = currentBrickSpeed * speedMult -- Get the combined speed multiplier
     if Ascensions.getCurrentAscension() >= 8 then
-        speedMult = speedMult * 1.20
+        speedMult = speedMult * 1.15
     end
     for _, brick in ipairs(bricks) do
         if not brick.destroyed and brick.health > 0 then

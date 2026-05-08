@@ -5,7 +5,7 @@ local Ascensions = {
     },
     { -- done
         name = "Ascension 1",
-        description = "Bricks scale in health 20% faster",
+        description = "Bricks scale in health 15% faster",
     },
     { -- done
         name = "Ascension 2",
@@ -28,7 +28,7 @@ local Ascensions = {
     },
     {
         name = "Ascension 6",
-        description = "bricks have 20% more health",
+        description = "bricks have 15% more health",
     },
     {
         name = "Ascension 7",
@@ -36,14 +36,11 @@ local Ascensions = {
     },
     {
         name = "Ascension 8",
-        description = "bricks move 20% faster",
+        description = "bricks move 15% faster",
     },
     {
         name = "Ascension 9",
-        description = "There are only 2 options in the shop and on weapon unlock",
-        onMatchStart = function()
-            Player.brickHealthScalingMult = (Player.brickHealthScalingMult or 1) * 1.2
-        end
+        description = "Boss has double health"
     },
 }
 
