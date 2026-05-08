@@ -357,8 +357,8 @@ function gainMoneyWithAnimations(moneyGain, itemID, playSFX)
         -- Update money
         createMoneyPopup(moneyGain, math.random(190, 210), 175);
         if not Player.levelingUp then
-            playerMoneyBoost.alpha = 1.0
-            local moneyOutTween = tween.new(1.0, playerMoneyBoost, {alpha = 0.0}, tween.easing.inCirc, nil, true)
+            PlayerMoneyBoost.alpha = 1.0
+            local moneyOutTween = tween.new(1.0, PlayerMoneyBoost, {alpha = 0.0}, tween.easing.inCirc, nil, true)
             addTweenToUpdate(moneyOutTween)
         end
 

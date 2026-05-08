@@ -254,6 +254,15 @@ function totalUpgrade()
     end
 end
 
+--[[local bulletTrailLength = 15
+local function initializeBallTrail(x, y)
+    x = x or -1000
+    y = y or -1000
+    for i = 1, bulletTrailLength do
+    bullet.trail[i] = {x = x, y = y}  -- Pre-allocate once
+end]]
+
+
 local powerups = {}
 
 -- Powerup trail ring-buffer settings (prevents per-frame allocations and table shifting)
@@ -1376,7 +1385,7 @@ local mortarBombs = {}
 local function turretShoot(turret, typeMod)
     if not typeMod then typeMod = "gun" end
 
-    -- return if player is dead
+    -- return if Player is dead
     if Player.dead then
         return
     end   
@@ -4997,11 +5006,11 @@ function Balls.update(dt, paddle, bricks)
                     local multX, multY = normalizeVector(ball.speedX, ball.speedY)
                     local extraX = speedExtra * multX * 50
                     local extraY = speedExtra * multY * 50
-                    ball.x = ball.x + (ball.speedX + extraX * 1.6) * ball.speedMult * dtStep * coreMult * 0.925 * 4
-                    ball.y = ball.y + (ball.speedY + extraY * 1.6) * ball.speedMult * dtStep * coreMult * 0.925 * 4
+                    ball.x = ball.x + (ball.speedX + extraX * 1.6) * ball.speedMult * dtStep * coreMult * 4
+                    ball.y = ball.y + (ball.speedY + extraY * 1.6) * ball.speedMult * dtStep * coreMult * 4
                 else
-                    ball.x = ball.x + ball.speedX * ball.speedMult * dtStep * coreMult * 0.925 * 4
-                    ball.y = ball.y + ball.speedY * ball.speedMult * dtStep * coreMult * 0.925 * 4
+                    ball.x = ball.x + ball.speedX * ball.speedMult * dtStep * coreMult * 4
+                    ball.y = ball.y + ball.speedY * ball.speedMult * dtStep * coreMult * 4
                 end
 
                 for i = 1, substeps do
@@ -5134,22 +5143,31 @@ function Balls.update(dt, paddle, bricks)
         
         -- Handle Homing Projectiles
         if hasItem("Homing Projectiles") then
-            -- Find nearest brick
-            local nearestBrick = nil
-            local minDist = math.huge
-            
-            for _, brick in ipairs(visibleBricks) do  -- Use visibleBricks for performance
-                if not brick.destroyed and brick.health > 0 then
-                    local dx = (brick.x + brick.width/2) - bullet.x
-                    local dy = (brick.y + brick.height/2) - bullet.y
-                    local dist = dx * dx + dy * dy -- Square distance is fine, no need for square root
-                    
-                    if dist < minDist and dist > brick.width * 1.25 then
-                        minDist = dist
-                        nearestBrick = brick
+            bullet.homingUpdateTimer = (bullet.homingUpdateTimer or 0) + dt
+    
+            -- Only update nearest brick every 0.1 seconds instead of every frame
+            if bullet.homingUpdateTimer >= 0.1 then
+                bullet.homingUpdateTimer = 0
+                local nearestBrick = nil
+                local minDistSq = math.huge
+                
+                for _, brick in ipairs(visibleBricks) do
+                    if not brick.destroyed and brick.health > 0 then
+                        local dx = (brick.x + brick.width/2) - bullet.x
+                        local dy = (brick.y + brick.height/2) - bullet.y
+                        local distSq = dx * dx + dy * dy  -- No sqrt needed
+                        
+                        if distSq < minDistSq and distSq > (brick.width * 1.25)^2 then
+                            minDistSq = distSq
+                            nearestBrick = brick
+                        end
                     end
                 end
+                bullet.cachedHomingBrick = nearestBrick
+                bullet.cachedHomingDistSq = minDistSq
             end
+            -- Find nearest brick
+            local nearestBrick = bullet.cachedHomingBrick
             
             -- If we found a brick, adjust bullet velocity towards it
             if nearestBrick then
@@ -5850,5 +5868,13 @@ function Balls:draw()
         end
     end
 end
+
+
+-- debug functions
+function Balls.insertBullet(bullet)
+    table.insert(bullets, bullet)
+end
+
+
 
 return Balls

@@ -15,7 +15,7 @@ end
 
 UtilityFunction = require("UtilityFunction") -- utility functions
 DifficultyModifiers = require("difficultyModifiers") -- difficulty modifiers
-Player = require("Player") -- player logic
+Player = require("Player") -- Player logic
 Balls = require("Balls") -- ball logic
 FancyText = require("Libraries.fancyText") -- fancy text rendering
 upgradesUI = require("upgradesUI") -- upgrade UI logic
@@ -69,7 +69,7 @@ musicVolume = 1
 sfxVolume = 1
 fullScreenCheckbox = love.window.getFullscreen()
 
--- Add this variable to store the player's choice
+-- Add this variable to store the Player's choice
 local startingChoice = nil
 
 --screen dimensions
@@ -1477,7 +1477,7 @@ local function gameFixedUpdate(dt)
 
             boomUpdate(dt) -- Update explosion for damage
 
-            Player.update(dt) -- Update player logic
+            Player.update(dt) -- Update Player logic
 
             updateAnimations(dt) -- Update animations
 
@@ -2898,7 +2898,7 @@ function love.keypressed(key)
         -- PERFORMANCE STRESS TESTS
 
         if key == "q" then
-            for i=1, 100 do
+            for i=1, 50 do
                 local speedRef = 2500
                 local speedXref = math.random(-1000,1000)
                 local bullet = {
@@ -2970,9 +2970,7 @@ function love.keypressed(key)
         -----------------------------------
 
         if key == "1" then
-            for upgradeName, upgradeValue in pairs(Player.permanentUpgrades) do
-                print(upgradeName .. ": " .. tostring(upgradeValue))
-            end
+            currentRowPopulation = 500
             --[[local mouseX, mouseY = love.mouse.getPosition()
             textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)]]
         end
@@ -3026,7 +3024,7 @@ function love.keypressed(key)
         end
 
         if key == "9" then
-            gameTime = 600
+            gameTime = 900
             currentRowPopulation = 800
             -- spawnBoss()
         end

@@ -192,6 +192,7 @@ local function paddleCoresDraw()
 end
 
 local function startingMoneyDraw()
+    -- draw starting money
     local startingMoney = Player.startingMoney or 0
     local menuX = 1400
     local menuY = 110
@@ -202,6 +203,32 @@ local function startingMoneyDraw()
     suit.Label("starting money", {align = "center"}, menuX, menuY, menuWidth, 40)
     local y = menuY + 80
     drawTextCenteredWithScale(startingMoney .. "$", menuX , y, 1, menuWidth, {14/255, 202/255, 92/255})
+
+    if startingMoney <= 2 then
+        -- draw upgrade
+        y = y + 60
+        suit.Label("increase by 1", {}, menuX, y, menuWidth, 40)
+        local upgradeStartingMoneyButton = suit.Button("", {color = invisButtonColor}, menuX, y - 140, menuWidth, 230)
+
+        -- draw price
+        y = y + 50
+        local price = Player.startingMoneyUpgradePrice or 25
+        local x = menuX
+        local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(price))/2
+        love.graphics.setColor(0,0,0,1)
+        love.graphics.print(formatNumber(price) .. "$", x + 104 + moneyOffsetX, y + 4, math.rad(5))
+        local moneyColor = Player.gold >= price and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
+        love.graphics.setColor(moneyColor)
+        love.graphics.print(formatNumber(price) .. "$", x + 100 + moneyOffsetX, y, math.rad(5))
+        love.graphics.setColor(1,1,1,1)
+        if upgradeStartingMoneyButton.hit then
+            print("values before increase / starting money : " .. Player.startingMoney .. " / upgrade price : " .. Player.startingMoneyUpgradePrice)
+            Player.startingMoney = startingMoney + 1
+            Player.startingMoneyUpgradePrice = Player.startingMoneyUpgradePrice * 5
+            print("values after increase / starting money : " .. Player.startingMoney .. " / upgrade price : " .. Player.startingMoneyUpgradePrice)
+            saveGameData()
+        end
+    end
 end
 
 function permanentUpgrades.draw()

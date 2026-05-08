@@ -193,8 +193,8 @@ end
 
 visualMoneyValues = {scale = 1}
 uiOffset = {x = 0, y = 0}
-local drawPlayerStatsHeight = 200 -- Height of the player stats section
-local playerStatsPointers = {
+local drawPlayerStatsHeight = 200 -- Height of the Player stats section
+local PlayerStatsPointers = {
     default = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 20),
     big = love.graphics.newFont("assets/Fonts/KenneyFuture.ttf", 23),
     bold = love.graphics.newFont("assets/Fonts/KenneyFutureBold.ttf", 25),
@@ -245,14 +245,14 @@ local function drawPlayerStats()
         popupText = "At the start of the level up phase, gain <color=money><font=big>".. gainValue .."$ <font=default><color=white>interest"
     end
     if popupFancyText == nil then
-        popupFancyText = FancyText.new(popupText, 20, 15, 350, 20, "left", playerStatsPointers.default, playerStatsPointers)
+        popupFancyText = FancyText.new(popupText, 20, 15, 350, 20, "left", PlayerStatsPointers.default, PlayerStatsPointers)
     else
         popupFancyText:setText(popupText); 
     end
     love.graphics.setColor(1,1,1,1)
     popupFancyText:draw()
 
-    -- render interest if player has not finished leveling up
+    -- render interest if Player has not finished leveling up
     local interestValue = 5 -- + math.floor(math.min(Player.money, Player.currentCore == "Economy Core" and 50 or 25)/5) + getItemsIncomeBonus()
     if Player.currentCore == gainValue then
         interestValue = 3
@@ -397,8 +397,8 @@ function setLevelUpShop()
                     break
                 end
             end
-            for _, playerWeapon in pairs(Balls.getUnlockedBallTypes()) do
-                if playerWeapon.name == weaponToDisplay.name then
+            for _, PlayerWeapon in pairs(Balls.getUnlockedBallTypes()) do
+                if PlayerWeapon.name == weaponToDisplay.name then
                     doAgain = true
                     break
                 end
@@ -506,7 +506,7 @@ local function drawPlayerUpgrades()
             local buttonID
             buttonID = generateNextButtonID() -- Generate a unique ID for the button
             local upgradeStatButton = dress:Button("", {color = invisButtonColor, id = buttonID}, x, y-20, cellWidth, cellHeight*4)
-            -- Check if the player has enough money to upgrade
+            -- Check if the Player has enough money to upgrade
             local upgradeQueued = false
             if Player.queuedUpgrades then
                 if Player.queuedUpgrades[1] == bonusName then
@@ -522,7 +522,7 @@ local function drawPlayerUpgrades()
                 else
                     playSoundEffect(upgradeSFX, 0.5, 0.95, false)
                     if upgradeQueued then
-                        -- Remove the queued upgrade if the player has enough money now
+                        -- Remove the queued upgrade if the Player has enough money now
                         for i = #Player.queuedUpgrades, 1, -1 do
                             if Player.queuedUpgrades[i] == bonusName then
                                 table.remove(Player.queuedUpgrades, i)
@@ -531,7 +531,7 @@ local function drawPlayerUpgrades()
                         end
                     end
                     -- Always pay first, then increase the price
-                    Player.pay(math.ceil(Player.bonusPrice[bonusName])) -- Deduct the cost from the player's money
+                    Player.pay(math.ceil(Player.bonusPrice[bonusName])) -- Deduct the cost from the Player's money
                     Player.bonusUpgrades[bonusName]() -- Call the upgrade function
                     Player.bonusPrice[bonusName] = Player.bonusPrice[bonusName] * (usingMoneySystem and 10 or 2) -- Increase the price for the next upgrade
                     print(bonusName .. " upgraded to " .. Player.bonuses[bonusName])
@@ -917,7 +917,7 @@ local function drawBallStats()
                                 ballType.stats[statName] = ballType.stats[statName] + 1 -- Example action
                                 print( "stat ".. statName .. " increased to " .. ballType.stats[statName])
                             end
-                            Player.pay(math.ceil(ballType.price)) -- Deduct the cost from the player's money
+                            Player.pay(math.ceil(ballType.price)) -- Deduct the cost from the Player's money
                             if usingMoneySystem then
                                 ballType.price = ballType.price * 2 -- Increase the price of the ball
                             else
@@ -991,7 +991,7 @@ local function drawBallStats()
                     -- does nothing
                 else
                     playSoundEffect(upgradeSFX, 0.5, 0.95, false)
-                    Player.pay(math.ceil(upgradePrice)) -- Deduct the cost from the player's money
+                    Player.pay(math.ceil(upgradePrice)) -- Deduct the cost from the Player's money
                     local totalStats = {}
                     for statName, statValue in pairs(ballType.stats) do
                         totalStats[statName] = statValue
@@ -1107,7 +1107,7 @@ function drawLevelUpShop()
     -- print("level up shop opacity: " .. levelUpShopAlpha)
     local opacity = levelUpShopAlpha or 1
     --print("level up shop opacity: " .. opacity)
-    local topText = levelUpShopType == "playerUpgrade" and "Choose a new Player Upgrade" or "Choose a new Weapon"
+    local topText = levelUpShopType == "PlayerUpgrade" and "Choose a new Player Upgrade" or "Choose a new Weapon"
     setFont(60)
     love.graphics.print(topText, screenWidth/2 - getTextSize(topText)/2, buttonY - 175)
 
@@ -1447,7 +1447,7 @@ function deletePlayerItemById(itemId)
             return
         end
     end
-    error("Warning: Tried to delete player item with id " .. tostring(itemId) .. " but it was not found.")
+    error("Warning: Tried to delete Player item with id " .. tostring(itemId) .. " but it was not found.")
 end
 
 hoveringPlayerItem = nil
@@ -1550,7 +1550,7 @@ local function drawPlayerItems()
             setFont(18)
             drawTextCenteredWithScale(item.name or "Unknown", itemX + 12, itemY + 15, 1, (uiBigWindowImg:getWidth() - 20)/2, {1,1,1,1})
 
-            local id = "fancyText, player.items" .. index .. item.name:gsub("%s+", "_") .. (item.id or "")
+            local id = "fancyText, Player.items" .. index .. item.name:gsub("%s+", "_") .. (item.id or "")
             if fancyTexts[id] then
                 fancyTexts[id]:draw()
             else
@@ -1562,7 +1562,7 @@ local function drawPlayerItems()
             end
 
             -- draw sell text
-            local id = "fancyText, player.items, sell button" .. index .. item.name:gsub("%s+", "_") .. (item.id or "")
+            local id = "fancyText, Player.items, sell button" .. index .. item.name:gsub("%s+", "_") .. (item.id or "")
             local sellValue = item.rarity == "common" and 4 or item.rarity == "uncommon" and 8 or item.rarity == "rare" and 12 or item.rarity == "legendary" and 16 or 0
             if fancyTexts[id] then
                 fancyTexts[id]:draw()
@@ -1582,12 +1582,12 @@ local function drawPlayerItems()
     
 end
 
-playerMoneyBoost = {alpha = 0}
+PlayerMoneyBoost = {alpha = 0}
 local function drawPlayerMoney()
     -- render money
     local opacity = 1
     if not Player.levelingUp then
-        opacity = playerMoneyBoost.alpha
+        opacity = PlayerMoneyBoost.alpha
     end
     local x, y, w, h = 965, 930, 210, 30
     local fontSize = 80 * visualMoneyValues.scale
@@ -1626,7 +1626,7 @@ end
 function upgradesUI.draw()
 
     drawCooldownVFXs()
-    drawPlayerStats() -- Draw the player stats table
+    drawPlayerStats() -- Draw the Player stats table
     drawPlayerMoney()
     if not (currentlyOnFirstLevelUp and Player.getCurrentTutorialStep() == 4) then
         drawBallStats() -- Draw the ball stats table

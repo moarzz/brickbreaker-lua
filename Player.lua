@@ -10,7 +10,8 @@ function loadGameData()
     local data = {
         highScore = 0,
         gold = 0,
-        startingMoney = 1,
+        startingMoney = 0,
+        startingMoneyUpgradePrice = 25,
         permanentUpgrades = {},
         paddleCores = {["Amount Core"] = true},  -- Initialize paddleCores
         permanentUpgradePrices = {
@@ -44,6 +45,7 @@ function loadGameData()
                 data.highScore = fileData.highScore or 0
                 data.gold = fileData.gold or 0
                 data.startingMoney = fileData.startingMoney or 1
+                data.startingMoneyUpgradePrice = fileData.startingMoneyUpgradePrice or 25
                 data.permanentUpgrades = fileData.permanentUpgrades or {}
                 data.paddleCores = fileData.paddleCores or { ["Amount Core"] = true }
                 data.permanentUpgradePrices = fileData.permanentUpgradePrices or data.permanentUpgradePrices
@@ -62,6 +64,7 @@ function loadGameData()
     Player.fastestTime = data.fastestTime
     Player.gold = data.gold
     Player.startingMoney = data.startingMoney
+    Player.startingMoneyUpgradePrice = data.startingMoneyUpgradePrice
     Player.permanentUpgrades = data.permanentUpgrades
     Player.permanentUpgradePrices = data.permanentUpgradePrices
     Player.startingItems = data.startingItems
@@ -100,6 +103,7 @@ Player = {
     hiddenMoney = 0;
     realMoney = 0;
     startingMoney = 0,
+    startingMoneyUpgradePrice = 25,
     gold = 0,
     rerolls = 0,
     score = 0,
@@ -139,14 +143,14 @@ Player = {
 
 function Player.initialize() 
     setmetatable(Player.permanentUpgrades, {
-    __index = defaultPermanentUpgrades  -- if key not found in player, look in defaults
+    __index = defaultPermanentUpgrades  -- if key not found in Player, look in defaults
     })
 end
 
 -- Save game data to file        
 function saveGameData()
 
-    -- code to check if the player has the basic core, game would break otherwise (just for first time open and safety)
+    -- code to check if the Player has the basic core, game would break otherwise (just for first time open and safety)
     local hasBasicCore = false
     if Player.paddleCores then
         for core, _ in pairs(Player.paddleCores) do
@@ -167,6 +171,7 @@ function saveGameData()
         fastestTime = Player.fastestTime,
         gold = Player.gold,
         startingMoney = Player.startingMoney,
+        startingMoneyUpgradePrice = Player.startingMoneyUpgradePrice or 25,
         permanentUpgrades = {
             -- paddleSize = Player.permanentUpgrades.paddleSize or 0,
             -- paddleSpeed = Player.permanentUpgrades.paddleSpeed or 0,
@@ -204,12 +209,13 @@ function saveGameData()
     love.filesystem.write(saveFilePath, encoded)
 end
 
--- This file contains the player class, it manages his level, his abilities and his stats
+-- This file contains the Player class, it manages his level, his abilities and his stats
 
 local gameData = loadGameData()
 function Player.loadJsonValues() -- wtf is this bootleg function?
     firstRunCompleted = gameData.firstRunCompleted or false
     Player.startingMoney = gameData.startingMoney or 0
+    Player.startingMoneyUpgradePrice = gameData.startingMoneyUpgradePrice or 25
     Player.hiddenMoney = gameData.startingMoney or 0
     Player.gold = gameData.gold or 0
     Player.highScore = gameData.highScore or 0
@@ -310,7 +316,7 @@ Player.upgradePaddle = {
 Player.availableCores = {
     {
         name = "Amount Core",
-        description = "+1 amount for every 5 player level",
+        description = "+1 amount for every 5 Player level",
         price = 0,
         startingItem = "Ball",
     },
@@ -359,7 +365,7 @@ Player.availableCores = {
 }
 
 Player.coreDescriptions = {
-    ["Amount Core"] = "gain +1 amount for every 5 player level",
+    ["Amount Core"] = "gain +1 amount for every 5 Player level",
     ["Spray and Pray Core"] = "gain +1 fireRate for every 5 Player level",
     ["Fast Study Core"] = "gain +3% experience gain per Player Level",
     ["Hacker Core"] = "All Weapons start with an upgradePrice of 0",
@@ -391,6 +397,7 @@ function Player.reset()
         saveGameData()  -- Save the new high score
     end
     Player.startingMoney = gameData.startingMoney or 0
+    Player.startingMoneyUpgradePrice = gameData.startingMoneyUpgradePrice or 25
     Player.score = 0
     Player.hiddenMoney = gameData.startingMoney or 0;
     Player.gold = gameData.gold or 0
@@ -457,7 +464,7 @@ function Player.levelUp()
     resetRerollPrice()
     Player.level = Player.level + 1
 
-    -- should player unlock new weapon?
+    -- should Player unlock new weapon?
     local weaponAmount = tableLength(Balls.getUnlockedBallTypes())
     if weaponAmount < math.ceil((Player.level + 1) / 4) and weaponAmount < 6 then
         setLevelUpShop(true) -- Set the level up shop with ball unlockedBallTypes
@@ -494,7 +501,7 @@ function Player.levelUp()
     if Player.currentCore == "Farm Core" then
         FarmCoreUpgrade()
         if hasItem("Birthday Hat") then
-            FarmCoreUpgrade() -- Trigger a second time if the player has the Birthday Hat
+            FarmCoreUpgrade() -- Trigger a second time if the Player has the Birthday Hat
         end
     elseif Player.currentCore == "Size Core" then
         paddle.width = paddle.width + 20
@@ -586,7 +593,7 @@ function Player.die()
     setMusicEffect("dead")
     inGame = false
     -- Check and update high score
-    print("player die")
+    print("Player die")
    --  Balls.clear()
     if Player.score > Player.highScore then
         Player.highScore = Player.score
@@ -645,7 +652,7 @@ function Player.shiftMoneyValue(amnt)
     Player.hiddenMoney = Player.hiddenMoney + amnt;
 
     if Player.hiddenMoney < 0 then
-        print("player spent more money then they had");
+        print("Player spent more money then they had");
     end
 end
 
