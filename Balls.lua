@@ -445,11 +445,23 @@ end
 
 -- reduce trail length to make draw cheaper (was 35)
 local ballTrailLength = 8   -- Length of the ball trail
+local BULLET_TRAIL_MAX = 15  -- Maximum trail points for bullets (ring buffer size)
 local bullets = {}
 local deadBullets = {}
 local laserBeamBrick
 local laserBricksInSight = {}
 local laserBeamY = 0
+
+-- Helper function to initialize bullet trail as a ring buffer
+local function initializeBulletTrail(bullet)
+    if not bullet.trail then
+        bullet.trail = {}
+        for i = 1, BULLET_TRAIL_MAX do
+            bullet.trail[i] = {x = 0, y = 0}
+        end
+    end
+    bullet._trailCount = 0  -- number of valid points in the buffer
+end
 
 local brickDeathSFXCd = 0
 -- Update damage calculation in dealDamage function score
@@ -920,7 +932,7 @@ local function shoot(gunName, ball)
             if Player.currentCore == "Phantom Core" then
                 bulletDamage = math.max(math.floor(bulletDamage / 2), 1)
             end
-            local bulletSpeed = gun.bulletSpeed or 1000
+            local bulletSpeed = gun.bulletSpeed or 1750
             local angle = math.random(0, 360) * math.pi / 180
             local speedXref = math.cos(angle) * bulletSpeed
             local speedYref = math.sin(angle) * bulletSpeed
@@ -1011,7 +1023,7 @@ local function shoot(gunName, ball)
             if Player.currentCore == "Phantom Core" then
                 bulletDamage = math.max(math.floor(bulletDamage * 0.5), 1) -- Phantom Core cuts the damage in 3
             end
-            local bulletSpeed = gun.bulletSpeed or 1000
+            local bulletSpeed = gun.bulletSpeed or 1750
 
             -- decrease ammo
             if gun.name ~= "Ball Gun" and gun.name ~= "Gun Ball Gun" then
@@ -1401,7 +1413,7 @@ local function turretShoot(turret, typeMod)
             playSoundEffect(gunShootSFX, 1, 0.9, false, true)
             shootSFXCooldown = 0.03
         end
-        local bulletSpeed = turretType.bulletSpeed or 2000
+        local bulletSpeed = turretType.bulletSpeed or 3000
         local speed = {x =math.cos((turret.angle + turret.angleOffset) - math.pi/2) * bulletSpeed, y = math.sin((turret.angle + turret.angleOffset) - math.pi/2) * bulletSpeed}
         local normalizedSpeedX, normalizedSpeedY = normalizeVector(speed.x, speed.y)
         local bulletDamage = getStat("Gun Turrets", "damage")
@@ -2442,7 +2454,7 @@ local function ballListInit()
             ballAmount = 1,
             description = "A ball that shoots bullets in a random direction like a gun on bounce.",
             color = {0.8, 0.4, 0.1, 1}, -- Orange color
-            bulletSpeed = 1000,
+            bulletSpeed = 1750,
             currentAmmo = 1,
             onBounce = function(ball)
                 shoot("Gun Ball", ball)
@@ -2464,7 +2476,7 @@ local function ballListInit()
             ballAmount = 1,
             description = "Has the effects of every other ball (except phantom ball).",
             color = {0.5, 0.5, 0.5, 1}, -- Orange color
-            bulletSpeed = 1000,
+            bulletSpeed = 1750,
             currentAmmo = 1,
             onBounce = function(ball)
                 shoot("Incrediball", ball)
@@ -2493,7 +2505,7 @@ local function ballListInit()
             end,
             noAmount = true,
             currentAmmo = 7 + ((Player.permanentUpgrades.ammo or 0)) * 7,
-            bulletSpeed = 1000,
+            bulletSpeed = 1750 ,
             canBuy = function() return false end,
 
             stats = {
@@ -2519,7 +2531,7 @@ local function ballListInit()
             end,
             noAmount = true,
             currentAmmo = 2 + ((Player.permanentUpgrades.ammo or 0)) * 2,
-            bulletSpeed = 1500,
+            bulletSpeed = 2250,
 
             stats = {
                 damage = 1,
@@ -2546,7 +2558,7 @@ local function ballListInit()
             end,
             noAmount = true,
             currentAmmo = 3 + ((Player.permanentUpgrades.ammo or 0)) * 3,
-            bulletSpeed = 1250,
+            bulletSpeed = 2000,
             stats = {
                 damage = 1,
                 amount = 1,
@@ -2570,7 +2582,7 @@ local function ballListInit()
             end,
             noAmount = true,
             currentAmmo = 100 + ((Player.permanentUpgrades.ammo or 0)) * 15,
-            bulletSpeed = 1000,
+            bulletSpeed = 1750,
             stats = {
                 damage = 1,
                 cooldown = 15,
@@ -2594,7 +2606,7 @@ local function ballListInit()
             end,
             noAmount = true,
             currentAmmo = 2 + ((Player.permanentUpgrades.ammo or 0)) * 2,
-            bulletSpeed = 1500,
+            bulletSpeed = 2250,
             stats = {
                 damage = 2,
                 cooldown = 8,
@@ -2738,7 +2750,7 @@ local function ballListInit()
             rarity = "uncommon",
             startingPrice = 50,
             description = "Generates turrets that shoots bullets forward. \n(max 20)",
-            bulletSpeed = 1500,
+            bulletSpeed = 2250,
             color = {0.5, 0.5, 0.5, 1}, -- Grey color for Turret Generator
             currentAmmo = 9 + ((Player.permanentUpgrades.ammo or 0)) * 3,
             onBuy = function() 
@@ -2764,7 +2776,7 @@ local function ballListInit()
             rarity = "uncommon",
             startingPrice = 50,
             description = "Generates turrets that shoot laser beams forward. \n(max 20)",
-            bulletSpeed = 1500,
+            bulletSpeed = 2250,
             color = {0.5, 0.5, 0.5, 1}, -- Grey color for Turret Generator
             currentAmmo = 6 + ((Player.permanentUpgrades.ammo or 0)) * 2,
             onBuy = function() 
@@ -2790,7 +2802,7 @@ local function ballListInit()
             rarity = "uncommon",
             startingPrice = 50,
             description = "Generates turrets that shoot explosive shells forward. \n(max 20)",
-            bulletSpeed = 1500,
+            bulletSpeed = 2250,
             color = {0.5, 0.5, 0.5, 1}, -- Grey color for Turret Generator
             currentAmmo = 3 + ((Player.permanentUpgrades.ammo or 0)) * 1,
             onBuy = function() 
@@ -3163,7 +3175,7 @@ function Balls.addBall(ballName, singleBall)
                 price = upgradePrice, -- Set the initial price of ball upgrades
                 ballAmount = ballTemplate.ballAmount or 0,
                 currentAmmo = (ballTemplate.currentAmmo or 0), -- Copy specific values from the template
-                bulletSpeed = ballTemplate.bulletSpeed or 1000, -- Set the bullet speed if it exists
+                bulletSpeed = ballTemplate.bulletSpeed or 1750, -- Set the bullet speed if it exists
                 attractionStrength = ballTemplate.attractionStrength or nil, -- Set the attraction strength if it exists
                 currentAngle = ballTemplate.currentAngle or nil,
                 orbitRadius = ballTemplate.orbitRadius or nil,
@@ -3558,7 +3570,7 @@ local function paddleCollisionCheck(ball, paddle) -- trail
     
     -- Paddle Defense System, etc...
     if hasItem("Paddle Defense System") then
-        local bulletSpeed = 1500
+        local bulletSpeed = 2250
         local speedX = math.random(-500,500)
         local speed = {x = speedX, y = -math.sqrt(bulletSpeed*bulletSpeed - speedX*speedX)}
         local critChance = hasItem("Four Leafed Clover") and 50 or 25
@@ -4320,19 +4332,12 @@ local function updateDeadBullets(dt)
         local elapsed = love.timer.getTime() - bullet.deathTime
         local fade = 1 - math.min(elapsed, 1)
         bullet.trailFade = fade
-        if bullet.trail and #bullet.trail > 1 then
-            local moveFrac = dt / 0.5
-            for j = 1, #bullet.trail - 1 do
-                local p = bullet.trail[j]
-                local nextP = bullet.trail[j+1]
-                p.x = p.x + (nextP.x - p.x) * moveFrac
-                p.y = p.y + (nextP.y - p.y) * moveFrac
-            end
-            -- Remove only one point per frame for smoother fade
-            table.remove(bullet.trail, 1)
+        -- Fade trail by reducing count instead of removing entries
+        if bullet.trail and bullet._trailCount and bullet._trailCount > 1 then
+            bullet._trailCount = bullet._trailCount - 1
         end
         -- Remove the bullet when the trail is gone or after 1s
-        if fade <= 0 or not bullet.trail or #bullet.trail < 2 then
+        if fade <= 0 or not bullet.trail or (bullet._trailCount and bullet._trailCount < 2) then
             table.remove(deadBullets, i)
         else
             bullet.x = bullet.x + bullet.speedX * dt
@@ -5204,19 +5209,24 @@ function Balls.update(dt, paddle, bricks)
         local moveY = bullet.y - lastY
         -- Number of collision checks along the path (more for faster bullets)
         local steps = math.max(1, math.ceil(math.sqrt(moveX * moveX + moveY * moveY) / bullet.radius))
-        -- Bullet trail logic (longer, smoother)
-        bullet.trail = bullet.trail or {}
-        -- Insert at the end for natural order (oldest at 1, newest at #trail)
-        -- Add interpolated point between last and current if possible
-        if #bullet.trail > 0 then
-            local last = bullet.trail[#bullet.trail]
-            local mid = {x = (last.x + bullet.x) * 0.5, y = (last.y + bullet.y) * 0.5}
-            table.insert(bullet.trail, mid)
+        -- Bullet trail logic using ring buffer (no allocations)
+        if not bullet.trail then
+            initializeBulletTrail(bullet)
         end
-        table.insert(bullet.trail, {x = bullet.x, y = bullet.y})
-        local maxTrail = 15
-        while #bullet.trail > maxTrail do
-            table.remove(bullet.trail, 1)
+        
+        -- Shift all points backwards (O(n) but with pre-allocated buffer)
+        for i = BULLET_TRAIL_MAX, 2, -1 do
+            bullet.trail[i].x = bullet.trail[i-1].x
+            bullet.trail[i].y = bullet.trail[i-1].y
+        end
+        
+        -- Add new point at position 1
+        bullet.trail[1].x = bullet.x
+        bullet.trail[1].y = bullet.y
+        
+        -- Increase count until we reach max capacity
+        if bullet._trailCount < BULLET_TRAIL_MAX then
+            bullet._trailCount = bullet._trailCount + 1
         end
         -- multishot logic
         if Player.perks.multishot or hasItem("Split Shooter") then
@@ -5240,12 +5250,13 @@ function Balls.update(dt, paddle, bricks)
                         -- Deep copy stats
                         newBullet.stats = {}
                         for k,v in pairs(bullet.stats or {}) do newBullet.stats[k]=v end
-                        -- Deep copy trail so each split bullet has its own trail
+                        -- Deep copy trail so each split bullet has its own ring buffer
                         if bullet.trail then
                             newBullet.trail = {}
-                            for i, pt in ipairs(bullet.trail) do
-                                newBullet.trail[i] = {x = pt.x, y = pt.y}
+                            for i = 1, BULLET_TRAIL_MAX do
+                                newBullet.trail[i] = {x = bullet.trail[i].x, y = bullet.trail[i].y}
                             end
+                            newBullet._trailCount = bullet._trailCount
                         end
                         -- Ensure golden property is preserved for Golden Gun
                         if bullet.golden or bullet.name == "Golden Gun" then
@@ -5370,6 +5381,13 @@ function Balls.update(dt, paddle, bricks)
             fireAnims[id] = nil
         end
     end
+    
+    -- Initialize trails for new bullets that don't have them yet
+    for _, bullet in ipairs(bullets) do
+        if not bullet.trail then
+            initializeBulletTrail(bullet)
+        end
+    end
     -- Failsafe: Prevent Flamethrower VFX update during shop/levelingUp phase
     local flamethrower = unlockedBallTypes["Flamethrower"]
     if flamethrower and flamethrower.vfx then
@@ -5486,14 +5504,14 @@ local function drawBullets()
     -- Draw bullet trails (active bullets)
     for _, bullet in ipairs(bullets) do
         local scale = 1
-        if bullet.trail then
-            local trailLen = #bullet.trail
+        if bullet.trail and bullet._trailCount and bullet._trailCount > 0 then
+            local trailLen = bullet._trailCount
             local step = 2
             for i = trailLen, 2, -step do
                 local p1 = bullet.trail[i]
                 local p2 = bullet.trail[math.max(i-step, 1)]
                 if p1 and p2 then
-                    local t = (i-1) / trailLen
+                    local t = (trailLen - i) / (trailLen - 1)
                     local radius = ((bullet.radius or 5) * t * 0.75 + 0.5) * scale
                     local alpha = 1
                     if bullet.golden or bullet.name == "Golden Gun" then
@@ -5525,8 +5543,8 @@ local function drawBullets()
     -- Draw fading trails for dead bullets
     for _, bullet in ipairs(deadBullets) do
         local fade = bullet.trailFade or 1
-        if bullet.trail then
-            local trailLen = #bullet.trail
+        if bullet.trail and bullet._trailCount and bullet._trailCount > 0 then
+            local trailLen = bullet._trailCount
             for i = trailLen, 2, -1 do
                 local p1 = bullet.trail[i]
                 local p2 = bullet.trail[i-1]
@@ -5535,7 +5553,7 @@ local function drawBullets()
                 local mult = 1.0
                 p2 = {x = p2.x - p3.x * mult, y = p2.y - p3.y * mult}
                 if p1 and p2 then
-                    local t = (i-1) / trailLen
+                    local t = (trailLen - i) / (trailLen - 1)
                     local radius = (bullet.radius or 5) * t
                     local alpha = 1 * fade
                     if bullet.golden or bullet.name == "Golden Gun" then

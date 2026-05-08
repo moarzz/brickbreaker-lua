@@ -7,17 +7,19 @@ Trail.shader = love.graphics.newShader("trail", "Shaders/trail.frag");
 function Trail.new(trailRadius, trailLen)
     local instance = setmetatable({}, Trail);
 
-    instance.prevXCoords = {}; -- list of previous positions (newset to oldest)
-    instance.prevYCoords = {}; -- list of previous positions (newset to oldest)
-    -- instance.prevDTs     = {}; -- list of previous dts (newest to oldest)
+    -- Ring buffer arrays (fixed size, no allocations after init)
+    instance.xBuffer = {}; -- ring buffer of x coordinates
+    instance.yBuffer = {}; -- ring buffer of y coordinates
+    for i = 1, trailLen do
+        instance.xBuffer[i] = 0;
+        instance.yBuffer[i] = 0;
+    end
 
-    instance.trailLen = trailLen; -- amount of previous positions to remember
+    instance.trailLen = trailLen; -- maximum capacity
+    instance.count = 0; -- number of valid points currently in buffer
+    instance.head = 1; -- write position (1-indexed for Lua)
     instance.trailRadius = trailRadius; -- radius of the trail
-    -- instance.curLen = 0;
 
-    -- instance.spriteBatch = love.graphics.newSpriteBatch(Trail.circle, trailLen);
-
-    -- instance.verticeCount = 60; -- number of 1d vertices (mesh uses 2 2d vertices per 1d vertex)
     instance.mesh = love.graphics.newMesh(instance.trailLen * 2 + 1, "strip");
 
     instance.minX = nil;
@@ -33,56 +35,77 @@ function Trail:getTrailData()
 end
 
 function Trail:addPosition(x, y)
-    table.insert(self.prevXCoords, 1, x);
-    table.insert(self.prevYCoords, 1, y);
+    -- Write to current head position
+    self.xBuffer[self.head] = x;
+    self.yBuffer[self.head] = y;
 
-    while #self.prevXCoords > self.trailLen do
-        table.remove(self.prevXCoords, self.trailLen + 1);
-        table.remove(self.prevYCoords, self.trailLen + 1);
+    -- Advance head with wrap-around
+    self.head = self.head + 1;
+    if self.head > self.trailLen then
+        self.head = 1;
     end
 
+    -- Increase count until we reach max capacity
+    if self.count < self.trailLen then
+        self.count = self.count + 1;
+    end
+
+    -- Update bounds
     self.minX = x;
     self.minY = y;
     self.maxX = x;
     self.maxY = y;
 
-    for i = 2, #self.prevXCoords do
-        self.minX = math.min(self.minX, self.prevXCoords[i]);
-        self.minY = math.min(self.minY, self.prevYCoords[i]);
-        self.maxX = math.max(self.maxX, self.prevXCoords[i]);
-        self.maxY = math.max(self.maxY, self.prevYCoords[i]);
+    for i = 1, self.count do
+        self.minX = math.min(self.minX, self.xBuffer[i]);
+        self.minY = math.min(self.minY, self.yBuffer[i]);
+        self.maxX = math.max(self.maxX, self.xBuffer[i]);
+        self.maxY = math.max(self.maxY, self.yBuffer[i]);
     end
-
-    --self:formMesh();
 end
 
 function Trail:kickData()
-    table.remove(self.prevXCoords, #self.prevXCoords);
-    table.remove(self.prevYCoords, #self.prevYCoords);
+    -- Decrement the count of valid points in the buffer
+    if self.count > 0 then
+        self.count = self.count - 1;
+    end
 
-    return #self.prevXCoords == 0;
+    return self.count == 0;
 end
 
 function Trail:draw()
-    -- love.graphics.setColor(1,1,1); -- white
-
-    if #self.prevXCoords <= 0 then
+    if self.count <= 0 then
         return;
     end
 
-    self.shader:send("points_x", unpack(self.prevXCoords));
-    self.shader:send("points_y", unpack(self.prevYCoords));
+    -- Create ordered arrays for shader (newest to oldest)
+    local orderedX = {};
+    local orderedY = {};
+
+    -- Iterate backwards from the most recent point
+    local pos = self.head - 1;
+    if pos < 1 then
+        pos = self.trailLen;
+    end
+
+    for i = 1, self.count do
+        orderedX[i] = self.xBuffer[pos];
+        orderedY[i] = self.yBuffer[pos];
+
+        pos = pos - 1;
+        if pos < 1 then
+            pos = self.trailLen;
+        end
+    end
+
+    self.shader:send("points_x", unpack(orderedX));
+    self.shader:send("points_y", unpack(orderedY));
     self.shader:send("trailRadius", self.trailRadius);
-    self.shader:send("usedPoints", #self.prevXCoords);
+    self.shader:send("usedPoints", self.count);
 
     love.graphics.setShader(self.shader);
-
     love.graphics.rectangle("fill", self.minX - self.trailRadius, self.minY - self.trailRadius, (self.maxX - self.minX) + self.trailRadius * 2, (self.maxY - self.minY) + self.trailRadius * 2);
-    -- love.graphics.draw(self.mesh);
-
     love.graphics.setShader();
-
-    -- love.graphics.circle("fill", love.mouse.getX(), love.mouse.getY(), 10);
 end
 
 return Trail;
