@@ -22,6 +22,33 @@ function addLists(list1, list2)
     return result
 end
 
+function drawGold(price, centerX, centerY, buyable, angle)
+    local buyable = buyable or Player.gold >= price
+    local angle = angle or math.rad(5) -- Default angle if not provided
+    local fontSize = fontSize or 35
+    local text = price
+    setFont(fontSize)
+    local moneyOffsetX = -math.cos(angle) * getTextSize(formatNumber(text))/2
+    local goldOffsetY = math.sin(angle) * getTextSize(formatNumber(text))
+    
+    -- Draw shadow text
+
+    love.graphics.setColor(0, 0, 0, 1)
+    love.graphics.print(formatNumber(text), centerX + 4 + moneyOffsetX, centerY + 4, angle)
+    
+    -- Draw main text in money green
+    local moneyColor = buyable and {1, 200/255, 0, 1} or {164/255, 14/255, 14/255,1} -- Green for buyable, red for not buyable
+    love.graphics.setColor(moneyColor)
+    love.graphics.print(formatNumber(text), centerX + moneyOffsetX, centerY, angle)
+
+    love.graphics.setColor(1,1,1,1)
+    local sizeMult = 0.12
+    love.graphics.draw(goldImg, centerX + moneyOffsetX + getTextSize(formatNumber(text)) - 3, centerY - goldImg:getHeight() * sizeMult/2 + 8 + goldOffsetY * 1.2, 0, sizeMult, sizeMult)
+    
+    -- Reset color
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
 function openBrowser(url)
     local opener
     if package.config:sub(1,1) == "\\" then

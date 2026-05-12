@@ -971,6 +971,7 @@ end
 
 local backgroundOpacity = {value = 0}
 local loadTime
+local currentSelectedCoreID = 1
 function love.load()
     print(love.graphics.getRendererInfo())
     print(love.graphics.getCanvasFormats())
@@ -1053,6 +1054,7 @@ function love.load()
 
     loadTime = love.timer.getTime()
     
+    Ascensions.reassesAscension()
 end
 
 function getHighestBrickY(lowestInstead)
@@ -1602,8 +1604,10 @@ local menuFont
 local buttonWidth = 400
 local buttonHeight = 75
 local buttonSpacing = 100
-local currentSelectedCoreID = 1
 local currentStartingItemID = 1
+function getSelectedCore()
+    return Player.availableCores[currentSelectedCoreID].name
+end
 function getCoreStartingItem(coreName)
     for _, availableCore in ipairs(Player.availableCores) do
         if availableCore.name == coreName then
@@ -1680,6 +1684,7 @@ function drawMenu()
         end
         core = paddleCores[currentSelectedCoreID]
         currentSelectedCore = core
+        Ascensions.reassesAscension()
     end
     if btn2Before.hit then
         playSoundEffect(selectSFX, 1, 0.8)
@@ -1689,6 +1694,7 @@ function drawMenu()
         end
         core = paddleCores[currentSelectedCoreID]
         currentSelectedCore = core.name
+        Ascensions.reassesAscension()
     end
 
     local btnY = btnY + buttonHeight + 80
@@ -1762,6 +1768,11 @@ function drawMenu()
     love.graphics.setColor(1,1,1,1)
     local ascensionBtnBefore = suit.Button("", {id = "back_difficulty", color = invisButtonColor, valign = "center"}, arrowX, arrowY, 100, 100)
     if ascensionBtnBefore.hit then
+        if Ascensions.getCurrentAscension() > 0 then
+            playSoundEffect(selectSFX, 1, 0.8)
+        else
+            playSoundEffect(unavailableSFX, 1, 0.8)
+        end
         Ascensions.reduceAscension()
     end
     -- next ascension button
@@ -1770,8 +1781,13 @@ function drawMenu()
     love.graphics.draw(rightArrowImg, arrowX, arrowY, 0, 100 / rightArrowImg:getWidth(), 100 / rightArrowImg:getHeight())
     love.graphics.setColor(1,1,1,1)
     local ascensionBtnAfter = suit.Button("", {id = "next_difficulty", color = invisButtonColor}, arrowX, arrowY, 100, 100)
-    if ascensionBtnAfter.hit then
-        Ascensions.increaseAscension()
+    if ascensionBtnAfter.hit and Ascensions.getCurrentAscension() < Player.coreHighestAscension[currentSelectedCore] then
+        if Ascensions.getCurrentAscension() < Player.coreHighestAscension[currentSelectedCore] then
+            Ascensions.increaseAscension()
+            playSoundEffect(selectSFX, 1, 0.8)
+        else
+            playSoundEffect(unavailableSFX, 1, 0.8)
+        end
     end
 
     -- challenge runs
@@ -2343,6 +2359,12 @@ function drawVictoryScreen()
     love.graphics.setColor(1, 1, 1, 1) -- Reset color to white
     love.graphics.printf("Press R to restart or ESC to quit", 0, centerY + 2000, screenWidth, "center")
 
+    if newAscensionUnlocked then
+        setFont(80)
+        love.graphics.setColor(1, 0.5, 1, 1) -- Pink for new ascension unlocked
+        love.graphics.printf("New Ascension Unlocked! Try it for a bigger challenge!", 0, 125, screenWidth, "center")
+    end
+
     -- Draw Main Menu, Keep Going, and Upgrades buttons at the bottom using SUIT
     local buttonW, buttonH = 350, 125
     local spacing = 40  -- Reduced spacing to fit three buttons
@@ -2367,6 +2389,7 @@ function drawVictoryScreen()
         resetGame()
         currentGameState = GameState.MENU
         love.mouse.setVisible(true)
+        Ascensions.reassesAscension()
     end
     -- Upgrades button
     if suit.Button("Shop", {id = "victory_upgrades"}, startX + (buttonW + spacing) * 2, y, buttonW, buttonH).hit then

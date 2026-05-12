@@ -1043,6 +1043,11 @@ local function drawBallStats()
                             currentlyOnFirstLevelUp = false
                         end
                     end
+                    if hasItem("Money Back") then
+                        local moneyBack = getItem("Money Back")
+                        local moneyBackCount = itemCount("Money Back") or 1
+                        Player.changeMoney(moneyBackCount, moneyBack.id)
+                    end
                 end
             end
             

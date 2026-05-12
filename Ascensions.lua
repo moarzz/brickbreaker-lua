@@ -59,6 +59,13 @@ function Ascensions.increaseAscension()
     end
 end
 
+function Ascensions.reassesAscension()
+    local currentCore = getSelectedCore()
+    local highestAscensionForCore = Player.coreHighestAscension[currentCore] or 0
+    currentAscension = highestAscensionForCore
+    print("Reassessed Ascension: " .. currentAscension .. " for core: " .. currentCore)
+end
+
 function Ascensions.reduceAscension()
     if currentAscension > 0 then
         currentAscension = currentAscension - 1

@@ -214,17 +214,13 @@ local function startingMoneyDraw()
         y = y + 50
         local price = Player.startingMoneyUpgradePrice or 25
         local x = menuX
-        local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(price))/2
-        love.graphics.setColor(0,0,0,1)
-        love.graphics.print(formatNumber(price) .. "$", x + 104 + moneyOffsetX, y + 4, math.rad(5))
-        local moneyColor = Player.gold >= price and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
-        love.graphics.setColor(moneyColor)
-        love.graphics.print(formatNumber(price) .. "$", x + 100 + moneyOffsetX, y, math.rad(5))
-        love.graphics.setColor(1,1,1,1)
-        if upgradeStartingMoneyButton.hit then
+        drawGold(price, x + 100, y)
+        if upgradeStartingMoneyButton.hit and Player.gold >= price then
+            Player.gold = Player.gold - price
+            playSoundEffect(upgradeSFX, 0.6, 1, false)
             print("values before increase / starting money : " .. Player.startingMoney .. " / upgrade price : " .. Player.startingMoneyUpgradePrice)
             Player.startingMoney = startingMoney + 1
-            Player.startingMoneyUpgradePrice = Player.startingMoneyUpgradePrice * 5
+            Player.startingMoneyUpgradePrice = Player.startingMoneyUpgradePrice * 4
             print("values after increase / starting money : " .. Player.startingMoney .. " / upgrade price : " .. Player.startingMoneyUpgradePrice)
             saveGameData()
         end
@@ -260,9 +256,7 @@ function permanentUpgrades.draw()
     love.graphics.print(formatNumber(Player.gold) .. "$", screenWidth/2 + moneyOffsetX, y+30, math.rad(1.5))]]
     local moneyColor = {14/255, 202/255, 92/255,1}
     love.graphics.setColor(1,200/255,0)
-    love.graphics.print(formatNumber(Player.gold), screenWidth/2 + moneyOffsetX, y + 26)
-    love.graphics.setColor(1,1,1,1)
-    love.graphics.draw(goldImg, screenWidth/2 + moneyOffsetX + getTextSize(formatNumber(Player.gold)), y - 5, 0, 0.15, 0.15)
+    drawGold(Player.gold, screenWidth/2, y + 30, true, 0)
 
     -- Draw rest of UI (title and upgrades)
     y = y + 90  -- Add spacing after money/score display
@@ -284,13 +278,7 @@ function permanentUpgrades.draw()
         if (Player.permanentUpgrades[upgradeName] or 0) < 1 and (not (upgradeName == "cooldown" and (Player.permanentUpgrades[upgradeName] or 0) <= -1)) then
             setFont(45)
             price = Player.permanentUpgradePrices[upgradeName] or 100  -- Default price if not set
-            local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(price))/2
-            love.graphics.setColor(0,0,0,1)
-            love.graphics.print(formatNumber(price) .. "$", x + 104 + moneyOffsetX, y + 4, math.rad(5))
-            local moneyColor = Player.gold >= price and {14/255, 202/255, 92/255,1} or {164/255, 14/255, 14/255,1}
-            love.graphics.setColor(moneyColor)
-            love.graphics.print(formatNumber(price) .. "$", x + 100 + moneyOffsetX, y, math.rad(5))
-            love.graphics.setColor(1,1,1,1)
+            drawGold(price, x + 100, y)
         else
             setFont(25)
             local text = "Max Level"

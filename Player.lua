@@ -44,7 +44,7 @@ function loadGameData()
             if fileData then
                 data.highScore = fileData.highScore or 0
                 data.gold = fileData.gold or 0
-                data.startingMoney = fileData.startingMoney or 1
+                data.startingMoney = fileData.startingMoney or 0
                 data.startingMoneyUpgradePrice = fileData.startingMoneyUpgradePrice or 25
                 data.permanentUpgrades = fileData.permanentUpgrades or {}
                 data.paddleCores = fileData.paddleCores or { ["Amount Core"] = true }
@@ -478,7 +478,7 @@ function Player.levelUp()
         Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.25)
     else
         if Player.level < 5 then
-            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 2.8)
+            Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 2.4)
         elseif Player.level < 10 then
             Player.xpForNextLevel = math.floor(Player.xpForNextLevel * 1.45)
         elseif Player.level < 15 then

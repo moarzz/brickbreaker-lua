@@ -38,6 +38,7 @@ local damageTimers = {}
 local fireAnims = {}
 local fireTimers = {}
 local lightningCooldowns = {} -- Table to track per-brick cooldowns for lightning spells
+newAscensionUnlocked = false
 
 local bossWidth, bossHeight = 500, 300
 local function bossDestroyed(bossBrick)
@@ -52,6 +53,15 @@ local function bossDestroyed(bossBrick)
         Player.levelingUp = false
         Player.choosingUpgrade = false
     end
+    -- ascension stuff
+    local currentAscension = Ascensions.getCurrentAscension()
+    local currentCore = Player.currentCore
+    if currentAscension == (Player.coreHighestAscension[currentCore] or 0) then
+        newAscensionUnlocked = true
+    end
+    Player.coreHighestAscension[currentCore] = math.max(Player.coreHighestAscension[currentCore] or 0, currentAscension + 1)
+
+
     fakeBossValues.on = true
     fakeBossValues.boost = 0
     fakeBossValues.x = bossBrick.x
@@ -445,7 +455,7 @@ end
 
 -- reduce trail length to make draw cheaper (was 35)
 local ballTrailLength = 8   -- Length of the ball trail
-local BULLET_TRAIL_MAX = 15  -- Maximum trail points for bullets (ring buffer size)
+local BULLET_TRAIL_MAX = 8  -- Maximum trail points for bullets (ring buffer size)
 local bullets = {}
 local deadBullets = {}
 local laserBeamBrick
@@ -2964,6 +2974,7 @@ function Balls.initialize()
     -- clean code/s
     lastPowerupSpawnTime = 0
     resetBoopSFXTimer()
+    newAscensionUnlocked = false
     changeMusic("calm")
     endlessRun = false
     powerupPopup = {startTime = 0, type = nil, scale = 0, angle = 0}
@@ -2979,9 +2990,10 @@ function Balls.initialize()
     Player.levelingUp = false
     Player.choosingUpgrade = false
     Player.upgradePriceMultScaling = 2
-    Player.xpForNextLevel = 5
+    Player.xpForNextLevel = 8
     Player.xpGainMult = 1
     Player.setMoney(0);
+    Player.paddleUpgrades = {}
     bossOverwriteValues = {x = 0, y = 0, whiteBoostTween = 0}
     if Player.currentCore == "Loan Core" then
         Player.setMoney(25)
@@ -3218,7 +3230,11 @@ function Balls.addBall(ballName, singleBall)
             return
         end
         if ballTemplate.type == "ball" then
-            local loops = (Player.currentCore == "Damage Core") and 1 or (singleBall and 1 or (getStatItemsBonus("amount", ballTemplate) + (Player.permanentUpgrades.amount or 0) + 1)) * (Player.currentCore == "Madness Core" and 2 or 1) + (Player.paddleUpgrades.amount or 0)
+            local loops = 1  -- Default to 1 ball
+            -- Only apply bonuses if this is a NEW ball
+            if isNewBall then
+                loops = (Player.currentCore == "Damage Core") and 1 or (singleBall and 1 or (getStatItemsBonus("amount", ballTemplate) + (Player.permanentUpgrades.amount or 0) + 1)) * (Player.currentCore == "Madness Core" and 2 or 1) + (Player.paddleUpgrades.amount or 0)
+            end
             loops = Player.currentCore == "IncrediCore" and 1 or loops
             for i=1, loops do
                 local totalSpeed = getStat(ballName, "speed")
