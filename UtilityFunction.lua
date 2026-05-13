@@ -1800,6 +1800,7 @@ function cleanupTextObjects()
 end
 
 local damageNumberId = 1
+local lastDamageNumberTweened = {time = -math.huge, number = {}}
 function damageNumber(damage, x, y, color)
     if damage == 0 then return end
     if damage < 0 then 
@@ -1810,26 +1811,40 @@ function damageNumber(damage, x, y, color)
         local damageNumber = {
             x = x,
             y = y,
+            xRandom = math.random(-15, 15),
+            yRandom = -15 - math.random(20),
             damage = damage,
             color = color or {1, 0, 0, 1}, -- Default to red if no color is provided
             alpha = 1,
-            fontSize = 0,
-            id = damageNumberId
+            -- fontSize = 0,
+            maxFontSize = damage < 10 and mapRange(damage, 0, 10, 1, 3) or mapRangeClamped(damage, 10, 50, 3, 5),
+            startTweenAlpha = 0,
+            id = damageNumberId,
+            numberToCopy = nil
         }
         damageNumberId = damageNumberId + 1
         table.insert(damageNumbers, damageNumber)
 
-        local sizeTween = tween.new(0.75, damageNumber, {fontSize = damage < 10 and mapRange(damage, 0, 10, 1, 3) or mapRangeClamped(damage, 10, 50, 3, 5)}, tween.easing.outBack)
-        addTweenToUpdate(sizeTween)
+        if gameTime - lastDamageNumberTweened.time < 0.02 then
+            damageNumber.numberToCopy = lastDamageNumberTweened.damageNumber
+        else
+            local sizeTween = tween.new(0.5, damageNumber, {startTweenAlpha = 1}, tween.easing.outBack)
+            addTweenToUpdate(sizeTween)
+            lastDamageNumberTweened.time = gameTime
+            lastDamageNumberTweened.damageNumber = damageNumber
+        end
+        
 
-        local xRandom, yRandom = math.random(-15, 15), -15 - math.random(20)
+        --[[local xRandom, yRandom = math.random(-15, 15), -15 - math.random(20)
         local offsetTween = tween.new(0.75, damageNumber, {x = x + xRandom, y = y + yRandom}, tween.easing.outQuad)
-        addTweenToUpdate(offsetTween)
-        Timer.after(0.40, function()
-            local alphaTween = tween.new(0.35, damageNumber, {alpha = 0}, tween.easing.outCirc)
-            addTweenToUpdate(alphaTween)
-        end)
-        Timer.after(0.75, function()
+        addTweenToUpdate(offsetTween)]]
+        if damageNumber.numberToCopy == nil then
+            Timer.after(0.3, function()
+                local alphaTween = tween.new(0.2, damageNumber, {alpha = 0}, tween.easing.outCirc)
+                addTweenToUpdate(alphaTween)
+            end)
+        end
+        Timer.after(0.5, function()
             for i = #damageNumbers, 1, -1 do
                 if damageNumbers[i].id == damageNumber.id then
                     table.remove(damageNumbers, i) -- Remove the damage number after its duration
@@ -1872,26 +1887,38 @@ function healNumber(number, x, y)
         local healNumber = {
             x = x,
             y = y,
+            xRandom = math.random(-15, 15),
+            yRandom = -15 - math.random(20),
             damage = number,
             color = {125/255, 1, 0, 1},
             alpha = 1,
-            fontSize = 0,
-            id = damageNumberId
+            maxFontSize = number < 10 and mapRange(number, 0, 10, 1, 3) or mapRangeClamped(number, 10, 50, 3, 5),
+            startTweenAlpha = 0,
+            id = damageNumberId,
+            numberToCopy = nil
         }
         damageNumberId = damageNumberId + 1
         table.insert(damageNumbers, healNumber)
 
-        local sizeTween = tween.new(0.75, healNumber, {fontSize = number < 10 and mapRange(number, 0, 10, 1, 3) or mapRangeClamped(number, 10, 50, 3, 5)}, tween.easing.outBack)
-        addTweenToUpdate(sizeTween)
+        if gameTime - lastDamageNumberTweened.time < 0.02 then
+            healNumber.numberToCopy = lastDamageNumberTweened.damageNumber
+        else
+            local sizeTween = tween.new(0.5, healNumber, {startTweenAlpha = 1}, tween.easing.outBack)
+            addTweenToUpdate(sizeTween)
+            lastDamageNumberTweened.time = gameTime
+            lastDamageNumberTweened.damageNumber = healNumber
+        end
 
-        local xRandom, yRandom = math.random(-15, 15), -15 - math.random(20)
+        --[[local xRandom, yRandom = math.random(-15, 15), -15 - math.random(20)
         local offsetTween = tween.new(0.75, healNumber, {x = x + xRandom, y = y + yRandom}, tween.easing.outQuad)
-        addTweenToUpdate(offsetTween)
-        Timer.after(0.40, function()
-            local alphaTween = tween.new(0.35, healNumber, {alpha = 0}, tween.easing.outCirc)
-            addTweenToUpdate(alphaTween)
-        end)
-        Timer.after(0.75, function()
+        addTweenToUpdate(offsetTween)]]
+        if healNumber.numberToCopy == nil then
+            Timer.after(0.3, function()
+                local alphaTween = tween.new(0.2, healNumber, {alpha = 0}, tween.easing.outCirc)
+                addTweenToUpdate(alphaTween)
+            end)
+        end
+        Timer.after(0.5, function()
             for i = #damageNumbers, 1, -1 do
                 if damageNumbers[i].id == healNumber.id then
                     table.remove(damageNumbers, i) -- Remove the heal number after its duration
@@ -1971,7 +1998,7 @@ function drawDamageNumbers()
     -- Group numbers by fontSize (rounded to 0.1) to minimize state changes
     local fontGroups = {}
     for _, number in ipairs(damageNumbers) do
-        local fontSize = math.floor(number.fontSize * 10) / 10
+        local fontSize = math.floor(number.maxFontSize * number.startTweenAlpha * 10) / 10
         fontGroups[fontSize] = fontGroups[fontSize] or {}
         table.insert(fontGroups[fontSize], number)
     end
@@ -1994,9 +2021,13 @@ function drawDamageNumbers()
             for damage, numbers in pairs(valueGroups) do
                 -- Draw all instances of this damage value
                 for _, number in ipairs(numbers) do
+                    if number.numberToCopy then
+                        number.startTweenAlpha = number.numberToCopy.startTweenAlpha
+                        number.alpha = number.numberToCopy.alpha
+                    end
                     love.graphics.setColor(number.color[1], number.color[2], number.color[3], number.color[4] * number.alpha)
-                    local x = (number.x * 3 / fontSize)
-                    local y = (number.y * 3 / fontSize)
+                    local x = ((number.x + number.xRandom * number.startTweenAlpha) * 3 / fontSize)
+                    local y = ((number.y + number.yRandom * number.startTweenAlpha) * 3 / fontSize)
                     love.graphics.print(tostring(damage), x, y);
                     --love.graphics.draw(text, x, y)
                 end

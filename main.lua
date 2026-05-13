@@ -2360,7 +2360,7 @@ function drawVictoryScreen()
     love.graphics.printf("Press R to restart or ESC to quit", 0, centerY + 2000, screenWidth, "center")
 
     if newAscensionUnlocked then
-        setFont(80)
+        setFont(65)
         love.graphics.setColor(1, 0.5, 1, 1) -- Pink for new ascension unlocked
         love.graphics.printf("New Ascension Unlocked! Try it for a bigger challenge!", 0, 125, screenWidth, "center")
     end
@@ -2984,7 +2984,7 @@ function love.keypressed(key)
         if key == "0" then
             for i= #bricks, 1, -1 do
                 local brick = bricks[i]
-                if not brick.destroyed and brick.y > screenHeight/5 then
+                if not brick.destroyed and brick.y > screenHeight/8 then
                     dealDamage({stats = {damage = 10000000}}, brick)
                 end
             end
@@ -3022,7 +3022,7 @@ function love.keypressed(key)
         -- test ball lag
         if key == "6" then
             -- drawTrails = not drawTrails
-            ballPhysics = not ballPhysics
+            -- ballPhysics = not ballPhysics
             Balls.addBall("Laser Portals")
             Balls.addBall("Laser Ball")
             -- Balls.addBall("Laser Turrets")
