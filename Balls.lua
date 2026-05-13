@@ -1013,46 +1013,50 @@ local function shoot(gunName, ball)
             })
             local chance = hasItem("Four Leafed Clover") and 16 or 8
             if math.random(1,100) <= chance and hasItem("Sudden Mitosis") then
-                local totalSpeed = 500
-                local speedX = math.random(-totalSpeed*0.6, totalSpeed*0.6)
-                local speedY = -math.sqrt(math.max(0.01, totalSpeed^2 - speedX^2))
-                local ballTemplate = ballList["Ball"]
+                if getItem("Sudden Mitosis"):canIncrease() then
+                    local totalSpeed = 500
+                    local speedX = math.random(-totalSpeed*0.6, totalSpeed*0.6)
+                    local speedY = -math.sqrt(math.max(0.01, totalSpeed^2 - speedX^2))
+                    local ballTemplate = ballList["Ball"]
 
-                currentBallID = currentBallID + 1
-                local newBall = {
-                    type = "Sudden Mitosis",
-                    name = "Sudden Mitosis",
-                    id = currentBallID,
-                    x = paddle.x + paddle.width / 2,
-                    y = paddle.y - 6,
-                    speedMult = ballTemplate.speedMult or 1,
-                    radius = (ballTemplate.radius or 10) * 1.5,
-                    drawSizeBoost = 1,
-                    drawSizeMult = 0.5,
-                    drawSizeBoostTweens = {},
-                    onBounce = ballTemplate.onBounce or nil, -- Function to call when the ball bounces off a brick
-                    currentlyOverlappingBricks = {},
-                    attractionStrength = ballTemplate.attractionStrength or nil,
-                    stats = ballTemplate.stats,
-                    speedX = speedX,
-                    speedY = speedY,
-                    dead = false,
-                    trail = {},
-                    speedMultiplier = 1
-                }
-                table.insert(Balls, newBall)
-                Timer.after(6, function()
-                    local ballDeathTween = tween.new(0.5, newBall, {drawSizeMult = 0}, tween.outCubic)
-                    addTweenToUpdate(ballDeathTween)
-                    Timer.after(0.5, function()
-                        for i, b in ipairs(Balls) do
-                            if b.id == newBall.id then
-                                table.remove(Balls, i)
-                                break
-                            end
-                        end 
+                    currentBallID = currentBallID + 1
+                    local newBall = {
+                        type = "Sudden Mitosis",
+                        name = "Sudden Mitosis",
+                        id = currentBallID,
+                        x = paddle.x + paddle.width / 2,
+                        y = paddle.y - 20,
+                        speedMult = ballTemplate.speedMult or 1,
+                        radius = (ballTemplate.radius or 10) * 1.5,
+                        drawSizeBoost = 1,
+                        drawSizeMult = 0.5,
+                        drawSizeBoostTweens = {},
+                        onBounce = ballTemplate.onBounce or nil, -- Function to call when the ball bounces off a brick
+                        currentlyOverlappingBricks = {},
+                        attractionStrength = ballTemplate.attractionStrength or nil,
+                        stats = ballTemplate.stats,
+                        speedX = speedX,
+                        speedY = speedY,
+                        dead = false,
+                        trail = {},
+                        speedMultiplier = 1
+                    }
+                    getItem("Sudden Mitosis"):increase()
+                    table.insert(Balls, newBall)
+                    Timer.after(6, function()
+                        local ballDeathTween = tween.new(0.5, newBall, {drawSizeMult = 0}, tween.outCubic)
+                        addTweenToUpdate(ballDeathTween)
+                        Timer.after(0.5, function()
+                            getItem("Sudden Mitosis"):decrease()
+                            for i, b in ipairs(Balls) do
+                                if b.id == newBall.id then
+                                    table.remove(Balls, i)
+                                    break
+                                end
+                            end 
+                        end)
                     end)
-                end)
+                end
             end
             return
         end
@@ -1216,46 +1220,50 @@ local function shoot(gunName, ball)
                 end
                 local chance = hasItem("Four Leafed Clover") and 16 or 8
                 if math.random(1,100) <= chance and hasItem("Sudden Mitosis") then
-                    local totalSpeed = 500
-                    local speedX = math.random(-totalSpeed*0.6, totalSpeed*0.6)
-                    local speedY = -math.sqrt(math.max(0.01, totalSpeed^2 - speedX^2))
-                    local ballTemplate = ballList["Ball"]
+                    if getItem("Sudden Mitosis"):canIncrease() then
+                        local totalSpeed = 500
+                        local speedX = math.random(-totalSpeed*0.6, totalSpeed*0.6)
+                        local speedY = -math.sqrt(math.max(0.01, totalSpeed^2 - speedX^2))
+                        local ballTemplate = ballList["Ball"]
 
-                    currentBallID = currentBallID + 1
-                    local newBall = {
-                        type = "Sudden Mitosis",
-                        name = "Sudden Mitosis",
-                        id = currentBallID,
-                        x = paddle.x + paddle.width / 2,
-                        y = paddle.y - 6,
-                        speedMult = ballTemplate.speedMult or 1,
-                        radius = (ballTemplate.radius or 10) * 1.5,
-                        drawSizeBoost = 1,
-                        drawSizeMult = 0.5,
-                        drawSizeBoostTweens = {},
-                        onBounce = ballTemplate.onBounce or nil, -- Function to call when the ball bounces off a brick
-                        currentlyOverlappingBricks = {},
-                        attractionStrength = ballTemplate.attractionStrength or nil,
-                        stats = ballTemplate.stats,
-                        speedX = speedX,
-                        speedY = speedY,
-                        dead = false,
-                        trail = {},
-                        speedMultiplier = 1
-                    }
-                    table.insert(Balls, newBall)
-                    Timer.after(6, function()
-                        local ballDeathTween = tween.new(0.5, newBall, {drawSizeMult = 0}, tween.outCubic)
-                        addTweenToUpdate(ballDeathTween)
-                        Timer.after(0.5, function()
-                            for i, b in ipairs(Balls) do
-                                if b.id == newBall.id then
-                                    table.remove(Balls, i)
-                                    break
+                        currentBallID = currentBallID + 1
+                        local newBall = {
+                            type = "Sudden Mitosis",
+                            name = "Sudden Mitosis",
+                            id = currentBallID,
+                            x = paddle.x + paddle.width / 2,
+                            y = paddle.y - 20,
+                            speedMult = ballTemplate.speedMult or 1,
+                            radius = (ballTemplate.radius or 10) * 1.5,
+                            drawSizeBoost = 1,
+                            drawSizeMult = 0.5,
+                            drawSizeBoostTweens = {},
+                            onBounce = ballTemplate.onBounce or nil, -- Function to call when the ball bounces off a brick
+                            currentlyOverlappingBricks = {},
+                            attractionStrength = ballTemplate.attractionStrength or nil,
+                            stats = ballTemplate.stats,
+                            speedX = speedX,
+                            speedY = speedY,
+                            dead = false,
+                            trail = {},
+                            speedMultiplier = 1
+                        }
+                        table.insert(Balls, newBall)
+                        getItem("Sudden Mitosis"):increase()
+                        Timer.after(6, function()
+                            local ballDeathTween = tween.new(0.5, newBall, {drawSizeMult = 0}, tween.outCubic)
+                            addTweenToUpdate(ballDeathTween)
+                            Timer.after(0.5, function()
+                                for i, b in ipairs(Balls) do
+                                    if b.id == newBall.id then
+                                        table.remove(Balls, i)
+                                        break
+                                    end
                                 end
-                            end 
+                                getItem("Sudden Mitosis"):decrease() 
+                            end)
                         end)
-                    end)
+                    end
                 end
             elseif gun.name == "Sniper" then
                 bulletDamage = bulletDamage * 10
@@ -1291,46 +1299,50 @@ local function shoot(gunName, ball)
                 })
                 local chance = hasItem("Four Leafed Clover") and 16 or 8
                 if math.random(1,100) <= chance and hasItem("Sudden Mitosis") then
-                    local totalSpeed = 500
-                    local speedX = math.random(-totalSpeed*0.6, totalSpeed*0.6)
-                    local speedY = -math.sqrt(math.max(0.01, totalSpeed^2 - speedX^2))
-                    local ballTemplate = ballList["Ball"]
+                    if getItem("Sudden Mitosis"):canIncrease() then
+                        local totalSpeed = 500
+                        local speedX = math.random(-totalSpeed*0.6, totalSpeed*0.6)
+                        local speedY = -math.sqrt(math.max(0.01, totalSpeed^2 - speedX^2))
+                        local ballTemplate = ballList["Ball"]
 
-                    currentBallID = currentBallID + 1
-                    local newBall = {
-                        type = "Sudden Mitosis",
-                        name = "Sudden Mitosis",
-                        id = currentBallID,
-                        x = paddle.x + paddle.width / 2,
-                        y = paddle.y - 6,
-                        speedMult = ballTemplate.speedMult or 1,
-                        radius = (ballTemplate.radius or 10) * 1.5,
-                        drawSizeBoost = 1,
-                        drawSizeMult = 0.5,
-                        drawSizeBoostTweens = {},
-                        onBounce = ballTemplate.onBounce or nil, -- Function to call when the ball bounces off a brick
-                        currentlyOverlappingBricks = {},
-                        attractionStrength = ballTemplate.attractionStrength or nil,
-                        stats = ballTemplate.stats,
-                        speedX = speedX,
-                        speedY = speedY,
-                        dead = false,
-                        trail = {},
-                        speedMultiplier = 1
-                    }
-                    table.insert(Balls, newBall)
-                    Timer.after(6, function()
-                        local ballDeathTween = tween.new(0.5, newBall, {drawSizeMult = 0}, tween.outCubic)
-                        addTweenToUpdate(ballDeathTween)
-                        Timer.after(0.5, function()
-                            for i, b in ipairs(Balls) do
-                                if b.id == newBall.id then
-                                    table.remove(Balls, i)
-                                    break
-                                end
-                            end 
+                        currentBallID = currentBallID + 1
+                        local newBall = {
+                            type = "Sudden Mitosis",
+                            name = "Sudden Mitosis",
+                            id = currentBallID,
+                            x = paddle.x + paddle.width / 2,
+                            y = paddle.y - 20,
+                            speedMult = ballTemplate.speedMult or 1,
+                            radius = (ballTemplate.radius or 10) * 1.5,
+                            drawSizeBoost = 1,
+                            drawSizeMult = 0.5,
+                            drawSizeBoostTweens = {},
+                            onBounce = ballTemplate.onBounce or nil, -- Function to call when the ball bounces off a brick
+                            currentlyOverlappingBricks = {},
+                            attractionStrength = ballTemplate.attractionStrength or nil,
+                            stats = ballTemplate.stats,
+                            speedX = speedX,
+                            speedY = speedY,
+                            dead = false,
+                            trail = {},
+                            speedMultiplier = 1
+                        }
+                        table.insert(Balls, newBall)
+                        getItem("Sudden Mitosis"):increase()
+                        Timer.after(6, function()
+                            local ballDeathTween = tween.new(0.5, newBall, {drawSizeMult = 0}, tween.outCubic)
+                            addTweenToUpdate(ballDeathTween)
+                            Timer.after(0.5, function()
+                                for i, b in ipairs(Balls) do
+                                    if b.id == newBall.id then
+                                        table.remove(Balls, i)
+                                        break
+                                    end
+                                end 
+                                getItem("Sudden Mitosis"):decrease()
+                            end)
                         end)
-                    end)
+                    end
                 end
             else -- default shooting behavior
                 local speedXref = spray and (math.random(-gun.bulletSpeed * 0.8, gun.bulletSpeed * 0.8) + speedOffset) or (math.random(-150, 150) + speedOffset)
@@ -1350,47 +1362,51 @@ local function shoot(gunName, ball)
                     golden = math.random(1,100) <= getGoldenBulletChance(),
                 })
                 local chance = hasItem("Four Leafed Clover") and 16 or 8
-                if math.random(1,100) <= chance and hasItem("Sudden Mitosis")then
-                    local totalSpeed = 500
-                    local speedX = math.random(-totalSpeed*0.6, totalSpeed*0.6)
-                    local speedY = -math.sqrt(math.max(0.01, totalSpeed^2 - speedX^2))
-                    local ballTemplate = ballList["Ball"]
+                if math.random(1,100) <= chance and hasItem("Sudden Mitosis") then
+                    if getItem("Sudden Mitosis"):canIncrease() then
+                        local totalSpeed = 500
+                        local speedX = math.random(-totalSpeed*0.6, totalSpeed*0.6)
+                        local speedY = -math.sqrt(math.max(0.01, totalSpeed^2 - speedX^2))
+                        local ballTemplate = ballList["Ball"]
 
-                    currentBallID = currentBallID + 1
-                    local newBall = {
-                        type = "Sudden Mitosis",
-                        name = "Sudden Mitosis",
-                        id = currentBallID,
-                        x = paddle.x + paddle.width / 2,
-                        y = paddle.y - 6,
-                        speedMult = ballTemplate.speedMult or 1,
-                        radius = (ballTemplate.radius or 10) * 1.5,
-                        drawSizeBoost = 1,
-                        drawSizeMult = 0.5,
-                        drawSizeBoostTweens = {},
-                        onBounce = ballTemplate.onBounce or nil, -- Function to call when the ball bounces off a brick
-                        currentlyOverlappingBricks = {},
-                        attractionStrength = ballTemplate.attractionStrength or nil,
-                        stats = ballTemplate.stats,
-                        speedX = speedX,
-                        speedY = speedY,
-                        dead = false,
-                        trail = {},
-                        speedMultiplier = 1
-                    }
-                    table.insert(Balls, newBall)
-                    Timer.after(6, function()
-                        local ballDeathTween = tween.new(0.5, newBall, {drawSizeMult = 0}, tween.outCubic)
-                        addTweenToUpdate(ballDeathTween)
-                        Timer.after(0.5, function()
-                            for i, b in ipairs(Balls) do
-                                if b.id == newBall.id then
-                                    table.remove(Balls, i)
-                                    break
-                                end
-                            end 
+                        currentBallID = currentBallID + 1
+                        local newBall = {
+                            type = "Sudden Mitosis",
+                            name = "Sudden Mitosis",
+                            id = currentBallID,
+                            x = paddle.x + paddle.width / 2,
+                            y = paddle.y - 20,
+                            speedMult = ballTemplate.speedMult or 1,
+                            radius = (ballTemplate.radius or 10) * 1.5,
+                            drawSizeBoost = 1,
+                            drawSizeMult = 0.5,
+                            drawSizeBoostTweens = {},
+                            onBounce = ballTemplate.onBounce or nil, -- Function to call when the ball bounces off a brick
+                            currentlyOverlappingBricks = {},
+                            attractionStrength = ballTemplate.attractionStrength or nil,
+                            stats = ballTemplate.stats,
+                            speedX = speedX,
+                            speedY = speedY,
+                            dead = false,
+                            trail = {},
+                            speedMultiplier = 1
+                        }
+                        table.insert(Balls, newBall)
+                        getItem("Sudden Mitosis"):increase()
+                        Timer.after(6, function()
+                            local ballDeathTween = tween.new(0.5, newBall, {drawSizeMult = 0}, tween.outCubic)
+                            addTweenToUpdate(ballDeathTween)
+                            Timer.after(0.5, function()
+                                for i, b in ipairs(Balls) do
+                                    if b.id == newBall.id then
+                                        table.remove(Balls, i)
+                                        break
+                                    end
+                                end 
+                                getItem("Sudden Mitosis"):decrease()
+                            end)
                         end)
-                    end)
+                    end
                 end
                 local normalizedSpeedX, normalizedSpeedY = normalizeVector(speedXref, -math.sqrt(bulletSpeed^2 - speedXref^2))
                 muzzleFlash(xBruh, paddle.y, -math.acos(normalizedSpeedX))
@@ -1490,46 +1506,50 @@ local function turretShoot(turret, typeMod)
         table.insert(bullets, bullet)
         local chance = hasItem("Four Leafed Clover") and 16 or 8
         if math.random(1,100) <= chance and hasItem("Sudden Mitosis") then
-            local totalSpeed = 500
-            local speedX = math.random(-totalSpeed*0.6, totalSpeed*0.6)
-            local speedY = -math.sqrt(math.max(0.01, totalSpeed^2 - speedX^2))
-            local ballTemplate = ballList["Ball"]
+            if getItem("Sudden Mitosis"):canIncrease() then
+                local totalSpeed = 500
+                local speedX = math.random(-totalSpeed*0.6, totalSpeed*0.6)
+                local speedY = -math.sqrt(math.max(0.01, totalSpeed^2 - speedX^2))
+                local ballTemplate = ballList["Ball"]
 
-            currentBallID = currentBallID + 1
-            local newBall = {
-                type = "Sudden Mitosis",
-                name = "Sudden Mitosis",
-                id = currentBallID,
-                x = paddle.x + paddle.width / 2,
-                y = paddle.y - 6,
-                speedMult = ballTemplate.speedMult or 1,
-                radius = (ballTemplate.radius or 10) * 1.5,
-                drawSizeBoost = 1,
-                drawSizeMult = 0.5,
-                drawSizeBoostTweens = {},
-                onBounce = ballTemplate.onBounce or nil, -- Function to call when the ball bounces off a brick
-                currentlyOverlappingBricks = {},
-                attractionStrength = ballTemplate.attractionStrength or nil,
-                stats = ballTemplate.stats,
-                speedX = speedX,
-                speedY = speedY,
-                dead = false,
-                trail = {},
-                speedMultiplier = 1
-            }
-            table.insert(Balls, newBall)
-            Timer.after(6, function()
-                local ballDeathTween = tween.new(0.5, newBall, {drawSizeMult = 0}, tween.outCubic)
-                addTweenToUpdate(ballDeathTween)
-                Timer.after(0.5, function()
-                    for i, b in ipairs(Balls) do
-                        if b.id == newBall.id then
-                            table.remove(Balls, i)
-                            break
-                        end
-                    end 
+                currentBallID = currentBallID + 1
+                local newBall = {
+                    type = "Sudden Mitosis",
+                    name = "Sudden Mitosis",
+                    id = currentBallID,
+                    x = paddle.x + paddle.width / 2,
+                    y = paddle.y - 20,
+                    speedMult = ballTemplate.speedMult or 1,
+                    radius = (ballTemplate.radius or 10) * 1.5,
+                    drawSizeBoost = 1,
+                    drawSizeMult = 0.5,
+                    drawSizeBoostTweens = {},
+                    onBounce = ballTemplate.onBounce or nil, -- Function to call when the ball bounces off a brick
+                    currentlyOverlappingBricks = {},
+                    attractionStrength = ballTemplate.attractionStrength or nil,
+                    stats = ballTemplate.stats,
+                    speedX = speedX,
+                    speedY = speedY,
+                    dead = false,
+                    trail = {},
+                    speedMultiplier = 1
+                }
+                table.insert(Balls, newBall)
+                getItem("Sudden Mitosis"):increase()
+                Timer.after(6, function()
+                    local ballDeathTween = tween.new(0.5, newBall, {drawSizeMult = 0}, tween.outCubic)
+                    addTweenToUpdate(ballDeathTween)
+                    Timer.after(0.5, function()
+                        for i, b in ipairs(Balls) do
+                            if b.id == newBall.id then
+                                table.remove(Balls, i)
+                                break
+                            end
+                        end 
+                        getItem("Sudden Mitosis"):decrease()
+                    end)
                 end)
-            end)
+            end
         end
         local useAmmo = true
         if hasItem("Magic Mag") then
@@ -3696,43 +3716,47 @@ local function paddleCollisionCheck(ball, paddle) -- trail
         table.insert(bullets, bullet)
         local chance = hasItem("Four Leafed Clover") and 20 or 10
         if math.random(1,100) <= chance and hasItem("Sudden Mitosis") then
-            local totalSpeed = 500
-            local speedX = math.random(-totalSpeed*0.6, totalSpeed*0.6)
-            local speedY = -math.sqrt(math.max(0.01, totalSpeed^2 - speedX^2))
-            local ballTemplate = ballList["Ball"]
-            local newBall = {
-                type = "ball",
-                name = ballTemplate.name,
-                x = paddle.x + paddle.width / 2,
-                y = paddle.y - 6,
-                speedMult = ballTemplate.speedMult or 1,
-                radius = (ballTemplate.radius or 10) * 1.5,
-                drawSizeBoost = 1,
-                drawSizeMult = 0.5,
-                drawSizeBoostTweens = {},
-                onBounce = ballTemplate.onBounce or nil,
-                currentlyOverlappingBricks = {},
-                attractionStrength = ballTemplate.attractionStrength or nil,
-                stats = ballTemplate.stats,
-                speedX = speedX,
-                speedY = speedY,
-                dead = false,
-                trail = {},
-                speedMultiplier = 1
-            }
-            table.insert(Balls, newBall)
-            Timer.after(8, function()
-                local ballDeathTween = tween.new(0.5, newBall, {drawSizeMult = 0}, tween.outCubic)
-                addTweenToUpdate(ballDeathTween)
-                Timer.after(0.5, function()
-                    for i, b in ipairs(Balls) do
-                        if b == newBall then
-                            table.remove(Balls, i)
-                            break
-                        end
-                    end 
+            if getItem("Sudden Mitosis"):canIncrease() then
+                local totalSpeed = 500
+                local speedX = math.random(-totalSpeed*0.6, totalSpeed*0.6)
+                local speedY = -math.sqrt(math.max(0.01, totalSpeed^2 - speedX^2))
+                local ballTemplate = ballList["Ball"]
+                local newBall = {
+                    type = "ball",
+                    name = ballTemplate.name,
+                    x = paddle.x + paddle.width / 2,
+                    y = paddle.y - 6,
+                    speedMult = ballTemplate.speedMult or 1,
+                    radius = (ballTemplate.radius or 10) * 1.5,
+                    drawSizeBoost = 1,
+                    drawSizeMult = 0.5,
+                    drawSizeBoostTweens = {},
+                    onBounce = ballTemplate.onBounce or nil,
+                    currentlyOverlappingBricks = {},
+                    attractionStrength = ballTemplate.attractionStrength or nil,
+                    stats = ballTemplate.stats,
+                    speedX = speedX,
+                    speedY = speedY,
+                    dead = false,
+                    trail = {},
+                    speedMultiplier = 1
+                }
+                table.insert(Balls, newBall)
+                getItem("Sudden Mitosis"):increase()
+                Timer.after(8, function()
+                    local ballDeathTween = tween.new(0.5, newBall, {drawSizeMult = 0}, tween.outCubic)
+                    addTweenToUpdate(ballDeathTween)
+                    Timer.after(0.5, function()
+                        for i, b in ipairs(Balls) do
+                            if b == newBall then
+                                table.remove(Balls, i)
+                                break
+                            end
+                        end 
+                        getItem("Sudden Mitosis"):decrease()
+                    end)
                 end)
-            end)
+            end
         end
     end
 
