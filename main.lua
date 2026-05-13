@@ -493,6 +493,10 @@ function fastBricksReset()
     lastFastBrickCreateTime = 0
 end
 
+function getFastBricks()
+    return fastBricks
+end
+
 local function getCurrentColumnCount()
     if Player.level < 3 then
         return 16
@@ -756,7 +760,7 @@ local function generateRow(brickCount, yPos)
                     end
                     local healDelay = 1.75 - ((gameTime * 100) % 175)/100
                     Timer.after(1.75 + healDelay, function() healSelf(healBrick) end)
-                elseif Player.level >= 12 and math.random(1, 250) <= math.floor(mapRangeClamped(Player.level, 12, 25, 1, 5)) then
+                elseif Player.level >= 12 and math.random(1, 250) <= math.floor(mapRangeClamped(Player.level, 12, 25, 1, 4)) * 0 then
                     -- make shield bricks
                     print("Generating shield brick")
                     local shieldHealth = math.ceil(Player.level * 7 + math.random(-100,100)/100 * Player.level)
@@ -1058,6 +1062,7 @@ function love.load()
 end
 
 function getHighestBrickY(lowestInstead)
+    if #bricks == 0 then return 0 end
     lowestInstead = lowestInstead or false
     -- Defensive: ensure bricks is always a table
     if type(bricks) ~= "table" then bricks = {} end
@@ -2921,7 +2926,7 @@ function love.keypressed(key)
         -- PERFORMANCE STRESS TESTS
 
         if key == "q" then
-            for i=1, 50 do
+            for i=1, 100 do
                 local speedRef = 2500
                 local speedXref = math.random(-1000,1000)
                 local bullet = {
@@ -3010,11 +3015,13 @@ function love.keypressed(key)
             -- brickCollisions = not brickCollisions
         end
 
+        -- remove paddle collisions
         if key == "4" then
-            paddleCollisions = not paddleCollisions
+            -- paddleCollisions = not paddleCollisions
+            Balls.addBall("Laser Ball")
         end
 
-        -- get powerup
+        -- remove ball collisions
         if key == "5" then
             collisionsOn = not collisionsOn
         end

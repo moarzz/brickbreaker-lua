@@ -566,7 +566,10 @@ function burnBrick(brick, damage, name)
     burnTick()
 end
 
-function dealDamage(ball, brick, burnDamage, patternRecognition, GasolineDmg)
+function dealDamage(ball, brick, burnDamage, patternRecognition, GasolineDmg) -- return
+    if brick.y < -brick.height then
+        return false
+    end
     GasolineDmg = GasolineDmg or false
     patternRecognition = patternRecognition or false
     local chance = hasItem("Four Leafed Clover") and 70 or 35
@@ -776,7 +779,7 @@ local function newLaserPortal(damage, fireRate, name)
                 self.laserBricksInSight = {}
                 self.laserBeamBrick = nil
                 local closestDist = math.huge
-                local highestBrick
+                local highestBrick = nil
                 local angle = (self.angle + math.rad(self.angleOffset)) + self.swayAngleOffset
                 local startX = self.x
                 local startY = self.y
@@ -787,8 +790,52 @@ local function newLaserPortal(damage, fireRate, name)
                 local endX = startX + dirX * laserLength
                 local endY = startY + dirY * laserLength
                 
-                for _, brick in ipairs(bricks) do
-                    if brick.health > 0 and not brick.destroyed then
+                local iterations = #bricks
+                for i = 1, iterations do
+                    local brick = bricks[iterations - i + 1]  -- Iterate backwards to prioritize closer bricks in case of multiple hits
+                    if brick.health > 0 and not brick.destroyed and brick.y > -brick.height then
+                        -- Check all four sides of the brick for intersection
+                        local sides = {
+                            {brick.x, brick.y + brick.height, brick.x + brick.width, brick.y + brick.height}, -- bottom
+                            {brick.x, brick.y, brick.x + brick.width, brick.y}, -- top
+                            {brick.x, brick.y, brick.x, brick.y + brick.height}, -- left
+                            {brick.x + brick.width, brick.y, brick.x + brick.width, brick.y + brick.height} -- right
+                        }
+                        
+                        for _, side in ipairs(sides) do
+                            -- Line intersection check
+                            local x1, y1, x2, y2 = side[1], side[2], side[3], side[4]
+                            local denominator = (endY - startY) * (x2 - x1) - (endX - startX) * (y2 - y1)
+                            
+                            if denominator ~= 0 then
+                                local ua = ((endX - startX) * (y1 - startY) - (endY - startY) * (x1 - startX)) / denominator
+                                local ub = ((x2 - x1) * (y1 - startY) - (y2 - y1) * (x1 - startX)) / denominator
+                                
+                                if ua >= 0 and ua <= 1 and ub >= 0 and ub <= 1 then
+                                    local intersectX = x1 + ua * (x2 - x1)
+                                    local intersectY = y1 + ua * (y2 - y1)
+                                    local dist = math.sqrt((intersectX - startX)^2 + (intersectY - startY)^2)
+                                    
+                                    table.insert(self.laserBricksInSight, brick)
+                                    if dist < closestDist then
+                                        closestDist = dist
+                                        highestBrick = brick
+                                        laserBeamY = intersectY
+                                    end
+                                end
+                            end
+                        end
+                    end
+                    if highestBrick then
+                        break
+                    end
+                end
+
+                local fastBricks = getFastBricks()
+                local iterations = #fastBricks
+                for i = 1, iterations do
+                    local brick = fastBricks[iterations - i + 1]  -- Iterate backwards to prioritize closer bricks in case of multiple hits
+                    if brick.health > 0 and not brick.destroyed and brick.y > -brick.height then
                         -- Check all four sides of the brick for intersection
                         local sides = {
                             {brick.x, brick.y + brick.height, brick.x + brick.width, brick.y + brick.height}, -- bottom
@@ -1840,7 +1887,7 @@ local function fire(techName)
                         self.laserBricksInSight = {}
                         self.laserBeamBrick = nil
                         local closestDist = math.huge
-                        local highestBrick
+                        local highestBrick = nil
                         local angle = self.angle + self.angleOffset
                         local speed = {x =math.cos((self.angle + self.angleOffset) - math.pi/2) * 1000, y = math.sin((self.angle + self.angleOffset) - math.pi/2) * 1000}
                         local normalizedSpeedX, normalizedSpeedY = normalizeVector(speed.x, speed.y)
@@ -1855,8 +1902,53 @@ local function fire(techName)
                         local endX = startX + dirX * laserLength
                         local endY = startY + dirY * laserLength
                         
-                        for _, brick in ipairs(bricks) do
-                            if brick.health > 0 and not brick.destroyed then
+                        local iterations = #bricks
+                        for i = 1, iterations do
+                            local brick = bricks[iterations - i + 1]
+                            if brick.health > 0 and not brick.destroyed and brick.y > -brick.height then
+                                -- Check all four sides of the brick for intersection
+                                local sides = {
+                                    {brick.x, brick.y + brick.height, brick.x + brick.width, brick.y + brick.height}, -- bottom
+                                    {brick.x, brick.y, brick.x + brick.width, brick.y}, -- top
+                                    {brick.x, brick.y, brick.x, brick.y + brick.height}, -- left
+                                    {brick.x + brick.width, brick.y, brick.x + brick.width, brick.y + brick.height} -- right
+                                }
+                                
+                                for _, side in ipairs(sides) do
+                                    -- Line intersection check
+                                    local x1, y1, x2, y2 = side[1], side[2], side[3], side[4]
+                                    local denominator = (endY - startY) * (x2 - x1) - (endX - startX) * (y2 - y1)
+                                    
+                                    if denominator ~= 0 then
+                                        local ua = ((endX - startX) * (y1 - startY) - (endY - startY) * (x1 - startX)) / denominator
+                                        local ub = ((x2 - x1) * (y1 - startY) - (y2 - y1) * (x1 - startX)) / denominator
+                                        
+                                        if ua >= 0 and ua <= 1 and ub >= 0 and ub <= 1 then
+                                            local intersectX = x1 + ua * (x2 - x1)
+                                            local intersectY = y1 + ua * (y2 - y1)
+                                            local dist = math.sqrt((intersectX - startX)^2 + (intersectY - startY)^2)
+                                            
+                                            table.insert(laserBricksInSight, brick)
+                                            if dist < closestDist then
+                                                closestDist = dist
+                                                highestBrick = brick
+                                                laserBeamY = intersectY
+                                            end
+                                            break
+                                        end
+                                    end
+                                end
+                            end
+                            if highestBrick then
+                                break
+                            end
+                        end
+
+                        local fastBricks = getFastBricks()
+                        local iterations = #fastBricks
+                        for i = 1, iterations do
+                            local brick = fastBricks[iterations - i + 1]
+                            if brick.health > 0 and not brick.destroyed and brick.y > -brick.height then
                                 -- Check all four sides of the brick for intersection
                                 local sides = {
                                     {brick.x, brick.y + brick.height, brick.x + brick.width, brick.y + brick.height}, -- bottom
@@ -3727,7 +3819,7 @@ local function shootRandomLaserFromBall(ball, hitType)
 
     -- check if colliding with brick
     for _, brick in ipairs(bricks) do
-        if brick.health > 0 and not brick.destroyed then
+        if brick.health > 0 and not brick.destroyed and brick.y > -brick.height then
             local brickClosestDist = math.huge
             local brickHit = false
             
@@ -3944,7 +4036,7 @@ local function techUpdate(dt)
         laserBricksInSight = {}
         laserBeamBrick = nil
         local closestDist = math.huge
-        local highestBrick
+        local highestBrick = nil
         local angle = -math.rad(laserBeam.angle)
         local startX = paddle.x + paddle.width/2
         local startY = paddle.y
@@ -3955,8 +4047,10 @@ local function techUpdate(dt)
         local endX = startX + dirX * laserLength
         local endY = startY + dirY * laserLength
         
-        for _, brick in ipairs(bricks) do
-            if brick.health > 0 and not brick.destroyed then
+        local iterations = #bricks
+        for i=1, iterations do
+            local brick = bricks[iterations - i + 1] -- Iterate backwards to prioritize closer bricks in case of multiple hits
+            if brick.health > 0 and not brick.destroyed and brick.y > -brick.height then
                 -- Check all four sides of the brick for intersection
                 local sides = {
                     {brick.x, brick.y + brick.height, brick.x + brick.width, brick.y + brick.height}, -- bottom
@@ -3986,6 +4080,51 @@ local function techUpdate(dt)
                                 laserBeamY = intersectY
                             end
                             break
+                        end
+                    end
+                end
+            end
+            if highestBrick then
+                break
+            end
+        end
+
+        if highestBrick then
+            local fastBricks = getFastBricks()
+            local iterations = #fastBricks
+            for i=1, iterations do
+                local brick = fastBricks[iterations - i + 1] -- Iterate backwards to prioritize closer bricks in case of multiple hits
+                if brick.health > 0 and not brick.destroyed and brick.y > -brick.height then
+                    -- Check all four sides of the brick for intersection
+                    local sides = {
+                        {brick.x, brick.y + brick.height, brick.x + brick.width, brick.y + brick.height}, -- bottom
+                        {brick.x, brick.y, brick.x + brick.width, brick.y}, -- top
+                        {brick.x, brick.y, brick.x, brick.y + brick.height}, -- left
+                        {brick.x + brick.width, brick.y, brick.x + brick.width, brick.y + brick.height} -- right
+                    }
+                    
+                    for _, side in ipairs(sides) do
+                        -- Line intersection check
+                        local x1, y1, x2, y2 = side[1], side[2], side[3], side[4]
+                        local denominator = (endY - startY) * (x2 - x1) - (endX - startX) * (y2 - y1)
+                        
+                        if denominator ~= 0 then
+                            local ua = ((endX - startX) * (y1 - startY) - (endY - startY) * (x1 - startX)) / denominator
+                            local ub = ((x2 - x1) * (y1 - startY) - (y2 - y1) * (x1 - startX)) / denominator
+                            
+                            if ua >= 0 and ua <= 1 and ub >= 0 and ub <= 1 then
+                                local intersectX = x1 + ua * (x2 - x1)
+                                local intersectY = y1 + ua * (y2 - y1)
+                                local dist = math.sqrt((intersectX - startX)^2 + (intersectY - startY)^2)
+                                
+                                table.insert(laserBricksInSight, brick)
+                                if dist < closestDist then
+                                    closestDist = dist
+                                    highestBrick = brick
+                                    laserBeamY = intersectY
+                                end
+                                break
+                            end
                         end
                     end
                 end
@@ -4902,7 +5041,7 @@ function Balls.update(dt, paddle, bricks)
     end
 
     -- update balls
-    local substeps = 5
+    local substeps = 3
     local dtStep = dt / substeps
     local isMadnessCore = Player.currentCore == "Madness Core"
     local coreMult = 1
@@ -4951,7 +5090,7 @@ function Balls.update(dt, paddle, bricks)
             end
             ball.laserBeamBrick = nil
             local closestDist = math.huge
-            local highestBrick
+            local highestBrick = nil
             ball.randomSeed = ball.randomSeed or math.random(1, 1000000)
             local angle = math.sin((gameTime + ball.randomSeed) * 0.5) * 1.5
             local startX = ball.x
@@ -4963,7 +5102,7 @@ function Balls.update(dt, paddle, bricks)
             local endY = startY + dirY * 2000
             
             for _, brick in ipairs(bricks) do
-                if brick.health > 0 and not brick.destroyed then
+                if brick.health > 0 and not brick.destroyed and brick.y > -brick.height then
                     -- Check all four sides of the brick for intersection
                     local sides = {
                         {brick.x, brick.y + brick.height, brick.x + brick.width, brick.y + brick.height}, -- bottom
