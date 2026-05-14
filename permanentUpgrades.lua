@@ -174,17 +174,7 @@ local function paddleCoresDraw()
                     print("Not enough gold to unlock " .. core.name)
                 end
             end
-            local moneyOffsetX = -math.cos(math.rad(5))*getTextSize(formatNumber(core.price))/2
-            -- Draw price with shadow and color
-            local moneyText = formatNumber(core.price) .. "$"
-            local moneyColor = affordable and {14/255, 202/255, 92/255, 1} or {164/255, 14/255, 14/255,1}
-            local shadowOffset = 4
-            setFont(35)
-            love.graphics.setColor(0,0,0,1)
-            love.graphics.print(moneyText, x + colWidth - 20 + moneyOffsetX + shadowOffset, y + shadowOffset, math.rad(5))
-            love.graphics.setColor(moneyColor)
-            love.graphics.print(moneyText, x + colWidth - 20 + moneyOffsetX, y, math.rad(5))
-            love.graphics.setColor(1,1,1,1)
+            drawGold(core.price, x + colWidth - 20, y)
         else
             suit.Label(label, {align = "center"}, x, y, colWidth, buttonHeight)
         end

@@ -84,7 +84,7 @@ local function bossDestroyed(bossBrick)
     end
     love.mouse.setVisible(true)
     -- Award gold and save data (same as game over)
-    local goldEarned = 500 + Player.level * math.ceil(Player.level / 5) * 5 
+    local goldEarned = 50 + Player.level * math.ceil(Player.level / 4)
     goldEarnedFrl = goldEarned
     Player.gold = (Player.gold or 0) + goldEarned
     if gameTime < (Player.fastestTime or 1000000) then

@@ -324,31 +324,31 @@ Player.availableCores = {
     {
         name = "Spray and Pray Core",
         description = "gain +1 fireRate for every 5 Player level.",
-        price = 250,
+        price = 50,
         startingItem = "Machine Gun"
     },
     {
         name = "Fast Study Core",
         description = "gain +3% experience gain per Player Level",
-        price = 500,
+        price = 100,
         startingItem = "Laser Beam"
     },
     {
         name = "Hacker Core",
         description = "All Weapons start with an upgradePrice of 0",
-        price = 750,
+        price = 150,
         startingItem = "Shotgun"
     },
     {
         name = "Loan Core",
         description = "gain 10$ instead of 6$ on level up. There are no items that give money in the shop",
-        price = 1000,
+        price = 200,
         startingItem = "Rocket Launcher"
     },
     {
         name = "Size Core",
         description = "gain 7% paddle size per level",
-        price = 1250,
+        price = 250,
         startingItem = "Gun Ball",
     },
     --[[{
@@ -609,7 +609,7 @@ function Player.die()
         love.mouse.setVisible(true)
     end)
     -- Calculate gold earned based on score
-    local goldEarned = Player.level * math.ceil(Player.level / 5) * 5 
+    local goldEarned = Player.level * math.ceil(Player.level / 4)
     Player.addGold(goldEarned)
     Player.dead = true
     saveGameData()  -- Save the new high score]]
