@@ -46,6 +46,17 @@ function FlamethrowerVFX:new(x, y, direction)
     self.airResistanceY = 0.3
     self.sizeMultiplier = 0.5
     
+    -- Create particle texture once (reuse it)
+    if not FlamethrowerVFX.particleTexture then
+        local canvas = love.graphics.newCanvas(32, 48)
+        love.graphics.setCanvas(canvas)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.ellipse("fill", 16, 24, 16, 24)
+        love.graphics.setCanvas()
+        FlamethrowerVFX.particleTexture = canvas
+    end
+    
+    FlamethrowerVFX:setQuality("low")
     return self
 end
 
@@ -77,10 +88,13 @@ end
 
 function FlamethrowerVFX:update(dt)
     self.time = self.time + dt
-    
+    self.lastSpawnTime = (self.lastSpawnTime or 0) + dt
+    print("self spawn rate: " .. self.spawnRate)
+    local spawnRate = 1
     -- Spawn new particles if active
+
     if self.active then
-        for i = 1, self.spawnRate do
+        for i = 1, spawnRate do
             if #self.particles < self.maxParticles then
                 table.insert(self.particles, self:createParticle())
             end
@@ -119,7 +133,7 @@ function FlamethrowerVFX:update(dt)
         p.size = p.initialSize * (self.sizeMultiplier + p.life * self.sizeMultiplier)
         
         -- Remove dead particles
-        if p.life <= 0 then
+        if p.life <= 0.35 then
             table.remove(self.particles, i)
         end
     end
@@ -142,30 +156,24 @@ function FlamethrowerVFX:getParticleColor(life)
 end
 
 function FlamethrowerVFX:render()
-        -- Draw a dark background rectangle so additive particles are visible
-        love.graphics.setColor(0.08, 0.08, 0.08, 0.2)
-        --love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
-
-        love.graphics.setBlendMode("add", "premultiplied")
-        -- Sort particles by life (render older particles first for better blending)
-        table.sort(self.particles, function(a, b) return a.life < b.life end)
-
         local boost = 0.8 -- Adjust for desired opacity
+        local texture = FlamethrowerVFX.particleTexture
+        
+        -- First pass: alpha blend
+        print("Rendering " .. #self.particles .. " particles")
+        love.graphics.setBlendMode("alpha")
         for _, p in ipairs(self.particles) do
             local r, g, b, a = self:getParticleColor(p.life)
-            -- Premultiplied alpha and boost
-            love.graphics.setColor(r * a * boost, g * a * boost, b * a * boost, a * boost)
-
-            love.graphics.push()
-            love.graphics.translate(p.x, p.y)
-            love.graphics.rotate(p.rotation)
-            love.graphics.setBlendMode("alpha")
             love.graphics.setColor(r, g, b, a)
-            love.graphics.ellipse("fill", 0, 0, p.size, p.size * 1.5)
-            love.graphics.setBlendMode("add", "premultiplied")
+            love.graphics.draw(texture, p.x, p.y, 0, p.size / 16, p.size / 24, 16, 24)
+        end
+        
+        -- Second pass: additive blend
+        love.graphics.setBlendMode("add", "premultiplied")
+        for _, p in ipairs(self.particles) do
+            local r, g, b, a = self:getParticleColor(p.life)
             love.graphics.setColor(r * a * boost, g * a * boost, b * a * boost, a * boost)
-            love.graphics.ellipse("fill", 0, 0, p.size, p.size * 1.5)
-            love.graphics.pop()
+            love.graphics.draw(texture, p.x, p.y, 0, p.size / 16, p.size / 24, 16, 24)
         end
 
         love.graphics.setBlendMode("alpha")

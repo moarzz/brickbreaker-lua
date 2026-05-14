@@ -3041,7 +3041,7 @@ function love.keypressed(key)
 
         -- add weapon
         if key == "7" then  
-            Balls.addBall("Ball Gun")
+            Balls.addBall("Flamethrower")
         end
 
         -- burn test

@@ -2800,12 +2800,12 @@ local function ballListInit()
             y = screenHeight / 2,
             size = 1,
             noAmount = true,
-            ammoMult = 3,
-            rarity = "uncommon",
+            ammoMult = 2,
+            rarity = "common",
             startingPrice = 25,
             description = "A flamethrower that shoots fire at a fast rate. Can burn bricks dealing damage over time.",
             color = {1, 0.5, 0, 1}, -- Orange color for Flamethrower
-            currentAmmo = 3 + ((Player.permanentUpgrades.ammo or 0)) * 3,
+            currentAmmo = 6 + ((Player.permanentUpgrades.ammo or 0)) * 2,
             shooting = false,
             onBuy = function()
                 fire("Flamethrower")
@@ -2813,7 +2813,7 @@ local function ballListInit()
             stats = {
                 damage = 1,
                 ammo = 6,
-                cooldown = 12,
+                cooldown = 11,
             },
             canBuy = function() return Player.currentCore ~= "Damage Core" end
         },
@@ -3281,7 +3281,7 @@ function Balls.addBall(ballName, singleBall)
             upgradePrice = 3
         end
         if Player.currentCore == "Hacker Core" then
-            upgradePrice = 0
+            upgradePrice = upgradePrice - 2
         end
         if isNewBall then
             local newBallType = {
@@ -4263,9 +4263,14 @@ local function techUpdate(dt)
     if unlockedBallTypes["Flamethrower"] then
         local flamethrower = unlockedBallTypes["Flamethrower"]
         flamethrower.damageCooldowns = flamethrower.damageCooldowns or {}
-        -- Tick down cooldowns for all bricks
+        -- Tick down cooldowns for all bricks and remove expired entries
         for brickKey, cd in pairs(flamethrower.damageCooldowns) do
-            flamethrower.damageCooldowns[brickKey] = math.max(0, cd - dt)
+            cd = math.max(0, cd - dt)
+            if cd <= 0 then
+                flamethrower.damageCooldowns[brickKey] = nil  -- Remove expired entries
+            else
+                flamethrower.damageCooldowns[brickKey] = cd
+            end
         end
         -- FlamethrowerVFX hitbox logic (shot forward like flames)
         if flamethrower.vfx then
@@ -4279,6 +4284,7 @@ local function techUpdate(dt)
             local boxLife = 0.6 -- seconds
             local boxSize = 50
             -- Spawn new hitboxes if active
+            
             if flamethrower.vfx.active then
                 for i = 1, spawnRate do
                     local angle = dir + (math.random() - 0.5) * spread
@@ -4311,9 +4317,9 @@ local function techUpdate(dt)
                     table.remove(flamethrower.debugHitboxes, i)
                 end
             end
-            -- Check overlap with bricks
+            -- Check overlap with bricks (only on-screen bricks)
             for _, brick in ipairs(bricks) do
-                if not brick.destroyed and brick.health > 0 then
+                if not brick.destroyed and brick.health > 0 and brick.y > -brick.height and brick.y < screenHeight + 100 then
                     local brickKey = brick.id or brick
                     for _, hb in ipairs(flamethrower.debugHitboxes) do
                         if brick.x < hb.x + hb.w/2 and brick.x + brick.width > hb.x - hb.w/2 and
