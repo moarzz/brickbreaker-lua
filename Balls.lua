@@ -1764,29 +1764,31 @@ local function fire(techName)
             flamethrower.shooting = true
             -- Start ammo depletion timer
             ammoDepletionTimer = Timer.every(0.4, function()
-                local useAmmo = true
-                if hasItem("Magic Mag") then
-                    for i=1, itemCount("Magic Mag") do
-                        if math.random(1,100) <= 35 then
-                            useAmmo = false
-                            break
+                if not Player.levelingUp then 
+                    local useAmmo = true
+                    if hasItem("Magic Mag") then
+                        for i=1, itemCount("Magic Mag") do
+                            if math.random(1,100) <= 35 then
+                                useAmmo = false
+                                break
+                            end
                         end
                     end
-                end
-                if useAmmo then
-                    flamethrower.currentAmmo = flamethrower.currentAmmo - 1
-                end
-                if flamethrower.currentAmmo <= 0 then
-                    flamethrower.vfx:stop()
-                    flamethrower.shooting = false
-                    Timer.cancel(ammoDepletionTimer)
-                    -- Refill ammo after cooldown
-                    local cooldownValue = getStat("Flamethrower", "cooldown") * 0.7
-                    Timer.after(cooldownValue, function()
-                        flamethrower.currentAmmo = getStat("Flamethrower", "ammo")
-                        fire("Flamethrower")
-                    end)
-                    createCooldownVFX(cooldownValue)
+                    if useAmmo then
+                        flamethrower.currentAmmo = flamethrower.currentAmmo - 1
+                    end
+                    if flamethrower.currentAmmo <= 0 then
+                        flamethrower.vfx:stop()
+                        flamethrower.shooting = false
+                        Timer.cancel(ammoDepletionTimer)
+                        -- Refill ammo after cooldown
+                        local cooldownValue = getStat("Flamethrower", "cooldown") * 0.7
+                        Timer.after(cooldownValue, function()
+                            flamethrower.currentAmmo = getStat("Flamethrower", "ammo")
+                            fire("Flamethrower")
+                        end)
+                        createCooldownVFX(cooldownValue)
+                    end
                 end
             end)
         end

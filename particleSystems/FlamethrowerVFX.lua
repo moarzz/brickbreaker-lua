@@ -33,18 +33,21 @@ function FlamethrowerVFX:new(x, y, direction)
     -- Visual properties optimized for additive blending
     self.colors = {
         {1.0, 0.9, 0.7, 0.5}, -- Hot white core
-        {1.0, 0.6, 0.15, 0.25}, -- Yellow-orange
-        {1.0, 0.4, 0.1, 0.2}, -- Orange
-        {0.9, 0.3, 0.1, 0.175}, -- Reddish orange
-        {0.8, 0.2, 0.1, 0.15}, -- Red
-        {0.55, 0.1, 0.1, 0.125}, -- Dark red
+        {1.0, 0.6, 0.15, 0.3}, -- Yellow-orange
+        {1.0, 0.5, 0.1, 0.25}, -- Orange
+        {1.0, 0.4, 0.1, 0.225}, -- Orange
+        {0.95, 0.35, 0.1, 0.2}, -- Reddish orange
+        {0.9, 0.3, 0.1, 0.18}, -- Reddish orange
+        {0.85, 0.25, 0.1, 0.16}, -- Red-orange
+        {0.8, 0.2, 0.1, 0.14}, -- Red
+        {0.55, 0.1, 0.1, 0.12}, -- Dark red
         {0.1, 0.1, 0.1, 0.025}  -- Smoke
     }
     
     -- Performance optimization: pre-calculate values
     self.airResistanceX = 0.5
     self.airResistanceY = 0.3
-    self.sizeMultiplier = 0.5
+    self.sizeMultiplier = 1.5
     
     -- Create particle texture once (reuse it)
     if not FlamethrowerVFX.particleTexture then
@@ -66,15 +69,16 @@ function FlamethrowerVFX:createParticle()
     
     self.particleIdCounter = self.particleIdCounter + 1
     
-    local maxLife = (1.2 + math.random() * 0.6) * 0.7
+    local maxLife = (1 + math.random() * 0.6) * 0.7
+    local size = 8 + math.random() * 12
     return {
         x = self.x,
-        y = self.y,
+        y = self.y - size * 3 / 4,
         vx = math.cos(angle) * speed,
         vy = math.sin(angle) * speed,
         life = 1.0,
-        size = 8 + math.random() * 12,
-        initialSize = 8 + math.random() * 12,
+        size = size,
+        initialSize = size,
         rotation = math.random() * math.pi * 2,
         rotationSpeed = (math.random() - 0.5) * 4,
         -- Turbulence properties
@@ -89,8 +93,7 @@ end
 function FlamethrowerVFX:update(dt)
     self.time = self.time + dt
     self.lastSpawnTime = (self.lastSpawnTime or 0) + dt
-    print("self spawn rate: " .. self.spawnRate)
-    local spawnRate = 1
+    local spawnRate = self.spawnRate
     -- Spawn new particles if active
 
     if self.active then
@@ -156,25 +159,63 @@ function FlamethrowerVFX:getParticleColor(life)
 end
 
 function FlamethrowerVFX:render()
-        local boost = 0.8 -- Adjust for desired opacity
+        local boost = 0.8
         local texture = FlamethrowerVFX.particleTexture
         
-        -- First pass: alpha blend
-        print("Rendering " .. #self.particles .. " particles")
-        love.graphics.setBlendMode("alpha")
-        for _, p in ipairs(self.particles) do
-            local r, g, b, a = self:getParticleColor(p.life)
-            love.graphics.setColor(r, g, b, a)
-            love.graphics.draw(texture, p.x, p.y, 0, p.size / 16, p.size / 24, 16, 24)
+        if #self.particles == 0 then
+            return
         end
         
-        -- Second pass: additive blend
-        love.graphics.setBlendMode("add", "premultiplied")
+        -- Build mesh vertices for all particles
+        local meshData = {}
         for _, p in ipairs(self.particles) do
             local r, g, b, a = self:getParticleColor(p.life)
-            love.graphics.setColor(r * a * boost, g * a * boost, b * a * boost, a * boost)
-            love.graphics.draw(texture, p.x, p.y, 0, p.size / 16, p.size / 24, 16, 24)
+            
+            -- Create quad (2 triangles) for particle
+            local hx, hy = p.size / 2, p.size * 0.75
+            
+            -- Triangle 1
+            table.insert(meshData, {p.x - hx, p.y - hy, 0, 0, r, g, b, a})
+            table.insert(meshData, {p.x + hx, p.y - hy, 1, 0, r, g, b, a})
+            table.insert(meshData, {p.x + hx, p.y + hy, 1, 1, r, g, b, a})
+            
+            -- Triangle 2
+            table.insert(meshData, {p.x - hx, p.y - hy, 0, 0, r, g, b, a})
+            table.insert(meshData, {p.x + hx, p.y + hy, 1, 1, r, g, b, a})
+            table.insert(meshData, {p.x - hx, p.y + hy, 0, 1, r, g, b, a})
         end
+        
+        -- Create fresh mesh for alpha pass
+        local alphaMesh = love.graphics.newMesh(meshData, "triangles")
+        alphaMesh:setTexture(texture)
+        
+        -- First pass: alpha blend (single draw call)
+        print("Rendering " .. #self.particles .. " particles")
+        love.graphics.setBlendMode("alpha")
+        love.graphics.draw(alphaMesh)
+        
+        -- Second pass: additive blend (single draw call)
+        -- Rebuild mesh with boosted alpha for additive pass
+        meshData = {}
+        for _, p in ipairs(self.particles) do
+            local r, g, b, a = self:getParticleColor(p.life)
+            r, g, b, a = r * a * boost, g * a * boost, b * a * boost, a * boost
+            
+            local hx, hy = p.size / 2, p.size * 0.75
+            
+            table.insert(meshData, {p.x - hx, p.y - hy, 0, 0, r, g, b, a})
+            table.insert(meshData, {p.x + hx, p.y - hy, 1, 0, r, g, b, a})
+            table.insert(meshData, {p.x + hx, p.y + hy, 1, 1, r, g, b, a})
+            
+            table.insert(meshData, {p.x - hx, p.y - hy, 0, 0, r, g, b, a})
+            table.insert(meshData, {p.x + hx, p.y + hy, 1, 1, r, g, b, a})
+            table.insert(meshData, {p.x - hx, p.y + hy, 0, 1, r, g, b, a})
+        end
+        
+        local addMesh = love.graphics.newMesh(meshData, "triangles")
+        addMesh:setTexture(texture)
+        love.graphics.setBlendMode("add", "premultiplied")
+        love.graphics.draw(addMesh)
 
         love.graphics.setBlendMode("alpha")
         love.graphics.setColor(1, 1, 1, 1)
@@ -212,7 +253,7 @@ end
 function FlamethrowerVFX:setQuality(quality)
     if quality == "low" then
         self.maxParticles = 100
-        self.spawnRate = 4
+        self.spawnRate = 2
     elseif quality == "medium" then
         self.maxParticles = 200
         self.spawnRate = 6
