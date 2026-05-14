@@ -1045,7 +1045,7 @@ local function drawBallStats()
                     end
                     if hasItem("Money Back") then
                         local moneyBack = getItem("Money Back")
-                        local moneyBackCount = itemCount("Money Back") or 1
+                        local moneyBackCount = itemCount("Money Back") * 2 or 2
                         Player.changeMoney(moneyBackCount, moneyBack.id)
                     end
                 end

@@ -300,7 +300,7 @@ local function loadAssets()
     runeCircleImg = love.graphics.newImage("assets/sprites/runeCircle.png")
     bezelImg = love.graphics.newImage("assets/sprites/bezel.png")
     screenContour = love.graphics.newImage("assets/sprites/screenContour1.png")
-    goldImg = love.graphics.newImage("assets/sprites/UI/gold.png")
+    goldImg = love.graphics.newImage("assets/sprites/UI/goldCoin.png")
 
     -- UI
     uiLabelImg = love.graphics.newImage("assets/sprites/UI/label.png")

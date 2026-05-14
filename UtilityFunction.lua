@@ -32,7 +32,6 @@ function drawGold(price, centerX, centerY, buyable, angle)
     local goldOffsetY = math.sin(angle) * getTextSize(formatNumber(text))
     
     -- Draw shadow text
-
     love.graphics.setColor(0, 0, 0, 1)
     love.graphics.print(formatNumber(text), centerX + 4 + moneyOffsetX, centerY + 4, angle)
     
@@ -41,8 +40,8 @@ function drawGold(price, centerX, centerY, buyable, angle)
     love.graphics.setColor(moneyColor)
     love.graphics.print(formatNumber(text), centerX + moneyOffsetX, centerY, angle)
 
-    love.graphics.setColor(1,1,1,1)
-    local sizeMult = 0.12
+    love.graphics.setColor(0.875,0.875,0.875,1)
+    local sizeMult = 0.25
     love.graphics.draw(goldImg, centerX + moneyOffsetX + getTextSize(formatNumber(text)) - 3, centerY - goldImg:getHeight() * sizeMult/2 + 8 + goldOffsetY * 1.2, 0, sizeMult, sizeMult)
     
     -- Reset color
