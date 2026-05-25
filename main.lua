@@ -1631,6 +1631,30 @@ function getCurrentSelectedCore()
     end 
     return presetPaddleCores[currentSelectedCoreID]
 end
+local shouldDrawChallengeRuns = false
+local function drawChallengeRuns()
+    if shouldDrawChallengeRuns then
+        -- window draw
+        love.graphics.setColor(1, 1, 1, 1)
+        local x, y = screenWidth * 1 / 4 + 50, screenHeight / 2 - 50
+        local windowW, windowH = uiBigWindowImg:getWidth() * 1.15, uiBigWindowImg:getHeight() * 0.75
+        love.graphics.draw(uiBigWindowImg, x, y, 0, 1.15, 0.75, windowW/1.15/2, windowH/0.75/2)
+
+        -- X to close draw
+        love.graphics.setColor(1,0,0,1)
+        setFont(60)
+        love.graphics.print("X", x + windowW/2 - 70, y - windowH/2 + 25)
+        drawTextCenteredWithScale("X", x + windowH/2 - 75, y, 35, 75, {1,0,0,1})
+        if suit.Button("", {id = "close_challenge_runs", color = invisButtonColor}, x + windowW/2 - 77, y - windowH/2 + 20, 50, 50).hit then
+            playSoundEffect(selectSFX, 1, 0.8)
+            shouldDrawChallengeRuns = false
+        end
+
+
+        love.graphics.setColor(1,1,1,1)
+    end
+end
+
 
 function drawMenu()
     -- Calculate center positions
@@ -1796,11 +1820,22 @@ function drawMenu()
     end
 
     -- challenge runs
-    setFont(22)
-    love.graphics.draw(uiWindowImg, centerX + buttonWidth * 0.25 - 375, startY - 40, 0, buttonWidth * 0.5/uiWindowImg:getWidth(), buttonHeight * 2/uiWindowImg:getHeight())
-    if suit.Button("Challenge\nRuns", {id="challenge button", valign = "middle", color = invisButtonColor}, centerX + buttonWidth * 0.25 -370, startY - 40, buttonWidth * 0.5, buttonHeight * 2).hit then
-        
+    if not shouldDrawChallengeRuns then
+        setFont(22)
+        love.graphics.draw(uiWindowImg, centerX + buttonWidth * 0.25 - 375, startY - 40, 0, buttonWidth * 0.5/uiWindowImg:getWidth(), buttonHeight * 2/uiWindowImg:getHeight())
+        if suit.Button("Challenge\nRuns", {id="challenge button", valign = "middle", color = invisButtonColor}, centerX + buttonWidth * 0.25 -370, startY - 40, buttonWidth * 0.5, buttonHeight * 2).hit then
+            -- shouldDrawChallengeRuns = not shouldDrawChallengeRuns
+            playSoundEffect(selectSFX, 1, 0.8)
+            love.graphics.setColor(1,1,0,1)
+            textPopup("Coming soon!", centerX + buttonWidth * 0.25 - 375, startY - 40, {1,1,0,1}, 40)
+            love.graphics.setColor(1,1,1,1)
+        end
     end
+    if shouldDrawChallengeRuns then
+        drawChallengeRuns()
+    end
+
+    setFont(22)
 
     -- exit game button
     love.graphics.draw(uiWindowImg, screenWidth - buttonWidth * 0.7 - 105, 95, 0, buttonWidth * 0.7/uiWindowImg:getWidth(), buttonHeight * 1.5/uiWindowImg:getHeight())
@@ -2921,7 +2956,7 @@ function love.keypressed(key)
         print("Testing mode: " .. tostring(testingMode))
     end
 
-    if testingMode then
+    --[[if testingMode then
 
         -- PERFORMANCE STRESS TESTS
 
@@ -2999,8 +3034,6 @@ function love.keypressed(key)
 
         if key == "1" then
             currentRowPopulation = 500
-            --[[local mouseX, mouseY = love.mouse.getPosition()
-            textPopup("Only available in full release!", mouseX, mouseY, {0, 1, 0}, 40)]]
         end
 
         if key == "2" then
@@ -3172,7 +3205,7 @@ function love.keypressed(key)
                 createSpriteAnimation(x, y, 1, explosionVFX, 512, 512, 0.01, 0, false)
             end
         end
-    end
+    end]]
     
 end
 

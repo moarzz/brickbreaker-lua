@@ -355,13 +355,14 @@ Player.availableCores = {
         name = "Farm Core",
         description = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown).\nIt takes 100% more xp for you to level up",
         price = 1000,
-    },
+    },]]
     
     {
         name = "Madness Core",
         description = "Damage is divided by 2. Cooldown is halved. Every other stat is doubled.",
         price = 5000,
-    },]]
+        startingItem = "Ball"
+    },
 }
 
 Player.coreDescriptions = {
@@ -372,7 +373,7 @@ Player.coreDescriptions = {
     ["Loan Core"] = "start with 25$. gain 3$ instead of 5$ on level up.",
     ["Size Core"] = "+8% paddle size per level",
     ["Farm Core"] = "When you level up, all your weapons gain +1 to a random stat (-1 for cooldown)\nIt takes 100% more xp for you to level up and bricks grow in health 100% faster",
-    --["Madness Core"] = "Damage and coldown are reduced by 50%.\nevery other stat is doubled. bricks go twice as fast\n(can break the game)."
+    ["Madness Core"] = "Damage and coldown are reduced by 50%.\nevery other stat is doubled. bricks go twice as fast\n(can break the game)."
 }
 
 Player.coreRestrictions = {

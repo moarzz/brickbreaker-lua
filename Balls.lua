@@ -3155,7 +3155,6 @@ function Balls.initialize()
     else
         setBossSpawnTime(600)
     end
-    
 
     -- sets which items should be visible
     Items.setAllVisible(true)
