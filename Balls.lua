@@ -2684,7 +2684,7 @@ function Balls.initialize()
     Player.levelingUp = false
     Player.choosingUpgrade = false
     Player.upgradePriceMultScaling = 2
-    Player.xpForNextLevel = 15
+    Player.xpForNextLevel = 8
     Player.xpGainMult = 1
     Player.setMoney(0);
     bossOverwriteValues = {x = 0, y = 0, whiteBoostTween = 0}
