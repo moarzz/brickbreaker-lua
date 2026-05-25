@@ -364,7 +364,7 @@ function gainMoneyWithAnimations(moneyGain, itemID, playSFX)
     end
     
     print("gaining money: " .. moneyGain .. " with itemID: " .. (itemID or "NO ID"))
-    EventQueue:addEventToQueue(EVENT_POINTERS.money_gain, 0.3, function() 
+    EventQueue:addEventToQueue(EVENT_POINTERS.money_gain, 0.15, function() 
         
         -- First event: Show animation and add money
         if itemID then -- Changed from itemId to itemName check
@@ -377,7 +377,7 @@ function gainMoneyWithAnimations(moneyGain, itemID, playSFX)
         end
         
         -- Create and add tween without capturing outer scope variables
-        local inTween = tween.new(0.075, visualMoneyValues, {scale = 1.7}, tween.easing.outCirc, nil, true)
+        local inTween = tween.new(0.04, visualMoneyValues, {scale = 1.7}, tween.easing.outCirc, nil, true)
         addTweenToUpdate(inTween)
         
         -- Update money
@@ -389,9 +389,9 @@ function gainMoneyWithAnimations(moneyGain, itemID, playSFX)
         end
 
         -- reset Scale tween
-        GlobalTimer:after(0.075, function() 
+        GlobalTimer:after(0.05, function() 
             Player.shiftMoneyValue(moneyGain);
-            local outTween = tween.new(0.225, visualMoneyValues, {scale = 1}, tween.easing.inCirc, nil, true)
+            local outTween = tween.new(0.11, visualMoneyValues, {scale = 1}, tween.easing.inCirc, nil, true)
             addTweenToUpdate(outTween)
         end)
     end)
